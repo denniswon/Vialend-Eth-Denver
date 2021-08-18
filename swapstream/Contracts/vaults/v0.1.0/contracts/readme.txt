@@ -1,0 +1,16 @@
+vault address: 
+
+0x6e6F5887CfCB6B13bdF9089152c90606544CB8cA    
+	simplifided the withdraw function,  amount0 = amount0Min  amount1 = amount1Min, make sure the shares and amount0,1 is < total
+	success deposit 
+	success withdraw
+
+pool address  (on goerli)
+0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c
+
+token address: (on goerli)
+tUSDC  
+0xFA5dF5372c03D4968d128D624e3Afeb61031a777
+
+tWETH 
+0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4
