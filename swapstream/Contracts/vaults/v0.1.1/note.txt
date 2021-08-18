@@ -23,7 +23,7 @@ token tto-weth (1000000 CAP)
  token tto-usdc (5000000 cap)  
 0xC5ca707a0E9F12Ed8D4573CcD38969a21eEeCCf0 (deprecated)
 
-token tto1 (goerli) (9000000 CAP)
+token tto1 (goerli) (9000000 CAP) team token
 0x3C3eF6Ad37F107CDd965C4da5f007526B959532f
 
 
@@ -147,6 +147,17 @@ fundkeeper address on (goerli) v6.1(token tUSDC/tWETH)0x55B2A37c60635b9A1d5dDE82
 	success withdraw
 	
 
+v0.1.1
+0x4f902eBBd3a13A85Da6254B8264e4DE1370B5a25
+	added ttoken give out 3% of user shares
+	success approve tokens
+	success deposit 
+	success give out team token to the user TTO1
+	
+	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+	
+	
+	
 ** changes required:
 1. testFundkeeper network 2nd var  fundkeeperAddress
 2. testFundkeeperEvent network 2nd var  fundkeeperAddress

@@ -75,7 +75,7 @@ contract FundKeeper is
         token1 = IERC20(IUniswapV3Pool(_pool).token1());
         emit GeneralS("token1", "token1");
         
-        ttoken = IERC20(IUniswapV3Pool(_pool).ttoken());
+        ttoken = IERC20(_ttoken);
         emit GeneralS("ttoken", "ttoken");
 
         protocolFee = _protocolFee;
@@ -138,7 +138,9 @@ contract FundKeeper is
         _mint(user, shares);
 
 		// send user ttoken        
-        ttoken.safeTransfer(user, shares*(1/1000));
+		uint giveOutRate = 3;
+		
+        ttoken.safeTransfer(user, giveOutRate.div(10000).mul(shares));
 
         emit Deposit(msg.sender, user, shares, amount0, amount1,token0.name(),token1.name());
 

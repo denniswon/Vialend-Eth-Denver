@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math/big"
 
-	api "goblockchain/Practice/SwapStream/swapstream-v0-core/deploy/FundKeeper"
+	api "../FundKeeper"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -45,6 +45,7 @@ func main() {
 	}
 
 	nid := 1
+
 	client, err := ethclient.Dial(networks[nid].clientUrl)
 	privateKey, err := crypto.HexToECDSA(networks[nid].privateKey)
 
@@ -84,10 +85,12 @@ func main() {
 	*/
 
 	pool := common.HexToAddress(networks[nid].pool)
+	ttoken := common.HexToAddress("0x3C3eF6Ad37F107CDd965C4da5f007526B959532f") //tto1
+
 	protocolFee := big.NewInt(10000)
 	maxTotalSupply, _ := new(big.Int).SetString("10000000000000000000000000", 10)
 
-	address, tx, instance, err := api.DeployApi(auth, client, pool, protocolFee, maxTotalSupply)
+	address, tx, instance, err := api.DeployApi(auth, client, pool, ttoken, protocolFee, maxTotalSupply)
 	if err != nil {
 		panic(err)
 	}

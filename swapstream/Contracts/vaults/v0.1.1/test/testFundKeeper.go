@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	fundkeepergo "goblockchain/Practice/SwapStream/swapstream-v0-core/deploy/FundKeeper"
+	fundkeepergo "../deploy/FundKeeper"
 )
 
 type nClient struct {
@@ -57,7 +57,7 @@ func main() {
 
 		{ //2 test user 1
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"0xCe1CC3cC667D5B8925962B6a8F8F997aF018A7AC",
+			"0x4f902eBBd3a13A85Da6254B8264e4DE1370B5a25",
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",
 			"",
 			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},
@@ -77,11 +77,11 @@ func main() {
 			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},
 	}
 
-	nid := 1
+	nid := 2
 	doApprove := false
-	doDeposit := false
+	doDeposit := true
 	doWithDraw := false
-	doWithDrawAll := true
+	doWithDrawAll := false
 
 	token0Address := common.HexToAddress("0xFA5dF5372c03D4968d128D624e3Afeb61031a777")
 	token1Address := common.HexToAddress("0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4")
@@ -190,10 +190,11 @@ func main() {
 
 		//amountToken0 := big.NewInt(10 * 1000000000000000000)  //overflow error
 		//amountToken1 := big.NewInt(200 * 1000000000000000000)  // overlow error
-		//var amountToken0, _ = new(big.Int).SetString("100000000000000000000", 10)
-		//var amountToken1, _ = new(big.Int).SetString("200000000000000000000", 10)
-		amountToken0 := big.NewInt(1 * 1000000000000000000)
-		amountToken1 := big.NewInt(2 * 1000000000000000000)
+
+		var amountToken0, _ = new(big.Int).SetString("100000000000000000000", 10)
+		var amountToken1, _ = new(big.Int).SetString("200000000000000000000", 10)
+		//amountToken0 := big.NewInt(1 * 1000000000000000000)
+		//amountToken1 := big.NewInt(2 * 1000000000000000000)
 		amount0Min := big.NewInt(1)
 		amount1Min := big.NewInt(1)
 
