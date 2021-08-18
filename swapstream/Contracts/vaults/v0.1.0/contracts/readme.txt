@@ -5,6 +5,25 @@ vault address:
 	success deposit 
 	success withdraw
 
+contract methods:
+ deposit
+ withdraw
+ getTotalAmount  
+
+test files:
+ ./test/testFundkeeper.go
+ ./test/event/testFundkeeperEvent.go
+
+
+contract abi 
+../build/fundkeeper.abi
+
+contract deployed functions
+../deploy/fundkeeper/fundkeeper.go
+
+
+
+
 pool address  (on goerli)
 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c
 
