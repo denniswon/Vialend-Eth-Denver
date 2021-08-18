@@ -5,50 +5,28 @@
       <div class="container">
         <div class="row">
           <div class="col">
-            <div
-              class="
+            <div class="
                 header_content
                 d-flex
                 flex-row
                 align-items-center
                 justify-content-start
-              "
-            >
+              ">
               <div class="logo">
                 <a href="#">
-                  <div>SwapStream</div>
+                  <div style="vertical-align: middle;">
+                    <img src="images/logo.png"
+                         width="30"
+                         height="33" />&nbsp;&nbsp;SwapStream
+                  </div>
                   <div></div>
                 </a>
               </div>
-              <nav class="main_nav">
-                <ul
-                  class="
-                    d-flex
-                    flex-row
-                    align-items-center
-                    justify-content-start
-                  "
-                >
-                  <li><a href="blog.html">Docs</a></li>
-                  <li><a href="contact.html">Vote</a></li>
-                </ul>
-              </nav>
-              <div
-                class="
-                  header_extra
-                  d-flex
-                  flex-row
-                  align-items-center
-                  justify-content-start
-                  ml-auto
-                "
-              >
-                <div class="book_button trans_200">
-                  <a href="#">Launch App</a>
-                </div>
-              </div>
+              <Navigate />
+              <MenuFeature />
               <div class="hamburger ml-auto">
-                <i class="fa fa-bars" aria-hidden="true"></i>
+                <i class="fa fa-bars"
+                   aria-hidden="true"></i>
               </div>
             </div>
           </div>
@@ -59,19 +37,15 @@
     <!-- Menu -->
 
     <div class="menu">
-      <div
-        class="background_image"
-        style="background-image: url(images/menu.jpg)"
-      ></div>
-      <div
-        class="
+      <div class="background_image"
+           style="background-image: url(images/menu.jpg)"></div>
+      <div class="
           menu_content
           d-flex
           flex-column
           align-items-center
           justify-content-center
-        "
-      >
+        ">
         <ul class="menu_nav_list text-center">
           <li><a href="index.html">Docs</a></li>
           <li><a href="about.html">Vote</a></li>
@@ -81,36 +55,28 @@
     </div>
 
     <!-- Home -->
-
-    <div class="home">
-      <div
-        class="parallax_background parallax-window"
-        data-parallax="scroll"
-        data-speed="0.8"
-      ></div>
-      <div class="home_container">
-        <div class="container">
-          <div class="row">
-            <div class="col">
-              <div class="home_content text-center">
-                <div class="home_title"><h1>Welcome to SwapStream</h1></div>
-                <div class="home_text">It's your best choice</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Home />
   </div>
 </template>
 
 <script>
-//import HelloWorld from "./components/Home.vue";
+import Navigate from './components/Nav.vue'
+import MenuFeature from './components/MenuFeature.vue'
+import Home from './views/Home.vue'
 
 export default {
-  name: "App",
-  components: {},
-};
+  name: 'App',
+  components: {
+    Navigate,
+    MenuFeature,
+    Home
+  },
+  methods: {
+    getName () {
+      console.log('name=' + this.$store.state.name)
+    }
+  }
+}
 </script>
 
 <style>
