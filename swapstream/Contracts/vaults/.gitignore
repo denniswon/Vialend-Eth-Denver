@@ -1,0 +1,17 @@
+
+#*
+#!.gitignore
+
+gitTest/
+@uniswap/
+@openzeppelin/
+
+
+#/node_modules/.cache
+#.idea
+#.idea/
+#/.idea/workspace.xml
+#/.idea/workspace.xml
+#/.idea/inspectionProfiles/Project_Default.xml
+#/node_modules
+#/dist

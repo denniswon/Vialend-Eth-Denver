@@ -140,21 +140,23 @@ fundkeeper address on (goerli) v6.1(token tUSDC/tWETH)0x55B2A37c60635b9A1d5dDE82
 	test function _shares(amountToken0, amountToken1) instead of _shareByAmount 
 	success  deposit  but token amount is small (100 and 200, reading 0.0000000000000001) 
 	failed withdraw  Fail with error 'withdraw amount0&gt;min, error in the withdraw function
-	
+
+v0.1.0 current wokring address:
 0x6e6F5887CfCB6B13bdF9089152c90606544CB8cA    
 	simplifided the withdraw function,  amount0 = amount0Min  amount1 = amount1Min, make sure the shares and amount0,1 is < total
 	success deposit 
 	success withdraw
 	
 
-v0.1.1
-0x4f902eBBd3a13A85Da6254B8264e4DE1370B5a25
-	added ttoken give out 3% of user shares
+v0.1.1 vault address: 
+0xB0eeD5760749E2B05db16131bc44c55b5E3fE2b5
+	added ttoken give out 100 tto1  
 	success approve tokens
 	success deposit 
 	success give out team token to the user TTO1
 	
-	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+// old 0.1	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+
 	
 	
 	

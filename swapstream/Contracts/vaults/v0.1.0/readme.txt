@@ -6,6 +6,7 @@ vault address:
 	success withdraw
 
 contract methods:
+ appove 
  deposit
  withdraw
  withdrawAll (for owner of the contract)
