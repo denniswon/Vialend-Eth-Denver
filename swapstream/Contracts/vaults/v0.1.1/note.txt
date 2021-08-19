@@ -1,0 +1,229 @@
+--deploy fundkeeper Contract
+1. solc compile fundkeeper (solc -abi, -bin)
+2. abigen fundkeeper 
+3. fundkeeper_deploy (get contract address)
+4. testFundkeeper.go  (change contract address)
+
+Addresses:
+Uniswap V3 Positions NFT-V1 (UNI-V3-POS) (goerli)
+0xC36442b4a4522E871399CD717aBDD847Ab11FE88 
+
+Test pool (elefss1/elefss2) address:  (goerli)
+0x616fb433fb74c2ad03613f7b200a9e02df193d0c
+
+token0 elefss1 (goerli ):  
+0xc4AFB13b10f7C49Af721860A188D6443D0fF8747
+
+token1 elefss2 (goerli ):  
+0x2aDEca523FbBF0937A9419924feAB607Bf599311
+
+token tto-weth (1000000 CAP)
+0x941CD33dd99A623Ab2F058C3A5961F8422652761 (deprecated)  
+
+ token tto-usdc (5000000 cap)  
+0xC5ca707a0E9F12Ed8D4573CcD38969a21eEeCCf0 (deprecated)
+
+token tto1 (goerli) (9000000 CAP) team token
+0x3C3eF6Ad37F107CDd965C4da5f007526B959532f
+
+
+
+pool (elefss2/usdc):  (goerli)
+0xd765dbc1fa901c795ef8b1adbcf0414726428791
+initial 
+ELEFSS2 65.85 39%
+USDC 0.9999 61%
+
+
+tUSDC  (on goerli)
+0xFA5dF5372c03D4968d128D624e3Afeb61031a777
+total supply 26512386160 (  same as USDC on  mainet )
+
+tWETH (on goerli)
+0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4
+ total supply 6718113 ( same as WETH on mainet )
+
+Pool 1  (tUSDC/tWETH)    (1% fee rate )   (goerli)
+0x5d5f4a5fbb77cd09be9a2fe12c443a3a8ac7336f          
+current  1 tweth=2.9 tusdc
+
+Pool 2 ( tWETH/tUSDC )   ( fee rate 0.3% )   (goerli)
+0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c 
+current 1 tweth = 10 tusdc   
+
+Pool 3 ( tWETH/tUSDC )   ( fee rate 0.05% )   (goerli)
+0xA6525c9A6A86859DdA4F6f6a26748466BdF35CA2 
+current 1 tweth = 3000 tusdc   
+
+
+Test:
+SwapStream uniswap  v3 factory address (goerli) 0xD15b0a02F508e38266dcB7df057E4F094DB52598
+official uniswap v3 factory address:  (all nets) 0x1f98431c8ad98523631ae4a59f267346ea31f984 
+
+
+**note: this pool is manually generated through uniswap app by adding these two tokens. 
+// now , redeploy the fundkeeper with the new pool address and test the deposit
+
+pool usdc/elef: (goerli)   0xB61f214F672DeBb4a95FA71381E62443288828db
+usdc: 0xd87ba7a50b2e7e660f678a895e4b72e7cb4ccd9c
+elef (goerli ): 0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a
+1usdc = 99699 elef
+
+
+
+
+*** deploy new token:
+
+1. Change token name and symbol C:\Users\xdotk\go\src\goblockchain\Practice\Tokens\erc20\contracts\token.sol
+
+2. wsl  
+ /// solc-select use 0.7.6
+ /// cd /mnt/c/Users/xdotk/go/src/goblockchain/Practice/tokens/erc20/contracts 
+	
+  solc solc --optimize --overwrite --bin token.sol -o ../build
+  solc solc --optimize --overwrite --bin token.sol -o ../build
+
+3. back to windows 
+/// C:\Users\xdotk\go\src\goblockchain\Practice\Tokens\erc20\contracts>
+abigen --abi=../build/token.abi --bin=../build/token.bin --pkg=api --out=../deploy/token/token.go
+
+4. run C:\Users\xdotk\go\src\goblockchain\Practice\Tokens\erc20\deploy\token_deploy.go
+
+** 手动添加token 到uniswap 并创建pool
+** pool 创建完成后， 在etherscan里找到pool 地址
+** 修改fundkeeper_deploy.go 里的pool地址。 并运行发布新的fundkeeper 合约,  得到新的fundkeeper合约地址
+** 修改testFundKeeper.go 里的fundkeeperContract 地址。并运行 
+
+
+
+/// The call will revert if the pool already exists, the fee is invalid, or the token arguments are invalid.
+ 
+run createpool.go 
+
+factory address: 0xD15b0a02F508e38266dcB7df057E4F094DB52598
+
+usdc: 0xd87ba7a50b2e7e660f678a895e4b72e7cb4ccd9c
+elef (goerli ): 0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a
+weth: 0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6
+elefant s1 (ELEFS1)  0x5F05690cCed1a1115a48FB913cc43BFCa95cAFd2
+
+
+
+
+fundkeeper address on (goerli) v1: 0x623220D8e2C9bEf6cEb22B1895CA84fb38FC36ec ,
+(save version) 0x7E83D2768B6A96FD753AB307fac88b08E2B7debA  
+
+fundkeeper address on (goerli) v2(to on top ): 0x223D2e50a83BcBd68549E99ffD5d57E91624509d
+fundkeeper address on (goerli) v3(to on top ): 0x85F1693750f1BfCFDc631e8371Bce88c73441768
+
+fundkeeper address on (goerli) v4( moved to back down): 0xf50265ee1E0DB06a39BA3e64DB20d33f77c02dC9
+
+fundkeeper address on (goerli) v5(token elefss1/elefss2) 0x553eE61a6AD3f5Fc5974EfA3DBfD54A33A5bb7E0
+
+fundkeeper address on (goerli) v6(token tUSDC/tWETH) 0xf3007DFf71402Ce0985Be930125a34095Dc53D2B
+fundkeeper address on (goerli) v6.1(token tUSDC/tWETH)0x55B2A37c60635b9A1d5dDE829E9611fa70dd5DDc
+0xCBA19bc3AF614a7905b80cc2E58fBf990be670c6 (failed)
+0x50ec0Ce318708121F43b47D5D0342614fad278A0 (failed)
+0xCe1CC3cC667D5B8925962B6a8F8F997aF018A7AC (failed amount0Min ???? called an old contract?)
+0x00ff3577A4657cD3576Ecbc630732a3815A1C613 (failed invalid shares)
+0xe7170c1593bB3e436C4DDC78E8FBeDb76C88BC7F (failed shares = 0)
+0x5909CE9FD90053426C707a3af8bA1d9f373bA2A3  (failed Deposit amount0 = 0 hardcoded shares = 300 )
+0xFed9831d2d42F4E6DA470972762118B6eba0535b 
+    hardcoded (300,amountToken0, amountToken1); 
+    but failed :ERC20: transfer amount exceeds allowance'
+    
+0xEbEf7A52CC1D61b098ED7C77b1Ec44D8F60D9194
+	normal _shareByAmount returns, modified require(xx && yy) inside _shareByamount
+	failed Deposit amount0'
+
+0x6a7C7B0e5484B39F34dF4C6fa95b24d62c40c6eA	
+	test function _shares(amountToken0, amountToken1) instead of _shareByAmount 
+	success  deposit  but token amount is small (100 and 200, reading 0.0000000000000001) 
+	failed withdraw  Fail with error 'withdraw amount0&gt;min, error in the withdraw function
+	
+0x6e6F5887CfCB6B13bdF9089152c90606544CB8cA    
+	simplifided the withdraw function,  amount0 = amount0Min  amount1 = amount1Min, make sure the shares and amount0,1 is < total
+	success deposit 
+	success withdraw
+	
+
+v0.1.1
+0x4f902eBBd3a13A85Da6254B8264e4DE1370B5a25
+	added ttoken give out 3% of user shares
+	success approve tokens
+	success deposit 
+	success give out team token to the user TTO1
+	
+	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+	
+	
+	
+** changes required:
+1. testFundkeeper network 2nd var  fundkeeperAddress
+2. testFundkeeperEvent network 2nd var  fundkeeperAddress
+
+demo external functions:  
+	deposit    // need sign
+	withdraw    // need sign
+	getTotalAmount   // pure view
+	
+abi location : /build/FundKeeper.abi	
+
+Frontend Test:
+1. Update Contract address with new address  (revert Error might occur with old address)
+2. add token into metamask
+usdc: 0xd87ba7a50b2e7e660f678a895e4b72e7cb4ccd9c
+weth: 0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6
+4. 到uniswap 买点weth 和 usdc
+5. call deposit  (token0=usdc, token1=eth)
+6. check event
+
+
+
+
+//use wsl 
+
+solc-select use 0.7.5 
+// or /home/eric/.local/bin/solc-select use 0.7.5\
+
+solc --optimize --overwrite --abi FundKeeper.sol -o ../build
+solc --optimize --overwrite --bin FundKeeper.sol -o ../build
+
+//back to windows
+
+ create a folder /deploy/filename
+ create a folder /deploy/filename_script
+
+// run abigen 
+abigen --abi=./build/FundKeeper.abi --bin=./build/FundKeeper.bin --pkg=api --out=./deploy/FundKeeper/FundKeeper.go
+or
+abigen --abi=../build/FundKeeper.abi --bin=../build/FundKeeper.bin --pkg=api --out=../deploy/FundKeeper/FundKeeper.go
+
+
+//copy and paste the deploy script and modify import and apiDeploy call method and 
+
+/deploy/filename_script/filename_deploy.go
+
+modify import file path: 	api "goblockchain/Practice/SwapStream/deploy/filename"
+
+modify eth client parameters, other constructor variables
+
+modify call api.DeployAPI 
+
+
+  _pool: 0x04B1560f4F58612a24cF13531F4706c817E8A5Fe
+
+
+  _protocolFee = 10000
+  _maxTotalSupply = 1e+32
+
+
+
+run ganache if deploy to local
+
+compile and run _deploy.go
+
+
+
+
+
