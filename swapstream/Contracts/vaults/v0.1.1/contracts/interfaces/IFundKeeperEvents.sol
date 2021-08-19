@@ -17,9 +17,7 @@ interface IFundKeeperEvents {
         address indexed to,
         uint256 shares,
         uint256 amount0,
-        uint256 amount1,
-        string nameToken0,
-        string nameToken1
+        uint256 amount1
     );
 
     event Withdraw(

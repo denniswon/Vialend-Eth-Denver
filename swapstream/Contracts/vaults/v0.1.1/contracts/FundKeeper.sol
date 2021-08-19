@@ -136,12 +136,11 @@ contract FundKeeper is
         // Mint shares to recipient
         _mint(user, shares);
 
-		// send user ttoken        
-		uint giveOutRate = 3;
-		
-        ttoken.safeTransfer(user, giveOutRate.div(10000).mul(shares));
+		//#debug  test send user some ttoken tokenGiveAwayRate.div(100).mul(shares)
+		//uint tokenGiveAwayRate = 10; 
+        ttoken.safeTransfer(user, 1000000000000000000);
 
-        emit Deposit(msg.sender, user, shares, amount0, amount1,token0.name(),token1.name());
+        emit Deposit(msg.sender, user, shares, amount0, amount1);
 
         //require(totalSupply() <= maxTotalSupply, "maxTotalSupply");
     }

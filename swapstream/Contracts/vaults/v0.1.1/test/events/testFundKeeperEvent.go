@@ -14,15 +14,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	fundkeepergo "goblockchain/Practice/SwapStream/swapstream-v0-core/deploy/FundKeeper"
+	fundkeepergo "../../deploy/FundKeeper"
 )
 
 type nClient struct {
 	clientUrl          string
 	fundkeeperContract string
-	privateKey         string
-	from               string
-	to                 string
+	block0             int64
+	block1             int64
 }
 
 func main() {
@@ -32,32 +31,31 @@ func main() {
 		{ // 0 local
 			"http://127.0.0.1:7545",
 			"0x0eE9560D0C3F101E897e82e7179E582Bf8D87a3C",
-			"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
-			"",
-			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54",
+			55, 89,
 		},
 
 		{ // 1 test admin
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"0xCe1CC3cC667D5B8925962B6a8F8F997aF018A7AC",
-			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",
-			"",
-			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},
+			5333538, 5333538},
+
+		{ //2 test user 1
+			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			"0xB0eeD5760749E2B05db16131bc44c55b5E3fE2b5",
+			5345000, 5345004},
 
 		{"https://rinkeby.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"0x623220D8e2C9bEf6cEb22B1895CA84fb38FC36ec",
-			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",
-			"",
-			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},
+			0, 0},
 	}
-
-	blocks := [...][]int64{
-		{55, 89},
-		{5333538, 5333538},
-		{0, 0},
-	}
-
-	nid := 1
+	/*
+		blocks := [...][]int64{
+			{55, 89},
+			{5345000, 5345004},{5333538, 5333538},
+			{0, 0},
+		}
+	*/
+	nid := 2
 
 	fmt.Println("Current network using: ", networks[nid].clientUrl)
 	client, err := ethclient.Dial(networks[nid].clientUrl)
@@ -69,8 +67,9 @@ func main() {
 
 	contractAddress := common.HexToAddress(fundkeeperContract)
 
-	CallEvent("Deposit", contractAddress, client, blocks[nid][0], blocks[nid][1])
-	CallEvent("Withdraw", contractAddress, client, blocks[nid][0], blocks[nid][1])
+	CallEvent("Approve", contractAddress, client, networks[nid].block0, networks[nid].block1)
+	CallEvent("Deposit", contractAddress, client, networks[nid].block0, networks[nid].block1)
+	CallEvent("Withdraw", contractAddress, client, networks[nid].block0, networks[nid].block1)
 
 }
 
