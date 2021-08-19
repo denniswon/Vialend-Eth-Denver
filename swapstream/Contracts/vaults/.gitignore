@@ -1,10 +1,10 @@
 
 #*
-#!.gitignore
+!.gitignore
 
-gitTest/
 @uniswap/
 @openzeppelin/
+v0.2.0/
 
 
 #/node_modules/.cache
