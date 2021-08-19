@@ -24,6 +24,8 @@
         <el-button type="primary"
                    @click="lanuchApp">Lanuch App</el-button>
         <el-button @click="centerDialogVisible = false">Learn More</el-button>
+        <router-link to="/dashboard">Go to Dashboard</router-link>
+        <router-view></router-view>
       </span>
     </el-dialog>
   </div>
@@ -38,6 +40,8 @@ export default {
   },
   methods: {
     lanuchApp () {
+      this.centerDialogVisible = false
+      this.$router.push({ path: '/dashboard' })
       console.log(this.$store.state.name)
     }
   }

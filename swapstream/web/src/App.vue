@@ -1,76 +1,25 @@
 <template>
   <div class="super_container">
-    <!-- Header -->
-    <header class="header">
+    <router-view />
+    <footer class="footer">
       <div class="container">
         <div class="row">
           <div class="col">
-            <div class="
-                header_content
-                d-flex
-                flex-row
-                align-items-center
-                justify-content-start
-              ">
-              <div class="logo">
-                <a href="#">
-                  <div style="vertical-align: middle;">
-                    <img src="images/logo.png"
-                         width="30"
-                         height="33" />&nbsp;&nbsp;SwapStream
-                  </div>
-                  <div></div>
-                </a>
-              </div>
-              <Navigate />
-              <MenuFeature />
-              <div class="hamburger ml-auto">
-                <i class="fa fa-bars"
-                   aria-hidden="true"></i>
+            <div class="footer_content d-flex flex-md-row flex-column align-items-center align-items-start justify-content-start">
+              <div class="copyright">
               </div>
             </div>
           </div>
         </div>
       </div>
-    </header>
-
-    <!-- Menu -->
-
-    <div class="menu">
-      <div class="background_image"
-           style="background-image: url(images/menu.jpg)"></div>
-      <div class="
-          menu_content
-          d-flex
-          flex-column
-          align-items-center
-          justify-content-center
-        ">
-        <ul class="menu_nav_list text-center">
-          <li><a href="index.html">Docs</a></li>
-          <li><a href="about.html">Vote</a></li>
-        </ul>
-        <div class="menu_review"><a href="#">Launch App</a></div>
-      </div>
-    </div>
-
-    <!-- Home -->
-    <Home />
+    </footer>
   </div>
+
 </template>
 
 <script>
-import Navigate from './components/Nav.vue'
-import MenuFeature from './components/MenuFeature.vue'
-import Home from './views/Home.vue'
-
 export default {
   name: 'App',
-  components: {
-    Navigate,
-    MenuFeature,
-    Home
-  },
   methods: {
     getName () {
       console.log('name=' + this.$store.state.name)

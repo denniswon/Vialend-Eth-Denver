@@ -24,8 +24,8 @@
               </div>
               <nav class="main_nav">
                 <ul class="d-flex flex-row align-items-center justify-content-start">
-                  <li><a href="blog.html">Docs</a></li>
-                  <li><a href="contact.html">Vote</a></li>
+                  <li><a href="#">Dashboard</a></li>
+                  <li><a href="#">Vote</a></li>
                 </ul>
               </nav>
               <div class="
@@ -38,7 +38,7 @@
     ">
                 <div class="book_button trans_200">
                   <a href="#"
-                     @click="centerDialogVisible = true">Launch App</a>
+                     @click="centerDialogVisible = true">Connect Wallet</a>
                 </div>
                 <el-dialog title="DeFi revenue streams on AutoPilot"
                            :visible.sync="centerDialogVisible"
@@ -53,6 +53,7 @@
                     <el-button type="primary"
                                @click="lanuchApp">Lanuch App</el-button>
                     <el-button @click="centerDialogVisible = false">Learn More</el-button>
+                    <router-link to="/dashboard">Go to Dashboard</router-link>
                     <router-view></router-view>
                   </span>
                 </el-dialog>
@@ -93,26 +94,43 @@
            data-speed="0.8"></div>
       <div class="home_container">
         <div class="container">
-          <div class="row">
-            <div class="col">
-              <div class="home_content text-center">
-                <div class="home_title">
-                  <h1>Welcome to SwapStream</h1>
-                </div>
-                <div class="home_text">It's your best choice</div>
+          <div class="row align-items-center my-financial">
+            <div class="col-md-3 text-center">
+              <ul>
+                <li class="title">My Liquidity</li>
+                <li class="value">$0.000000000000000</li>
+              </ul>
+            </div>
+            <div class="col-md-6 text-center apy-container">
+              <div class="apy-style">
+                <ul>
+                  <li class="apy-title">Net APY</li>
+                  <li class="apy-content">...</li>
+                </ul>
               </div>
+            </div>
+            <div class="col-md-3 text-center">
+              <ul>
+                <li class="title">My Revenue</li>
+                <li class="value">$0.00000000000000</li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <MyLiquidity />
+    <SupplyLiquidity />
   </div>
 </template>
 
 <script>
 import { Component, Vue } from 'vue-property-decorator'
+import MyLiquidity from '@/components/MyLiquidity.vue'
+import SupplyLiquidity from '@/components/SupplyLiquidity.vue'
 
 export default {
+  components: { MyLiquidity, SupplyLiquidity },
   data () {
     return {
       centerDialogVisible: false
@@ -127,3 +145,40 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.my-financial ul li {
+  line-height: 30px;
+}
+.my-financial .title {
+  font-size: 16px;
+}
+.my-financial .value {
+  font-size: 20px;
+  color: white;
+}
+.my-financial .apy-title {
+  margin-top: 50px;
+  font-size: 20px;
+  color: white;
+}
+.my-financial .apy-content {
+  font-size: 20px;
+  color: white;
+}
+.apy-container {
+  position: relative;
+}
+.apy-style {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  width: 200px;
+  height: 200px;
+  border: 5px solid #9900ff;
+  border-radius: 50%;
+}
+</style>
