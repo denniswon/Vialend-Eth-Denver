@@ -149,13 +149,17 @@ v0.1.0 current wokring address:
 	
 
 v0.1.1 vault address: 
+// old 0.1	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+
 0xB0eeD5760749E2B05db16131bc44c55b5E3fE2b5
-	added ttoken give out 100 tto1  
+	added ttoken give out 100 tto1  (0.0000000000000001)
 	success approve tokens
 	success deposit 
 	success give out team token to the user TTO1
+
+0x43E20187D5aa7BD7e76420bbcb0bb5C07d4364a3
+	ttoken give out 1e18  tto1 
 	
-// old 0.1	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
 
 	
 	

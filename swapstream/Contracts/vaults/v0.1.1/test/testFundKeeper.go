@@ -57,7 +57,7 @@ func main() {
 
 		{ //2 test user 1
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"0xB0eeD5760749E2B05db16131bc44c55b5E3fE2b5",
+			"0x43E20187D5aa7BD7e76420bbcb0bb5C07d4364a3",
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",
 			"",
 			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},

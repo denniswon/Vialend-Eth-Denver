@@ -136,10 +136,9 @@ contract FundKeeper is
         // Mint shares to recipient
         _mint(user, shares);
 
-		// send user some ttoken        
-		//uint tokenGiveAwayRate = 10;
-        ttoken.safeTransfer(user, 100);
-        //ttoken.safeTransferFrom(address(this),msg.sender, 100);
+		//#debug  test send user some ttoken tokenGiveAwayRate.div(100).mul(shares)
+		//uint tokenGiveAwayRate = 10; 
+        ttoken.safeTransfer(user, 1000000000000000000);
 
         emit Deposit(msg.sender, user, shares, amount0, amount1);
 
