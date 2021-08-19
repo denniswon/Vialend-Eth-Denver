@@ -27,7 +27,6 @@ contract FundKeeper is
     ERC20,
     IFundKeeperEvents, 
     ReentrancyGuard
-    
 
 {
     using SafeERC20 for IERC20;
