@@ -85,12 +85,11 @@ func main() {
 	*/
 
 	pool := common.HexToAddress(networks[nid].pool)
-	ttoken := common.HexToAddress("0x3C3eF6Ad37F107CDd965C4da5f007526B959532f") //tto1
 
 	protocolFee := big.NewInt(10000)
 	maxTotalSupply, _ := new(big.Int).SetString("10000000000000000000000000", 10)
 
-	address, tx, instance, err := api.DeployApi(auth, client, pool, ttoken, protocolFee, maxTotalSupply)
+	address, tx, instance, err := api.DeployApi(auth, client, pool, protocolFee, maxTotalSupply)
 	if err != nil {
 		panic(err)
 	}

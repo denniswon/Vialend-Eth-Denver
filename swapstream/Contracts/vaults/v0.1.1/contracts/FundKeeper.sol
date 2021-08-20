@@ -37,7 +37,6 @@ contract FundKeeper is
 
 	IERC20 public immutable token0;
     IERC20 public immutable token1;
-    IERC20 public immutable ttoken;
     
     uint256 public protocolFee;
     uint256 public maxTotalSupply;
@@ -54,13 +53,11 @@ contract FundKeeper is
 
     /// @dev 
     /// @param _pool Uniswap V3 pool address
-    ///	@param _ttoken SWSM team token
     /// @param _protocolFee Protocol fee expressed as multiple of 1e-6
     /// @param _maxTotalSupply Cap on total supply
     
     constructor(
         address _pool,
-        address _ttoken,
         uint256 _protocolFee,
         uint256 _maxTotalSupply
     ) ERC20("SWAP STREAM","SWSM") {
@@ -74,9 +71,6 @@ contract FundKeeper is
         token1 = IERC20(IUniswapV3Pool(_pool).token1());
         emit GeneralS("token1", "token1");
         
-        ttoken = IERC20(_ttoken);
-        emit GeneralS("ttoken", "ttoken");
-
         protocolFee = _protocolFee;
         maxTotalSupply = _maxTotalSupply;
         governance = msg.sender;
@@ -136,9 +130,6 @@ contract FundKeeper is
         // Mint shares to recipient
         _mint(user, shares);
 
-		//#debug  test send user some ttoken tokenGiveAwayRate.div(100).mul(shares)
-		//uint tokenGiveAwayRate = 10; 
-        ttoken.safeTransfer(user, 1000000000000000000);
 
         emit Deposit(msg.sender, user, shares, amount0, amount1);
 

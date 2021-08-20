@@ -50,14 +50,14 @@ func main() {
 
 		{ //1 test admin
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"0x6e6F5887CfCB6B13bdF9089152c90606544CB8cA",
+			"0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009",
 			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",
 			"",
 			"0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E"},
 
 		{ //2 test user 1
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"0x43E20187D5aa7BD7e76420bbcb0bb5C07d4364a3",
+			"0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009",
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",
 			"",
 			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},
@@ -77,7 +77,7 @@ func main() {
 			"0x4F211267896C4D3f2388025263AC6BD67B0f2C54"},
 	}
 
-	nid := 2
+	nid := 1
 	doApprove := true
 
 	doDeposit := true
