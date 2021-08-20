@@ -78,11 +78,11 @@ func main() {
 	}
 
 	nid := 1
-	doApprove := true
+	doApprove := false
 
-	doDeposit := true
+	doDeposit := false
 
-	doWithDraw := false
+	doWithDraw := true
 
 	doWithDrawAll := false
 
@@ -220,9 +220,9 @@ func main() {
 		}
 		auth.Nonce = big.NewInt(int64(nonce))
 
-		shares := big.NewInt(20000)
-		amount0Min := big.NewInt(10000)
-		amount1Min := big.NewInt(10000)
+		shares := big.NewInt(2000000000000000000)
+		amount0Min := big.NewInt(1000000000000000000)
+		amount1Min := big.NewInt(1000000000000000000)
 
 		callfunc_withdraw(instance, auth,
 			shares,
