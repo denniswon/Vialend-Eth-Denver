@@ -34,7 +34,8 @@
                               class="btn btn-default btn-sm">In range</button></td>
                     <td>$33,500</td>
                     <td>Remove <button type="button"
-                              class="btn btn-primary btn-sm">Increase</button></td>
+                              class="btn btn-primary btn-sm"
+                              disabled="true">Increase</button></td>
                   </tr>
                 </tbody>
               </table>

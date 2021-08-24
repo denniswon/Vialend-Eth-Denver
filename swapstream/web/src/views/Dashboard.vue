@@ -36,27 +36,10 @@
       justify-content-start
       ml-auto
     ">
-                <div class="book_button trans_200">
+                <div :class="[walletButtonClass,isConnected ? connectClass:disConnectClass]">
                   <a href="#"
-                     @click="centerDialogVisible = true">Connect Wallet</a>
+                     @click="setWalletStatus">{{ StatusButtonText }}</a>
                 </div>
-                <el-dialog title="DeFi revenue streams on AutoPilot"
-                           :visible.sync="centerDialogVisible"
-                           :append-to-body="true"
-                           width="30%"
-                           center>
-                  <span>Maximize youre return on liquidity with SwapStream Smart Vaults.a
-                    Uniswap V3 concentrated liquidity management tool that will earn revenue
-                    in the most efficient,secure and automated way.</span>
-                  <span slot="footer"
-                        class="dialog-footer">
-                    <el-button type="primary"
-                               @click="lanuchApp">Lanuch App</el-button>
-                    <el-button @click="centerDialogVisible = false">Learn More</el-button>
-                    <router-link to="/dashboard">Go to Dashboard</router-link>
-                    <router-view></router-view>
-                  </span>
-                </el-dialog>
               </div>
               <div class="hamburger ml-auto">
                 <i class="fa fa-bars"
@@ -121,6 +104,27 @@
     </div>
     <MyLiquidity />
     <SupplyLiquidity />
+    <el-dialog title="SMART VAULTS"
+               :visible.sync="treatyDialogVisible"
+               :append-to-body="true"
+               width="30%"
+               center>
+      <span class="dialog-content">SwapStream's Smart Vaults are a new experimental DeFi application that is open-source software maintained by a distributed autonomous organization.
+        The software is recorded as a set of smart contracts on Ethereum with no promise to return profits or guarantee the security of funds.
+        The application is not regulated and may not be subjected to the same laws and regulations that are applicable to other types of businesses,organizations,firms,individuals,partnerships,or solo practitioners.
+        It is important to recognize that you can lose up to 100% of your funds,with no recourse to compensation.
+        Please ensure you do your own research and understand the risks before proceeding to use these vaults.
+        For more information you can read and review the contracts at the following location</span>
+      <span class="dialog-checkbox">
+        <el-checkbox>I understand and agree to these conditions</el-checkbox>
+      </span>
+      <span slot="footer"
+            class="dialog-footer">
+        <el-button type="primary"
+                   @click="goSign">SIGN</el-button>
+        <router-view />
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -129,18 +133,107 @@ import { Component, Vue } from 'vue-property-decorator'
 import MyLiquidity from '@/components/MyLiquidity.vue'
 import SupplyLiquidity from '@/components/SupplyLiquidity.vue'
 
+const _this = this
+window.ethereum.autoRefreshOnNetworkChange = false
+window.ethereum.on('accountsChanged', () => {
+  console.log('accountsChanged')
+  connectWallet()
+  // switch (_this.$route.path) {
+  //   case '/':
+  //     this.connectMetaMask()
+  //     break
+  //   default:
+  // }
+})
+window.ethereum.on('networkChanged', () => {
+  console.log('networkChanged')
+  connectWallet()
+})
+
 export default {
   components: { MyLiquidity, SupplyLiquidity },
   data () {
     return {
-      centerDialogVisible: false
+      currentAccount: null,
+      isConnected: false,
+      walletButtonClass: 'walletButton',
+      connectClass: 'wallet_connected',
+      disConnectClass: 'wallet_disconnected',
+      StatusButtonText: 'Connect Wallet',
+      treatyDialogVisible: false
     }
   },
+  created: function () {
+    // this.showTreaty()
+    console.log('load create function')
+  },
+  mounted () {
+    window.connectWallet = this.connectWallet
+  },
   methods: {
-    lanuchApp () {
-      this.centerDialogVisible = false
-      this.$router.push({ path: '/dashboard' })
+    showTreaty () {
+      this.treatyDialogVisible = true
       // console.log(this.$store.state.name)
+    },
+    goSign () {
+
+    },
+    setWalletStatus () {
+      if (this.isConnected) {
+        console.log('call disconnect')
+        this.isConnected = false
+        // ethereum.on('disconnect', error => { console.log(error) })
+        this.StatusButtonText = 'Connect Wallet'
+      } else {
+        if (ethereum.isConnected() && this.currentAccount != null) {
+          this.isConnected = true
+          console.log('this.currentAccount=' + this.currentAccount)
+          this.StatusButtonText = this.currentAccount
+        } else {
+          this.connectWallet()
+        }
+      }
+    },
+    connectWallet () {
+      // try {
+      //   // Request account access if needed
+      //   const accounts = await ethereum.send('eth_requestAccounts')
+      //   // Accounts now exposed, use them
+      //   // ethereum.send('eth_sendTransaction', { from: accounts[0] /* ... */ })
+      //   if (accounts != null && accounts.result != null) {
+      //     this.isConnected = true
+      //     this.StatusButtonText = accounts.result[0]
+      //     console.log('accounts=', accounts.result[0])
+      //   }
+      // } catch (error) {
+      //   // User denied account access
+      // }
+      // // window.ethereum.enable().then(() => {
+      // //   const web3 = new Web3(window.web3.currentProvider)
+      // //   console.log(web3)
+      // // })
+      console.log('call connectWallet')
+      ethereum
+        .request({ method: 'eth_requestAccounts' })
+        .then(this.handleAccountsChanged)
+        .catch((err) => {
+          // Some unexpected error.
+          // For backwards compatibility reasons, if no accounts are available,
+          // eth_accounts will return an empty array.
+          console.error(err)
+        })
+    },
+    handleAccountsChanged (accounts) {
+      if (accounts.length === 0) {
+        // MetaMask is locked or the user has not connected any accounts
+        console.log('Please connect to MetaMask.')
+      } else if (accounts[0] !== this.currentAccount) {
+        this.currentAccount = accounts[0]
+        // Do any other work!
+        this.isConnected = true
+        this.StatusButtonText = this.currentAccount
+        console.log('account status:' + ethereum.isConnected())
+      }
     }
   }
 }
@@ -180,5 +273,44 @@ export default {
   height: 200px;
   border: 5px solid #9900ff;
   border-radius: 50%;
+}
+.dialog-content {
+  line-height: 25px;
+}
+.dialog-checkbox {
+  line-height: 50px;
+}
+.dialog-footer {
+  line-height: 50px;
+}
+.wallet_connected {
+  width: 76px !important;
+  padding-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
+}
+.wallet_disconnected {
+  width: 151px;
+}
+.walletButton {
+  width: 151px;
+  height: 37px;
+  background: #2e3f61;
+  text-align: center;
+  border-radius: 6px;
+}
+.walletButton:hover {
+  background: #637496;
+}
+.walletButton a {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 37px;
 }
 </style>

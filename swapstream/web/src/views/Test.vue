@@ -97,9 +97,11 @@
 import Web3 from 'web3'
 import contractABI from '../ABI/contractABI.json'
 
-const privateKey = '0x014bebbe9b56c23c7c2913e0800a85d83e05e6551769ae15d420b464fafc7c48'
+const privateKey = '014bebbe9b56c23c7c2913e0800a85d83e05e6551769ae15d420b464fafc7c48'
 const contractAddress = '0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009'
 const _this = this
+
+const Tx = require('ethereumjs-tx') // .Transaction
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
@@ -110,6 +112,7 @@ if (typeof web3 !== 'undefined') {
   console.log('web3 provider:web3.HttpProvider')
 }
 
+var web3Provider, web3js
 var contractObj = new web3.eth.Contract(contractABI, contractAddress)
 window.ethereum.autoRefreshOnNetworkChange = false
 let currentAccount = null
@@ -128,6 +131,24 @@ window.ethereum.on('chainChanged', () => {
   console.log('chainChanged')
   connectWallet()
 })
+
+function toUint8Arr (str) {
+  const buffer = []
+  for (let i of str) {
+    const _code = i.charCodeAt(0)
+    if (_code < 0x80) {
+      buffer.push(_code)
+    } else if (_code < 0x800) {
+      buffer.push(0xc0 + (_code >> 6))
+      buffer.push(0x80 + (_code & 0x3f))
+    } else if (_code < 0x10000) {
+      buffer.push(0xe0 + (_code >> 12))
+      buffer.push(0x80 + (_code >> 6 & 0x3f))
+      buffer.push(0x80 + (_code & 0x3f))
+    }
+  }
+  return Uint8Array.from(buffer)
+}
 
 export default {
   components: {},
@@ -166,36 +187,26 @@ export default {
     async getTestData () {
       this.testData = await contractObj.methods.Hello().call()
     },
-    async connectWallet () {
-      ethereum
-        .request({ method: 'eth_requestAccounts' })
-        .then(this.handleAccountsChanged)
-        .catch((err) => {
-          if (err.code === 4001) {
-            // EIP-1193 userRejectedRequest error
-            // If this happens, the user rejected the connection request.
-            console.log('Please connect to MetaMask.')
-          } else {
-            console.error(err)
-          }
-        })
-      // try {
-      //   // Request account access if needed
-      //   const accounts = await ethereum.send('eth_requestAccounts')
-      //   // Accounts now exposed, use them
-      //   // ethereum.send('eth_sendTransaction', { from: accounts[0] /* ... */ })
-      //   if (accounts != null && accounts.result != null) {
-      //     this.isConnected = true
-      //     this.walletAddress = accounts.result[0]
-      //     console.log('accounts=', accounts.result[0])
-      //   }
-      // } catch (error) {
-      //   // User denied account access
-      // }
-      // window.ethereum.enable().then(() => {
-      //   const web3 = new Web3(window.web3.currentProvider)
-      //   console.log(web3)
-      // })
+    connectWallet () {
+      if (window.ethereum) {
+        web3Provider = window.ethereum
+        try {
+          // 请求用户授权
+          window.ethereum.enable()
+        } catch (error) {
+          // 用户不授权时
+          console.error('User denied account access')
+        }
+      }
+      web3js = new Web3(web3Provider)// web3js就是你需要的web3实例
+
+      web3js.eth.getAccounts(function (error, result) {
+        if (!error) {
+          currentAccount = result[0]
+          this.walletAddress = result[0]
+          console.log('this.walletAddress=' + this.walletAddress)
+        }// 授权成功后result能正常获取到账号了
+      })
     },
     handleAccountsChanged (accounts) {
       if (accounts.length === 0) {
@@ -206,85 +217,61 @@ export default {
         // Do any other work!
         // if (currentAccount != null && currentAccount.result != null) {
         this.isConnected = true
-        this.walletAddress = currentAccount
+        // this.walletAddress = currentAccount
         console.log('accounts=', currentAccount)
         // }
       }
     },
     async deposit () {
+      // 导入ethereumjs-tx库，通过npm install安装
+
+      // _from为发起交易的地址
+      var _from = '0xa5f8dE976675F5241502FF5b142B281fA95647A4'
+      // nonce随机数，这里取该账号的交易数量
+      // var number = web3.eth.getTransactionCount(_from).toString(16)
+      console.log('currentAccount=' + currentAccount)
       var functionEncode = await contractObj.methods.deposit(this.amount0Desired, this.amount1Desired, this.amount0Min, this.amount1Min, currentAccount).encodeABI()
-      this.sendTransfer(currentAccount, functionEncode, 10, {}, {})
-      // var functionEncode = await contractObj.methods.deposit(this.amount0Desired, this.amount1Desired, this.amount0Min, this.amount1Min, currentAccount).encodeABI()
-      // var sign = await web3.eth.accounts.signTransaction({
-      //   from: currentAccount,
-      //   gas: web3.utils.toWei('0.0000000000003', 'ether'),
-      //   gasPrice: web3.utils.toWei('0.00000000002', 'ether'),
+      // console.log('nonce=' + JSON.stringify(number))
+      // var rawTx = {
+      //   nonce: '0x' + number, // 随机数
+      //   // gasPrice和gasLimit如果不知道怎么填，可以参考etherscan上的任意一笔交易的值
+      //   gasPrice: '0x77359400',
+      //   gasLimit: '0x295f05',
+      //   to: contractAddress, // 接受方地址或者合约地址
+      //   value: '0x100', // 发送的金额，这里是16进制，实际表示发送256个wei
+      //   data: functionEncode
+      // }
+      // var priKey = Buffer.from('0x014bebbe9b56c23c7c2913e0800a85d83e05e6551769ae15d420b464fafc7c48', 'hex')
+      // let nonce = await web3.eth.getTransactionCount(contractAddress)
+      // let gasPrice = await web3.eth.getGasPrice()
+
+      // var rawTx = {
+      //   nonce: nonce,
+      //   from: _from,
+      //   gasPrice: gasPrice,
       //   to: contractAddress,
-      //   data: functionEncode,
-      //   value: 10
-      // }, privateKey)
-      // var result = await web3.eth.sendSignedTransaction(sign.rawTransaction)
-      // console.log('resultTxHash=', result.transactionHash)
-    },
-    async sendTransfer (account, data, value, callback, errorCallBack) {
-      // estimateGas获取交易的 gas 用量
-      const params = {
-        from: account,
-        to: contractAddress,
-        data: data,
-        value: value
+      //   value: '0x00',
+      //   data: functionEncode
+      // }
+
+      const transactionParameters = {
+        nonce: '0x00', // ignored by MetaMask
+        gasPrice: '0x520800', // customizable by user during MetaMask confirmation.
+        gas: '0x520800', // customizable by user during MetaMask confirmation.
+        to: contractAddress, // Required except during contract publications.
+        from: ethereum.selectedAddress, // must match user's active address.
+        value: '0x00', // Only required to send ether to the recipient from the initiating external account.
+        data: functionEncode // Optional, but used for defining smart contract creation and interaction.
+        // chainId: '0x3' // Used to prevent transaction reuse across blockchains. Auto-filled by MetaMask.
       }
-      console.log('call estimateGas')
-      web3.eth.estimateGas(params, function (error1, gaslimit) {
-        if (error1) {
-          console.log('call estimateGas error' + error1)
-          errorCallBack(error1)
-        } else {
-          // gasprice获取当前gas价格
-          console.log('call getGasPrice')
-          web3.eth.getGasPrice(async function (error2, gasPrice) {
-            if (error2) {
-              errorCallBack(error2)
-            } else {
-              gaslimit -= -10000
-              let params = [
-                {
-                  gasPrice: gasPrice,
-                  gasLimit: gaslimit,
-                  from: account,
-                  to: contractAddress,
-                  data: data,
-                  value: value
-                }
-              ]
-              // ethereum.sendAsync方法发送以太币、调用智能合约：
-              // ethereum.sendAsync(
-              //   {
-              //     method: 'eth_sendTransaction',
-              //     params: params,
-              //     from: account
-              //   },
-              //   function (error, hash) {
-              //     if (error) {
-              //       // alert(error.message);
-              //       errorCallBack(error.message)
-              //     } else {
-              //       callback(hash)
-              //     }
-              //   }
-              // )
-              console.log('params=' + params)
-              var sign = await web3.eth.accounts.signTransaction(params, privateKey)
-              var result = await web3.eth.sendSignedTransaction(sign.rawTransaction)
-              console.log('resultTxHash=', result.transactionHash)
-              // 监听MetaMask的事件
-              ethereum.on('accountsChanged', function (accounts) {
-                console.log(accounts[0])
-              })
-            }
-          })
-        }
+
+      // txHash is a hex string
+      // As with any RPC call, it may throw an error
+      const txHash = await ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters]
       })
+      console.log('txHash=' + txHash)
     }
   }
 }
