@@ -87,10 +87,16 @@
                     style="text-align:center;">
                   <el-button type="primary"
                              :disabled="token0Approved == true ? true : false"
-                             @click="approveToken(0)">Approve {{supplyToken0}}</el-button>
+                             @click="approveToken(0)"
+                             :style="{display:isConnected?'':'none'}">Approve {{supplyToken0}}</el-button>
                   <el-button type="primary"
                              :disabled="token1Approved == true ? true : false"
-                             @click="approveToken(1)">Approve {{supplyToken1}}</el-button>
+                             @click="approveToken(1)"
+                             :style="{display:isConnected?'':'none'}">Approve {{supplyToken1}}</el-button>
+                  <el-button type="primary"
+                             style="width:100%;"
+                             @click="connectWallet"
+                             :style="{display:isConnected?'none':''}">Connect Wallet</el-button>
 
                 </td>
               </tr>
@@ -100,7 +106,8 @@
                              :disabled="btnDepositDisabled"
                              @click="deposit"
                              :loading="depositLoading"
-                             style="width:100%;">Deposit</el-button>
+                             style="width:100%;"
+                             :style="{display:isConnected?'':'none'}">Deposit</el-button>
                 </td>
               </tr>
             </table>
@@ -159,6 +166,7 @@ export default {
         { 'number': 2, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'USDC', 'abi': '', 'tokenAddress': '' }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true },
         { 'number': 3, 'smartVaults': [{ 'iconLink': 'images/wbtc.png', 'name': 'WBTC', 'abi': '', 'tokenAddress': '' }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true }
       ],
+      isConnected: false,
       activeName: 'first',
       supplyDialogTitle: '',
       supplyTokens: '',
@@ -197,7 +205,22 @@ export default {
       )
       console.log('token contract address is:' + this.currentItem.smartVaults[index].tokenAddress)
     },
+    connectWallet () {
+      this.$parent.setWalletStatus()
+    },
+    checkConnectionStatus () {
+      if (ethereum.isConnected() && this.$parent.isConnected) {
+        console.log('wallet is connected')
+        this.isConnected = true
+      } else {
+        // console.log('this.isConnected=' + this.isConnected)
+        // console.log('isConnected=' + this.$parent.isConnected)
+        console.log('wallet is disconnected')
+        this.isConnected = false
+      }
+    },
     showSupplyDialog (item) {
+      this.checkConnectionStatus()
       this.currentItem = item
       this.supplyDialogTitle = item.smartVaults[0].name + ' / ' + item.smartVaults[1].name
       this.supplyToken0 = item.smartVaults[0].name

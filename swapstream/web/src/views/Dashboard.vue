@@ -103,7 +103,7 @@
       </div>
     </div>
     <MyLiquidity />
-    <SupplyLiquidity />
+    <SupplyLiquidity ref="supplyliq" />
     <el-dialog title="SMART VAULTS"
                :visible.sync="treatyDialogVisible"
                :append-to-body="true"
@@ -189,6 +189,7 @@ export default {
           this.isConnected = true
           console.log('this.currentAccount=' + this.currentAccount)
           this.StatusButtonText = this.currentAccount
+          this.$refs.supplyliq.checkConnectionStatus()
         } else {
           this.connectWallet()
         }
@@ -233,6 +234,7 @@ export default {
         this.isConnected = true
         this.StatusButtonText = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
+        this.$refs.supplyliq.checkConnectionStatus()
       }
     }
   }
