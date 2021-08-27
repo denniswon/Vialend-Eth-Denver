@@ -369,10 +369,17 @@ func myLiquidity(instance *fundkeepergo.Api) {
 
 	account := common.HexToAddress("0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
 
+	name, err := instance.Name(nil)
+
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("name: %v\n", name)
+
 	myShares, err := instance.BalanceOf(&bind.CallOpts{}, account)
 
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	fmt.Printf("my liquidity: %v\n", myShares)
