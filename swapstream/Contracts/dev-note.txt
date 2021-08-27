@@ -110,18 +110,18 @@ elefant s1 (ELEFS1)  0x5F05690cCed1a1115a48FB913cc43BFCa95cAFd2
 
 
 
-fundkeeper address on (goerli) v1: 0x623220D8e2C9bEf6cEb22B1895CA84fb38FC36ec ,
+fundkeeper address on (goerli) v0.0.1: 0x623220D8e2C9bEf6cEb22B1895CA84fb38FC36ec ,
 (save version) 0x7E83D2768B6A96FD753AB307fac88b08E2B7debA  
 
-fundkeeper address on (goerli) v2(to on top ): 0x223D2e50a83BcBd68549E99ffD5d57E91624509d
-fundkeeper address on (goerli) v3(to on top ): 0x85F1693750f1BfCFDc631e8371Bce88c73441768
+fundkeeper address on (goerli) v0.0.2(to on top ): 0x223D2e50a83BcBd68549E99ffD5d57E91624509d
+fundkeeper address on (goerli) v0.0.3(to on top ): 0x85F1693750f1BfCFDc631e8371Bce88c73441768
 
-fundkeeper address on (goerli) v4( moved to back down): 0xf50265ee1E0DB06a39BA3e64DB20d33f77c02dC9
+fundkeeper address on (goerli) v0.0.4( moved to back down): 0xf50265ee1E0DB06a39BA3e64DB20d33f77c02dC9
 
-fundkeeper address on (goerli) v5(token elefss1/elefss2) 0x553eE61a6AD3f5Fc5974EfA3DBfD54A33A5bb7E0
+fundkeeper address on (goerli) v0.0.5(token elefss1/elefss2) 0x553eE61a6AD3f5Fc5974EfA3DBfD54A33A5bb7E0
 
-fundkeeper address on (goerli) v6(token tUSDC/tWETH) 0xf3007DFf71402Ce0985Be930125a34095Dc53D2B
-fundkeeper address on (goerli) v6.1(token tUSDC/tWETH)0x55B2A37c60635b9A1d5dDE829E9611fa70dd5DDc
+fundkeeper address on (goerli) v0.0.6(token tUSDC/tWETH) 0xf3007DFf71402Ce0985Be930125a34095Dc53D2B
+fundkeeper address on (goerli) v0.0.7(token tUSDC/tWETH)0x55B2A37c60635b9A1d5dDE829E9611fa70dd5DDc
 0xCBA19bc3AF614a7905b80cc2E58fBf990be670c6 (failed)
 0x50ec0Ce318708121F43b47D5D0342614fad278A0 (failed)
 0xCe1CC3cC667D5B8925962B6a8F8F997aF018A7AC (failed amount0Min ???? called an old contract?)
@@ -131,25 +131,27 @@ fundkeeper address on (goerli) v6.1(token tUSDC/tWETH)0x55B2A37c60635b9A1d5dDE82
 0xFed9831d2d42F4E6DA470972762118B6eba0535b 
     hardcoded (300,amountToken0, amountToken1); 
     but failed :ERC20: transfer amount exceeds allowance'
-    
+
+fundkeeper address on (goerli) v0.0.8   
 0xEbEf7A52CC1D61b098ED7C77b1Ec44D8F60D9194
 	normal _shareByAmount returns, modified require(xx && yy) inside _shareByamount
 	failed Deposit amount0'
 
+fundkeeper address on (goerli) v0.0.9
 0x6a7C7B0e5484B39F34dF4C6fa95b24d62c40c6eA	
 	test function _shares(amountToken0, amountToken1) instead of _shareByAmount 
 	success  deposit  but token amount is small (100 and 200, reading 0.0000000000000001) 
 	failed withdraw  Fail with error 'withdraw amount0&gt;min, error in the withdraw function
 
-v0.1.0 current wokring address:
+fundkeeper address on (goerli) v0.1.0 current wokring address:
 0x6e6F5887CfCB6B13bdF9089152c90606544CB8cA    
 	simplifided the withdraw function,  amount0 = amount0Min  amount1 = amount1Min, make sure the shares and amount0,1 is < total
 	success deposit 
 	success withdraw
-	
-
-v0.1.1 vault address: 
-// old 0.1	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+ 
+fundkeeper address on (goerli) v0.1.1 vault address:  (team token give away)
+// old working one	tx: 0x7edf0b122166747acc18fcfda1b56fe57960963183ea493ea5e74d2862cd6c53
+// 0x4f902ebbd3a13a85da6254b8264e4de1370b5a25
 
 0xB0eeD5760749E2B05db16131bc44c55b5E3fE2b5
 	added ttoken give out 100 tto1  (0.0000000000000001)
@@ -157,8 +159,9 @@ v0.1.1 vault address:
 	success deposit 
 	success give out team token to the user TTO1
 
+fundkeeper address on (goerli) v0.1.2 vault address:  (team token give away )
 0x43E20187D5aa7BD7e76420bbcb0bb5C07d4364a3
-	ttoken give out 1e18  tto1 
+
 	
 
 	

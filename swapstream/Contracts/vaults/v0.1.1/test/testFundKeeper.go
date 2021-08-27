@@ -82,7 +82,7 @@ func main() {
 
 	doDeposit := false
 
-	doWithDraw := true
+	doWithDraw := false
 
 	doWithDrawAll := false
 
@@ -110,10 +110,11 @@ func main() {
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	fmt.Println("from:", fromAddress)
+
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Value = big.NewInt(0)                  // in wei
 	auth.GasLimit = uint64(6721975)             // in units
-	auth.GasPrice = big.NewInt(19 * 1000000000) // 1 gwei = 1000000000
+	auth.GasPrice = big.NewInt(19 * 1000000000) // 1 gwei = 1000000000 wei
 
 	fmt.Println("fundkeeper instance:", contractAddress)
 	fmt.Println("token0 instance:", token0Address)
@@ -137,6 +138,8 @@ func main() {
 	callfunc_greet(instance)
 	callfunc_hello(instance)
 	callfunc_plus(instance, big.NewInt(12), big.NewInt(2))
+
+	myLiquidity(instance)
 
 	var nonce uint64
 
@@ -359,6 +362,20 @@ func callfunc_withdraw(instance *fundkeepergo.Api, auth *bind.TransactOpts,
 
 	//get the transaction hash
 	fmt.Println("withdraw tx sent: %s", tx.Hash().Hex())
+
+}
+
+func myLiquidity(instance *fundkeepergo.Api) {
+
+	account := common.HexToAddress("0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
+
+	myShares, err := instance.BalanceOf(&bind.CallOpts{}, account)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("my liquidity: %v\n", myShares)
 
 }
 
