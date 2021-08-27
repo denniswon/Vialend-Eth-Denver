@@ -70,8 +70,7 @@
     <!-- Menu -->
 
     <div class="menu">
-      <div class="background_image"
-           style="background-image: url(images/menu.jpg)"></div>
+      <div class="background_image"></div>
       <div class="
           menu_content
           d-flex
