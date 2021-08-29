@@ -40,13 +40,16 @@ func main() {
 			"pool"},
 	}
 
-	//name, symbol, decimals, totalSupply := "tto USDC", "tUSDC", uint8(18), big.NewInt(26512386160)
+	//	total0, _ := new(big.Int).SetString("26512386160", 10) // totalSupply , 6
+
+	//name, symbol, decimals, totalSupply := "tto USDC", "tUSDC6", uint8(6), big.NewInt(26512386160)
+	name, symbol, decimals, totalSupply := "tto USDC", "tUSDC", uint8(18), big.NewInt(26512386160)
 	//(name,symbol,decimals,totalSupply) := ("tto WETH","tWETH", uint8(18), big.NewInt(6718113))
 
-	name, symbol, decimals, totalSupply := "local test5", "test5", uint8(6), big.NewInt(2651238616000000000)
+	//name, symbol, decimals, totalSupply := "local test5", "test5", uint8(6), big.NewInt(2651238616000000000)
 	//name, symbol, decimals, totalSupply := "local test6", "test6", uint8(6), big.NewInt(2651238616000000000)
 
-	nid := 0
+	nid := 1
 	client, err := ethclient.Dial(networks[nid].clientUrl)
 	privateKey, err := crypto.HexToECDSA(networks[nid].privateKey)
 

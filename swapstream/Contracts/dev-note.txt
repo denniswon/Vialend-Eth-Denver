@@ -10,7 +10,8 @@ factory:
  	0x1f98431c8ad98523631ae4a59f267346ea31f984 	 official uniswap v3 factory address:  (all nets) 
 	
 tokens 
-	tUSDC  0x7c868e541b972c9400a8773e18d429C2E306e05D  (local tUSDC)
+	tusdc 0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59    (local tUSDC , 18) 
+	tusdc 0x034A156169e7f3239eDC318747f305d7aA161d8B (local tusdc 6)
 	tWETH  0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23  (local tWETH)
 
 
@@ -32,8 +33,10 @@ tokens
 	
 
 	tUSDC  (on goerli)
-	0xFA5dF5372c03D4968d128D624e3Afeb61031a777  
+	0xFA5dF5372c03D4968d128D624e3Afeb61031a777   (18 decimals)
+	0xcEe3B5618B775bb0c2935D3633675AAa22337155  (6 decimals)
 		total supply 26512386160 (  same as USDC on  mainet )
+	
 	
 	tWETH (on goerli)
 	0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4

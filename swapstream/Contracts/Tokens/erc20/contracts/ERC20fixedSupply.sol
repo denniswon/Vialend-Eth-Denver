@@ -14,6 +14,7 @@ contract ERC20fixedSupply is ERC20 {
 		uint totalSupply
 		
     )  ERC20(name, symbol) {
+    	_setupDecimals(decimals);
 		_mint(msg.sender, totalSupply * (10** decimals)  );
 
     }
