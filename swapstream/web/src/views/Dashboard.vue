@@ -54,8 +54,7 @@
     <!-- Menu -->
 
     <div class="menu">
-      <div class="background_image"
-           style="background-image: url(images/menu.jpg)"></div>
+      <div class="background_image"></div>
       <div class="
           menu_content
           d-flex
@@ -81,7 +80,7 @@
             <div class="col-md-3 text-center">
               <ul>
                 <li class="title">My Liquidity</li>
-                <li class="value">$0.000000000000000</li>
+                <li class="value">{{myLiquidity}}</li>
               </ul>
             </div>
             <div class="col-md-6 text-center apy-container">
@@ -129,11 +128,13 @@
 </template>
 
 <script>
+import contractABI from '../ABI/contractABI.json'
 import { Component, Vue } from 'vue-property-decorator'
 import MyLiquidity from '@/components/MyLiquidity.vue'
 import SupplyLiquidity from '@/components/SupplyLiquidity.vue'
 
 const _this = this
+
 window.ethereum.autoRefreshOnNetworkChange = false
 window.ethereum.on('accountsChanged', () => {
   console.log('accountsChanged')
@@ -154,18 +155,25 @@ export default {
   components: { MyLiquidity, SupplyLiquidity },
   data () {
     return {
+      vaultAddress: '0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009',
       currentAccount: null,
+      keeperContract: null,
       isConnected: false,
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
       disConnectClass: 'wallet_disconnected',
       StatusButtonText: 'Connect Wallet',
-      treatyDialogVisible: false
+      treatyDialogVisible: false,
+      myLiquidity: 0
     }
   },
   created: function () {
     // this.showTreaty()
     console.log('load create function')
+    this.keeperContract = new web3.eth.Contract(
+      contractABI,
+      this.vaultAddress
+    )
   },
   mounted () {
     window.connectWallet = this.connectWallet
@@ -196,23 +204,6 @@ export default {
       }
     },
     connectWallet () {
-      // try {
-      //   // Request account access if needed
-      //   const accounts = await ethereum.send('eth_requestAccounts')
-      //   // Accounts now exposed, use them
-      //   // ethereum.send('eth_sendTransaction', { from: accounts[0] /* ... */ })
-      //   if (accounts != null && accounts.result != null) {
-      //     this.isConnected = true
-      //     this.StatusButtonText = accounts.result[0]
-      //     console.log('accounts=', accounts.result[0])
-      //   }
-      // } catch (error) {
-      //   // User denied account access
-      // }
-      // // window.ethereum.enable().then(() => {
-      // //   const web3 = new Web3(window.web3.currentProvider)
-      // //   console.log(web3)
-      // // })
       console.log('call connectWallet')
       ethereum
         .request({ method: 'eth_requestAccounts' })
@@ -235,6 +226,21 @@ export default {
         this.StatusButtonText = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
         this.$refs.supplyliq.checkConnectionStatus()
+        this.getMyLiquidity()
+      }
+    },
+    getMyLiquidity () {
+      if (this.keeperContract != null) {
+        var myLiq = this.keeperContract.methods
+          .balanceOf(this.currentAccount)
+          .call()
+          .then(val => {
+            this.myLiquidity = val
+            console.log('BalanceOf=' + val)
+          })
+        // console.log('BalanceOf=' + myLiq + '|' + JSON.stringify(myLiq))
+      } else {
+        console.log('keeperContract is null')
       }
     }
   }

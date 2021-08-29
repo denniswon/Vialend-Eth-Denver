@@ -146,8 +146,6 @@
 import Web3 from 'web3'
 import contractABI from '../ABI/contractABI.json'
 
-const vaultAddress = '0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009'
-
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
   console.log('web3 provider:web3.currentProvider')
@@ -184,7 +182,6 @@ export default {
       token0Contract: null,
       token1Contract: null,
       tokenContract: null,
-      keeperContract: null,
       currentItem: null,
       depositLoading: false,
       withdrawLoading: false,
@@ -192,10 +189,9 @@ export default {
     }
   },
   created: function () {
-    this.keeperContract = new web3.eth.Contract(
-      contractABI,
-      vaultAddress
-    )
+  },
+  mounted: function () {
+
   },
   methods: {
     getTokenContract (index) {
@@ -272,9 +268,10 @@ export default {
       } else {
         this.token1Approved = true
       }
+      console.log('vaultAddress=' + this.$parent.vaultAddress)
       if (this.tokenContract != null) {
         this.tokenContract.methods
-          .approve(vaultAddress, BigInt(90000000000000000000000))
+          .approve(this.$parent.vaultAddress, BigInt(90000000000000000000000))
           .send({
             from: ethereum.selectedAddress,
             gasPrice: '10000000000',
@@ -313,10 +310,10 @@ export default {
     },
     deposit () {
       var _this = this
-      if (this.keeperContract != null) {
+      if (this.$parent.keeperContract != null) {
         console.log('account address is ' + ethereum.selectedAddress)
         this.depositLoading = true
-        this.keeperContract.methods
+        this.$parent.keeperContract.methods
           .deposit(
             BigInt(this.depositToken0 * 1000000000000000000),
             BigInt(this.depositToken1 * 1000000000000000000),
@@ -335,6 +332,7 @@ export default {
             if (_this.depositLoading === true) {
               _this.depositLoading = false
               _this.$message('Successfully deposited!')
+              _this.supplyDialogVisible = false
               console.log('confirmation')
             }
           })
@@ -342,6 +340,7 @@ export default {
             if (_this.depositLoading === true) {
               _this.depositLoading = false
               _this.$message('Successfully deposited!')
+              _this.supplyDialogVisible = false
               console.log('receipt')
             }
           })
@@ -353,10 +352,10 @@ export default {
     },
     withdraw () {
       var _this = this
-      if (this.keeperContract != null) {
+      if (this.$parent.keeperContract != null) {
         console.log('account address is ' + ethereum.selectedAddress)
         this.withdrawLoading = true
-        this.keeperContract.methods
+        this.$parent.keeperContract.methods
           .withdraw(
             BigInt(this.shareValue * 1000000000000000000),
             BigInt(1000000000000000000),
@@ -374,6 +373,7 @@ export default {
             if (_this.withdrawLoading === true) {
               _this.withdrawLoading = false
               _this.$message('Successfully withdrawed!')
+              _this.supplyDialogVisible = false
               console.log('confirmation')
             }
           })
@@ -381,6 +381,7 @@ export default {
             if (_this.withdrawLoading === true) {
               _this.withdrawLoading = false
               _this.$message('Successfully withdrawed!')
+              _this.supplyDialogVisible = false
               console.log('receipt')
             }
           })
