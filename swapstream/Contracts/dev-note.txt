@@ -1,64 +1,83 @@
+
+>>>>>>>>>>> Addresses:  <<<<<<<<<<<<< 
+
+factory:  
+	0x2820BAd125c568C556a86d80A9484fa268A944c2 (ganache local)
+	0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5  ( goerli uniswapv3 edited verion)
+
+	0xD15b0a02F508e38266dcB7df057E4F094DB52598 SwapStream uniswap  v3 factory address (goerli) 
+
+ 	0x1f98431c8ad98523631ae4a59f267346ea31f984 	 official uniswap v3 factory address:  (all nets) 
+	
+tokens 
+	tUSDC  0x7c868e541b972c9400a8773e18d429C2E306e05D  (local tUSDC)
+	tWETH  0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23  (local tWETH)
+
+
+	
+	 elefss1 (goerli ):  
+	0xc4AFB13b10f7C49Af721860A188D6443D0fF8747
+	
+	 elefss2 (goerli ):  
+	0x2aDEca523FbBF0937A9419924feAB607Bf599311
+	
+	 tto-weth (1000000 CAP)
+	0x941CD33dd99A623Ab2F058C3A5961F8422652761 (deprecated)  
+	
+	 tto-usdc (5000000 cap)  
+	0xC5ca707a0E9F12Ed8D4573CcD38969a21eEeCCf0 (deprecated)
+	
+	 tto1 (goerli) (9000000 CAP) team token
+	0x3C3eF6Ad37F107CDd965C4da5f007526B959532f
+	
+
+	tUSDC  (on goerli)
+	0xFA5dF5372c03D4968d128D624e3Afeb61031a777  
+		total supply 26512386160 (  same as USDC on  mainet )
+	
+	tWETH (on goerli)
+	0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4
+	 	total supply 6718113 ( same as WETH on mainet )
+	
+
+Pools
+	0x616fb433fb74c2ad03613f7b200a9e02df193d0c  (  goerli elefss1/elefss2 )
+	
+	0xd765dbc1fa901c795ef8b1adbcf0414726428791 pool (elefss2/usdc):  (goerli)
+
+		initial ELEFSS2 65.85 39%  USDC 0.9999 61%
+
+
+	Pool 1  (tUSDC/tWETH)    (1% fee rate )   (goerli)
+	0x5d5f4a5fbb77cd09be9a2fe12c443a3a8ac7336f          
+		current  1 tweth=2.9 tusdc
+
+	Pool 2 ( tWETH/tUSDC )   ( fee rate 0.3% )   (goerli)
+	0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c 
+		current 1 tweth = 10 tusdc   
+
+	Pool 3 ( tWETH/tUSDC )   ( fee rate 0.05% )   (goerli)
+	0xA6525c9A6A86859DdA4F6f6a26748466BdF35CA2 
+		current 1 tweth = 3000 tusdc   
+
+	
+===
+
+
+
 --deploy fundkeeper Contract
 1. solc compile fundkeeper (solc -abi, -bin)
 2. abigen fundkeeper 
 3. fundkeeper_deploy (get contract address)
 4. testFundkeeper.go  (change contract address)
 
-Addresses:
-Uniswap V3 Positions NFT-V1 (UNI-V3-POS) (goerli)
-0xC36442b4a4522E871399CD717aBDD847Ab11FE88 
-
-Test pool (elefss1/elefss2) address:  (goerli)
-0x616fb433fb74c2ad03613f7b200a9e02df193d0c
-
-token0 elefss1 (goerli ):  
-0xc4AFB13b10f7C49Af721860A188D6443D0fF8747
-
-token1 elefss2 (goerli ):  
-0x2aDEca523FbBF0937A9419924feAB607Bf599311
-
-token tto-weth (1000000 CAP)
-0x941CD33dd99A623Ab2F058C3A5961F8422652761 (deprecated)  
-
- token tto-usdc (5000000 cap)  
-0xC5ca707a0E9F12Ed8D4573CcD38969a21eEeCCf0 (deprecated)
-
-token tto1 (goerli) (9000000 CAP) team token
-0x3C3eF6Ad37F107CDd965C4da5f007526B959532f
 
 
 
-pool (elefss2/usdc):  (goerli)
-0xd765dbc1fa901c795ef8b1adbcf0414726428791
-initial 
-ELEFSS2 65.85 39%
-USDC 0.9999 61%
-
-
-tUSDC  (on goerli)
-0xFA5dF5372c03D4968d128D624e3Afeb61031a777
-total supply 26512386160 (  same as USDC on  mainet )
-
-tWETH (on goerli)
-0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4
- total supply 6718113 ( same as WETH on mainet )
-
-Pool 1  (tUSDC/tWETH)    (1% fee rate )   (goerli)
-0x5d5f4a5fbb77cd09be9a2fe12c443a3a8ac7336f          
-current  1 tweth=2.9 tusdc
-
-Pool 2 ( tWETH/tUSDC )   ( fee rate 0.3% )   (goerli)
-0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c 
-current 1 tweth = 10 tusdc   
-
-Pool 3 ( tWETH/tUSDC )   ( fee rate 0.05% )   (goerli)
-0xA6525c9A6A86859DdA4F6f6a26748466BdF35CA2 
-current 1 tweth = 3000 tusdc   
 
 
 Test:
-SwapStream uniswap  v3 factory address (goerli) 0xD15b0a02F508e38266dcB7df057E4F094DB52598
-official uniswap v3 factory address:  (all nets) 0x1f98431c8ad98523631ae4a59f267346ea31f984 
+
 
 
 **note: this pool is manually generated through uniswap app by adding these two tokens. 
@@ -234,5 +253,41 @@ compile and run _deploy.go
 
 
 
+============= uniswapv3 deploy
+solc abi
+solc bin
+abigen --abi=../build/UniswapV3Factory.abi --bin=../build/UniswapV3Factory.bin --pkg=api --out=../deploy/uniswapv3Factory/uniswapV3Factory.go
 
 
+
+
+
+------solc  evm-version
+ "evmVersion": "<VERSION>"
+
+homestead (oldest version)
+
+tangerineWhistle
+	Gas cost for access to other accounts increased, relevant for gas estimation and the optimizer.
+	All gas sent by default for external calls, previously a certain amount had to be retained.
+
+spuriousDragon
+	Gas cost for the exp opcode increased, relevant for gas estimation and the optimizer.
+
+byzantium
+	Opcodes returndatacopy, returndatasize and staticcall are available in assembly.
+	The staticcall opcode is used when calling non-library view or pure functions, which prevents the functions from modifying state at the EVM level, i.e., even applies when you use invalid type conversions.
+	It is possible to access dynamic data returned from function calls.
+	revert opcode introduced, which means that revert() will not waste gas.
+
+constantinople
+	Opcodes create2`, ``extcodehash, shl, shr and sar are available in assembly.
+	Shifting operators use shifting opcodes and thus need less gas.
+
+petersburg (default)
+	The compiler behaves the same way as with constantinople.
+
+istanbul
+	Opcodes chainid and selfbalance are available in assembly.
+
+berlin (experimental)
