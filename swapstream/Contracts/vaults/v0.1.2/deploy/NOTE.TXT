@@ -1,0 +1,6 @@
+
+solc --optimize --overwrite --abi FundKeeper.sol.go -o ../build
+solc --optimize --overwrite --bin FundKeeper.sol.go -o ../build
+abigen --abi=../build/Fundkeeper.abi --bin=../build/Fundkeeper.bin --pkg=api --out=../deploy/Fundkeeper/Fundkeeper.go
+
+fundkeeper_deploy.go
