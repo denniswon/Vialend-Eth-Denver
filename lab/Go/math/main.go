@@ -34,4 +34,34 @@ func main() {
 
 	fmt.Println("float to bigint:", biSqrtPX96, "==", sqrtPriceX96)
 
+	///------------ big int value test ， 深度copy bigint variable
+	fmt.Println("\nbig int value test....")
+	// 初始化两个变量: a = 1, b = 2
+	a := big.NewInt(1)
+	b := big.NewInt(2)
+
+	// 打印交换前的数值
+	fmt.Printf("a = %v   b = %v\n", a, b)
+	// 使用中間變量法進行交換
+	tmp := big.NewInt(0)
+	tmp.Set(a)
+	a.Set(b)
+	b.Set(tmp)
+
+	// 交換完成, 對中間變量加100
+	tmp.Add(tmp, big.NewInt(100))
+
+	// 打印交換後的結果
+	fmt.Printf("a = %v    b = %v   tmp = %v\n", a, b, tmp)
+
+	fmt.Println(x1E18(5000000000000005))
+}
+
+///  return big.NewInt(10 * 1e18) //10 * 10**18
+func x1E18(x int64) *big.Int {
+
+	e18, _ := new(big.Int).SetString("1000000000000000000", 10)
+	bigx := big.NewInt(x)
+
+	return bigx.Mul(bigx, e18)
 }

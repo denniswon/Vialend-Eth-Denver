@@ -1,6 +1,8 @@
 
 >>>>>>>>>>> Addresses:  <<<<<<<<<<<<< 
-
+vault:
+	0xF2510458eaf4dC13Fa80bef475D857F6775b38C5 (ganache local)
+	
 factory:  
 	0x2820BAd125c568C556a86d80A9484fa268A944c2 (ganache local)
 	0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5  ( goerli uniswapv3 edited verion)
@@ -14,6 +16,7 @@ tokens
 	tusdc 0x034A156169e7f3239eDC318747f305d7aA161d8B (local tusdc 6)
 	tWETH  0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23  (local tWETH)
 
+	 0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9   (local tBonus)
 
 	
 	 elefss1 (goerli ):  
@@ -220,6 +223,12 @@ solc-select use 0.7.5
 solc --optimize --overwrite --abi FundKeeper.sol -o ../build
 solc --optimize --overwrite --bin FundKeeper.sol -o ../build
 
+
+solc --optimize --overwrite --abi feeMaker.sol -o ../build
+solc --optimize --overwrite --bin feeMaker.sol -o ../build
+abigen --abi=../build/feeMaker.abi --bin=../build/feeMaker.bin --pkg=api --out=../deploy/feeMaker/feeMaker.go
+
+
 //back to windows
 
  create a folder /deploy/filename
@@ -261,6 +270,7 @@ solc abi
 solc bin
 abigen --abi=../build/UniswapV3Factory.abi --bin=../build/UniswapV3Factory.bin --pkg=api --out=../deploy/uniswapv3Factory/uniswapV3Factory.go
 
+$GOHOME/build/bin/abigen --abi=../build/UniswapV3Factory.abi --bin=../build/UniswapV3Factory.bin --pkg=api --out=../deploy/uniswapv3Factory/uniswapV3Factory.go
 
 
 
@@ -294,3 +304,17 @@ istanbul
 	Opcodes chainid and selfbalance are available in assembly.
 
 berlin (experimental)
+
+
+
+>>>>>>>>>>>>>>>>>>> install Go on linux >>>>>>>>>>>>>>>>>
+
+$sudo apt install golang -y
+
+$export PATH="$GOPATH/bin:$PATH"
+
+$cd $GOPATH/src/github.com/ethereum/go-ethereum/
+
+$make  (or try make all)
+
+$make devtools
