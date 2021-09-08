@@ -50,7 +50,7 @@ func DeployVault(do bool) {
 
 	config.NonceGen()
 
-	pool := common.HexToAddress(config.Network.Pool)
+	pool := GetPoolFromToken(true)
 	ttoken := common.HexToAddress(config.Network.BonusToken)
 	protocolFee := big.NewInt(10000)
 	maxTotalSupply := big.NewInt(1e18).Mul(big.NewInt(1e18), big.NewInt(1e18))

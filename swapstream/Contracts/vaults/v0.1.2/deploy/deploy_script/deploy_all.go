@@ -8,7 +8,8 @@ import (
 	"math/big"
 
 	//api "../FundKeeper"
-	api "../FeeMaker"
+	feemaker "../FeeMaker"
+	tester "../tester"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,12 +25,16 @@ type nClient struct {
 
 func main() {
 
+	nid := 1
+	deploy_feemaker := true
+	deploy_tester := false
+
 	networks := [...]nClient{
 
 		{ //0 local
 			"http://127.0.0.1:7545",
 			"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
-			"n/a"},
+			"0x606B7f7093aa4df2282763F4e9f714706221838b"},
 
 		{ //1 test admin
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
@@ -51,8 +56,6 @@ func main() {
 			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",
 			"pool"},
 	}
-
-	nid := 0
 
 	client, err := ethclient.Dial(networks[nid].clientUrl)
 	privateKey, err := crypto.HexToECDSA(networks[nid].privateKey)
@@ -98,12 +101,24 @@ func main() {
 	protocolFee := big.NewInt(10000)
 	maxTotalSupply, _ := new(big.Int).SetString("10000000000000000000000000", 10)
 
-	address, tx, instance, err := api.DeployApi(auth, client, pool, ttoken, protocolFee, maxTotalSupply)
-	if err != nil {
-		panic(err)
+	if deploy_feemaker {
+		address, tx, instance, err := feemaker.DeployApi(auth, client, pool, ttoken, protocolFee, maxTotalSupply)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("feeMaker address:", address.Hex())
+
+		_, _ = instance, tx
 	}
 
-	fmt.Println("contract address:", address.Hex())
+	if deploy_tester {
+		address, tx, instance, err := tester.DeployApi(auth, client)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("contract address:", address.Hex())
 
-	_, _ = instance, tx
+		_, _ = instance, tx
+	}
+
 }

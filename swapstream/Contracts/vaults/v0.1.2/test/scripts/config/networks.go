@@ -1,10 +1,15 @@
 package config
 
 import (
+	"bufio"
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"log"
+	"math"
 	"math/big"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -25,9 +30,10 @@ type Init struct {
 	Pool        string
 	BonusToken  string
 	Vault       string
+	Fee         int64
 }
 
-var Networkid = 2
+var Networkid = 3
 var Client, err = ethclient.Dial(Networks[Networkid].ClientUrl)
 var Auth = GetSignature(Networkid)
 var FromAddress common.Address
@@ -48,6 +54,7 @@ var Networks = [...]Init{
 		"", // pool
 		"", // bonus token
 		"", //vault address
+		3000,
 	},
 
 	{ // 1 local
@@ -62,6 +69,7 @@ var Networks = [...]Init{
 		"0x606B7f7093aa4df2282763F4e9f714706221838b", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
 		"0xF2510458eaf4dC13Fa80bef475D857F6775b38C5", //vault address
+		3000, // fee
 	},
 
 	{ // 2 local user2
@@ -76,28 +84,37 @@ var Networks = [...]Init{
 		"0x606B7f7093aa4df2282763F4e9f714706221838b", //pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
 		"0xF2510458eaf4dC13Fa80bef475D857F6775b38C5", //vault address
+		3000, // fee
 	},
 
-	{ ///2  goerli admin test 1
+	{ ///3  goerli admin test 1
 		"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-		"",
-		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //new uniswapv3factory modified requires
-		"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",
-		"0x2aDEca523FbBF0937A9419924feAB607Bf599311", //tokenA
-		"0xc4AFB13b10f7C49Af721860A188D6443D0fF8747", //tokenB
-		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54", //new owner, test user 1
-		30,
-		"", //pool
+		"0x1F98431c8aD98523631AE4a59f267346ea31F984",
+		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5",                       //new uniswapv3 factory modified
+		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
+		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8",                       //tokenA eWeth
+		"0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8",                       //tokenB  eusdc
+		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54",                       //new owner, test user 1
+		60,
+		"0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"", //vault address
+		"0x40014da7c5B87b7701D1B3681138556667DDEC37", //vault address
+		3000, // fee
 	},
 }
 
+/*
+eUSDC 0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8
+	eWeth 0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8
+
+		"0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4",                       //tokenA tWeth
+		"0xFA5dF5372c03D4968d128D624e3Afeb61031a777",                       //tokenB  tusdc
+
+*/
+
 func GetSignature(nid int) *bind.TransactOpts {
 
-	network := Networks[nid]
-
-	privateKey, err := crypto.HexToECDSA(network.PrivateKey)
+	privateKey, err := crypto.HexToECDSA(Network.PrivateKey)
 
 	if err != nil {
 		log.Fatal(err)
@@ -110,6 +127,7 @@ func GetSignature(nid int) *bind.TransactOpts {
 	}
 
 	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA)
+	fmt.Println("signed by ", FromAddress)
 
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Value = big.NewInt(0)                 // in wei
@@ -130,4 +148,48 @@ func NonceGen() {
 
 	Auth.Nonce = big.NewInt(int64(nonce))
 
+}
+
+func Readstring(msg string) string {
+
+	fmt.Println(msg)
+	fmt.Println("---------------------")
+
+	auto := true
+
+	if auto {
+		time.Sleep(Network.PendingTime * time.Second)
+		return ""
+	} else {
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			fmt.Print("-> ")
+			text, _ := reader.ReadString('\n')
+			// convert CRLF to LF
+			text = strings.TrimSuffix(strings.TrimSpace(text), " \n")
+
+			return text
+
+		}
+	}
+}
+
+func X1E18(x int64) *big.Int {
+
+	e18, _ := new(big.Int).SetString("1000000000000000000", 10)
+	bigx := big.NewInt(x)
+
+	return bigx.Mul(bigx, e18)
+}
+
+func FloorFloat64ToBigInt(f64 float64) *big.Int {
+
+	// This number doesn't exist in the float64 world,
+	// just a number to perform the test.
+
+	if f64 >= math.MaxInt64 || f64 <= math.MinInt64 {
+		log.Fatal("f64 is out of int64 range.", err)
+	}
+
+	return big.NewInt(int64(math.Floor(f64)))
 }

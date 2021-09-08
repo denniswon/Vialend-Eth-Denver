@@ -1,5 +1,15 @@
+ solc --optimize --overwrite --abi tester.sol -o ../build
+  solc solc --optimize --overwrite --bin tester.sol -o ../build
+abigen --abi=../build/tester.abi --bin=../build/tester.bin --pkg=api --out=../deploy/tester/tester.go
+
+
 
 >>>>>>>>>>> Addresses:  <<<<<<<<<<<<< 
+Accounts:
+Test admin 2:
+	0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
+	284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f
+	
 vault:
 	0xF2510458eaf4dC13Fa80bef475D857F6775b38C5 (ganache local)
 	
@@ -12,34 +22,34 @@ factory:
  	0x1f98431c8ad98523631ae4a59f267346ea31f984 	 official uniswap v3 factory address:  (all nets) 
 	
 tokens 
+(local)
 	tusdc 0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59    (local tUSDC , 18) 
 	tusdc 0x034A156169e7f3239eDC318747f305d7aA161d8B (local tusdc 6)
 	tWETH  0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23  (local tWETH)
+	tBonus 0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9   
+	
 
-	 0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9   (local tBonus)
-
+(goerli)
 	
-	 elefss1 (goerli ):  
-	0xc4AFB13b10f7C49Af721860A188D6443D0fF8747
+	eUSDC 0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8
+	eWeth 0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8
 	
-	 elefss2 (goerli ):  
-	0x2aDEca523FbBF0937A9419924feAB607Bf599311
+	 elefss1 	0xc4AFB13b10f7C49Af721860A188D6443D0fF8747
 	
-	 tto-weth (1000000 CAP)
-	0x941CD33dd99A623Ab2F058C3A5961F8422652761 (deprecated)  
+	 elefss2 (goerli ):  	0x2aDEca523FbBF0937A9419924feAB607Bf599311
 	
-	 tto-usdc (5000000 cap)  
-	0xC5ca707a0E9F12Ed8D4573CcD38969a21eEeCCf0 (deprecated)
+	 tto-weth (1000000 CAP) 	0x941CD33dd99A623Ab2F058C3A5961F8422652761 (deprecated)  
 	
-	 tto1 (goerli) (9000000 CAP) team token
+	 tto-usdc (5000000 cap)  	0xC5ca707a0E9F12Ed8D4573CcD38969a21eEeCCf0 (deprecated)
+	
+	 tto1 (goerli) (9000000 CAP) bonus token:
 	0x3C3eF6Ad37F107CDd965C4da5f007526B959532f
 	
 
 	tUSDC  (on goerli)
 	0xFA5dF5372c03D4968d128D624e3Afeb61031a777   (18 decimals)
-	0xcEe3B5618B775bb0c2935D3633675AAa22337155  (6 decimals)
+	0xcEe3B5618B775bb0c2935D3633675AAa22337155  (18 decimals)
 		total supply 26512386160 (  same as USDC on  mainet )
-	
 	
 	tWETH (on goerli)
 	0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4

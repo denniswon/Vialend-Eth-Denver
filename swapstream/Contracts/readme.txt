@@ -1,4 +1,4 @@
-Test Account (goerli):
+New Test admin  (goerli):
 0xD8Dbe65b64428464fFa14DEAbe288b83C240e713
 private key:
 d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a

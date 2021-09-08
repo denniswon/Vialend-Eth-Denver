@@ -1,10 +1,13 @@
 #v0.1.0 实现了deposit and withdraw functions
 #v0.1.1 更新了 deposit ， withdraw。 测试了withdrawall 功能。 
-#v0.1.2 实现了 add、remove position by calling rebalance
-
+#v0.1.2 
+   更新了 deposit ， withdraw。 
+   实现了 add、remove uniswap position by calling rebalance
+   tested bonus token
+    
 
 new solc methods:
-    1. bonus token (temp test method, maybe removed later) give out team token to user who makes deposit.  1:1 ttoken give out to the user. 
+    1. bonus token when deposit (temp test method, maybe removed later) give out team token to user who makes deposit.  1:1 ttoken give out to the user. 
     2. rebalance
 
 

@@ -1,4 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
+/*
+
+solc --optimize --overwrite --abi feeMaker.sol -o ../build
+solc --optimize --overwrite --bin feeMaker.sol -o ../build
+abigen --abi=../build/feeMaker.abi --bin=../build/feeMaker.bin --pkg=api --out=../deploy/feeMaker/feeMaker.go
+
+feemaker: georli
+0x9432391d340024d5FA561a46025De1F42763c451
+0x29Afdd61dBd1AB6f044aa751bfeEd31f7f7A49f9
+0x34170abd43B7853304D358CfEe4A88744DA6d39D
+0x3C111b30536079C4206b6b13fA6b5B9e5CC119C5
+0x31698AE7BDE6387C69dbD5257D8C1DF5A88E70a5
+
+*/
 
 pragma solidity >=0.5.0;
 
@@ -15,7 +29,7 @@ import "./@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "./@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
 
-//import "../interfaces/IFeeMaker.sol";
+
 import "../interfaces/IFeeMakerEvents.sol";
 
 
@@ -29,7 +43,6 @@ contract FeeMaker is
     IUniswapV3MintCallback,
     IUniswapV3SwapCallback,
     ReentrancyGuard
-
 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -48,8 +61,8 @@ contract FeeMaker is
     address public governance;
     
 
-    int24 public currentLower;
-    int24 public currentUpper;
+    int24 public cLow;
+    int24 public cHigh;
     uint256 public accruedProtocolFees0;
     uint256 public accruedProtocolFees1;
     
@@ -65,7 +78,7 @@ contract FeeMaker is
         address _ttoken,
         uint256 _protocolFee,
         uint256 _maxTotalSupply
-    ) ERC20("tt","ttToken") {
+    ) ERC20("Token Ref","ShareRef") {
 
 		pool = IUniswapV3Pool(_pool);	
 		emit GeneralA("pool", _pool);
@@ -95,7 +108,7 @@ contract FeeMaker is
     /// @notice tokens get deposited in this smart contract will be held until next rebalance. 
     /// @param amountToken0 amount of token0 to deposit
     /// @param amountToken0 amount of token1 to deposit
-    /// @param shareholder  The shareholder's address of the tokens 
+    /// @param staker  The staker's address of the tokens 
     /// @return shares Number of shares minted
     /// @return amount0 Amount of token0 deposited
     /// @return amount1 Amount of token1 deposited
@@ -103,9 +116,10 @@ contract FeeMaker is
     function deposit(
         uint256 amountToken0,
         uint256 amountToken1,
-        address shareholder
+        address staker
     )
         external
+        
         nonReentrant
         
         returns (
@@ -116,13 +130,13 @@ contract FeeMaker is
     {
         require(amountToken0 > 0 || amountToken1 > 0, _hint2("amountToken0,1,",amountToken0,amountToken1,0,",") );
        
-        require(shareholder != address(0) && shareholder != address(this), "shareholder");
+        require(staker != address(0) && staker != address(this), "staker");
 
   		/// #debug will be replaced. Poke positions so to get uniswap v3 fees up to date. 
-        _poke(currentLower, currentUpper);
+        _poke(cLow, cHigh);
 		
 
-        (shares, amount0, amount1) = _calcShares(amountToken0, amountToken1); // _shares(amountToken0, amountToken1); 
+        (shares, amount0, amount1) = _calcShares(amountToken0, amountToken1); 
         
         require(amountMin(amount0,amount1), "amountMIn");
         
@@ -134,16 +148,16 @@ contract FeeMaker is
         if (amount1 > 0) token1.safeTransferFrom(msg.sender, address(this), amount1);
 
         // Mint shares to recipient
-        _mint(shareholder, shares);
+        _mint(staker, shares);
 
-		//#debug  test send shareholder some ttoken tokenGiveAwayRate.div(100).mul(shares)
+		//#debug  test send staker some ttoken tokenGiveAwayRate.div(100).mul(shares)
 		if ( ttoken.balanceOf(address(this) ) > 1000000000000000000 )
 		{
 			//uint tokenGiveAwayRate = 10; 
-	        ttoken.safeTransfer(shareholder, 1000000000000000000);
+	        ttoken.safeTransfer(staker, 1000000000000000000);
         }
 
-        emit Deposit(msg.sender, shareholder, shares, amount0, amount1);
+        emit Deposit(msg.sender, staker, shares, amount0, amount1);
 
         //#debug , temporary turned off
         //require(totalSupply() <= maxTotalSupply, "maxTotalSupply");
@@ -158,27 +172,14 @@ contract FeeMaker is
     }
 
 
-    function _shares(uint256 amountToken0, uint256 amountToken1)
-        internal
-        pure
-        returns (
-            uint256 shares,
-            uint256 amount0,
-            uint256 amount1
-        )
-        {
-			amount0 = amountToken0;
-			amount1 = amountToken1;
-        	shares = amount0+amount1;
-        }
-
+ 
     
     
-    /// - shareholder Withdraw 
-    /// @param shareholder address of Recipient of tokens
+    /// - staker Withdraw 
+    /// @param staker address of Recipient of tokens
     /// @param shares number of Shares owned by sender to be burned
-    /// @return amount0 Amount of token0 sent to shareholder 
-    /// @return amount1 Amount of token1 sent to shareholder
+    /// @return amount0 Amount of token0 sent to staker 
+    /// @return amount1 Amount of token1 sent to staker
     /// @param amount0Min Revert if resulting `amount0` is smaller than this
     /// @param amount1Min Revert if resulting `amount1` is smaller than this
     
@@ -186,26 +187,27 @@ contract FeeMaker is
         uint256 shares,
         uint256 amount0Min,
         uint256 amount1Min,
-        address shareholder
+        address staker
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
         
         require(shares > 0, "shares withdraw");
 
-        require(shareholder != address(0) && shareholder != address(this), "shareholder");
+        require(staker != address(0) && staker != address(this), "staker");
 
+        uint256 totalSupply = totalSupply();
 
         // Burn shares
         _burn(msg.sender, shares);
 
-        uint256 totalSupply = totalSupply();
-
+        require(totalSupply > 0, "t1");
+        
         // Calculate token amounts proportional to unused balances
         uint256 unusedAmount0 = getBalance0().mul(shares).div(totalSupply);
         uint256 unusedAmount1 = getBalance1().mul(shares).div(totalSupply);
 
-        // Withdraw proportion of liquidity from Uniswap pool
+        // Withdraw proportion of liquidity directly from Uniswap pool
         (uint256 poolamount0, uint256 poolamount1) =
-            _burnLiquidityShare(currentLower, currentUpper, shares, totalSupply);
+            _burnLiquidityShare(cLow, cHigh, shares, totalSupply);
 
         // Sum up total amounts owed to recipient
         amount0 = unusedAmount0.add(poolamount0);
@@ -216,10 +218,10 @@ contract FeeMaker is
         require(amount1 >= amount1Min, _hint2("withdraw amount1,",amount1, 0,0,"") );
         
         // Push tokens to recipient
-        if (amount0 > 0) token0.safeTransfer(shareholder, amount0);
-        if (amount1 > 0) token1.safeTransfer(shareholder, amount1);
+        if (amount0 > 0) token0.safeTransfer(staker, amount0);
+        if (amount1 > 0) token1.safeTransfer(staker, amount1);
 
-        emit Withdraw(msg.sender, shareholder, shares, amount0, amount1,token0.name(),token1.name());
+        emit Withdraw(msg.sender, staker, shares, amount0, amount1,token0.name(),token1.name());
     }
 
     function _calcShares(uint256 amountToken0, uint256 amountToken1)
@@ -276,6 +278,9 @@ contract FeeMaker is
         uint256 totalSupply
     ) internal returns (uint256 amount0, uint256 amount1) {
         (uint128 totalLiquidity, , , , ) = _position(tickLower, tickUpper);
+        
+        require(totalSupply > 0, _hint2("t2",totalLiquidity,0,0,"") ) ;
+        
         uint256 liquidity = uint256(totalLiquidity).mul(shares).div(totalSupply);
 
         if (liquidity > 0) {
@@ -300,7 +305,7 @@ contract FeeMaker is
     	view  
     	returns (uint256 total0, uint256 total1) {
          
-        (uint256 Amount0, uint256 Amount1) =  getPositionAmounts(currentLower, currentUpper);
+        (uint256 Amount0, uint256 Amount1) =  getPositionAmounts(cLow, cHigh);
         
         total0 = getBalance0().add(Amount0);
         total1 = getBalance1().add(Amount1);
@@ -308,55 +313,80 @@ contract FeeMaker is
     }
     
     
-    /// @notice do rebalance, can be called by the strategist only 
-    /// @param zeroForOne whether Token0 is converted to Token1
-    /// @param sqrtPriceLimitX96  the upper limit of the price
-    /// @param swapAmount amount of token0 or token1 needed to swap to the other
-    
+	/// @dev TODO  _swap
+	/// @notice 先获得当前token1、0 的price, 以较小的token amount 根据totalliquidity，tick low hi 计算出另一个token所需的amount
+	/// @param newLow new tickLower
+	/// @param newHigh new tickUpper
+	/// @param swapAmount 0 value means no swap needed by caller's calculation.
+
     function rebalance(
-        int24 newLower,
-        int24 newUpper,
-        bool zeroForOne,    
-        int256 swapAmount,
-        uint160 sqrtPriceLimitX96    
+        int24 newLow,
+        int24 newHigh,
+        int256 swapAmount
         
     ) external nonReentrant onlyGovernance { 
 
-        int256 _swapAmount = swapAmount;
-    	
-		require(_swapAmount > 0 , "swapAmount<=0");
 		
 		//#debug onlyGovernance for now. called from outside chain
         //require(msg.sender == strategist, "strategist");
         
         (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool.slot0();
         
-        //#debug
-        require(true, uint2str(sqrtPriceX96));
-        
-        _validRange(newLower, newUpper, tick);  // passed 1200 , 2100, 18382
+        _validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382
         
         
         // Withdraw all current liquidity from Uniswap pool
+       
+       (uint128 allLiquidity, , , , ) = _position(cLow, cHigh); 
         
-       (uint128 allLiquidity, , , , ) = _position(currentLower, currentUpper); 
-        //require(false, "_position no error");
-        //emit GeneralS("_position no error","");
-        
-  		_burnAndCollect(currentLower, currentUpper, allLiquidity);
-		//emit GeneralS("_burnAdnCollect no error","");
-		//require(false, "_burnAdnCollect no error");
+  		_burnAndCollect(cLow, cHigh, allLiquidity);
 
-		// Emit snapshot to record balances and supply
+
         uint256 balance0 = getBalance0();
         uint256 balance1 = getBalance1();
         
+		// Emit snapshot to record balances and supply
         emit Snapshot(tick, balance0, balance1, totalSupply());            	
-        
+
         //ok require(false, append("balance0:", uint2str(balance0),"balance1:",uint2str(balance1),""));
         
-        //validSwapAmount( _swapAmount, balance0 , balance1 );
-   /*     
+        
+        if (swapAmount > 0) {
+
+
+        	_swap(balance0,balance1,tick, sqrtPriceX96, swapAmount);
+
+	        balance0 = getBalance0();
+	        balance1 = getBalance1();
+
+        }
+
+        
+		// Place position on Uniswap
+        uint128 liquidity = _liquidityForAmounts( newLow, newHigh, balance0, balance1);
+        
+        require(liquidity > 0 ,append("liquidity: ",uint2str(liquidity),"","","")) ;
+       
+        pool.mint(address(this), newLow, newHigh, liquidity, "");
+
+        (cLow, cHigh) = (newLow, newHigh);
+        
+    }
+    
+	function _swap(uint256 bal0, uint256 bal1, int24 tick, uint160 sqrtPriceX96, int256 _swapAmount ) internal  {
+
+/*        
+        (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool.slot0();
+
+        bool zeroForOne, 
+
+        uint160 sqrtPriceLimitX96    
+        
+        //#debug
+//        require(true, uint2str(sqrtPriceX96));
+    	
+        //verifySwapAmount( _swapAmount, balance0 , balance1 );
+
 		pool.swap(
                address(this),
                zeroForOne,
@@ -365,24 +395,10 @@ contract FeeMaker is
                ""
            );
 
-        require(false, append("swap success:",uint2str(balance0),",",uint2str(balance1),".") );
+        //require(false, append("swap success:",uint2str(balance0),",",uint2str(balance1),".") );
 */
-           balance0 = getBalance0();
-           balance1 = getBalance1();
-        
-        
-		// Place position on Uniswap
-        uint128 liquidity = _liquidityForAmounts( newLower, newUpper, balance0, balance1);
-        
-        require(liquidity > 0 ,append("liquidity: ",uint2str(liquidity),"","","")) ;
-       
-        pool.mint(address(this), newLower, newUpper, liquidity, "");
-
-        (currentLower, currentUpper) = (newLower, newUpper);
-        
-    }
-    
-
+	}
+	
  /// @dev Callback for Uniswap V3 pool.
     function uniswapV3MintCallback(
         uint256 amount0,
@@ -477,9 +493,9 @@ contract FeeMaker is
         
         int24 _tickSpacing = tickSpacing;
         
-        require(_lower < _upper, append("lower < upper", uint2str(uint256(_lower)) ,",", uint2str(uint256(_upper)),"")  );
-        require(_lower < _tick , append("lower < tick" , uint2str(uint256(_lower)),",", uint2str(uint256(_tick)),"")  );
-        require(_upper > _tick , append("upper < tick" , uint2str(uint256(_upper)),",",uint2str(uint256(_tick)),"")  );
+        require(_lower < _upper, _hint2("lower < _upper ", uint(_lower), uint(_upper), uint(_tick),"")  );
+        require(_lower < _tick , _hint2("lower > _tick ", uint(_lower), uint(_upper), uint(_tick),""));
+        require(_upper > _tick , _hint2("_upper > _tick ", uint(_lower), uint(_upper), uint(_tick),""));
         
         require(_lower >= TickMath.MIN_TICK, "Lower too low");
         require(_upper <= TickMath.MAX_TICK, "Upper too high");
@@ -616,6 +632,7 @@ contract FeeMaker is
 			return msg1;
 	}
 	
+
 	function uint2str(uint i) internal pure returns (string memory ){
 	    if (i == 0) return "0";
 	    uint j = i;

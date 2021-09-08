@@ -15,24 +15,46 @@ func main() {
 	project.DeployFactory(false)
 
 	/// if not creating new pool then use the network1.factory
-	fee := int64(3000)
-	project.CreatePool(fee, false)
+
+	/// edit networks. token0, token1, fee
+	project.CreatePool(false)
 
 	project.InitialPool(false)
 
+	//project.MintPool(fee, false)
+
+	/// edit networks. token0, token1, fee to get the pool address
 	project.DeployVault(false)
+	//return
+
+	/// print the pool address and token address
+	project.GetPoolFromToken(false)
+	//return
 
 	project.Approve(false)
-	project.Deposit(false)
+	//return
+	/// deposit token0 amount * 1e18, token1 amount * 1e6
+	project.AccountInfo(true)
+	project.ValutInfo(true)
 
-	project.GetTotalAmounts(true)
+	project.Deposit(true, 9, 2000)
+
+	project.AccountInfo(true)
+	project.ValutInfo(true)
+
+	/// withdraw shares
+	project.Withdraw(false, 0.1)
 
 	project.Rebalance(true)
+
+	project.AccountInfo(true)
+	project.ValutInfo(true)
+
 	/*
-		project.Withdraw(false)
-		project.Rebalance(false)
 		project.Swap(false)
 	*/
-	project.CheckPrice(false)
+	project.CheckPrice(false, 3)
+
+	project.Equation(false, false)
 
 }
