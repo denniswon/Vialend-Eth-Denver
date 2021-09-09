@@ -24,31 +24,31 @@ func main() {
 	//project.MintPool(fee, false)
 
 	/// edit networks. token0, token1, fee to get the pool address
-	project.DeployVault(false)
+	//project.DeployVault(true)
 	//return
 
 	/// print the pool address and token address
 	project.GetPoolFromToken(false)
 	//return
 
-	project.Approve(false)
+	//	project.Approve(true)
 	//return
 	/// deposit token0 amount * 1e18, token1 amount * 1e6
 	project.AccountInfo(true)
 	project.ValutInfo(true)
 
-	project.Deposit(true, 9, 2000)
+	//	project.Deposit(true, 3, 10000)
 
-	project.AccountInfo(true)
-	project.ValutInfo(true)
+	//	project.AccountInfo(true)
+	//	project.ValutInfo(true)
 
 	/// withdraw shares
-	project.Withdraw(false, 0.1)
+	//project.Withdraw(true, 1)
 
-	project.Rebalance(true)
+	//	project.Rebalance(true)
 
-	project.AccountInfo(true)
-	project.ValutInfo(true)
+	//	project.AccountInfo(true)
+	//	project.ValutInfo(true)
 
 	/*
 		project.Swap(false)

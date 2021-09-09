@@ -131,6 +131,10 @@ func Rebalance(do bool) {
 
 	fmt.Println("vaultAddress: ", vaultAddress)
 
+	///require governance. redo auth
+	config.Account = 0
+	config.GetSignature(config.Networkid)
+
 	vaultInstance, err := vault.NewApi(vaultAddress, config.Client)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
@@ -193,15 +197,20 @@ func Rebalance(do bool) {
 
 }
 
+/// formula:
+///
+/// (sqrtPricex96^2 * 1e18) >> (96*2)
+/// solc: uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e18) >> (96 * 2);
 func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) *big.Int {
 
-	SqrtPriceX96.Add(SqrtPriceX96, tick)
-	//convert sqrtPriceX96 into price, uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e18) >> (96 * 2);
+	//fmt.Println("test sqrtP * tick: ", SqrtPriceX96.Add(SqrtPriceX96, tick))
+	//SqrtPriceX96 = new(big.Int).Add(SqrtPriceX96, tick)
+	//fmt.Println("after sqrtP * tick:", SqrtPriceX96)
 
-	sqrprice := new(big.Int).Mul(SqrtPriceX96, SqrtPriceX96)
-	oPrice := new(big.Int).Mul(sqrprice, big.NewInt(1e18))
-	fPrice := new(big.Int).Rsh(oPrice, 96*2)
-	return fPrice
+	sqrpricePow2 := new(big.Int).Mul(SqrtPriceX96, SqrtPriceX96)
+	oPrice := new(big.Int).Mul(sqrpricePow2, big.NewInt(1e18))
+	Price := new(big.Int).Rsh(oPrice, 96*2)
+	return Price
 }
 func GetTotalAmounts(do bool) *struct {
 	Total0 *big.Int
@@ -330,6 +339,17 @@ func ValutInfo(do bool) {
 	totalSupply, err := instance.TotalSupply(&bind.CallOpts{})
 	fmt.Println("totalSupply (total shares in vault) :", totalSupply)
 
+	tickLower := big.NewInt(-199740)
+	tickUpper := big.NewInt(-187740)
+	liquidity, err := instance.GetSSLiquidity(&bind.CallOpts{}, tickLower, tickUpper)
+	fmt.Println("Current liquidity  :", liquidity)
+
+	accumulateFees0, _ := instance.AccumulateFees0(&bind.CallOpts{})
+	fmt.Println("accumulateFees0  :", accumulateFees0)
+
+	accumulateFees1, _ := instance.AccumulateFees1(&bind.CallOpts{})
+	fmt.Println("accumulateFees1  :", accumulateFees1)
+
 	///-----------
 	GetTotalAmounts(true)
 
@@ -341,7 +361,7 @@ func ValutInfo(do bool) {
 	}
 
 	bal, err := tokenInstance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
-	fmt.Println("shares in vault for ", config.FromAddress)
+	fmt.Println("shares in vault for Account ", config.Account)
 	fmt.Println(bal)
 
 }

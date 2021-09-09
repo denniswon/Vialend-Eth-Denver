@@ -48,6 +48,10 @@ func DeployVault(do bool) {
 		return
 	}
 
+	///require governance. always use account 0 as the deployer
+	config.Account = 0
+	config.GetSignature(config.Networkid)
+
 	config.NonceGen()
 
 	pool := GetPoolFromToken(true)

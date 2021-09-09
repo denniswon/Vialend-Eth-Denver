@@ -22,7 +22,7 @@ type Init struct {
 	ClientUrl   string
 	Factory     string
 	Callee      string
-	PrivateKey  string
+	PrivateKey  []string
 	TokenA      string
 	TokenB      string
 	NewOwner    string
@@ -34,6 +34,7 @@ type Init struct {
 }
 
 var Networkid = 3
+var Account = 1
 var Client, err = ethclient.Dial(Networks[Networkid].ClientUrl)
 var Auth = GetSignature(Networkid)
 var FromAddress common.Address
@@ -44,16 +45,16 @@ var Networks = [...]Init{
 
 	{ // 0 mainnet
 		"",
-		"", //factory
-		"", //callee
-		"", //privatekey
-		"", //tokenA tusdc
-		"", //tokenB tweth
-		"", //newOwner
-		60, //pendingtime
-		"", // pool
-		"", // bonus token
-		"", //vault address
+		"",           //factory
+		"",           //callee
+		[]string{""}, //privatekey
+		"",           //tokenA tusdc
+		"",           //tokenB tweth
+		"",           //newOwner
+		60,           //pendingtime
+		"",           // pool
+		"",           // bonus token
+		"",           //vault address
 		3000,
 	},
 
@@ -61,7 +62,7 @@ var Networks = [...]Init{
 		"http://127.0.0.1:7545",
 		"0x42414849A1f13b4d17C2B2eCd2dBfc6124567416", //factory
 		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
-		"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
+		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0"},
 		"0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59", //tokenA tusdc
 		"0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23", //tokenB tweth
 		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
@@ -74,12 +75,12 @@ var Networks = [...]Init{
 
 	{ // 2 local user2
 		"http://127.0.0.1:7545",
-		"0xDd9A27A42493AAebBf4d46Af476fd045acD467f5",                       // factory
-		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc",                       //callee
-		"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54", //(0xeBb29c07455113c30810Addc123D0D7Cd8637aea)
-		"0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59",                       //tokenA tusdc
-		"0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23",                       //tokenB tweth
-		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea",                       //new owner
+		"0xDd9A27A42493AAebBf4d46Af476fd045acD467f5",                                 // factory
+		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc",                                 //callee
+		[]string{"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"}, // local account1
+		"0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59",                                 //tokenA tusdc
+		"0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23",                                 //tokenB tweth
+		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea",                                 //new owner
 		10,
 		"0x606B7f7093aa4df2282763F4e9f714706221838b", //pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
@@ -90,15 +91,16 @@ var Networks = [...]Init{
 	{ ///3  goerli admin test 1
 		"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984",
-		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5",                       //new uniswapv3 factory modified
-		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
-		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8",                       //tokenA eWeth
-		"0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8",                       //tokenB  eusdc
-		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54",                       //new owner, test user 1
-		60,
+		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //new uniswapv3 factory modified
+		[]string{"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
+			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6"}, //test user 2
+		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
+		"0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8", //tokenB  eusdc
+		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54", //new owner, test user 1
+		40, //time pending interval
 		"0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"0x40014da7c5B87b7701D1B3681138556667DDEC37", //vault address
+		"0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2", //vault address
 		3000, // fee
 	},
 }
@@ -114,7 +116,7 @@ eUSDC 0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8
 
 func GetSignature(nid int) *bind.TransactOpts {
 
-	privateKey, err := crypto.HexToECDSA(Network.PrivateKey)
+	privateKey, err := crypto.HexToECDSA(Network.PrivateKey[Account])
 
 	if err != nil {
 		log.Fatal(err)

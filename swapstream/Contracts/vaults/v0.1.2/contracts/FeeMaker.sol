@@ -11,6 +11,8 @@ feemaker: georli
 0x34170abd43B7853304D358CfEe4A88744DA6d39D
 0x3C111b30536079C4206b6b13fA6b5B9e5CC119C5
 0x31698AE7BDE6387C69dbD5257D8C1DF5A88E70a5
+0x3c15d47D92bF713964deDBFD50DF0ABA9c1F7c05
+0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2
 
 */
 
@@ -65,6 +67,9 @@ contract FeeMaker is
     int24 public cHigh;
     uint256 public accruedProtocolFees0;
     uint256 public accruedProtocolFees1;
+
+    uint256 public AccumulateFees0;
+    uint256 public AccumulateFees1;
     
 
     /// @dev 
@@ -190,7 +195,7 @@ contract FeeMaker is
         address staker
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
         
-        require(shares > 0, "shares withdraw");
+        require(shares > 0, "shares <= 0");
 
         require(staker != address(0) && staker != address(this), "staker");
 
@@ -453,6 +458,10 @@ contract FeeMaker is
 
         feesToVault0 = collect0.sub(burned0);
         feesToVault1 = collect1.sub(burned1);
+
+        AccumulateFees0 = AccumulateFees0 + feesToVault0;
+        AccumulateFees1 = AccumulateFees1 + feesToVault1;
+        
         uint256 feesToProtocol0;
         uint256 feesToProtocol1;
 
@@ -590,6 +599,9 @@ contract FeeMaker is
     }   
 
 
+    function getSSLiquidity(int24 tickLower, int24 tickUpper) external view returns(uint128 liquidity) {
+    	( liquidity , , , , ) = _position(tickLower, tickUpper);
+    }
 
 
     modifier onlyGovernance {
