@@ -25,7 +25,7 @@ func Deposit(do bool, amount0 int64, amount1 int64) {
 	if !do {
 		return
 	}
-	fmt.Println("Deposit.........  ")
+	fmt.Println(".........Deposit.........  ")
 
 	fmt.Println("vaultAddress: ", vaultAddress)
 	fmt.Println("fromAddress: ", config.FromAddress)
@@ -69,18 +69,19 @@ func Deposit(do bool, amount0 int64, amount1 int64) {
 	}
 
 	//get the transaction hash
-	fmt.Println("deposit tx sent: %s", tx.Hash().Hex())
+	fmt.Println("deposit tx: %s", tx.Hash().Hex())
 
 	//	time.Sleep(config.Network.PendingTime * time.Second)
-	config.Readstring("wait for pending..next .. ")
+	config.Readstring("deposit sent...wait for pending..next .. ")
 
 }
-func Withdraw(do bool, percent float64) {
+
+func Withdraw(do bool, percent int64) {
 
 	if !do {
 		return
 	}
-	fmt.Println("Withdraw.........  ")
+	fmt.Println(".........Withdraw to.........  ", config.FromAddress)
 
 	fmt.Println("vaultAddress: ", vaultAddress)
 
@@ -89,18 +90,19 @@ func Withdraw(do bool, percent float64) {
 		log.Fatal("vault.NewApi ", err)
 	}
 
+	///get account's available shares
 	ashares, err := instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
 	}
-
 	fmt.Println("shares awailable = ", ashares)
-	//shares := new(big.Int).Mul(ashares, config.FloorFloat64ToBigInt(percent))
-	shares := new(big.Int).Div(ashares, big.NewInt(2))
 
+	///calc required shares to withdraw
+
+	shares := new(big.Int).Div(new(big.Int).Mul(ashares, big.NewInt(percent)), big.NewInt(100))
 	fmt.Println("shares required = ", shares)
 
-	//time.Sleep(config.Network.PendingTime * time.Second)
+	/// if required share > available share, set withdraw shares = awailable shares
 	if shares.Cmp(ashares) == 1 {
 		shares = ashares
 	}
@@ -119,9 +121,9 @@ func Withdraw(do bool, percent float64) {
 	}
 
 	//get the transaction hash
-	fmt.Println("withdraw tx sent: ", tx.Hash().Hex())
+	fmt.Println("withdraw tx: ", tx.Hash().Hex())
 
-	config.Readstring("wait for pending..next .. ")
+	config.Readstring("withdraw sent.... wait for pending..next .. ")
 
 }
 func Rebalance(do bool) {
@@ -133,8 +135,10 @@ func Rebalance(do bool) {
 	fmt.Println("vaultAddress: ", vaultAddress)
 
 	///require governance. redo auth
+
 	config.Account = 0
-	config.GetSignature(config.Networkid)
+	config.Auth = config.GetSignature(config.Networkid)
+	fmt.Println("**New Auth Set** ", config.Auth)
 
 	vaultInstance, err := vault.NewApi(vaultAddress, config.Client)
 	if err != nil {
@@ -181,6 +185,7 @@ func Rebalance(do bool) {
 	}
 
 	config.NonceGen()
+
 	tx, err := vaultInstance.Rebalance(config.Auth,
 		tickLower,
 		tickUpper,
@@ -192,9 +197,9 @@ func Rebalance(do bool) {
 	}
 
 	//get the transaction hash
-	fmt.Println("rebal tx sent: %s", tx.Hash().Hex())
+	fmt.Println("rebal tx: ", tx.Hash().Hex())
 
-	config.Readstring("rebalance set wait for pending..next .. ")
+	config.Readstring("rebalance sent.....  wait for pending..next .. ")
 
 }
 
@@ -238,7 +243,7 @@ func Approve(do bool) {
 		return
 	}
 
-	fmt.Println("Approve.........  ")
+	fmt.Println(".........Approve.........  ")
 
 	fmt.Println("vaultAddress: ", vaultAddress)
 	fmt.Println("fromAddress: ", config.FromAddress)
@@ -275,7 +280,7 @@ func Approve(do bool) {
 		log.Fatal("tx0, ", err)
 	}
 
-	fmt.Println("approve amountoken0: %s", tx0.Hash().Hex())
+	fmt.Println("approve token0 tx: ", tx0.Hash().Hex())
 
 	time.Sleep(config.Network.PendingTime * time.Second)
 	//	readstring("done... Press any key to continue when ready..........")
@@ -294,9 +299,9 @@ func Approve(do bool) {
 		log.Fatal("tx1, ", err)
 	}
 
-	fmt.Println("approve amountoken1: %s", tx1.Hash().Hex())
+	fmt.Println("approve token1 tx: ", tx1.Hash().Hex())
 
-	config.Readstring("Approve, wait for pending..next .. ")
+	config.Readstring("Approve sent... wait for pending..next .. ")
 
 }
 
@@ -306,7 +311,8 @@ func AccountInfo(do bool) {
 		return
 	}
 
-	fmt.Println("Account.........  ")
+	fmt.Println("Account  ", config.Account)
+	fmt.Println("Account address ", config.FromAddress)
 
 	tokenAInstance, err := token.NewApi(common.HexToAddress(config.Network.TokenA), config.Client)
 	if err != nil {
@@ -330,7 +336,8 @@ func ValutInfo(do bool) {
 		return
 	}
 
-	fmt.Println("VaultInfo.........  ")
+	fmt.Println(".........VaultInfo.........  ")
+	fmt.Println("Vault Address:  ", config.Network.Vault)
 
 	instance, err := vault.NewApi(vaultAddress, config.Client)
 	if err != nil {
@@ -367,7 +374,7 @@ func ValutInfo(do bool) {
 	}
 
 	bal, err := tokenInstance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
-	fmt.Println("shares in vault for Account ", config.Account)
+	fmt.Printf("shares in vault for Account %d\n", config.Account)
 	fmt.Println(bal)
 
 }

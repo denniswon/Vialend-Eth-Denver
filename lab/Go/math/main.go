@@ -30,9 +30,9 @@ func main() {
 
 	/// convert float64 to big.int
 	s := fmt.Sprintf("%.0f", sqrtPriceX96)
-	biSqrtPX96, _ := new(big.Int).SetString(s, 10)
+	bigSqrtPX96, _ := new(big.Int).SetString(s, 10)
 
-	fmt.Println("float to bigint:", biSqrtPX96, "==", sqrtPriceX96)
+	fmt.Println("float to bigint:", bigSqrtPX96, "==", sqrtPriceX96)
 
 	///------------ big int value test ， 深度copy bigint variable
 	fmt.Println("\nbig int value test....")

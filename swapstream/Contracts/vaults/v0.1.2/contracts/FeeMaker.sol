@@ -137,22 +137,20 @@ contract FeeMaker is
        
         require(staker != address(0) && staker != address(this), "staker");
 
-  		/// #debug will be replaced. Poke positions so to get uniswap v3 fees up to date. 
+  		/// Poke positions so to get uniswap v3 fees up to date. 
         _poke(cLow, cHigh);
 		
 
         (shares, amount0, amount1) = _calcShares(amountToken0, amountToken1); 
+		
+        require(shares > 0, _hint2("shares ",shares,0,0,"" ) ); 
         
         require(amountMin(amount0,amount1), "amountMIn");
-        
-        //#debug, maybe remove later
-        require(shares > 0, _hint2("shares ",shares,0,0,"" ) ); 
 
-        // Pull in tokens from sender
+        /// transfer tokens from sender
         if (amount0 > 0) token0.safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) token1.safeTransferFrom(msg.sender, address(this), amount1);
 
-        // Mint shares to recipient
         _mint(staker, shares);
 
 		//#debug  test send staker some ttoken tokenGiveAwayRate.div(100).mul(shares)
@@ -164,8 +162,7 @@ contract FeeMaker is
 
         emit Deposit(msg.sender, staker, shares, amount0, amount1);
 
-        //#debug , temporary turned off
-        //require(totalSupply() <= maxTotalSupply, "maxTotalSupply");
+        require(totalSupply() <= maxTotalSupply, "CAP");
     }
 
     /// poke to update fees from uniswap. 
@@ -585,6 +582,7 @@ contract FeeMaker is
 	/// todo
 	function amountMin(uint256 amount0, uint256 amount1) internal pure returns (bool){
 		return true; 
+		
 	}
     /// @notice return Balance of available token0.
      
@@ -598,12 +596,16 @@ contract FeeMaker is
         return token1.balanceOf(address(this)).sub(accruedProtocolFees1);
     }   
 
-
+	/// @notice vault liquidity in uniswap
     function getSSLiquidity(int24 tickLower, int24 tickUpper) external view returns(uint128 liquidity) {
     	( liquidity , , , , ) = _position(tickLower, tickUpper);
     }
 
-
+	///set new maxTotalSupply
+	function setMaxTotalSupply(uint256 newMax) external nonReentrant onlyGovernance {
+			maxTotalSupply = newMax;
+	}
+	
     modifier onlyGovernance {
         require(msg.sender == governance, "governance");
         _;

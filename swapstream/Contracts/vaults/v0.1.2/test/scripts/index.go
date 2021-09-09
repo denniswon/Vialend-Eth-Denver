@@ -31,21 +31,22 @@ func main() {
 	//project.GetPoolFromToken(false)
 	//return
 
-	//project.Approve(false)
+	//project.Approve(true)
 	//return
 	/// deposit token0 amount * 1e18, token1 amount * 1e6
 	//project.AccountInfo(true)
 	//project.ValutInfo(true)
 
-	//project.Deposit(true, 1, 5000)
+	//project.Deposit(true, 10, 1000)
 
 	//project.AccountInfo(true)
 	//project.ValutInfo(true)
 
-	/// withdraw shares
-	project.Withdraw(true, 0.1)
+	/// withdraw shares, input number in percentage %
+	//project.Withdraw(true, 20)
 
-	//project.Rebalance(true)
+	/// make sure Account = 0
+	project.Rebalance(true)
 
 	project.AccountInfo(true)
 	project.ValutInfo(true)

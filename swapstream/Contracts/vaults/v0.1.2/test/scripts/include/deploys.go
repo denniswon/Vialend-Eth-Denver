@@ -50,7 +50,7 @@ func DeployVault(do bool) {
 
 	///require governance. always use account 0 as the deployer
 	config.Account = 0
-	config.GetSignature(config.Networkid)
+	config.Auth = config.GetSignature(config.Networkid)
 
 	config.NonceGen()
 
