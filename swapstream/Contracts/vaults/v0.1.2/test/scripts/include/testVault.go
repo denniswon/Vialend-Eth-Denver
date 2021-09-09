@@ -95,7 +95,8 @@ func Withdraw(do bool, percent float64) {
 	}
 
 	fmt.Println("shares awailable = ", ashares)
-	shares := new(big.Int).Mul(ashares, config.FloorFloat64ToBigInt(percent))
+	//shares := new(big.Int).Mul(ashares, config.FloorFloat64ToBigInt(percent))
+	shares := new(big.Int).Div(ashares, big.NewInt(2))
 
 	fmt.Println("shares required = ", shares)
 
@@ -336,28 +337,33 @@ func ValutInfo(do bool) {
 		log.Fatal("vault.NewApi ", err)
 	}
 
+	///----------- 当前vault 里的 totalSupply
 	totalSupply, err := instance.TotalSupply(&bind.CallOpts{})
 	fmt.Println("totalSupply (total shares in vault) :", totalSupply)
 
+	///----------- 当前uniswap里的total liquidity
 	tickLower := big.NewInt(-199740)
 	tickUpper := big.NewInt(-187740)
 	liquidity, err := instance.GetSSLiquidity(&bind.CallOpts{}, tickLower, tickUpper)
 	fmt.Println("Current liquidity  :", liquidity)
 
+	///----------- fee0 的总数
 	accumulateFees0, _ := instance.AccumulateFees0(&bind.CallOpts{})
 	fmt.Println("accumulateFees0  :", accumulateFees0)
 
+	///----------- fee1 的总数
 	accumulateFees1, _ := instance.AccumulateFees1(&bind.CallOpts{})
 	fmt.Println("accumulateFees1  :", accumulateFees1)
 
-	///-----------
+	///----------- 分别返回两个toten 的总数
 	GetTotalAmounts(true)
 
 	///-----------
 
+	///----------- account x 的 shares
 	tokenInstance, err := token.NewApi(vaultAddress, config.Client)
 	if err != nil {
-		log.Fatal("token0Instance,", err)
+		log.Fatal("tokenInstance,", err)
 	}
 
 	bal, err := tokenInstance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
