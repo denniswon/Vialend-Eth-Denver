@@ -34,7 +34,7 @@ type Init struct {
 }
 
 var Networkid = 3
-var Account = 1
+var Account = 2
 var Client, err = ethclient.Dial(Networks[Networkid].ClientUrl)
 var Auth = GetSignature(Networkid)
 var FromAddress common.Address
@@ -93,7 +93,8 @@ var Networks = [...]Init{
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984",
 		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //new uniswapv3 factory modified
 		[]string{"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
-			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6"}, //test user 2
+			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",
+			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a"}, //test user 2
 		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
 		"0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8", //tokenB  eusdc
 		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54", //new owner, test user 1
