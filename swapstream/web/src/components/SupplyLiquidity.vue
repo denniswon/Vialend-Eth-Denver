@@ -50,7 +50,7 @@
     <el-dialog :title="supplyDialogTitle"
                :visible.sync="supplyDialogVisible"
                :append-to-body="true"
-               width="360px"
+               width="380px"
                center>
       <span>To supply or withdraw liquidity for {{supplyTokens}} to the SwapStream protocol,you need to enable it first.</span>
       <span>
@@ -65,6 +65,7 @@
                        width="30px"
                        height="30px" /></td>
                 <td>
+                  <!-- <span class="lblBalance">Balance:{{token0Balance}}(Max)</span> -->
                   <el-input placeholder="0.0"
                             type="text"
                             v-model="depositToken0"
@@ -76,6 +77,7 @@
                        width="30px"
                        height="30px" /></td>
                 <td>
+                  <!-- <span class="lblBalance">Balance:{{token1Balance}}(Max)</span> -->
                   <el-input placeholder="0.0"
                             type="text"
                             v-model="depositToken1"
@@ -145,14 +147,15 @@
 <script>
 import Web3 from 'web3'
 import contractABI from '../ABI/contractABI.json'
+import coinABI from '../ABI/ERC20.json'
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
   console.log('web3 provider:web3.currentProvider')
 } else {
   // set the provider you want from Web3.providers
-  web3 = new Web3(new Web3.providers.HttpProvider('https://goerli.infura.io'))
-  console.log('web3 provider:web3.HttpProvider')
+  web3 = new Web3(new Web3.providers.HttpProvider('https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6'))
+  console.log('web3 provider:goerli')
 }
 
 export default {
@@ -160,8 +163,8 @@ export default {
   data () {
     return {
       supplyLiquidityList: [
-        { 'number': 1, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'USDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0xFA5dF5372c03D4968d128D624e3Afeb61031a777' }, { 'iconLink': 'images/weth.png', 'name': 'WETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x3fF5E22B4be645EF1CCc8C6e32EDe6b35c569AE4' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
-        { 'number': 2, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'USDC', 'abi': '', 'tokenAddress': '' }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true },
+        { 'number': 1, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'eUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8' }, { 'iconLink': 'images/weth.png', 'name': 'eWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
+        { 'number': 2, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'dUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x88177e1a55c6Ca956A738abbF6d87148217a8Cb0' }, { 'iconLink': 'images/weth.png', 'name': 'dWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x495A3648AfDeb15Ce7B0cDDff44EAeB5E014cEAD' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
         { 'number': 3, 'smartVaults': [{ 'iconLink': 'images/wbtc.png', 'name': 'WBTC', 'abi': '', 'tokenAddress': '' }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true }
       ],
       isConnected: false,
@@ -185,7 +188,9 @@ export default {
       currentItem: null,
       depositLoading: false,
       withdrawLoading: false,
-      shareValue: 0
+      shareValue: 0,
+      token0Balance: 1,
+      token1Balance: 2
     }
   },
   created: function () {
@@ -203,6 +208,8 @@ export default {
     },
     connectWallet () {
       this.$parent.setWalletStatus()
+      this.isConnected = this.$parent.getConnectionStatus()
+      console.log('wallet connection status:', this.isConnected)
     },
     checkConnectionStatus () {
       if (ethereum.isConnected() && this.$parent.isConnected) {
@@ -216,6 +223,7 @@ export default {
       }
     },
     showSupplyDialog (item) {
+      var _this = this
       this.checkConnectionStatus()
       this.currentItem = item
       this.supplyDialogTitle = item.smartVaults[0].name + ' / ' + item.smartVaults[1].name
@@ -250,8 +258,57 @@ export default {
         }
         this.enableDepositFeature()
       })
+      // Get the balance of the account of given address
+      console.log('addr=', this.currentItem.smartVaults[0].tokenAddress)
+      web3.eth.getBalance('0xFA5dF5372c03D4968d128D624e3Afeb61031a777').then(function (balance) {
+        // _this.token0Balance = balance
+        console.log('balance=', balance)
+      })
+
+      var coinContract = new web3.eth.Contract(
+        coinABI,
+        '0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2', { from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' })
+
+      web3.eth.getBalance(ethereum.selectedAddress).then(console.log)
+
+      coinContract.methods.balanceOf('0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8').call({ from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' }, function (error, result) {
+        if (!error) {
+          console.log('result=', result)
+        } else {
+          console.log(error)
+        }
+      })
+      this.getBal()
+      // // 查看某个账号的代币余额
+      // coinContract.methods.balanceOf('0xFA5dF5372c03D4968d128D624e3Afeb61031a777').call()
+      //   .then(val => {
+      //     console.log('Coin BalanceOf=' + val)
+      //   })
+
+      // coinContract.methods.name().call()
+      //   .then(val => {
+      //     console.log('name=' + val)
+      //   })
 
       this.supplyDialogVisible = true
+    },
+    async getBal () {
+      const minABI = [
+        // balanceOf
+        {
+          constant: true,
+          inputs: [{ name: '_owner', type: 'address' }],
+          name: 'balanceOf',
+          outputs: [{ name: 'balance', type: 'uint256' }],
+          type: 'function'
+        }
+      ]
+      var coinContract = new web3.eth.Contract(
+        minABI,
+        '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8')
+      const result = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
+      // const format = Web3Client.utils.fromWei(result) // 29803630.997051883414242659
+      console.log('balance000=', result)
     },
     enableDepositFeature () {
       if (this.token0Approved && this.token1Approved) {
@@ -317,8 +374,6 @@ export default {
           .deposit(
             BigInt(this.depositToken0 * 1000000000000000000),
             BigInt(this.depositToken1 * 1000000000000000000),
-            BigInt(1),
-            BigInt(1),
             ethereum.selectedAddress
           )
           .send({
@@ -358,14 +413,14 @@ export default {
         this.$parent.keeperContract.methods
           .withdraw(
             BigInt(this.shareValue * 1000000000000000000),
-            BigInt(1000000000000000000),
-            BigInt(1000000000000000000),
+            BigInt(0),
+            BigInt(0),
             ethereum.selectedAddress
           )
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '10000000000',
-            gas: 200000,
+            gasPrice: '80000000000',
+            gas: 600000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
@@ -402,5 +457,8 @@ export default {
 .table td,
 .table th {
   border: 0px solid transparent;
+}
+.lblBalance {
+  float: right;
 }
 </style>

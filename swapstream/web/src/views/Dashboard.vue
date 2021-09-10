@@ -1,56 +1,6 @@
 <template>
   <div>
-    <!-- Header -->
-    <header class="header">
-      <div class="container">
-        <div class="row">
-          <div class="col">
-            <div class="
-                header_content
-                d-flex
-                flex-row
-                align-items-center
-                justify-content-start
-              ">
-              <div class="logo">
-                <a href="#">
-                  <div style="vertical-align: middle;">
-                    <img src="images/logo.png"
-                         width="30"
-                         height="33" />&nbsp;&nbsp;SwapStream
-                  </div>
-                  <div></div>
-                </a>
-              </div>
-              <nav class="main_nav">
-                <ul class="d-flex flex-row align-items-center justify-content-start">
-                  <li><a href="#">Dashboard</a></li>
-                  <li><a href="#">Vote</a></li>
-                </ul>
-              </nav>
-              <div class="
-      header_extra
-      d-flex
-      flex-row
-      align-items-center
-      justify-content-start
-      ml-auto
-    ">
-                <div :class="[walletButtonClass,isConnected ? connectClass:disConnectClass]">
-                  <a href="#"
-                     @click="setWalletStatus">{{ StatusButtonText }}</a>
-                </div>
-              </div>
-              <div class="hamburger ml-auto">
-                <i class="fa fa-bars"
-                   aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
+    <Header ref="headerComp" />
     <!-- Menu -->
 
     <div class="menu">
@@ -79,7 +29,7 @@
           <div class="row align-items-center my-financial">
             <div class="col-md-3 text-center">
               <ul>
-                <li class="title">My Liquidity</li>
+                <li class="title">My Shares</li>
                 <li class="value">{{myLiquidity}}</li>
               </ul>
             </div>
@@ -128,36 +78,19 @@
 </template>
 
 <script>
-import contractABI from '../ABI/contractABI.json'
+import Header from '@/components/Header.vue'
 import { Component, Vue } from 'vue-property-decorator'
 import MyLiquidity from '@/components/MyLiquidity.vue'
 import SupplyLiquidity from '@/components/SupplyLiquidity.vue'
 
 const _this = this
 
-window.ethereum.autoRefreshOnNetworkChange = false
-window.ethereum.on('accountsChanged', () => {
-  console.log('accountsChanged')
-  connectWallet()
-  // switch (_this.$route.path) {
-  //   case '/':
-  //     this.connectMetaMask()
-  //     break
-  //   default:
-  // }
-})
-window.ethereum.on('networkChanged', () => {
-  console.log('networkChanged')
-  connectWallet()
-})
-
 export default {
-  components: { MyLiquidity, SupplyLiquidity },
+  components: { Header, MyLiquidity, SupplyLiquidity },
   data () {
     return {
-      vaultAddress: '0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009',
+      keeperContract: this.$parent.keeperContract,
       currentAccount: null,
-      keeperContract: null,
       isConnected: false,
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
@@ -170,13 +103,15 @@ export default {
   created: function () {
     // this.showTreaty()
     console.log('load create function')
-    this.keeperContract = new web3.eth.Contract(
-      contractABI,
-      this.vaultAddress
-    )
   },
   mounted () {
     window.connectWallet = this.connectWallet
+  },
+  watch: {
+    isConnected (newStatus, oldStatus) {
+      this.isConnected = newStatus
+      this.$refs.supplyliq.isConnected = newStatus
+    }
   },
   methods: {
     showTreaty () {
@@ -187,61 +122,11 @@ export default {
 
     },
     setWalletStatus () {
-      if (this.isConnected) {
-        console.log('call disconnect')
-        this.isConnected = false
-        // ethereum.on('disconnect', error => { console.log(error) })
-        this.StatusButtonText = 'Connect Wallet'
-      } else {
-        if (ethereum.isConnected() && this.currentAccount != null) {
-          this.isConnected = true
-          console.log('this.currentAccount=' + this.currentAccount)
-          this.StatusButtonText = this.currentAccount
-          this.$refs.supplyliq.checkConnectionStatus()
-        } else {
-          this.connectWallet()
-        }
-      }
+      this.$refs.headerComp.setWalletStatus()
     },
-    connectWallet () {
-      console.log('call connectWallet')
-      ethereum
-        .request({ method: 'eth_requestAccounts' })
-        .then(this.handleAccountsChanged)
-        .catch((err) => {
-          // Some unexpected error.
-          // For backwards compatibility reasons, if no accounts are available,
-          // eth_accounts will return an empty array.
-          console.error(err)
-        })
-    },
-    handleAccountsChanged (accounts) {
-      if (accounts.length === 0) {
-        // MetaMask is locked or the user has not connected any accounts
-        console.log('Please connect to MetaMask.')
-      } else if (accounts[0] !== this.currentAccount) {
-        this.currentAccount = accounts[0]
-        // Do any other work!
-        this.isConnected = true
-        this.StatusButtonText = this.currentAccount
-        console.log('account status:' + ethereum.isConnected())
-        this.$refs.supplyliq.checkConnectionStatus()
-        this.getMyLiquidity()
-      }
-    },
-    getMyLiquidity () {
-      if (this.keeperContract != null) {
-        var myLiq = this.keeperContract.methods
-          .balanceOf(this.currentAccount)
-          .call()
-          .then(val => {
-            this.myLiquidity = val
-            console.log('BalanceOf=' + val)
-          })
-        // console.log('BalanceOf=' + myLiq + '|' + JSON.stringify(myLiq))
-      } else {
-        console.log('keeperContract is null')
-      }
+    getConnectionStatus () {
+      this.isConnected = this.$refs.headerComp.isConnected
+      return this.$refs.headerComp.isConnected
     }
   }
 }
@@ -315,6 +200,24 @@ export default {
   background: #637496;
 }
 .walletButton a {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 37px;
+}
+
+.adminButton {
+  width: 100px;
+  height: 37px;
+  background: #2a4988;
+  text-align: center;
+  border-radius: 6px;
+}
+.adminButton:hover {
+  background: #637496;
+}
+.adminButton a {
   display: block;
   font-size: 16px;
   font-weight: 500;
