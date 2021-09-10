@@ -22,14 +22,19 @@ export default new Router({
       component: () => import('./views/Dashboard.vue')
     },
     {
-      path: '/about',
-      name: 'about',
-      component: () => import('./views/About.vue')
-    },
-    {
       path: '/test',
       name: 'test',
       component: () => import('./views/Test.vue')
+    },
+    {
+      path: '/uniswap',
+      name: 'uniswap',
+      component: () => import('./views/Uniswap.vue')
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('./views/Admin.vue')
     }
   ]
 })
