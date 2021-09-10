@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"time"
 
 	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 	vault "../../../deploy/FeeMaker"
@@ -18,11 +17,12 @@ import (
 		token "../../uniswap/v3/deploy/token"
 	*/)
 
-func DeployFactory(do bool) *factory.Api {
+func DeployFactory(do int) *factory.Api {
 
-	if !do {
+	if do <= 0 {
 		return nil
 	}
+	fmt.Println(".......................Deploy Uniswap Factory. ..................")
 
 	config.NonceGen()
 	address, tx, instance, err := factory.DeployApi(config.Auth, config.Client)
@@ -32,43 +32,47 @@ func DeployFactory(do bool) *factory.Api {
 
 	config.Network.Factory = address.Hex()
 
-	fmt.Println("factory address:", address.Hex())
-
 	_, _ = instance, tx
 
-	time.Sleep(config.Network.PendingTime * time.Second)
-	//	fmt.Println("factory:", config.Network1.Factory)
+	config.Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
+
+	fmt.Println("factory address:", address.Hex())
 
 	return instance
 }
 
-func DeployVault(do bool) {
+func DeployVault(do int) {
 
-	if !do {
+	if do <= 0 {
 		return
 	}
 
+	fmt.Println(".......................Deploy Vault ...................")
+
 	///require governance. always use account 0 as the deployer
-	config.Account = 0
-	config.Auth = config.GetSignature(config.Networkid)
+	config.Auth = config.GetSignature(config.Networkid, 0)
 
 	config.NonceGen()
 
-	pool := GetPoolFromToken(true)
+	pool := GetPoolFromToken()
 	ttoken := common.HexToAddress(config.Network.BonusToken)
 	protocolFee := big.NewInt(10000)
 	maxTotalSupply := big.NewInt(1e18).Mul(big.NewInt(1e18), big.NewInt(1e18))
 
 	address, tx, instance, err := vault.DeployApi(config.Auth, config.Client, pool, ttoken, protocolFee, maxTotalSupply)
 
+	///set auth back to Account
+	config.Auth = config.GetSignature(config.Networkid, config.Account)
+
 	if err != nil {
 		log.Fatal("deploy vault ", err)
 	}
 
 	config.Network.Vault = address.Hex()
-	fmt.Println("vault address:", address.Hex())
 
-	time.Sleep(config.Network.PendingTime * time.Second)
+	config.Readstring("Vault deploy done, wait for pending ... next... ")
+
+	fmt.Println("vault address:", address.Hex())
 
 	_, _ = instance, tx
 

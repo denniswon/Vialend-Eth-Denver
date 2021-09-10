@@ -55,6 +55,25 @@ func main() {
 	fmt.Printf("a = %v    b = %v   tmp = %v\n", a, b, tmp)
 
 	fmt.Println(x1E18(5000000000000005))
+
+	/// 整除 ，  big.int to float
+	//var bv = new(big.Int).Mul(big.NewInt(1e18), big.NewInt(25))
+	var bv, _ = new(big.Int).SetString("25729324269165216041", 10)
+
+	fbalance := new(big.Float)
+	fbalance.SetString(bv.String())
+	fValue := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(18)))
+
+	fmt.Println(fValue) // 25.729324269165216041
+
+	// calculate percentable   a * 100 / B = x %
+	bal := big.NewInt(125)
+	fbal := new(big.Float)
+	fbal.SetString(bal.String())
+	fmt.Println(new(big.Float).Quo(fbal, big.NewFloat(1200)))
+	x := new(big.Float).Quo(new(big.Float).Mul(fbal, big.NewFloat(100)), big.NewFloat(1200))
+	fmt.Println(x, "%")
+
 }
 
 ///  return big.NewInt(10 * 1e18) //10 * 10**18

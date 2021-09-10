@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 	"math/big"
-	"time"
 
 	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 	pool "../../../../../../../uniswap/v3/deploy/UniswapV3Pool"
@@ -21,10 +20,12 @@ import (
 		token "../../uniswap/v3/deploy/token"
 	*/)
 
-func CreatePool(do bool) common.Address {
-	if !do {
+func CreatePool(do int) common.Address {
+	if do <= 0 {
 		return common.HexToAddress("0x0")
 	}
+
+	fmt.Println(".......................Create Pool. ..................")
 
 	factoryAddress := common.HexToAddress(config.Network.Factory)
 
@@ -47,7 +48,7 @@ func CreatePool(do bool) common.Address {
 		log.Fatal("createPool ", err)
 	}
 
-	time.Sleep(config.Network.PendingTime * time.Second)
+	config.Readstring("createpool done, wait for pending ... next getPool... ")
 
 	//get the transaction hash
 	_ = tx // reserve
@@ -57,17 +58,18 @@ func CreatePool(do bool) common.Address {
 	if err != nil {
 		log.Fatal("getpool ", err)
 	}
+
 	config.Network.Pool = poolAddress.String()
 
+	config.Readstring("createpool done, wait for pending ... next... ")
+
 	fmt.Println("poolAddress:", poolAddress)
+
 	return poolAddress
 
 }
 
-func GetPoolFromToken(do bool) common.Address {
-	if !do {
-		return common.HexToAddress("0x0")
-	}
+func GetPoolFromToken() common.Address {
 
 	factoryAddress := common.HexToAddress(config.Network.Factory)
 
@@ -96,11 +98,13 @@ func GetPoolFromToken(do bool) common.Address {
 
 }
 
-func InitialPool(do bool) {
+func InitialPool(do int) {
 
-	if !do {
+	if do <= 0 {
 		return
 	}
+
+	fmt.Println(".........Initialize Pool ..............")
 
 	//	poolAddress, err := newInstance.GetPool(&bind.CallOpts{}, Network.TokenA, Network.TokenB, fee)
 
@@ -152,20 +156,9 @@ func InitialPool(do bool) {
 
 	fmt.Println("initial tx sent:", tx.Hash().Hex())
 
-	time.Sleep(config.Network.PendingTime * time.Second)
+	config.Readstring("initial pool done, waiting for pending... next ... ")
 
-	//readstring("check the address and  press any key when ready... ")
-
-	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
-
-	fmt.Println("slot0.0:", slot0.SqrtPriceX96)
-	fmt.Println("slot0.1:", slot0.Tick)
-
-	feeRate, _ := poolInstance.Fee(&bind.CallOpts{})
-	fmt.Println("Fee:", feeRate)
-
-	liquidity, _ := poolInstance.Liquidity(&bind.CallOpts{})
-	fmt.Println("liquidity:", liquidity)
+	PoolInfo()
 
 	/*
 
@@ -193,6 +186,32 @@ func InitialPool(do bool) {
 	*/
 }
 
+func PoolInfo() {
+
+	//	poolAddress, err := newInstance.GetPool(&bind.CallOpts{}, Network.TokenA, Network.TokenB, fee)
+
+	fmt.Println(".............. Pool Info ....... ")
+
+	fmt.Println("pool address:", common.HexToAddress(config.Network.Pool))
+
+	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	fmt.Println("slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
+	fmt.Println("slot0.Tick:", slot0.Tick)
+
+	feeRate, _ := poolInstance.Fee(&bind.CallOpts{})
+	fmt.Println("Fee:", feeRate)
+
+	liquidity, _ := poolInstance.Liquidity(&bind.CallOpts{})
+	fmt.Println("liquidity in pool:", liquidity)
+
+}
 func getSqrtPriceX96(price float64) float64 {
 	return math.Floor(math.Sqrt(price) * (1 << 96))
 }

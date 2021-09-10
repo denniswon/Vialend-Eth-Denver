@@ -6,13 +6,12 @@ solc --optimize --overwrite --bin feeMaker.sol -o ../build
 abigen --abi=../build/feeMaker.abi --bin=../build/feeMaker.bin --pkg=api --out=../deploy/feeMaker/feeMaker.go
 
 feemaker: georli
-0x9432391d340024d5FA561a46025De1F42763c451
-0x29Afdd61dBd1AB6f044aa751bfeEd31f7f7A49f9
-0x34170abd43B7853304D358CfEe4A88744DA6d39D
-0x3C111b30536079C4206b6b13fA6b5B9e5CC119C5
-0x31698AE7BDE6387C69dbD5257D8C1DF5A88E70a5
-0x3c15d47D92bF713964deDBFD50DF0ABA9c1F7c05
 0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2
+
+
+0x5F959B38c7cdCF18276DB0979993Dc674f73458d
+0x9f0267c28A3b74Bf1735AB6Ca81e70C28B9805ED
+0xF08B791E6ea2963B8162993dCa91F4d20639bF60
 
 */
 
@@ -216,8 +215,8 @@ contract FeeMaker is
         amount1 = unusedAmount1.add(poolamount1);
 
 
-        require(amount0 >= amount0Min, _hint2("withdraw amount0,",amount0, 0,0,"") ) ;
-        require(amount1 >= amount1Min, _hint2("withdraw amount1,",amount1, 0,0,"") );
+        require(amount0 >= amount0Min, _hint2(" amount0<amount0Min: ",amount0, 0,0,"") ) ;
+        require(amount1 >= amount1Min, _hint2(" amount1<amount1Min: ",amount1, 0,0,"") );
         
         // Push tokens to recipient
         if (amount0 > 0) token0.safeTransfer(staker, amount0);

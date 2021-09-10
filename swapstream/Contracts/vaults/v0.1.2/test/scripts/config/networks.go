@@ -19,7 +19,7 @@ import (
 )
 
 type Init struct {
-	ClientUrl   string
+	ProviderUrl []string
 	Factory     string
 	Callee      string
 	PrivateKey  []string
@@ -33,10 +33,13 @@ type Init struct {
 	Fee         int64
 }
 
-var Networkid = 3
-var Account = 1
-var Client, err = ethclient.Dial(Networks[Networkid].ClientUrl)
-var Auth = GetSignature(Networkid)
+var Networkid = 2 /// 0: mainnet, 1: local, 2: gorlie
+var Account = 0
+var ProviderSortId = 1
+var Auto = true
+
+var Client, err = ethclient.Dial(Networks[Networkid].ProviderUrl[ProviderSortId])
+var Auth = GetSignature(Networkid, Account)
 var FromAddress common.Address
 
 var Network = Networks[Networkid]
@@ -44,7 +47,7 @@ var Network = Networks[Networkid]
 var Networks = [...]Init{
 
 	{ // 0 mainnet
-		"",
+		[]string{""},
 		"",           //factory
 		"",           //callee
 		[]string{""}, //privatekey
@@ -59,37 +62,25 @@ var Networks = [...]Init{
 	},
 
 	{ // 1 local
-		"http://127.0.0.1:7545",
-		"0x42414849A1f13b4d17C2B2eCd2dBfc6124567416", //factory
+		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
+		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
 		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
-		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0"},
+		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
+			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
 		"0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59", //tokenA tusdc
 		"0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23", //tokenB tweth
 		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
 		10,
-		"0x606B7f7093aa4df2282763F4e9f714706221838b", // pool
+		"0xf320395747Ad48f11Ce8eCA67Fcf82bF479CD532", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0xF2510458eaf4dC13Fa80bef475D857F6775b38C5", //vault address
+		"0x5d2c202CA5A4bAB4BB172C278d24eF78e43AD375", //vault address
 		3000, // fee
 	},
 
-	{ // 2 local user2
-		"http://127.0.0.1:7545",
-		"0xDd9A27A42493AAebBf4d46Af476fd045acD467f5",                                 // factory
-		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc",                                 //callee
-		[]string{"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"}, // local account1
-		"0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59",                                 //tokenA tusdc
-		"0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23",                                 //tokenB tweth
-		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea",                                 //new owner
-		10,
-		"0x606B7f7093aa4df2282763F4e9f714706221838b", //pool
-		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0xF2510458eaf4dC13Fa80bef475D857F6775b38C5", //vault address
-		3000, // fee
-	},
+	{ ///2  goerli admin test 1
+		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///
 
-	{ ///3  goerli admin test 1
-		"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984",
 		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //new uniswapv3 factory modified
 		[]string{"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
@@ -101,14 +92,14 @@ var Networks = [...]Init{
 		40, //time pending interval
 		"0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2", //vault address
+		"0x5F959B38c7cdCF18276DB0979993Dc674f73458d", //vault address
 		3000, // fee
 	},
 }
 
-func GetSignature(nid int) *bind.TransactOpts {
+func GetSignature(nid int, accId int) *bind.TransactOpts {
 
-	privateKey, err := crypto.HexToECDSA(Network.PrivateKey[Account])
+	privateKey, err := crypto.HexToECDSA(Network.PrivateKey[accId])
 
 	if err != nil {
 		log.Fatal(err)
@@ -149,9 +140,7 @@ func Readstring(msg string) string {
 	fmt.Println(msg)
 	fmt.Println("---------------------")
 
-	auto := true
-
-	if auto {
+	if Auto {
 		time.Sleep(Network.PendingTime * time.Second)
 		return ""
 	} else {
@@ -200,4 +189,13 @@ func Float64ToBigInt(f64 float64) *big.Int {
 	}
 
 	return big.NewInt(int64(f64))
+}
+
+func Pricef(priceInWei *big.Int, decimal int) *big.Float {
+	fbalance := new(big.Float)
+	fbalance.SetString(priceInWei.String())
+	value := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(decimal)))
+
+	//fmt.Println(value) // 25.729324269165216041
+	return value
 }
