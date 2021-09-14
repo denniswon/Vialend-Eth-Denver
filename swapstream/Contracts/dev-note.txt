@@ -1,3 +1,26 @@
+network set:
+		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
+		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
+		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
+		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
+			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
+		"0x6D30f1bDb702b2Ccc930BF04e094DC2D571FBb6a", //tokenA usdc
+		"0x83c3C928F77e74fa44bbF420478991124596d5e8", //tokenB usdt
+		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
+		10,
+		"0x1fD73Ce67f09753EF1FBbC7A0d411ECD65866ECA", // pool
+		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
+		"0x33679a533CB10D87CD9e54d649e9Ba7811C546d6", //vault address
+		3000, // fee
+
+
+	
+
+
+
+
+
+
  solc --optimize --overwrite --abi tester.sol -o ../build
   solc solc --optimize --overwrite --bin tester.sol -o ../build
 abigen --abi=../build/tester.abi --bin=../build/tester.bin --pkg=api --out=../deploy/tester/tester.go
@@ -11,7 +34,8 @@ Test admin 2:
 	284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f
 	
 vault:
-	0xF2510458eaf4dC13Fa80bef475D857F6775b38C5 (ganache local)
+	0x33679a533CB10D87CD9e54d649e9Ba7811C546d6   (ganache local)
+	0x6D479dc284A7103Ba6329F3e6A0A545f6928FFfe  (ganache local)
 	
 factory:  
 	0x2820BAd125c568C556a86d80A9484fa268A944c2 (ganache local)

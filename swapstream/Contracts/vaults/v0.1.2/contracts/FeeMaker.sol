@@ -5,13 +5,30 @@ solc --optimize --overwrite --abi feeMaker.sol -o ../build
 solc --optimize --overwrite --bin feeMaker.sol -o ../build
 abigen --abi=../build/feeMaker.abi --bin=../build/feeMaker.bin --pkg=api --out=../deploy/feeMaker/feeMaker.go
 
-feemaker: georli
-0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2
+    external and public functions 
+    	deposit
+		widthdraw
+		
+		rebalance
+		
+		setMaxTotalSupply
+		
+	    getBalance0
+	    getBalance1
+		
+		capacity = getTotalAmounts / maxTotalSupply
 
+		getTotalAmounts  -- total supply in vault
+		
+		getPositionAmounts	  --  pool's token0 token1
+		
+		getSSLiquidity  -- pool's liquidity
+		
+		
+		collectProtocol		
 
-0x5F959B38c7cdCF18276DB0979993Dc674f73458d
-0x9f0267c28A3b74Bf1735AB6Ca81e70C28B9805ED
-0xF08B791E6ea2963B8162993dCa91F4d20639bF60
+		sweep
+		
 
 */
 
@@ -142,8 +159,9 @@ contract FeeMaker is
 
         (shares, amount0, amount1) = _calcShares(amountToken0, amountToken1); 
 		
-        require(shares > 0, _hint2("shares ",shares,0,0,"" ) ); 
+        require(shares > 0, _hint2("shares ", shares, 0, 0,"" ) ); 
         
+        ///todo
         require(amountMin(amount0,amount1), "amountMIn");
 
         /// transfer tokens from sender
@@ -241,9 +259,7 @@ contract FeeMaker is
         //get total amount from current balance + position liquidity for each token
         (uint256 total0, uint256 total1) = getTotalAmounts();
 
-        // If total supply > 0, vault can't be empty
-        assert(totalSupply == 0 || total0 > 0 || total1 > 0);
-        
+       	assert( totalSupply == 0   || total0 >0 ||  total1>0 );
 
         if (totalSupply == 0) {
             // For first deposit, just use the amounts desired
@@ -266,7 +282,6 @@ contract FeeMaker is
             shares = cross.mul(totalSupply).div(total0).div(total1);
         }
         
-     
     }    
     	
 	/// collect fees and remove liquidity from Uniswap pool.
@@ -514,8 +529,8 @@ contract FeeMaker is
         uint256 amount1,
         address to
     ) external onlyGovernance {
-        //accruedProtocolFees0 = accruedProtocolFees0.sub(amount0);
-        //accruedProtocolFees1 = accruedProtocolFees1.sub(amount1);
+        accruedProtocolFees0 = accruedProtocolFees0.sub(amount0);
+        accruedProtocolFees1 = accruedProtocolFees1.sub(amount1);
         if (amount0 > 0) token0.safeTransfer(to, amount0);
         if (amount1 > 0) token1.safeTransfer(to, amount1);
     }
@@ -589,6 +604,7 @@ contract FeeMaker is
         return token0.balanceOf(address(this)).sub(accruedProtocolFees0);
     }
 
+
     /// @notice return Balance of available token1.
     
     function getBalance1() public view returns (uint256) {
@@ -600,7 +616,18 @@ contract FeeMaker is
     	( liquidity , , , , ) = _position(tickLower, tickUpper);
     }
 
-	///set new maxTotalSupply
+	
+    /// @notice Removes tokens accidentally sent to this vault.
+    function sweep(
+        IERC20 token,
+        uint256 amount,
+        address to
+    ) external onlyGovernance {
+        require(token != token0 && token != token1, "token");
+        token.safeTransfer(to, amount);
+    }
+    
+	///@notice set new maxTotalSupply
 	function setMaxTotalSupply(uint256 newMax) external nonReentrant onlyGovernance {
 			maxTotalSupply = newMax;
 	}
@@ -639,6 +666,19 @@ contract FeeMaker is
 
 	function _hint2(string memory msg1, uint v1, uint v2, uint v3,string memory msg2) internal pure returns (string memory)	{
 		
+		string memory sv1;
+		string memory sv2;
+		string memory sv3;
+		
+		if (v1 > 0 )
+			sv1 = uint2str(v1);
+		
+		if (v2 > 0 )
+			sv2 = uint2str(v2);
+
+		if (v3 > 0 )
+			sv3 = uint2str(v3);
+			
 		if (true)  // #debug, turn to false when launch
 			return append( msg1 , ",", append(uint2str(v1),",", uint2str(v2),",",uint2str(v3)), ",", msg2) ;
 		else

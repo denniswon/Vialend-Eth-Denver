@@ -62,9 +62,12 @@ func main() {
 	//	name, symbol, decimals, totalSupply := "ddd WETH", "dWETH", uint8(18), big.NewInt(6718113)
 
 	//name, symbol, decimals, totalSupply := "eee USDC", "eUSDC", uint8(6), big.NewInt(26512386160)
-	name, symbol, decimals, totalSupply := "eee WETH", "eWETH", uint8(18), big.NewInt(6718113)
+	//name, symbol, decimals, totalSupply := "eee WETH", "eWETH", uint8(18), big.NewInt(6718113)
 
-	nid := 2
+	//name, symbol, decimals, totalSupply := "local USDC", "USDC", uint8(18), big.NewInt(50000000000)
+	name, symbol, decimals, totalSupply := "local USDT", "USDT", uint8(18), big.NewInt(50000000000)
+
+	nid := 0
 	client, err := ethclient.Dial(networks[nid].clientUrl)
 	privateKey, err := crypto.HexToECDSA(networks[nid].privateKey)
 

@@ -14,8 +14,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"golang.org/x/crypto/sha3"
 )
 
 type Init struct {
@@ -30,13 +32,14 @@ type Init struct {
 	Pool        string
 	BonusToken  string
 	Vault       string
-	Fee         int64
+	FeeTier     int64
 }
 
-var Networkid = 2 /// 0: mainnet, 1: local, 2: gorlie
-var Account = 0
-var ProviderSortId = 1
+var Networkid = 1 /// 0: mainnet, 1: local, 2: gorlie
+var Account = 1
+var ProviderSortId = 0
 var Auto = true
+var Decimals0, Decimals1 uint8
 
 var Client, err = ethclient.Dial(Networks[Networkid].ProviderUrl[ProviderSortId])
 var Auth = GetSignature(Networkid, Account)
@@ -67,13 +70,13 @@ var Networks = [...]Init{
 		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
 		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
 			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
-		"0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59", //tokenA tusdc
-		"0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23", //tokenB tweth
+		"0x6D30f1bDb702b2Ccc930BF04e094DC2D571FBb6a", //tokenA usdc
+		"0x83c3C928F77e74fa44bbF420478991124596d5e8", //tokenB usdt
 		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
 		10,
-		"0xf320395747Ad48f11Ce8eCA67Fcf82bF479CD532", // pool
+		"0x1fD73Ce67f09753EF1FBbC7A0d411ECD65866ECA", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0x5d2c202CA5A4bAB4BB172C278d24eF78e43AD375", //vault address
+		"0xdf32856E1737983Fa08c822D330eCf19123DEEf8", //vault address
 		3000, // fee
 	},
 
@@ -112,7 +115,7 @@ func GetSignature(nid int, accId int) *bind.TransactOpts {
 	}
 
 	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA)
-	fmt.Println("signed by ", FromAddress)
+	//fmt.Println("signed by ", FromAddress)
 
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Value = big.NewInt(0)                 // in wei
@@ -138,7 +141,6 @@ func NonceGen() {
 func Readstring(msg string) string {
 
 	fmt.Println(msg)
-	fmt.Println("---------------------")
 
 	if Auto {
 		time.Sleep(Network.PendingTime * time.Second)
@@ -198,4 +200,76 @@ func Pricef(priceInWei *big.Int, decimal int) *big.Float {
 
 	//fmt.Println(value) // 25.729324269165216041
 	return value
+}
+
+func TokenTransfer(AccountId int, amount *big.Int, _tokenAddress string, _toAddress string) {
+
+	transferFnSignature := []byte("transfer(address,uint256)")
+
+	tokenAddress := common.HexToAddress(_tokenAddress)
+	toAddress := common.HexToAddress(_toAddress)
+
+	hash := sha3.NewLegacyKeccak256() // old sha3.NewKeccak256()
+	hash.Write(transferFnSignature)
+	methodID := hash.Sum(nil)[:4]
+	paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)
+	paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+
+	var data []byte
+	data = append(data, methodID...)
+	data = append(data, paddedAddress...)
+	data = append(data, paddedAmount...)
+
+	privateKey, err := crypto.HexToECDSA(Network.PrivateKey[AccountId])
+
+	publicKey := privateKey.Public()
+
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	gasLimit := uint64(345607)
+	gasPrice := big.NewInt(3100000000)
+
+	nonce, err := Client.PendingNonceAt(context.Background(), fromAddress)
+	value := big.NewInt(0)
+
+	tx := types.NewTransaction(nonce, tokenAddress, value, gasLimit, gasPrice, data)
+
+	chainID, err := Client.NetworkID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = Client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("sent tx: %s\n", signedTx.Hash().Hex()) // tx
+
+}
+
+func GetAddress(accId int) common.Address {
+
+	///get fromAddress
+	privateKey, err := crypto.HexToECDSA(Network.PrivateKey[accId])
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("error casting public key to ECDSA")
+	}
+
+	return crypto.PubkeyToAddress(*publicKeyECDSA)
 }

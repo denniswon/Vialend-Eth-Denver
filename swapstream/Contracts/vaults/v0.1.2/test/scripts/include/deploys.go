@@ -22,7 +22,9 @@ func DeployFactory(do int) *factory.Api {
 	if do <= 0 {
 		return nil
 	}
+	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy Uniswap Factory. ..................")
+	fmt.Println("----------------------------------------------")
 
 	config.NonceGen()
 	address, tx, instance, err := factory.DeployApi(config.Auth, config.Client)
@@ -47,7 +49,9 @@ func DeployVault(do int) {
 		return
 	}
 
+	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy Vault ...................")
+	fmt.Println("----------------------------------------------")
 
 	///require governance. always use account 0 as the deployer
 	config.Auth = config.GetSignature(config.Networkid, 0)
@@ -70,9 +74,9 @@ func DeployVault(do int) {
 
 	config.Network.Vault = address.Hex()
 
-	config.Readstring("Vault deploy done, wait for pending ... next... ")
-
 	fmt.Println("vault address:", address.Hex())
+
+	config.Readstring("Vault deploy done, wait for pending ... next... ")
 
 	_, _ = instance, tx
 
