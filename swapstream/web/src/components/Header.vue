@@ -23,7 +23,11 @@
             </div>
             <nav class="main_nav">
               <ul class="d-flex flex-row align-items-center justify-content-start">
-                <li><a href="/dashboard">Dashboard</a></li>
+                <li>
+                  <router-link to='/dashboard'>
+                    Dashboard
+                  </router-link>
+                </li>
                 <li><a href="#">Vote</a></li>
               </ul>
             </nav>
@@ -36,7 +40,9 @@
       ml-auto
     ">
               <div class="adminButton">
-                <a href="/admin">Admin</a>
+                <router-link to='/admin'>
+                  Admin
+                </router-link>
               </div>&nbsp;&nbsp;
               <div :class="[walletButtonClass,isConnected ? connectClass:disConnectClass]">
                 <a href="#"
@@ -238,7 +244,6 @@ export default {
   background: #637496;
 }
 .adminButton a {
-  display: block;
   font-size: 16px;
   font-weight: 500;
   color: #ffffff;

@@ -89,6 +89,7 @@ export default {
   components: { Header, MyLiquidity, SupplyLiquidity },
   data () {
     return {
+      vaultAddress: this.$parent.vaultAddress,
       keeperContract: this.$parent.keeperContract,
       currentAccount: null,
       isConnected: false,

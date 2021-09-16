@@ -65,11 +65,17 @@
                        width="30px"
                        height="30px" /></td>
                 <td>
-                  <!-- <span class="lblBalance">Balance:{{token0Balance}}(Max)</span> -->
+                  <span class="lblBalance">Balance:{{token0Balance}}(<el-link type="primary"
+                             @click="depositToken0 = token0Balance">Max</el-link>)</span>
                   <el-input placeholder="0.0"
                             type="text"
                             v-model="depositToken0"
-                            style="text-align:right;"></el-input>
+                            dir="rtl"
+                            style="text-align:right;"
+                            pattern="^[0-9]*[.,]?[0-9]*$"
+                            autocorrect="off"
+                            autocomplete="off"
+                            inputmode="decimal"></el-input>
                 </td>
               </tr>
               <tr>
@@ -77,11 +83,18 @@
                        width="30px"
                        height="30px" /></td>
                 <td>
-                  <!-- <span class="lblBalance">Balance:{{token1Balance}}(Max)</span> -->
+                  <span class="lblBalance">Balance:{{token1Balance}}(<el-link type="primary"
+                             @click="depositToken1 = token1Balance">Max</el-link>)</span>
                   <el-input placeholder="0.0"
                             type="text"
                             v-model="depositToken1"
-                            :model="depositToken1"></el-input>
+                            :model="depositToken1"
+                            dir="rtl"
+                            style="text-align:right;"
+                            pattern="^[0-9]*[.,]?[0-9]*$"
+                            autocorrect="off"
+                            autocomplete="off"
+                            inputmode="decimal"></el-input>
                 </td>
               </tr>
               <tr>
@@ -118,16 +131,39 @@
                        name="second">
             <table class="table">
               <tr>
-                <td>Vault shares</td>
-                <td>
-                  <el-input placeholder="0.0"
-                            type="text"
-                            v-model="shareValue"
-                            style="text-align:right;"></el-input>
+                <td>Vault shares:{{shareValue}}
                 </td>
               </tr>
               <tr>
-                <td colspan="2">
+                <td style="text-align:right;">
+                  <el-button type="danger"
+                             size="mini"
+                             @click="setSharePercent(25)">25%</el-button>
+                  <el-button type="danger"
+                             size="mini"
+                             @click="setSharePercent(50)">50%</el-button>
+                  <el-button type="danger"
+                             size="mini"
+                             @click="setSharePercent(75)">75%</el-button>
+                  <el-button type="danger"
+                             size="mini"
+                             @click="setSharePercent(100)">Max</el-button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="share_percent">{{sharePercent}}%</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <el-slider v-model="sharePercent"></el-slider>
+                  <!-- <el-input placeholder="0.0"
+                            type="text"
+                            v-model="shareValue"
+                            style="text-align:right;"></el-input> -->
+                </td>
+              </tr>
+              <tr>
+                <td>
                   <el-button type="primary"
                              :disabled="btnWithdrawDisabled"
                              @click="withdraw"
@@ -147,6 +183,7 @@
 <script>
 import Web3 from 'web3'
 import contractABI from '../ABI/contractABI.json'
+import tokenABI from '../ABI/tokenABI.json'
 import coinABI from '../ABI/ERC20.json'
 
 if (typeof web3 !== 'undefined') {
@@ -163,9 +200,9 @@ export default {
   data () {
     return {
       supplyLiquidityList: [
-        { 'number': 1, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'eUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8' }, { 'iconLink': 'images/weth.png', 'name': 'eWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
-        { 'number': 2, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'dUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x88177e1a55c6Ca956A738abbF6d87148217a8Cb0' }, { 'iconLink': 'images/weth.png', 'name': 'dWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x495A3648AfDeb15Ce7B0cDDff44EAeB5E014cEAD' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
-        { 'number': 3, 'smartVaults': [{ 'iconLink': 'images/wbtc.png', 'name': 'WBTC', 'abi': '', 'tokenAddress': '' }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '' }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true }
+        { 'number': 1, 'smartVaults': [{ 'iconLink': 'images/weth.png', 'name': 'eWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', 'decimals': 0 }, { 'iconLink': 'images/usdc.png', 'name': 'eUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8', 'decimals': 0 }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
+        { 'number': 2, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'dUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x88177e1a55c6Ca956A738abbF6d87148217a8Cb0', 'decimals': 0 }, { 'iconLink': 'images/weth.png', 'name': 'dWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x495A3648AfDeb15Ce7B0cDDff44EAeB5E014cEAD', 'decimals': 0 }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
+        { 'number': 3, 'smartVaults': [{ 'iconLink': 'images/wbtc.png', 'name': 'WBTC', 'abi': '', 'tokenAddress': '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8', 'decimals': 0 }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', 'decimals': 0 }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true }
       ],
       isConnected: false,
       activeName: 'first',
@@ -189,14 +226,33 @@ export default {
       depositLoading: false,
       withdrawLoading: false,
       shareValue: 0,
+      sharePercent: 25,
       token0Balance: 1,
-      token1Balance: 2
+      token1Balance: 2,
+      token0Decimals: 0,
+      token1Decimals: 0,
+      myAccount: '',
+      ashares: 0
     }
   },
-  created: function () {
+  created: async function () {
+    var decimals
+    for (var i = 0; i < this.supplyLiquidityList.length; i++) {
+      decimals = await this.getDecimalOfToken(this.supplyLiquidityList[i].smartVaults[0].tokenAddress)
+      this.supplyLiquidityList[i].smartVaults[0].decimals = decimals
+      console.log('decimal0', i, '=', decimals)
+      decimals = await this.getDecimalOfToken(this.supplyLiquidityList[i].smartVaults[1].tokenAddress)
+      this.supplyLiquidityList[i].smartVaults[1].decimals = decimals
+      console.log('decimal1', i, '=', decimals)
+    }
   },
   mounted: function () {
 
+  },
+  watch: {
+    sharePercent (val) {
+      this.getShares(val)
+    }
   },
   methods: {
     getTokenContract (index) {
@@ -216,8 +272,6 @@ export default {
         console.log('wallet is connected')
         this.isConnected = true
       } else {
-        // console.log('this.isConnected=' + this.isConnected)
-        // console.log('isConnected=' + this.$parent.isConnected)
         console.log('wallet is disconnected')
         this.isConnected = false
       }
@@ -225,10 +279,16 @@ export default {
     showSupplyDialog (item) {
       var _this = this
       this.checkConnectionStatus()
+      this.getAShares()
+      this.getShares(this.sharePercent)
       this.currentItem = item
       this.supplyDialogTitle = item.smartVaults[0].name + ' / ' + item.smartVaults[1].name
       this.supplyToken0 = item.smartVaults[0].name
       this.supplyToken1 = item.smartVaults[1].name
+      this.token0Decimals = item.smartVaults[0].decimals
+      this.token1Decimals = item.smartVaults[1].decimals
+      console.log('token0Decimals=', this.token0Decimals)
+      console.log('token1Decimals=', this.token1Decimals)
       // Get approve status for token0
       // this.$store.dispatch('setApproveStatus', {
       //   'token': item.smartVaults[0].name, 'status': false
@@ -236,6 +296,7 @@ export default {
       // this.token0Approved = this.$store.commit('getApproveStatus', {
       //   'token': 'TestToken'
       // })
+
       this.$store.dispatch('getApproveStatus', { 'token': item.smartVaults[0].name }).then(res => {
         console.log(item.smartVaults[0].name + 'Approved status is:' + JSON.stringify(res))
         if (res === 'true') {
@@ -259,26 +320,26 @@ export default {
         this.enableDepositFeature()
       })
       // Get the balance of the account of given address
-      console.log('addr=', this.currentItem.smartVaults[0].tokenAddress)
-      web3.eth.getBalance('0xFA5dF5372c03D4968d128D624e3Afeb61031a777').then(function (balance) {
-        // _this.token0Balance = balance
-        console.log('balance=', balance)
-      })
+      this.getTokensBalanceInWallet(item)
+      // console.log('addr=', this.currentItem.smartVaults[0].tokenAddress)
+      // web3.eth.getBalance('0xFA5dF5372c03D4968d128D624e3Afeb61031a777').then(function (balance) {
+      //   // _this.token0Balance = balance
+      //   console.log('balance=', balance)
+      // })
 
-      var coinContract = new web3.eth.Contract(
-        coinABI,
-        '0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2', { from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' })
+      // var coinContract = new web3.eth.Contract(
+      //   coinABI,
+      //   '0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2', { from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' })
 
-      web3.eth.getBalance(ethereum.selectedAddress).then(console.log)
+      // web3.eth.getBalance(ethereum.selectedAddress).then(console.log)
 
-      coinContract.methods.balanceOf('0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8').call({ from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' }, function (error, result) {
-        if (!error) {
-          console.log('result=', result)
-        } else {
-          console.log(error)
-        }
-      })
-      this.getBal()
+      // coinContract.methods.balanceOf('0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8').call({ from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' }, function (error, result) {
+      //   if (!error) {
+      //     console.log('balance result=', result)
+      //   } else {
+      //     console.log(error)
+      //   }
+      // })
       // // 查看某个账号的代币余额
       // coinContract.methods.balanceOf('0xFA5dF5372c03D4968d128D624e3Afeb61031a777').call()
       //   .then(val => {
@@ -292,23 +353,38 @@ export default {
 
       this.supplyDialogVisible = true
     },
-    async getBal () {
-      const minABI = [
-        // balanceOf
-        {
-          constant: true,
-          inputs: [{ name: '_owner', type: 'address' }],
-          name: 'balanceOf',
-          outputs: [{ name: 'balance', type: 'uint256' }],
-          type: 'function'
-        }
-      ]
-      var coinContract = new web3.eth.Contract(
-        minABI,
-        '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8')
-      const result = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
-      // const format = Web3Client.utils.fromWei(result) // 29803630.997051883414242659
-      console.log('balance000=', result)
+    async getDecimalOfToken (address) {
+      var coinContract
+      coinContract = new web3.eth.Contract(
+        tokenABI,
+        address)
+      var decimal = await coinContract.methods.decimals().call()
+      console.log('decimal_', address, ' = ', decimal)
+      return decimal
+    },
+    async getTokensBalanceInWallet (item) {
+      var coinContract
+      var balanceWei
+      var decimals
+      // token0 balance in wallet
+      coinContract = new web3.eth.Contract(
+        tokenABI,
+        item.smartVaults[0].tokenAddress)
+      balanceWei = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
+      // decimal = await this.getDecimalOfToken(item.smartVaults[0].tokenAddress)
+      decimals = item.smartVaults[0].decimals
+      console.log('token0BalanceInWallet=', balanceWei, ';token0 decimal=', decimals)
+      this.token0Balance = (parseInt(balanceWei / (Math.pow(10, decimals)) * 1000) / 1000).toFixed(3)
+
+      // token1 balance in wallet
+      decimals = item.smartVaults[1].decimals
+      coinContract = new web3.eth.Contract(
+        tokenABI,
+        item.smartVaults[1].tokenAddress)
+      balanceWei = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
+      // this.token1Balance = (parseInt(web3.utils.fromWei(balanceWei) * 1000) / 1000).toFixed(3)
+      this.token1Balance = (parseInt(balanceWei / (Math.pow(10, decimals)) * 1000) / 1000).toFixed(3)
+      console.log('token1BalanceInWallet=', this.token1Balance, ';token1 decimal=', decimals)
     },
     enableDepositFeature () {
       if (this.token0Approved && this.token1Approved) {
@@ -367,13 +443,16 @@ export default {
     },
     deposit () {
       var _this = this
+      // console.log('t0', BigInt(this.depositToken0 * Math.pow(10, this.token0Decimals)))
+      // console.log('t1', BigInt(this.depositToken1 * Math.pow(10, this.token1Decimals)))
+      // return
       if (this.$parent.keeperContract != null) {
         console.log('account address is ' + ethereum.selectedAddress)
         this.depositLoading = true
         this.$parent.keeperContract.methods
           .deposit(
-            BigInt(this.depositToken0 * 1000000000000000000),
-            BigInt(this.depositToken1 * 1000000000000000000),
+            BigInt(this.depositToken0 * Math.pow(10, this.token0Decimals)),
+            BigInt(this.depositToken1 * Math.pow(10, this.token1Decimals)),
             ethereum.selectedAddress
           )
           .send({
@@ -383,7 +462,6 @@ export default {
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
-            // GetBalance(accountAddress)
             if (_this.depositLoading === true) {
               _this.depositLoading = false
               _this.$message('Successfully deposited!')
@@ -412,7 +490,7 @@ export default {
         this.withdrawLoading = true
         this.$parent.keeperContract.methods
           .withdraw(
-            BigInt(this.shareValue * 1000000000000000000),
+            BigInt(this.shareValue),
             BigInt(0),
             BigInt(0),
             ethereum.selectedAddress
@@ -424,7 +502,6 @@ export default {
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
-            // GetBalance(accountAddress)
             if (_this.withdrawLoading === true) {
               _this.withdrawLoading = false
               _this.$message('Successfully withdrawed!')
@@ -446,8 +523,33 @@ export default {
           })
       }
     },
+    async getShares (percent) {
+      if (this.myAccount !== ethereum.selectedAddress) {
+        this.myAccount = ethereum.selectedAddress
+        this.getAShares()
+      } else if (this.ashare === 0) {
+        this.getAShares()
+      }
+      this.shareValue = BigInt(parseInt(this.ashares * percent / 100))
+      console.log('shares=', this.shareValue)
+    },
+    async getAShares () {
+      if (this.$parent.keeperContract != null) {
+        this.ashares = await this.$parent.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+        console.log('ashares1=', this.ashares)
+      }
+    },
+    setSharePercent (percent) {
+      this.sharePercent = percent
+    },
     handleTabClick (tab, event) {
       console.log(tab, event)
+    },
+    clearInputInitData (obj) {
+      console.log('obj value=' + obj)
+      if (obj === 0) {
+        // obj = ''
+      }
     }
   }
 }
@@ -460,5 +562,9 @@ export default {
 }
 .lblBalance {
   float: right;
+}
+.share_percent {
+  font-size: 30px;
+  margin: 10px;
 }
 </style>
