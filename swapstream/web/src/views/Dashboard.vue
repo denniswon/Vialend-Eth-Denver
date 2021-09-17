@@ -93,10 +93,6 @@ export default {
       keeperContract: this.$parent.keeperContract,
       currentAccount: null,
       isConnected: false,
-      walletButtonClass: 'walletButton',
-      connectClass: 'wallet_connected',
-      disConnectClass: 'wallet_disconnected',
-      StatusButtonText: 'Connect Wallet',
       treatyDialogVisible: false,
       myLiquidity: 0
     }
@@ -124,10 +120,6 @@ export default {
     },
     setWalletStatus () {
       this.$refs.headerComp.setWalletStatus()
-    },
-    getConnectionStatus () {
-      this.isConnected = this.$refs.headerComp.isConnected
-      return this.$refs.headerComp.isConnected
     }
   }
 }

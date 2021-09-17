@@ -264,7 +264,6 @@ export default {
     },
     connectWallet () {
       this.$parent.setWalletStatus()
-      // this.isConnected = this.$parent.getConnectionStatus()
       console.log('wallet connection status:', this.isConnected)
     },
     checkConnectionStatus () {

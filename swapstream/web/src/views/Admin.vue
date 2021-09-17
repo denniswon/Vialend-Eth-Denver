@@ -89,13 +89,6 @@ export default {
     }
   },
   created: function () {
-    if (this.$store.state.chainId !== 5) {
-      // this.$message({
-      //   message: 'Please select Goerli Test Network.',
-      //   type: 'warning'
-      // })
-      return
-    }
     console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
     this.keeperUniswapV3Contract = new web3.eth.Contract(
       uniswapV3PoolABI,
@@ -129,6 +122,9 @@ export default {
       console.log('new max price=', price)
       this.tickUpper = this.priceToTick(price)
       if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
+    },
+    '$store.state.isConnected': function () {
+      this.isConnected = this.$store.state.isConnected
     }
   },
   methods: {
