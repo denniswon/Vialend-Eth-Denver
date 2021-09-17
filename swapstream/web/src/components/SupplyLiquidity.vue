@@ -165,7 +165,7 @@
               <tr>
                 <td>
                   <el-button type="primary"
-                             :disabled="btnWithdrawDisabled"
+                             :disabled="!isConnected"
                              @click="withdraw"
                              :loading="withdrawLoading"
                              style="width:100%;">Withdraw</el-button>
@@ -200,7 +200,7 @@ export default {
   data () {
     return {
       supplyLiquidityList: SupplyLiquidityList,
-      isConnected: false,
+      isConnected: this.$store.state.isConnected,
       activeName: 'first',
       supplyDialogTitle: '',
       supplyTokens: '',
@@ -212,7 +212,6 @@ export default {
       token0Approved: false,
       token1Approved: false,
       btnDepositDisabled: false,
-      btnWithdrawDisabled: false,
       testData: '123',
       // contractObj: new web3.eth.Contract(contractABI, contractAddress)
       token0Contract: null,
@@ -241,13 +240,16 @@ export default {
       this.supplyLiquidityList[i].smartVaults[1].decimals = decimals
       // console.log('decimal1', i, '=', decimals)
     }
-
+    console.log('this.$store.state.isConnected supply=', this.$store.state.isConnected, ';isConnected=', this.isConnected)
     // console.log('SupplyLiquidityList=', JSON.stringify(SupplyLiquidityList))
   },
   mounted: function () {
 
   },
   watch: {
+    '$store.state.isConnected': function () {
+      this.isConnected = this.$store.state.isConnected
+    },
     sharePercent (val) {
       this.getShares(val)
     }
@@ -262,7 +264,7 @@ export default {
     },
     connectWallet () {
       this.$parent.setWalletStatus()
-      this.isConnected = this.$parent.getConnectionStatus()
+      // this.isConnected = this.$parent.getConnectionStatus()
       console.log('wallet connection status:', this.isConnected)
     },
     checkConnectionStatus () {
@@ -276,7 +278,8 @@ export default {
     },
     showSupplyDialog (item) {
       var _this = this
-      this.checkConnectionStatus()
+      console.log('isConnected status=', this.isConnected)
+      // this.checkConnectionStatus()
       this.getAShares()
       this.getShares(this.sharePercent)
       this.currentItem = item

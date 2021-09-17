@@ -33,7 +33,8 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary"
-                       @click="doRebalance">Rebalance</el-button>
+                       @click="doRebalance"
+                       :disabled="!isConnected">Rebalance</el-button>
           </el-form-item>
         </el-form>
         {{errorRebalance}}

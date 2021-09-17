@@ -93,7 +93,7 @@ export default {
   watch: {
     isConnected (newStatus, oldStatus) {
       console.log('newStatus=', newStatus, ';oldStatus=', oldStatus)
-      this.$parent.isConnected = newStatus
+      // this.$parent.isConnected = newStatus
       this.$store.state.isConnected = newStatus
       console.log('this.$store.state.isConnected header watch=', this.$store.state.isConnected)
     }

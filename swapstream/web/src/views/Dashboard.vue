@@ -111,7 +111,7 @@ export default {
     isConnected (newStatus, oldStatus) {
       this.isConnected = newStatus
       // set the sub-component wallet connection status
-      this.$refs.supplyliq.isConnected = newStatus
+      // this.$refs.supplyliq.isConnected = newStatus
     }
   },
   methods: {
