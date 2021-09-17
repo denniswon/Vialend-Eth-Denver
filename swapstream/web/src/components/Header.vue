@@ -61,16 +61,6 @@
 </template>
 
 <script>
-window.ethereum.autoRefreshOnNetworkChange = false
-window.ethereum.on('accountsChanged', () => {
-  console.log('accountsChanged')
-  connectWallet()
-})
-window.ethereum.on('networkChanged', () => {
-  console.log('networkChanged')
-  connectWallet()
-})
-
 export default {
   data () {
     return {
@@ -83,12 +73,14 @@ export default {
     }
   },
   created: function () {
+    this.getChainId()
     if (this.$store.state.StatusButtonText !== '') {
       this.StatusButtonText = this.$store.state.StatusButtonText
     }
   },
   mounted () {
     window.connectWallet = this.connectWallet
+    this.fn()
   },
   watch: {
     isConnected (newStatus, oldStatus) {
@@ -99,12 +91,48 @@ export default {
     }
   },
   methods: {
+    fn () {
+      window.ethereum.autoRefreshOnNetworkChange = false
+      window.ethereum.on('accountsChanged', () => {
+        console.log('accountsChanged')
+        this.connectWallet()
+      })
+      window.ethereum.on('networkChanged', () => {
+        console.log('networkChanged')
+        this.getChainId()
+        this.networkChanged()
+      })
+    },
+    getChainId () {
+      var _this = this
+      web3.eth.getChainId().then(function (val) {
+        _this.$store.state.chainId = val
+        console.log('ChainId:', val)
+      })
+    },
+    checkChain () {
+      if (this.$store.state.chainId === 5) { return true } else { return false }
+    },
+    networkChanged () {
+      this.StatusButtonText = 'Connect Wallet'
+      this.$store.state.StatusButtonText = 'Connect Wallet'
+      this.isConnected = false
+    },
     lanuchApp () {
       this.centerDialogVisible = false
       this.$router.push({ path: '/dashboard' })
     },
     // connect wallet or disconnect wallet
     setWalletStatus () {
+      if (!this.checkChain()) {
+        this.StatusButtonText = 'Wrong network'
+        this.$store.state.StatusButtonText = 'Wrong network'
+        this.$message({
+          message: 'Please select Goerli Test Network.',
+          type: 'warning'
+        })
+        return
+      }
       if (this.isConnected) {
         console.log('call disconnect')
         this.isConnected = false
@@ -124,6 +152,11 @@ export default {
       }
     },
     connectWallet () {
+      if (!this.checkChain()) {
+        this.StatusButtonText = 'Wrong network'
+        this.$store.state.StatusButtonText = 'Wrong network'
+        return
+      }
       console.log('call connectWallet')
       ethereum
         .request({ method: 'eth_requestAccounts' })

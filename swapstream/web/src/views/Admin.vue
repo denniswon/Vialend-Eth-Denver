@@ -89,6 +89,13 @@ export default {
     }
   },
   created: function () {
+    if (this.$store.state.chainId !== 5) {
+      // this.$message({
+      //   message: 'Please select Goerli Test Network.',
+      //   type: 'warning'
+      // })
+      return
+    }
     console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
     this.keeperUniswapV3Contract = new web3.eth.Contract(
       uniswapV3PoolABI,
