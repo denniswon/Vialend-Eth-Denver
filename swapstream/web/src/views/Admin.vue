@@ -67,6 +67,7 @@ export default {
   components: { Header },
   data () {
     return {
+      isConnected: this.$store.state.isConnected,
       keeperUniswapV3Contract: null,
       keeperContract: null,
       tickLower: 0,
@@ -99,6 +100,7 @@ export default {
     this.getSlot0()
     this.getTokensBalanceInWallet()
     this.getTokensBalanceInVaultAndPool()
+    console.log('this.$store.state.isConnected admin=', this.$store.state.isConnected)
   },
   mounted () {
   },

@@ -74,12 +74,17 @@ window.ethereum.on('networkChanged', () => {
 export default {
   data () {
     return {
-      isConnected: false,
+      isConnected: this.$store.state.isConnected,
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
       disConnectClass: 'wallet_disconnected',
       StatusButtonText: 'Connect Wallet',
       centerDialogVisible: false
+    }
+  },
+  created: function () {
+    if (this.$store.state.StatusButtonText !== '') {
+      this.StatusButtonText = this.$store.state.StatusButtonText
     }
   },
   mounted () {
@@ -89,25 +94,29 @@ export default {
     isConnected (newStatus, oldStatus) {
       console.log('newStatus=', newStatus, ';oldStatus=', oldStatus)
       this.$parent.isConnected = newStatus
+      this.$store.state.isConnected = newStatus
+      console.log('this.$store.state.isConnected header watch=', this.$store.state.isConnected)
     }
   },
   methods: {
     lanuchApp () {
       this.centerDialogVisible = false
       this.$router.push({ path: '/dashboard' })
-      console.log(this.$store.state.name)
     },
+    // connect wallet or disconnect wallet
     setWalletStatus () {
       if (this.isConnected) {
         console.log('call disconnect')
         this.isConnected = false
         // ethereum.on('disconnect', error => { console.log(error) })
         this.StatusButtonText = 'Connect Wallet'
+        this.$store.state.StatusButtonText = 'Connect Wallet'
       } else {
         if (ethereum.isConnected() && this.currentAccount != null) {
           this.isConnected = true
           console.log('this.currentAccount=' + this.currentAccount)
           this.StatusButtonText = this.currentAccount
+          this.$store.state.StatusButtonText = this.currentAccount
           // this.$refs.supplyliq.checkConnectionStatus()
         } else {
           this.connectWallet()
@@ -135,6 +144,7 @@ export default {
         // Do any other work!
         this.isConnected = true
         this.StatusButtonText = this.currentAccount
+        this.$store.state.StatusButtonText = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
         // this.$refs.supplyliq.checkConnectionStatus()
         // this.getMyLiquidity()

@@ -102,8 +102,7 @@ export default {
     }
   },
   created: function () {
-    // this.showTreaty()
-    console.log('load create function')
+    console.log('store name=', this.$store.state.name)
   },
   mounted () {
     window.connectWallet = this.connectWallet
@@ -111,6 +110,7 @@ export default {
   watch: {
     isConnected (newStatus, oldStatus) {
       this.isConnected = newStatus
+      // set the sub-component wallet connection status
       this.$refs.supplyliq.isConnected = newStatus
     }
   },

@@ -184,7 +184,7 @@
 import Web3 from 'web3'
 import contractABI from '../ABI/contractABI.json'
 import tokenABI from '../ABI/tokenABI.json'
-import coinABI from '../ABI/ERC20.json'
+import SupplyLiquidityList from '../data/SupplyLiqudityList'
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
@@ -199,11 +199,7 @@ export default {
   name: 'SupplyLiquidity',
   data () {
     return {
-      supplyLiquidityList: [
-        { 'number': 1, 'smartVaults': [{ 'iconLink': 'images/weth.png', 'name': 'eWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', 'decimals': 0 }, { 'iconLink': 'images/usdc.png', 'name': 'eUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8', 'decimals': 0 }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
-        { 'number': 2, 'smartVaults': [{ 'iconLink': 'images/usdc.png', 'name': 'dUSDC', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x88177e1a55c6Ca956A738abbF6d87148217a8Cb0', 'decimals': 0 }, { 'iconLink': 'images/weth.png', 'name': 'dWETH', 'abi': 'ABI/contractABI.js', 'tokenAddress': '0x495A3648AfDeb15Ce7B0cDDff44EAeB5E014cEAD', 'decimals': 0 }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': false },
-        { 'number': 3, 'smartVaults': [{ 'iconLink': 'images/wbtc.png', 'name': 'WBTC', 'abi': '', 'tokenAddress': '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8', 'decimals': 0 }, { 'iconLink': 'images/usdt.png', 'name': 'USDT', 'abi': '', 'tokenAddress': '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', 'decimals': 0 }], 'feeTier': '0.30%', 'currentAPR': '505.66%', 'capacity': '35.1%', 'TVL': '$2,366,149', 'disabled': true }
-      ],
+      supplyLiquidityList: SupplyLiquidityList,
       isConnected: false,
       activeName: 'first',
       supplyDialogTitle: '',
@@ -240,11 +236,13 @@ export default {
     for (var i = 0; i < this.supplyLiquidityList.length; i++) {
       decimals = await this.getDecimalOfToken(this.supplyLiquidityList[i].smartVaults[0].tokenAddress)
       this.supplyLiquidityList[i].smartVaults[0].decimals = decimals
-      console.log('decimal0', i, '=', decimals)
+      // console.log('decimal0', i, '=', decimals)
       decimals = await this.getDecimalOfToken(this.supplyLiquidityList[i].smartVaults[1].tokenAddress)
       this.supplyLiquidityList[i].smartVaults[1].decimals = decimals
-      console.log('decimal1', i, '=', decimals)
+      // console.log('decimal1', i, '=', decimals)
     }
+
+    // console.log('SupplyLiquidityList=', JSON.stringify(SupplyLiquidityList))
   },
   mounted: function () {
 
@@ -327,10 +325,6 @@ export default {
       //   console.log('balance=', balance)
       // })
 
-      // var coinContract = new web3.eth.Contract(
-      //   coinABI,
-      //   '0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2', { from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' })
-
       // web3.eth.getBalance(ethereum.selectedAddress).then(console.log)
 
       // coinContract.methods.balanceOf('0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8').call({ from: '0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0' }, function (error, result) {
@@ -359,7 +353,7 @@ export default {
         tokenABI,
         address)
       var decimal = await coinContract.methods.decimals().call()
-      console.log('decimal_', address, ' = ', decimal)
+      // console.log('decimal_', address, ' = ', decimal)
       return decimal
     },
     async getTokensBalanceInWallet (item) {
