@@ -25,13 +25,6 @@ body {
   background: #ffffff;
   color: #a5a5a5;
 }
-div {
-  display: block;
-  position: relative;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
 ul {
   list-style: none;
   margin-bottom: 0px;
@@ -308,7 +301,7 @@ section {
 *********************************/
 
 .header {
-  /* position: fixed; */
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
@@ -319,6 +312,7 @@ section {
 .header_content {
   width: 100%;
   height: 103px;
+  position: relative;
   -webkit-transition: all 400ms ease;
   -moz-transition: all 400ms ease;
   -ms-transition: all 400ms ease;
@@ -578,9 +572,10 @@ section {
 .home {
   width: 100%;
   height: 390px;
+  position: relative;
 }
 .home_container {
-  position: absolute;
+  position: relative;
   left: 0;
   top: 32.23%;
   width: 100%;

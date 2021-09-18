@@ -13,7 +13,20 @@
         <hr>
         Min Tick:{{tickLower}}<br>
         Max Tick:{{tickUpper}}<br>
-        Current Tick:{{currentTick}}<br>
+        Current Tick:{{currentTick}}
+        <el-button size="mini"
+                   :style="{display:rangeStatusDisplay}">
+          <span :class="[dotStyle,rangeStatusStyle]"></span>
+          <span class="status">{{rangeStatus}}</span>
+        </el-button><br>
+        <div class="block"
+             style="width:30%">
+          <el-slider v-model="tickRange"
+                     range
+                     :marks="getMarks">
+          </el-slider>
+
+        </div>
         <hr>
         <div class="range_title">Set Price Range</div>
         <el-form :inline="true"
@@ -74,6 +87,10 @@ export default {
       tickLower: 0,
       tickUpper: 0,
       currentTick: 0,
+      tickRange: [20, 80],
+      currentPercent: 0,
+      marks: {
+      },
       rangeForm: {
         minPrice: 0.0,
         maxPrice: 0.0
@@ -85,7 +102,11 @@ export default {
       token0BalanceInVault: 0,
       token1BalanceInVault: 0,
       token0BalanceInPool: 0,
-      token1BalanceInPool: 0
+      token1BalanceInPool: 0,
+      dotStyle: 'dot',
+      rangeStatusStyle: '',
+      rangeStatusDisplay: 'none',
+      rangeStatus: ''
     }
   },
   created: function () {
@@ -111,23 +132,51 @@ export default {
     },
     newMaxPrice () {
       return this.rangeForm.maxPrice
+    },
+    getMarks () {
+      var marks = {}
+      if (this.currentPercent !== 0) {
+        marks[this.currentPercent] = this.currentTick
+      }
+      return marks
     }
   },
   watch: {
     newMinPrice (price) {
       console.log('new min price=', price)
       if (!isNaN(price)) { this.tickLower = this.priceToTick(price) } else { this.tickLower = 0 }
+      this.drawTickRangeChart()
     },
     newMaxPrice (price) {
       console.log('new max price=', price)
       this.tickUpper = this.priceToTick(price)
       if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
+      this.drawTickRangeChart()
     },
     '$store.state.isConnected': function () {
       this.isConnected = this.$store.state.isConnected
     }
   },
   methods: {
+    drawTickRangeChart () {
+      if (this.tickLower !== 0 && this.tickUpper !== 0) {
+        var leftMargin = this.tickLower - 10000
+        var rightMargin = this.tickUpper + 10000
+        var leftPercent = parseInt(((this.tickLower - leftMargin) / (rightMargin - leftMargin)) * 100)
+        var rightPercent = parseInt(((this.tickUpper - leftMargin) / (rightMargin - leftMargin)) * 100)
+        this.currentPercent = parseInt(((this.currentTick - leftMargin) / (rightMargin - leftMargin)) * 100)
+        this.tickRange = [leftPercent, rightPercent]
+        console.log('currentPercent=', this.currentPercent)
+        if (this.tickLower > this.currentTick || this.tickUpper < this.currentTick) {
+          this.rangeStatusStyle = 'outOfRange'
+          this.rangeStatus = 'Out of range'
+        } else {
+          this.rangeStatusStyle = 'inRange'
+          this.rangeStatus = 'In range'
+        }
+        this.rangeStatusDisplay = ''
+      }
+    },
     async getSlot0 () {
       if (this.keeperUniswapV3Contract !== null) {
         this.keeperUniswapV3Contract.methods
@@ -257,5 +306,21 @@ export default {
   font-size: 20px;
   color: black;
   padding: 10px;
+}
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 100%;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+.status {
+  margin-left: 15px;
+}
+.inRange {
+  background: #0d7404;
+}
+.outOfRange {
+  background: brown;
 }
 </style>
