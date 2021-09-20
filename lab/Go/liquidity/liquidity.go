@@ -1,9 +1,19 @@
 package main
 
 /*
+converted from:
+https://github.com/atiselsts/uniswap-v3-liquidity-math/blob/master/uniswap-v3-liquidity-math.py
+
+More info read: ：
+http://atiselsts.github.io/pdfs/uniswap-v3-liquidity-math.pdf
+
+Liquidity math adapted from
+https://github.com/Uniswap/uniswap-v3-periphery/blob/main/contracts/libraries/LiquidityAmounts.sol
+
 See the technical note "Liquidity Math in Uniswap v3" and the Uniswap v3 whitepaper
 for the description of the purpose of this code.
- Liquidity math adapted from https://github.com/Uniswap/uniswap-v3-periphery/blob/main/contracts/libraries/LiquidityAmounts.sol
+
+
 */
 
 import (
