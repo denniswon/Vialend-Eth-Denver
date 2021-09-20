@@ -21,6 +21,10 @@ import (
 	"math"
 )
 
+var xDecimals = float64(18)
+var yDecimals = float64(6)
+var diffDecimals = math.Pow(10, xDecimals-yDecimals)
+
 func main() {
 
 	price := float64(3879.16)
@@ -28,12 +32,28 @@ func main() {
 	max := float64(5000)
 	x := float64(1)
 
+	// price = float64(0.9973)
+	// min = float64(0.9461092501)
+	// max = float64(1.045607201)
+	// x = float64(620)
+
+	/// https://app.uniswap.org/#/pool/668
+	// price = float64(1999.84)
+	// min = float64(1000.3)
+	// max = float64(3999.8)
+	// x = float64(99990)
+
 	getY(price, min, max, x)
 
 	price = float64(3879.6)
 	max = float64(5000)
 	x = float64(1)
 	y := float64(23633)
+
+	// price = float64(2000)
+	// max = float64(3000)
+	// x = float64(2)
+	// y = float64(4000)
 
 	getMin(price, max, x, y)
 
@@ -46,7 +66,7 @@ func main() {
 
 	getBalance(price, P1, min, max, x, y)
 
-	//	test_1()
+	test_1()
 	//	test_2()
 }
 
@@ -68,6 +88,167 @@ func test_2() {
 	x := float64(1)
 	y := 5096.06
 	test(x, y, p, a, b)
+}
+
+//
+// Test a known good combination of values against the functions provided above.
+//
+// Some errors are expected because:
+//  -- the floating point math is meant for simplicity, not accurate calculations!
+//  -- ticks and tick ranges are ignored for simplicity
+//  -- the test values taken from Uniswap v3 UI and are approximate
+//
+func test(x float64, y float64, p float64, a float64, b float64) {
+	sp := math.Sqrt(p) //p**0.5
+	sa := math.Sqrt(a) // a** 0.5
+	sb := math.Sqrt(b) // b**0.5
+
+	L := get_liquidity(x, y, sp, sa, sb)
+	fmt.Printf("L: {:%.2f}\n", L)
+
+	ia := calculate_a1(L, sp, sb, x, y)
+	error := 100.0 * (1 - ia/a)
+	fmt.Printf("a: {:%.2f} vs {:%.2f}, error {:%.6f}\n", a, ia, error)
+
+	ia = calculate_a2(sp, sb, x, y)
+	error = 100.0 * (1 - ia/a)
+	fmt.Printf("a: {:%.2f} vs {:%.2f}, error {:%.6f}\n", a, ia, error)
+
+	ib := calculate_b1(L, sp, sa, x, y)
+	error = 100.0 * (1 - ib/b)
+	fmt.Printf("b: {:%.2f} vs {:%.2f}, error {:%.6f}\n", b, ib, error)
+
+	ib = calculate_b2(sp, sa, x, y)
+	error = 100.0 * (1 - ib/b)
+	fmt.Printf("b: {:%.2f} vs {:%.2f}, error {:%.6f}\n", b, ib, error)
+
+	c := sb / sp
+	d := sa / sp
+
+	ic := calculate_c(p, d, x, y)
+	error = 100.0 * (1 - ic/c)
+	fmt.Printf("c^2: {:%.2f} vs {:%.2f}, error {:%.6f}\n", c*c, ic*ic, error)
+
+	id := calculate_d(p, c, x, y)
+	error = 100.0 * (1 - math.Pow(id, 2)/math.Pow(d, 2))
+	fmt.Printf("d^2: {:%.2f} vs {:%.2f}, error {:%.6f}\n", d*d, id*id, error)
+
+	ix := calculate_x(L, sp, sb)
+	error = 100.0 * (1 - ix/x)
+	fmt.Printf("x: {:%.2f} vs {:%.2f}, error {:%.6f}\n", x, ix, error)
+
+	iy := calculate_y(L, sp, sa)
+	error = 100.0 * (1 - iy/y)
+	fmt.Printf("y: {:%.2f} vs {:%.2f}, error {:%.6f}\n", y, iy, error)
+	fmt.Printf("")
+
+}
+
+//
+// Example 1 from the technical note
+//
+func getY(p float64, a float64, b float64, x float64) {
+
+	fmt.Println("Example 1: how much of USDC I need when providing 2 ETH at this price and range?")
+
+	// price := float64(3879.16)
+	// min := float64(300)
+	// max := float64(5000)
+	// x := float64(1)
+
+	sp := math.Sqrt(p) //p * *0.5
+	sa := math.Sqrt(a) //a * *0.5
+	sb := math.Sqrt(b) //b * *0.5
+
+	fmt.Println("math.Pow(p,0.5)=", math.Pow(p, 0.5), ";sp=", sp)
+
+	L := get_liquidity_0(x, sp, sb)
+	y := calculate_y(L, sp, sa)
+	fmt.Printf("amount of USDC y={:%.2f}\n", y)
+
+	// demonstrate that with the calculated y value, the given range is correct
+	c := sb / sp
+	d := sa / sp
+	ic := calculate_c(p, d, x, y)
+	fmt.Printf("ic={:%f}\n", ic)
+
+	id := calculate_d(p, c, x, y)
+	fmt.Printf("id={:%f}\n", id)
+
+	C := math.Pow(ic, 2) //ic * *2
+	fmt.Printf("C={:%f}\n", C)
+
+	D := math.Pow(id, 2) // id * *2
+	fmt.Printf("D={:%f}\n", D)
+
+	fmt.Printf("p_a={:%.2f} ({:%.2f} of P), p_b={:%.2f} ({:%.2f} of P)\n", D*p, D*100, C*p, C*100)
+	fmt.Printf("\n")
+}
+
+//
+// Example 2 from the technical note
+// calc min price
+//
+func getMin(p float64, b float64, x float64, y float64) {
+	fmt.Println("Example 2: I have 2 ETH and 4000 USDC, range top set to 3000 USDC. What's the bottom of the range?")
+	// p = 2000
+	// b = 3000
+	// x = 2
+	// y = 4000
+
+	sp := math.Sqrt(p) // p * *0.5
+	sb := math.Sqrt(b) //b * *0.5
+
+	a := calculate_a2(sp, sb, x, y)
+	fmt.Printf("lower bound of the price p_a={:%.2f}\n", a)
+
+	//calc tick  p(i) = 1.0001i
+
+	tick := math.Log(p/diffDecimals) / math.Log(1.0001)      // log(p,1.0001)
+	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001) // log(a,1.0001)
+	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001) // log(b,1.0001)
+
+	fmt.Printf("tick={:%.f}\n", tick)
+	fmt.Printf("tickLower={:%.f}\n", tickLower)
+	fmt.Printf("tickUpper={:%.f}\n", tickUpper)
+	fmt.Printf("\n")
+
+}
+
+//
+// Example 3 from the technical note
+// calc balances
+//
+func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float64) {
+	fmt.Printf("Example 3: Using the position created in Example 2, what are asset balances at 2500 USDC per ETH?")
+	// p = 2000
+	// a = 1333.33
+	// b = 3000
+	// x = 2
+	// y = 4000
+
+	sp := math.Sqrt(p) //p * *0.5
+	sa := math.Sqrt(a) //a * *0.5
+	sb := math.Sqrt(b) //b * *0.5
+	// calculate the initial liquidity
+	L := get_liquidity(x, y, sp, sa, sb)
+
+	//P1 := float64(2500)
+	sp1 := math.Sqrt(P1) // P1 * *0.5
+	x1 := calculate_x(L, sp1, sb)
+	y1 := calculate_y(L, sp1, sa)
+	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", x1, y1)
+
+	// alternative way, directly based on the whitepaper
+	delta_p := sp1 - sp
+	delta_inv_p := 1/sp1 - 1/sp
+	delta_x := delta_inv_p * L
+	delta_y := delta_p * L
+	x1 = x + delta_x
+	y1 = y + delta_y
+	fmt.Printf("delta_x={:%.2f} delta_y={:%.2f}\n", delta_x, delta_y)
+	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", x1, y1)
+
 }
 
 func get_liquidity_0(x float64, sa float64, sb float64) float64 {
@@ -146,142 +327,4 @@ func calculate_c(p float64, d float64, x float64, y float64) float64 {
 //
 func calculate_d(p float64, c float64, x float64, y float64) float64 {
 	return 1 + y*(1-c)/(c*p*x)
-}
-
-//
-// Test a known good combination of values against the functions provided above.
-//
-// Some errors are expected because:
-//  -- the floating point math is meant for simplicity, not accurate calculations!
-//  -- ticks and tick ranges are ignored for simplicity
-//  -- the test values taken from Uniswap v3 UI and are approximate
-//
-func test(x float64, y float64, p float64, a float64, b float64) {
-	sp := math.Pow(p, 0.5) // sqrt(p)
-	sa := math.Pow(a, 0.5) // sqrt(a)
-	sb := math.Pow(b, 0.5) // // sqrt(b)
-
-	L := get_liquidity(x, y, sp, sa, sb)
-	fmt.Printf("L: {:%.2f}\n", L)
-
-	ia := calculate_a1(L, sp, sb, x, y)
-	error := 100.0 * (1 - ia/a)
-	fmt.Printf("a: {:%.2f} vs {:%.2f}, error {:%.6f}\n", a, ia, error)
-
-	ia = calculate_a2(sp, sb, x, y)
-	error = 100.0 * (1 - ia/a)
-	fmt.Printf("a: {:%.2f} vs {:%.2f}, error {:%.6f}\n", a, ia, error)
-
-	ib := calculate_b1(L, sp, sa, x, y)
-	error = 100.0 * (1 - ib/b)
-	fmt.Printf("b: {:%.2f} vs {:%.2f}, error {:%.6f}\n", b, ib, error)
-
-	ib = calculate_b2(sp, sa, x, y)
-	error = 100.0 * (1 - ib/b)
-	fmt.Printf("b: {:%.2f} vs {:%.2f}, error {:%.6f}\n", b, ib, error)
-
-	c := sb / sp
-	d := sa / sp
-
-	ic := calculate_c(p, d, x, y)
-	error = 100.0 * (1 - ic/c)
-	fmt.Printf("c^2: {:%.2f} vs {:%.2f}, error {:%.6f}\n", c*c, ic*ic, error)
-
-	id := calculate_d(p, c, x, y)
-	error = 100.0 * (1 - math.Pow(id, 2)/math.Pow(d, 2))
-	fmt.Printf("d^2: {:%.2f} vs {:%.2f}, error {:%.6f}\n", d*d, id*id, error)
-
-	ix := calculate_x(L, sp, sb)
-	error = 100.0 * (1 - ix/x)
-	fmt.Printf("x: {:%.2f} vs {:%.2f}, error {:%.6f}\n", x, ix, error)
-
-	iy := calculate_y(L, sp, sa)
-	error = 100.0 * (1 - iy/y)
-	fmt.Printf("y: {:%.2f} vs {:%.2f}, error {:%.6f}\n", y, iy, error)
-	fmt.Printf("")
-
-}
-
-//
-// Example 1 from the technical note
-//
-func getY(p float64, a float64, b float64, x float64) {
-	fmt.Println("Example 1: how much of USDC I need when providing 2 ETH at this price and range?")
-	// p := float64(2000)
-	// a := float64(1500)
-	// b := float64(2500)
-	// x := float64(2)
-
-	sp := math.Sqrt(p) //p * *0.5
-	sa := math.Sqrt(a) //a * *0.5
-	sb := math.Sqrt(b) //b * *0.5
-	L := get_liquidity_0(x, sp, sb)
-	y := calculate_y(L, sp, sa)
-	fmt.Printf("amount of USDC y={:%.2f}\n", y)
-
-	// demonstrate that with the calculated y value, the given range is correct
-	c := sb / sp
-	d := sa / sp
-	ic := calculate_c(p, d, x, y)
-	id := calculate_d(p, c, x, y)
-	C := math.Pow(ic, 2) //ic * *2
-	D := math.Pow(id, 2) // id * *2
-	fmt.Printf("p_a={:%.2f} ({:%.2f}% of P), p_b={:%.2f} ({:%.2f}% of P)\n", D*p, D*100, C*p, C*100)
-	fmt.Printf("\n")
-}
-
-//
-// Example 2 from the technical note
-// calc tickLower
-//
-func getMin(p float64, b float64, x float64, y float64) {
-	fmt.Println("Example 2: I have 2 ETH and 4000 USDC, range top set to 3000 USDC. What's the bottom of the range?")
-	// p = 2000
-	// b = 3000
-	// x = 2
-	// y = 4000
-
-	sp := math.Sqrt(p) // p * *0.5
-	sb := math.Sqrt(b) //b * *0.5
-
-	a := calculate_a2(sp, sb, x, y)
-	fmt.Printf("lower bound of the price p_a={:%.2f}\n", a)
-	fmt.Printf("\n")
-
-}
-
-//
-// Example 3 from the technical note
-// calc balances
-//
-func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float64) {
-	fmt.Printf("Example 3: Using the position created in Example 2, what are asset balances at 2500 USDC per ETH?")
-	// p = 2000
-	// a = 1333.33
-	// b = 3000
-	// x = 2
-	// y = 4000
-
-	sp := math.Sqrt(p) //p * *0.5
-	sa := math.Sqrt(a) //a * *0.5
-	sb := math.Sqrt(b) //b * *0.5
-	// calculate the initial liquidity
-	L := get_liquidity(x, y, sp, sa, sb)
-
-	//P1 := float64(2500)
-	sp1 := math.Sqrt(P1) // P1 * *0.5
-	x1 := calculate_x(L, sp1, sb)
-	y1 := calculate_y(L, sp1, sa)
-	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", x1, y1)
-
-	// alternative way, directly based on the whitepaper
-	delta_p := sp1 - sp
-	delta_inv_p := 1/sp1 - 1/sp
-	delta_x := delta_inv_p * L
-	delta_y := delta_p * L
-	x1 = x + delta_x
-	y1 = y + delta_y
-	fmt.Printf("delta_x={:%.2f} delta_y={:%.2f}\n", delta_x, delta_y)
-	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", x1, y1)
-
 }
