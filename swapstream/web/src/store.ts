@@ -5,7 +5,10 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-
+    name: 'SwapStream.',
+    isConnected: false,
+    StatusButtonText: '',
+    chainId: 0
   },
   mutations: {
 

@@ -89,20 +89,16 @@ export default {
   components: { Header, MyLiquidity, SupplyLiquidity },
   data () {
     return {
+      vaultAddress: this.$parent.vaultAddress,
       keeperContract: this.$parent.keeperContract,
       currentAccount: null,
       isConnected: false,
-      walletButtonClass: 'walletButton',
-      connectClass: 'wallet_connected',
-      disConnectClass: 'wallet_disconnected',
-      StatusButtonText: 'Connect Wallet',
       treatyDialogVisible: false,
       myLiquidity: 0
     }
   },
   created: function () {
-    // this.showTreaty()
-    console.log('load create function')
+    console.log('store name=', this.$store.state.name)
   },
   mounted () {
     window.connectWallet = this.connectWallet
@@ -110,7 +106,8 @@ export default {
   watch: {
     isConnected (newStatus, oldStatus) {
       this.isConnected = newStatus
-      this.$refs.supplyliq.isConnected = newStatus
+      // set the sub-component wallet connection status
+      // this.$refs.supplyliq.isConnected = newStatus
     }
   },
   methods: {
@@ -123,10 +120,6 @@ export default {
     },
     setWalletStatus () {
       this.$refs.headerComp.setWalletStatus()
-    },
-    getConnectionStatus () {
-      this.isConnected = this.$refs.headerComp.isConnected
-      return this.$refs.headerComp.isConnected
     }
   }
 }

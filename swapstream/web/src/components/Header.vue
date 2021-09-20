@@ -23,7 +23,11 @@
             </div>
             <nav class="main_nav">
               <ul class="d-flex flex-row align-items-center justify-content-start">
-                <li><a href="/dashboard">Dashboard</a></li>
+                <li>
+                  <router-link to='/dashboard'>
+                    Dashboard
+                  </router-link>
+                </li>
                 <li><a href="#">Vote</a></li>
               </ul>
             </nav>
@@ -36,7 +40,9 @@
       ml-auto
     ">
               <div class="adminButton">
-                <a href="/admin">Admin</a>
+                <router-link to='/admin'>
+                  Admin
+                </router-link>
               </div>&nbsp;&nbsp;
               <div :class="[walletButtonClass,isConnected ? connectClass:disConnectClass]">
                 <a href="#"
@@ -55,20 +61,10 @@
 </template>
 
 <script>
-window.ethereum.autoRefreshOnNetworkChange = false
-window.ethereum.on('accountsChanged', () => {
-  console.log('accountsChanged')
-  connectWallet()
-})
-window.ethereum.on('networkChanged', () => {
-  console.log('networkChanged')
-  connectWallet()
-})
-
 export default {
   data () {
     return {
-      isConnected: false,
+      isConnected: this.$store.state.isConnected,
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
       disConnectClass: 'wallet_disconnected',
@@ -76,32 +72,79 @@ export default {
       centerDialogVisible: false
     }
   },
+  created: function () {
+    this.getChainId()
+    if (this.$store.state.StatusButtonText !== '') {
+      this.StatusButtonText = this.$store.state.StatusButtonText
+    }
+  },
   mounted () {
     window.connectWallet = this.connectWallet
+    this.fn()
   },
   watch: {
     isConnected (newStatus, oldStatus) {
       console.log('newStatus=', newStatus, ';oldStatus=', oldStatus)
-      this.$parent.isConnected = newStatus
+      // this.$parent.isConnected = newStatus
+      this.$store.state.isConnected = newStatus
+      console.log('this.$store.state.isConnected header watch=', this.$store.state.isConnected)
     }
   },
   methods: {
+    fn () {
+      window.ethereum.autoRefreshOnNetworkChange = false
+      window.ethereum.on('accountsChanged', () => {
+        console.log('accountsChanged')
+        this.connectWallet()
+      })
+      window.ethereum.on('networkChanged', () => {
+        console.log('networkChanged')
+        this.getChainId()
+        this.networkChanged()
+      })
+    },
+    getChainId () {
+      var _this = this
+      web3.eth.getChainId().then(function (val) {
+        _this.$store.state.chainId = val
+        console.log('ChainId:', val)
+      })
+    },
+    checkChain () {
+      if (this.$store.state.chainId === 5) { return true } else { return false }
+    },
+    networkChanged () {
+      this.StatusButtonText = 'Connect Wallet'
+      this.$store.state.StatusButtonText = 'Connect Wallet'
+      this.isConnected = false
+    },
     lanuchApp () {
       this.centerDialogVisible = false
       this.$router.push({ path: '/dashboard' })
-      console.log(this.$store.state.name)
     },
+    // connect wallet or disconnect wallet
     setWalletStatus () {
+      if (!this.checkChain()) {
+        this.StatusButtonText = 'Wrong network'
+        this.$store.state.StatusButtonText = 'Wrong network'
+        this.$message({
+          message: 'Please select Goerli Test Network.',
+          type: 'warning'
+        })
+        return
+      }
       if (this.isConnected) {
         console.log('call disconnect')
         this.isConnected = false
         // ethereum.on('disconnect', error => { console.log(error) })
         this.StatusButtonText = 'Connect Wallet'
+        this.$store.state.StatusButtonText = 'Connect Wallet'
       } else {
         if (ethereum.isConnected() && this.currentAccount != null) {
           this.isConnected = true
           console.log('this.currentAccount=' + this.currentAccount)
           this.StatusButtonText = this.currentAccount
+          this.$store.state.StatusButtonText = this.currentAccount
           // this.$refs.supplyliq.checkConnectionStatus()
         } else {
           this.connectWallet()
@@ -109,6 +152,11 @@ export default {
       }
     },
     connectWallet () {
+      if (!this.checkChain()) {
+        this.StatusButtonText = 'Wrong network'
+        this.$store.state.StatusButtonText = 'Wrong network'
+        return
+      }
       console.log('call connectWallet')
       ethereum
         .request({ method: 'eth_requestAccounts' })
@@ -129,6 +177,7 @@ export default {
         // Do any other work!
         this.isConnected = true
         this.StatusButtonText = this.currentAccount
+        this.$store.state.StatusButtonText = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
         // this.$refs.supplyliq.checkConnectionStatus()
         // this.getMyLiquidity()
@@ -238,7 +287,6 @@ export default {
   background: #637496;
 }
 .adminButton a {
-  display: block;
   font-size: 16px;
   font-weight: 500;
   color: #ffffff;

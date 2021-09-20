@@ -1,164 +1,326 @@
 <template>
   <div>
     <Header />
-    <div class="home">
-      <div class="parallax_background parallax-window"
-           data-parallax="scroll"
-           data-speed="0.8"></div>
-      <div class="home_container">
-        <div class="container">
-          <div class="row align-items-center my-financial">
-            <div class="col-md-3 text-center">
-              <ul>
-                <li class="title">My Liquidity</li>
-                <li class="value">{{myLiquidity}}</li>
-              </ul>
-            </div>
-            <div class="col-md-6 text-center apy-container">
-              <div class="apy-style">
-                <ul>
-                  <li class="apy-title">Net APY</li>
-                  <li class="apy-content">...</li>
-                </ul>
-              </div>
-            </div>
-            <div class="col-md-3 text-center">
-              <ul>
-                <li class="title">My Revenue</li>
-                <li class="value">$0.00000000000000</li>
-              </ul>
-            </div>
-          </div>
+    <el-tabs type="border-card">
+      <el-tab-pane>
+        <span slot="label"><i class="el-icon-date"></i> Rebalance</span>
+        Token0 balance in wallet:{{token0BalanceInWallet}}<br>
+        Token1 balance in wallet:{{token1BalanceInWallet}}<br>
+        Token0 balance in vault:{{token0BalanceInVault}}<br>
+        Token1 balance in vault:{{token1BalanceInVault}}<br>
+        Token0 balance in pool:{{token0BalanceInPool}}<br>
+        Token1 balance in pool:{{token1BalanceInPool}}<br>
+        <hr>
+        Min Tick:{{tickLower}}<br>
+        Max Tick:{{tickUpper}}<br>
+        Current Tick:{{currentTick}}
+        <el-button size="mini"
+                   :style="{display:rangeStatusDisplay}">
+          <span :class="[dotStyle,rangeStatusStyle]"></span>
+          <span class="status">{{rangeStatus}}</span>
+        </el-button><br>
+        <div class="block"
+             style="width:30%">
+          <el-slider v-model="tickRange"
+                     range
+                     :marks="getMarks">
+          </el-slider>
+
         </div>
-      </div>
-    </div>
+        <hr>
+        <div class="range_title">Set Price Range</div>
+        <el-form :inline="true"
+                 :model="rangeForm"
+                 class="demo-form-inline">
+          <el-form-item label="Min Price">
+            <el-input-number v-model="rangeForm.minPrice"
+                             :precision="1"
+                             :step="1"></el-input-number><br>
+            eUSDC per eWETH
+          </el-form-item>
+          <el-form-item label="Max Price">
+            <el-input-number v-model="rangeForm.maxPrice"
+                             :precision="1"
+                             :step="1"></el-input-number><br>
+            eUSDC per eWETH
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"
+                       @click="doRebalance"
+                       :disabled="!isConnected">Rebalance</el-button>
+          </el-form-item>
+        </el-form>
+        {{errorRebalance}}
+      </el-tab-pane>
+      <el-tab-pane>
+        <span slot="label"><i class="el-icon-date"></i> Security</span>
+        remove all liquidity from uniswap
+      </el-tab-pane>
+    </el-tabs>
 
   </div>
 </template>
 
 <script>
+import Web3 from 'web3'
 import Header from '@/components/Header.vue'
+import uniswapV3PoolABI from '../ABI/UniswapV3PoolABI.json'
+import contractABI from '../ABI/contractABI.json'
+import tokenABI from '../ABI/tokenABI.json'
 
-const _this = this
+if (typeof web3 !== 'undefined') {
+  web3 = new Web3(web3.currentProvider)
+  console.log('web3 provider:web3.currentProvider')
+} else {
+  // set the provider you want from Web3.providers
+  web3 = new Web3(new Web3.providers.HttpProvider('https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6'))
+  console.log('web3 provider:goerli')
+}
 
 export default {
   components: { Header },
   data () {
     return {
-      vaultAddress: '0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2',
-      currentAccount: null,
+      isConnected: this.$store.state.isConnected,
+      keeperUniswapV3Contract: null,
       keeperContract: null,
-      isConnected: false,
-      walletButtonClass: 'walletButton',
-      connectClass: 'wallet_connected',
-      disConnectClass: 'wallet_disconnected',
-      StatusButtonText: 'Connect Wallet',
-      treatyDialogVisible: false,
-      myLiquidity: 0
+      tickLower: 0,
+      tickUpper: 0,
+      currentTick: 0,
+      tickRange: [20, 80],
+      currentPercent: 0,
+      marks: {
+      },
+      rangeForm: {
+        minPrice: 0.0,
+        maxPrice: 0.0
+      },
+      errorRebalance: '',
+      rebalanceLoading: false,
+      token0BalanceInWallet: 0,
+      token1BalanceInWallet: 0,
+      token0BalanceInVault: 0,
+      token1BalanceInVault: 0,
+      token0BalanceInPool: 0,
+      token1BalanceInPool: 0,
+      dotStyle: 'dot',
+      rangeStatusStyle: '',
+      rangeStatusDisplay: 'none',
+      rangeStatus: ''
     }
   },
   created: function () {
-    // this.showTreaty()
-    console.log('load create function')
+    console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
+    this.keeperUniswapV3Contract = new web3.eth.Contract(
+      uniswapV3PoolABI,
+      '0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033'
+    )
     this.keeperContract = new web3.eth.Contract(
       contractABI,
-      this.vaultAddress
+      this.$parent.vaultAddress
     )
+    this.getSlot0()
+    this.getTokensBalanceInWallet()
+    this.getTokensBalanceInVaultAndPool()
+    console.log('this.$store.state.isConnected admin=', this.$store.state.isConnected)
   },
   mounted () {
-    window.connectWallet = this.connectWallet
+  },
+  computed: {
+    newMinPrice () {
+      return this.rangeForm.minPrice
+    },
+    newMaxPrice () {
+      return this.rangeForm.maxPrice
+    },
+    getMarks () {
+      var marks = {}
+      if (this.currentPercent !== 0) {
+        marks[this.currentPercent] = this.currentTick
+      }
+      return marks
+    }
+  },
+  watch: {
+    newMinPrice (price) {
+      console.log('new min price=', price)
+      if (!isNaN(price)) { this.tickLower = this.priceToTick(price) } else { this.tickLower = 0 }
+      this.drawTickRangeChart()
+    },
+    newMaxPrice (price) {
+      console.log('new max price=', price)
+      this.tickUpper = this.priceToTick(price)
+      if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
+      this.drawTickRangeChart()
+    },
+    '$store.state.isConnected': function () {
+      this.isConnected = this.$store.state.isConnected
+    }
   },
   methods: {
-    getMyLiquidity () {
-      if (this.keeperContract != null) {
-        var myLiq = this.keeperContract.methods
-          .balanceOf(this.currentAccount)
-          .call()
-          .then(val => {
-            this.myLiquidity = val
-            console.log('BalanceOf=' + val)
-          })
-        // console.log('BalanceOf=' + myLiq + '|' + JSON.stringify(myLiq))
-      } else {
-        console.log('keeperContract is null')
+    drawTickRangeChart () {
+      if (this.tickLower !== 0 && this.tickUpper !== 0) {
+        var leftMargin = this.tickLower - 10000
+        var rightMargin = this.tickUpper + 10000
+        var leftPercent = parseInt(((this.tickLower - leftMargin) / (rightMargin - leftMargin)) * 100)
+        var rightPercent = parseInt(((this.tickUpper - leftMargin) / (rightMargin - leftMargin)) * 100)
+        this.currentPercent = parseInt(((this.currentTick - leftMargin) / (rightMargin - leftMargin)) * 100)
+        this.tickRange = [leftPercent, rightPercent]
+        console.log('currentPercent=', this.currentPercent)
+        if (this.tickLower > this.currentTick || this.tickUpper < this.currentTick) {
+          this.rangeStatusStyle = 'outOfRange'
+          this.rangeStatus = 'Out of range'
+        } else {
+          this.rangeStatusStyle = 'inRange'
+          this.rangeStatus = 'In range'
+        }
+        this.rangeStatusDisplay = ''
       }
+    },
+    async getSlot0 () {
+      if (this.keeperUniswapV3Contract !== null) {
+        this.keeperUniswapV3Contract.methods
+          .slot0()
+          .call()
+          .then(slot => {
+            if (slot !== undefined && slot !== null && slot !== '') {
+              console.log('slot0=' + JSON.stringify(slot))
+              // var slot0 = JSON.parse(val)
+              console.log('tick=', parseInt(slot['tick']) - 1000)
+              // this.rangeForm.tickLower = parseInt(slot['tick']) - 1000
+              // this.rangeForm.tickUpper = parseInt(slot['tick']) + 1000
+              // this.tickLower = Math.round(parseInt(this.rangeForm.tickLower) / 60) * 60
+              // this.tickUpper = Math.round(parseInt(this.rangeForm.tickUpper) / 60) * 60
+              this.currentTick = slot['tick']
+            }
+          })
+      }
+    },
+    async getTokensBalanceInWallet () {
+      var coinContract
+      coinContract = new web3.eth.Contract(
+        tokenABI,
+        '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8')
+      this.token0BalanceInWallet = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
+      // const format = Web3Client.utils.fromWei(result) // 29803630.997051883414242659
+      console.log('token0BalanceInWallet=', this.token0BalanceInWallet)
+      var tokenDecimal = await coinContract.methods.decimals().call()
+      console.log('decimal_0x48=', tokenDecimal)
+      // token1BalanceInWallet
+      coinContract = new web3.eth.Contract(
+        tokenABI,
+        '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8')
+      this.token1BalanceInWallet = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
+      // const format = Web3Client.utils.fromWei(result) // 29803630.997051883414242659
+      console.log('token1BalanceInWallet=', this.token1BalanceInWallet)
+      tokenDecimal = await coinContract.methods.decimals().call()
+      console.log('decimal_0xFd=', tokenDecimal)
+    },
+    async getTokensBalanceInVaultAndPool () {
+      if (this.$parent.keeperContract != null) {
+        this.token0BalanceInVault = await this.$parent.keeperContract.methods.getBalance0().call()
+        console.log('token0BalanceInVault=', this.token0BalanceInVault)
+        this.token1BalanceInVault = await this.$parent.keeperContract.methods.getBalance1().call()
+        console.log('token1BalanceInVault=', this.token1BalanceInVault)
+        var result = await this.$parent.keeperContract.methods.getPositionAmounts(-201360, -198910).call()
+        if (result !== undefined && result !== null) {
+          this.token0BalanceInPool = result.amount0
+          this.token1BalanceInPool = result.amount1
+          console.log('result000=', result)
+        }
+        var decimal = await this.$parent.keeperContract.methods.decimals().call()
+        console.log('decimal=', decimal)
+      }
+    },
+    doRebalance () {
+      var _this = this
+      this.rebalanceLoading = true
+      if (isNaN(this.rangeForm.minPrice) || this.rangeForm.minPrice <= 0) {
+        this.$message({
+          message: 'Please input positive number greater than 0 in Min Price.',
+          type: 'warning'
+        })
+        return
+      }
+      if (isNaN(this.rangeForm.maxPrice) || this.rangeForm.maxPrice <= 0) {
+        this.$message({
+          message: 'Please input positive number greater than 0 in Max Price.',
+          type: 'warning'
+        })
+        return
+      }
+      if (this.keeperContract != null) {
+        console.log('account address is ' + ethereum.selectedAddress)
+        console.log('this.rangeForm.tickLower=', Math.round(parseInt(this.tickLower) / 60) * 60)
+        console.log('this.rangeForm.tickUpper=', Math.round(parseInt(this.tickUpper) / 60) * 60)
+
+        this.keeperContract.methods
+          .rebalance(
+            BigInt(Math.round(parseInt(this.tickLower) / 60) * 60),
+            BigInt(Math.round(parseInt(this.tickUpper) / 60) * 60),
+            0
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (_this.rebalanceLoading) {
+              _this.rebalanceLoading = false
+              _this.$message('rebalance confirmed!')
+              console.log('confirmation')
+              // _this.errorRebalance = receipt
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (_this.rebalanceLoading) {
+              _this.rebalanceLoading = false
+              _this.$message('rebalance receipt!')
+              console.log('receipt')
+              // _this.errorRebalance = receipt
+            }
+          })
+          .on('error', function (error) {
+            if (_this.rebalanceLoading) {
+              _this.rebalanceLoading = false
+              _this.$message.error(error)
+            }
+            // _this.errorRebalance = error
+          })
+      }
+    },
+    priceToTick (price) {
+      return parseInt(Math.log(price / 1000000000000) / Math.log(1.0001))
+    },
+    onSubmit () {
+      console.log('submit!')
     }
   }
 }
 </script>
 
 <style scoped>
-.my-financial ul li {
-  line-height: 30px;
-}
-.my-financial .title {
-  font-size: 16px;
-}
-.my-financial .value {
+.range_title {
   font-size: 20px;
-  color: white;
+  color: black;
+  padding: 10px;
 }
-.my-financial .apy-title {
-  margin-top: 50px;
-  font-size: 20px;
-  color: white;
-}
-.my-financial .apy-content {
-  font-size: 20px;
-  color: white;
-}
-.apy-container {
-  position: relative;
-}
-.apy-style {
+.dot {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  margin: auto;
-  width: 200px;
-  height: 200px;
-  border: 5px solid #9900ff;
-  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 100%;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
 }
-.dialog-content {
-  line-height: 25px;
+.status {
+  margin-left: 15px;
 }
-.dialog-checkbox {
-  line-height: 50px;
+.inRange {
+  background: #0d7404;
 }
-.dialog-footer {
-  line-height: 50px;
-}
-.wallet_connected {
-  width: 76px !important;
-  padding-left: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  word-break: break-all;
-}
-.wallet_disconnected {
-  width: 151px;
-}
-.walletButton {
-  width: 151px;
-  height: 37px;
-  background: #2e3f61;
-  text-align: center;
-  border-radius: 6px;
-}
-.walletButton:hover {
-  background: #637496;
-}
-.walletButton a {
-  display: block;
-  font-size: 16px;
-  font-weight: 500;
-  color: #ffffff;
-  line-height: 37px;
+.outOfRange {
+  background: brown;
 }
 </style>
