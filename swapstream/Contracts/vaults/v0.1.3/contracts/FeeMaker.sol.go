@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 /*
+recHdJT1QFHx0crX3
+
 
 solc --optimize --overwrite --abi feeMaker.sol -o ../build
 solc --optimize --overwrite --bin feeMaker.sol -o ../build
 abigen --abi=../build/feeMaker.abi --bin=../build/feeMaker.bin --pkg=api --out=../deploy/feeMaker/feeMaker.go
 
     external and public functions 
-    	deposit
+    	deposit  ,  
 		widthdraw
 		
-		rebalance
+		swap,  
+		strategy0, simple swap
+		strategy1, vialending
 		
 		setMaxTotalSupply
 		
-	    getBalance0    token0 in vault 
+	    getBalance0
+	    getBalance1
 		
-	    getBalance1  token1 in vault 
-		
-		capacity = getTotalAmounts / maxTotalSupply 
-		
-		getTotalAmounts  -- total supply in vault
+		capacity = getTVL / maxTotalSupply 
+
+		getTVL   -- used to be getTotalAmounts  = total in vault + total position in uniswap
 		
 		getPositionAmounts	  --  pool's token0 token1
 		
@@ -88,7 +91,13 @@ contract FeeMaker is
     uint256 public AccumulateFees0;
     uint256 public AccumulateFees1;
     
+  	uint256 public lastRebalance;
+    int24 public lastTick;
 
+    uint32 public twapDuration;
+	int24 public maxTwapDeviation;    
+    
+    
     /// @dev 
     /// @param _pool Uniswap V3 pool address
     ///	@param _ttoken SWSM team token
@@ -99,7 +108,10 @@ contract FeeMaker is
         address _pool,
         address _ttoken,
         uint256 _protocolFee,
-        uint256 _maxTotalSupply
+        uint256 _maxTotalSupply,
+        int24 _maxTwapDeviation,
+        uint32 _twapDuration
+        
     ) ERC20("Token Ref","ShareRef") {
 
 		pool = IUniswapV3Pool(_pool);	
@@ -116,13 +128,22 @@ contract FeeMaker is
 
         protocolFee = _protocolFee;
         
-        maxTotalSupply = _maxTotalSupply;
         
         governance = msg.sender;
 
 		tickSpacing = IUniswapV3Pool(_pool).tickSpacing();
 
         require(_protocolFee < 1e6, "protocolFee");
+
+        maxTotalSupply = _maxTotalSupply;
+
+        maxTwapDeviation = _maxTwapDeviation;
+
+        twapDuration = _twapDuration;
+
+		require(_maxTwapDeviation > 0, "maxTwapDeviation");
+		
+        require(_twapDuration > 0, "twapDuration");
     }
 
     
@@ -130,7 +151,7 @@ contract FeeMaker is
     /// @notice tokens get deposited in this smart contract will be held until next rebalance. 
     /// @param amountToken0 amount of token0 to deposit
     /// @param amountToken0 amount of token1 to deposit
-    /// @param staker  The staker's address of the recipient 
+    /// @param staker  The staker's address of the tokens 
     /// @return shares Number of shares minted
     /// @return amount0 Amount of token0 deposited
     /// @return amount1 Amount of token1 deposited
@@ -154,7 +175,7 @@ contract FeeMaker is
        
         require(staker != address(0) && staker != address(this), "staker");
 
-  		/// Poke positions so to get uniswap v3 fees up to date. 
+  		// Poke positions so to get uniswap v3 fees up to date. 
         _poke(cLow, cHigh);
 		
 
@@ -162,10 +183,10 @@ contract FeeMaker is
 		
         require(shares > 0, _hint2("shares ", shares, 0, 0,"" ) ); 
         
-        ///todo
+        //todo
         require(amountMin(amount0,amount1), "amountMIn");
 
-        /// transfer tokens from sender
+        // transfer tokens from sender
         if (amount0 > 0) token0.safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) token1.safeTransferFrom(msg.sender, address(this), amount1);
 
@@ -183,7 +204,7 @@ contract FeeMaker is
         require(totalSupply() <= maxTotalSupply, "CAP");
     }
 
-    /// poke to update fees from uniswap. 
+    // poke to update fees from uniswap. 
     function _poke(int24 tickLower, int24 tickUpper) internal {
         (uint128 liquidity, , , , ) = _position(tickLower, tickUpper);
         if (liquidity > 0) {
@@ -258,33 +279,19 @@ contract FeeMaker is
         uint256 totalSupply = totalSupply();
         
         //get total amount from current balance + position liquidity for each token
-        (uint256 total0, uint256 total1) = getTotalAmounts();
+        (uint256 total0, uint256 total1) = getTVL();
 
        	assert( totalSupply == 0   || total0 >0 ||  total1>0 );
+		
+        ( uint160 sqrtPriceX96, 	int24 tick, , , , , ) 	= pool.slot0();
+        
+        //( amount0,  amount1) = _swap(sqrtPriceX96, amountToken0, amountToken1);
+        (amount0, amount1 ) = (amountToken0, amountToken1);
 
-        if (totalSupply == 0) {
-            // For first deposit, just use the amounts desired
-            amount0 = amountToken0;
-            amount1 = amountToken1;
-            shares = Math.max(amount0, amount1);
-        } else if (total0 == 0) { 
-            amount1 = amountToken1;
-            shares = amount1.mul(totalSupply).div(total1);
-        } else if (total1 == 0) {
-            amount0 = amountToken0;
-            shares = amount0.mul(totalSupply).div(total0);
-        } else {
-            uint256 cross = Math.min(amountToken0.mul(total1), amountToken1.mul(total0));
-            require(cross > 0, "cross");
-
-            // Round up amounts
-            amount0 = cross.sub(1).div(total1).add(1);
-            amount1 = cross.sub(1).div(total0).add(1);
-            shares = cross.mul(totalSupply).div(total0).div(total1);
-        }
+        shares =  amount0.mul(amount1).div(1e18);
         
     }    
-    	
+		 
 	/// collect fees and remove liquidity from Uniswap pool.
 	/// @param amount0 burned amount of token0
 	/// @param amount1 burned amount of token1
@@ -317,7 +324,7 @@ contract FeeMaker is
         return uint128(x);
     }
     
-    function getTotalAmounts() 
+    function getTVL() 
     	public 
     	view  
     	returns (uint256 total0, uint256 total1) {
@@ -330,93 +337,252 @@ contract FeeMaker is
     }
     
     
-	/// @dev TODO  _swap
-	/// @notice 先获得当前token1、0 的price, 以较小的token amount 根据totalliquidity，tick low hi 计算出另一个token所需的amount
-	/// @param newLow new tickLower
-	/// @param newHigh new tickUpper
-	/// @param swapAmount 0 value means no swap needed by caller's calculation.
 
-    function rebalance(
-        int24 newLow,
-        int24 newHigh,
-        int256 swapAmount
-        
-    ) external nonReentrant onlyGovernance { 
-
-		
-		//#debug onlyGovernance for now. called from outside chain
-        //require(msg.sender == strategist, "strategist");
-        
-        (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool.slot0();
-        
-        _validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382
-        
+	function removePosition() internal {
         
         // Withdraw all current liquidity from Uniswap pool
-       
+      
        (uint128 allLiquidity, , , , ) = _position(cLow, cHigh); 
         
   		_burnAndCollect(cLow, cHigh, allLiquidity);
 
+	}
 
+    function rebalance(
+        int24 newLow,
+        int24 newHigh,
+        int24 tick
+        
+    ) internal { 
+
+        // get new balance
         uint256 balance0 = getBalance0();
         uint256 balance1 = getBalance1();
-        
-		// Emit snapshot to record balances and supply
-        emit Snapshot(tick, balance0, balance1, totalSupply());            	
-
-        //ok require(false, append("balance0:", uint2str(balance0),"balance1:",uint2str(balance1),""));
-        
-        
-        if (swapAmount > 0) {
-
-
-        	_swap(balance0,balance1,tick, sqrtPriceX96, swapAmount);
-
-	        balance0 = getBalance0();
-	        balance1 = getBalance1();
-
-        }
 
         
 		// Place position on Uniswap
         uint128 liquidity = _liquidityForAmounts( newLow, newHigh, balance0, balance1);
         
         require(liquidity > 0 ,append("liquidity: ",uint2str(liquidity),"","","")) ;
-       
+
+   
         pool.mint(address(this), newLow, newHigh, liquidity, "");
+
+        uint256 newBalance0 = getBalance0();
+        uint256 newBalance1 = getBalance1();
+
+        emit RebalanceLog(liquidity, balance0,balance1, newBalance0, newBalance1);
 
         (cLow, cHigh) = (newLow, newHigh);
         
     }
     
-	function _swap(uint256 bal0, uint256 bal1, int24 tick, uint160 sqrtPriceX96, int256 _swapAmount ) internal  {
-
-/*        
-        (uint160 sqrtPriceX96, int24 tick, , , , , ) = pool.slot0();
-
-        bool zeroForOne, 
-
-        uint160 sqrtPriceLimitX96    
+	
+	///@notice Todo lending uni mix
+	function strategy1() external nonReentrant onlyGovernance {
+		
+	}
+	
+	
+	
+	///@notice simple univ3 with swap
+	function strategy0(
+		int24 newLow,
+        int24 newHigh
         
-        //#debug
-//        require(true, uint2str(sqrtPriceX96));
-    	
-        //verifySwapAmount( _swapAmount, balance0 , balance1 );
+		) external nonReentrant onlyGovernance  {
+		
+        (	uint160 sqrtPriceX96, 	int24 tick, , , , , ) 	= pool.slot0();
 
-		pool.swap(
+  		_validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382
+        
+        // Check price is not too close to min/max allowed by Uniswap. Price
+        // shouldn't be this extreme unless something was wrong with the pool.
+
+        int24 range = newHigh - newLow ;
+            
+        require(tick > TickMath.MIN_TICK + range  + tickSpacing, "tick too low");
+        require(tick < TickMath.MAX_TICK - range  - tickSpacing, "tick too high");
+
+        // Check price has not moved a lot recently. This mitigates price
+        // manipulation during rebalance and also prevents placing orders
+        // when it's too volatile.
+        int24 twap = getTwap();
+        int24 deviation = tick > twap ? tick - twap : twap - tick;
+        require(deviation <= maxTwapDeviation, _hint2("deviation,maxTwapDeviation", uint256(deviation),uint256(maxTwapDeviation), 0,""));
+
+        
+        removePosition();
+        
+        uint256 balance0 = getBalance0();
+        uint256 balance1 = getBalance1();
+        
+        
+
+        _swap(sqrtPriceX96,tick,newLow,newHigh, balance0,balance1);
+
+        
+        
+
+//        int24 tickFloor = _floor(tick);
+//        int24 tickCeil = tickFloor + tickSpacing;
+
+		rebalance(
+	        newLow,
+	        newHigh,
+			tick
+			);
+
+        lastRebalance = block.timestamp;
+        lastTick = tick;
+        		
+	}
+	
+	/// to be optimized , or moved offchain
+	function swap( 
+		int256 swapAmount, 
+		bool zeroForOne ,
+		uint160 sqrtPriceLimitX96 
+		) public returns (int256 , int256) {
+		
+		
+		// to be optimized outside
+		sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+
+
+    	return pool.swap(
                address(this),
                zeroForOne,
-               swapAmount > 0 ? swapAmount : -swapAmount,
+               swapAmount,
+               sqrtPriceLimitX96,
+               abi.encode(msg.sender)
+        );
+	}
+	function TestSwap() public returns (int256 , int256) {
+		
+        (	uint160 sqrtPriceX96, 	int24 tick, , , , , ) 	= pool.slot0();
+
+		uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick); 
+		uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(cLow); 
+		uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(cHigh); 
+		
+        uint256 balance0 = getBalance0();
+        uint256 balance1 = getBalance1();
+
+		uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,balance0,balance1);
+
+        (uint256 amt0,uint256 amt1) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,liquidity);
+        
+        bool zeroFor1;
+        int256 swapAmount1;
+        
+        if ( amt0 > balance0 ) {
+        	zeroFor1 = true;
+        	swapAmount1 = int256(amt0.sub(balance0).div(2));
+        } else { //  (amt1 > balance1)
+        	zeroFor1 = false;
+			swapAmount1 = int256(-amt1.sub(balance1).div(2));
+        }
+        
+   		uint160 sqrtPriceLimitX961 = zeroFor1 ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+
+    	return pool.swap(
+               address(this),
+               zeroFor1,
+               swapAmount1,
+               sqrtPriceLimitX961,
+               abi.encode(msg.sender)
+        );
+
+	}
+    function Test() public view  {
+
+		int24 tick = -54;
+		int24 tickLower = -554;
+		int24 tickUpper = 446;
+		uint256 amount0 = 620;
+		uint256 amount1 = 771;
+
+		uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick); 
+		uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower); 
+		uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper); 
+		
+		
+
+        uint256 intermediate = FullMath.mulDiv(sqrtRatioX96, sqrtRatioBX96, FixedPoint96.Q96);
+        
+        uint128 liquidity1 = toUint128(FullMath.mulDiv(amount1, FixedPoint96.Q96, sqrtRatioX96 - sqrtRatioAX96));
+        uint128 liquidity0 = toUint128(FullMath.mulDiv(amount0, intermediate, sqrtRatioBX96 - sqrtRatioX96));
+        uint128  liquidity = liquidity0 < liquidity1 ? liquidity0 : liquidity1;
+        uint256 amt0  = FullMath.mulDiv(
+                uint256(liquidity) << FixedPoint96.RESOLUTION,
+                sqrtRatioBX96 - sqrtRatioX96,
+                sqrtRatioBX96
+            ) / sqrtRatioX96;
+            
+        uint256 amt1 = FullMath.mulDiv(liquidity, sqrtRatioX96 - sqrtRatioAX96, FixedPoint96.Q96);
+        
+        
+        //uint128 liquidity2 = toUint128(FullMath.mulDiv(amount1, FixedPoint96.Q96, sqrtRatioBX96 - sqrtRatioAX96));
+        liquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,amount0, amount1);
+
+        (amt0,amt1) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,liquidity);
+
+        require(false, _hint2("test:", 0, liquidity,amt0,uint2str(uint(amt1))));
+    }
+
+  	function toUint128(uint256 x) private pure returns (uint128 y) {
+        require((y = uint128(x)) == x);
+    }
+    
+	function _swap( uint160 sqrtPriceX96, int24 tick, int24 tickLower, int24  tickUpper,uint256 amount0, uint256 amount1) internal returns (int256 , int256) {
+
+		// #debug temporary solution. 
+		
+		
+        uint price;
+        int256 swapAmount =   int256(amount0.mul( price ).sub(amount1 ).div(2));
+        
+        bool zeroForOne =  swapAmount  > 0 ;
+
+        // adjust sqrtPriceX96 to meet the condition of swap method
+        // #debug  shift=1 hard coded for now
+
+        // tobe optimized
+        uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+        
+    	return pool.swap(
+               address(this),
+               zeroForOne,
+               swapAmount,
                sqrtPriceLimitX96,
                ""
            );
 
-        //require(false, append("swap success:",uint2str(balance0),",",uint2str(balance1),".") );
-*/
 	}
 	
- /// @dev Callback for Uniswap V3 pool.
+	    /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
+    function getTwap() public view returns (int24) {
+        uint32 _twapDuration = twapDuration;
+        uint32[] memory secondsAgo = new uint32[](2);
+        secondsAgo[0] = _twapDuration;
+        secondsAgo[1] = 0;
+
+        (int56[] memory tickCumulatives, ) = pool.observe(secondsAgo);
+        return int24((tickCumulatives[1] - tickCumulatives[0]) / _twapDuration);
+    }
+
+    /// @dev Rounds tick down towards negative infinity so that it's a multiple
+    /// of `tickSpacing`.
+    function _floor(int24 tick) internal view returns (int24) {
+        int24 compressed = tick / tickSpacing;
+        if (tick < 0 && tick % tickSpacing != 0) compressed--;
+        return compressed * tickSpacing;
+    }
+
+	
+	
+ /// @dev Callback for Uniswap V3 pool
     function uniswapV3MintCallback(
         uint256 amount0,
         uint256 amount1,
@@ -427,13 +593,16 @@ contract FeeMaker is
         if (amount1 > 0) token1.safeTransfer(msg.sender, amount1);
     }
 
-    /// @dev Callback for Uniswap V3 pool.
+    /// @dev Callback for Uniswap V3 pool
     function uniswapV3SwapCallback(
         int256 amount0Delta,
         int256 amount1Delta,
         bytes calldata data
     ) external override {
-        require(msg.sender == address(pool));
+        require(msg.sender == address(pool),"sender = pool?");
+
+        //require(false, _hint2("deltaamount", uint256(amount0Delta),uint256(amount1Delta),0,""));
+        
         if (amount0Delta > 0) token0.safeTransfer(msg.sender, uint256(amount0Delta));
         if (amount1Delta > 0) token1.safeTransfer(msg.sender, uint256(amount1Delta));
     }
@@ -512,7 +681,6 @@ contract FeeMaker is
      function _validRange(int24 _lower, int24 _upper, int24 _tick) internal view {
     	
         
-        int24 _tickSpacing = tickSpacing;
         
         require(_lower < _upper, _hint2("lower < _upper ", uint(_lower), uint(_upper), uint(_tick),"")  );
         require(_lower < _tick , _hint2("lower > _tick ", uint(_lower), uint(_upper), uint(_tick),""));
@@ -520,8 +688,10 @@ contract FeeMaker is
         
         require(_lower >= TickMath.MIN_TICK, "Lower too low");
         require(_upper <= TickMath.MAX_TICK, "Upper too high");
-        require(_lower % _tickSpacing == 0, "Lower % tickSpacing");
-        require(_upper % _tickSpacing == 0, "Upper % tickSpacing");
+
+        
+        require(_lower % tickSpacing == 0, "Lower % tickSpacing");
+        require(_upper % tickSpacing == 0, "Upper % tickSpacing");
     }
 
      /// @notice Used to collect accumulated protocol fees.
@@ -530,10 +700,18 @@ contract FeeMaker is
         uint256 amount1,
         address to
     ) external onlyGovernance {
-        accruedProtocolFees0 = accruedProtocolFees0.sub(amount0);
-        accruedProtocolFees1 = accruedProtocolFees1.sub(amount1);
-        if (amount0 > 0) token0.safeTransfer(to, amount0);
-        if (amount1 > 0) token1.safeTransfer(to, amount1);
+    	
+    	require (accruedProtocolFees0 >= amount0 && accruedProtocolFees1 >= amount1,"protocolfees");
+
+		if (amount0 > 0) {
+	        accruedProtocolFees0 = accruedProtocolFees0.sub(amount0);
+	        token0.safeTransfer(to, amount0);
+		}
+							
+        if (amount1 > 0) {
+        	accruedProtocolFees1 = accruedProtocolFees1.sub(amount1);
+        	token1.safeTransfer(to, amount1);
+        }
     }
     
 	/**
@@ -645,13 +823,23 @@ contract FeeMaker is
     }
 
 
+    function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyGovernance {
+        require(_maxTwapDeviation > 0, "maxTwapDeviation");
+        maxTwapDeviation = _maxTwapDeviation;
+    }
+
+    function setTwapDuration(uint32 _twapDuration) external onlyGovernance {
+        require(_twapDuration > 0, "twapDuration");
+        twapDuration = _twapDuration;
+    }
+
     ///#debug 888888888888888888888888888 dummy functions 
     
-    ///
+    
 	/// @notice 3 functiosn for demo
 	/// @dev 
 	///		Hello(), Greet(), plus(x,y)
-	///
+	
 	function Hello() public pure returns (string memory) {
         return "Hello World";
     }
@@ -686,6 +874,7 @@ contract FeeMaker is
 			return msg1;
 	}
 	
+	
 
 	function uint2str(uint i) internal pure returns (string memory ){
 	    if (i == 0) return "0";
@@ -710,6 +899,8 @@ contract FeeMaker is
 	    return string(abi.encodePacked(a1, a2, a3, a4, a5));
 	
 	}
+
+	
 
 
 }

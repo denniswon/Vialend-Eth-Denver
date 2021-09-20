@@ -26,28 +26,31 @@ func main() { ///-----------
 
 	networks := [...]nClient{
 
-		{ //0
+		{ //0 mainnet
+			"https://mainnet.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			""},
+		{ //1
 			"http://127.0.0.1:7545",
 			"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0"},
 
-		{ //1 test admin
+		{ //2 test admin
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7"},
 
-		{ //2 test user 1
+		{ //3 test user 1
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3"},
 
-		{ //3 test user 2
+		{ //4 test user 2
 			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6"},
 
-		{ //4
+		{ //5
 			"https://rinkeby.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7"},
 	}
 
-	nid := 0
+	nid := 1 //0 is mainnet
 
 	client, err := ethclient.Dial(networks[nid].clientUrl)
 	privateKey, err := crypto.HexToECDSA(networks[nid].privateKey)

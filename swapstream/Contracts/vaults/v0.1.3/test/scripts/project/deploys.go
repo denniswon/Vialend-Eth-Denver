@@ -6,7 +6,9 @@ import (
 	"math/big"
 
 	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
+	mocktoken "../../../../../Tokens/erc20/deploy/ERC20fixedSupply"
 	vault "../../../deploy/FeeMaker"
+
 	"../config"
 	"github.com/ethereum/go-ethereum/common"
 	/*
@@ -17,11 +19,8 @@ import (
 		token "../../uniswap/v3/deploy/token"
 	*/)
 
-func DeployFactory(do int) *factory.Api {
+func DeployFactory() *factory.Api {
 
-	if do <= 0 {
-		return nil
-	}
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy Uniswap Factory. ..................")
 	fmt.Println("----------------------------------------------")
@@ -43,11 +42,7 @@ func DeployFactory(do int) *factory.Api {
 	return instance
 }
 
-func DeployVault(do int) {
-
-	if do <= 0 {
-		return
-	}
+func DeployVault() {
 
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy Vault ...................")
@@ -62,9 +57,14 @@ func DeployVault(do int) {
 	ttoken := common.HexToAddress(config.Network.BonusToken)
 	protocolFee := big.NewInt(10000)
 
-	maxTotalSupply := big.NewInt(1e18).Mul(big.NewInt(1e18), big.NewInt(1e18))
+	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	if !ok {
+		log.Fatal("maxTotalSupply err ")
+	}
+	var maxTwapDeviation = big.NewInt(20)
+	var twapDuration = uint32(2)
 
-	address, tx, instance, err := vault.DeployApi(config.Auth, config.Client, pool, ttoken, protocolFee, maxTotalSupply)
+	address, tx, instance, err := vault.DeployApi(config.Auth, config.Client, pool, ttoken, protocolFee, maxTotalSupply, maxTwapDeviation, twapDuration)
 
 	///set auth back to Account
 	config.Auth = config.GetSignature(config.Networkid, config.Account)
@@ -73,6 +73,7 @@ func DeployVault(do int) {
 		log.Fatal("deploy vault ", err)
 	}
 
+	//refresh vault address in networks.go
 	config.Network.Vault = address.Hex()
 
 	fmt.Println("vault address:", address.Hex())
@@ -81,4 +82,27 @@ func DeployVault(do int) {
 
 	_, _ = instance, tx
 
+}
+
+func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.Int) {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy Token. ..................")
+	fmt.Println("----------------------------------------------")
+
+	config.NonceGen()
+
+	address, tx, instance, err := mocktoken.DeployApi(config.Auth, config.Client, name, symbol, decimals, totalSupply)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, _ = instance, tx
+
+	fmt.Println("token address:", address.Hex())
+
+	config.Readstring("token deploy done, wait for pending ... next... ")
+
+	//return instance
 }

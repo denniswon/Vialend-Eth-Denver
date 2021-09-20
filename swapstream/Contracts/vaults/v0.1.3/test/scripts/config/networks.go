@@ -20,6 +20,13 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+type TokenStruct struct {
+	Name           string
+	Symbol         string
+	Decimals       uint8
+	MaxTotalSupply *big.Int
+}
+
 type Init struct {
 	ProviderUrl []string
 	Factory     string
@@ -35,11 +42,14 @@ type Init struct {
 	FeeTier     int64
 }
 
-var Networkid = 2 /// 0: mainnet, 1: local, 2: gorlie
+var Networkid = 1 /// 0: mainnet, 1: local, 2: gorlie
 var Account = 0
 var ProviderSortId = 0
 var Auto = true
-var Decimals0, Decimals1 uint8
+
+var Token [2]TokenStruct
+
+//var Decimals0, Decimals1 uint8
 
 var Client, err = ethclient.Dial(Networks[Networkid].ProviderUrl[ProviderSortId])
 var Auth = GetSignature(Networkid, Account)
@@ -70,13 +80,13 @@ var Networks = [...]Init{
 		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
 		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
 			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
-		"0x6D30f1bDb702b2Ccc930BF04e094DC2D571FBb6a", //tokenA usdc
 		"0x83c3C928F77e74fa44bbF420478991124596d5e8", //tokenB usdt
+		"0xA332D81ca86e749C76B3Fb331AD641610Ec98e06", //tokenA usdc
 		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
 		10,
-		"0x1fD73Ce67f09753EF1FBbC7A0d411ECD65866ECA", // pool
+		"0x22a5a0Dbbfd3F70B0dEbceD881Df43b4ecb06b20", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0xdf32856E1737983Fa08c822D330eCf19123DEEf8", //vault address
+		"0x5011D985Ed754a626256E6bcA48F9925AEcC4E27", //vault address
 		3000, // fee
 	},
 
@@ -95,7 +105,7 @@ var Networks = [...]Init{
 		40, //time pending interval
 		"0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"0x3B326e4A6aDA2C499cb838A0aE21D934f8984cf1", //vault address
+		"0x715C2A85ad99792A6c6D4c877612a16f7Be4ba3A", //vault address
 		3000, // fee
 	},
 }
@@ -184,21 +194,12 @@ func RoundFloat64ToBigInt(f64 float64) *big.Int {
 	return big.NewInt(int64(math.Round(f64)))
 }
 
-func Float64ToBigInt(f64 float64) *big.Int {
-
-	if f64 >= math.MaxInt64 || f64 <= math.MinInt64 {
-		log.Fatal("f64 is out of int64 range.", err)
-	}
-
-	return big.NewInt(int64(f64))
-}
-
 func Pricef(priceInWei *big.Int, decimal int) *big.Float {
 	fbalance := new(big.Float)
 	fbalance.SetString(priceInWei.String())
 	value := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(decimal)))
 
-	//fmt.Println(value) // 25.729324269165216041
+	//	fmt.Println(value) // 25.729324269165216041
 	return value
 }
 
@@ -272,4 +273,36 @@ func GetAddress(accId int) common.Address {
 	}
 
 	return crypto.PubkeyToAddress(*publicKeyECDSA)
+}
+
+func Float64ToBigInt(f64 float64) *big.Int {
+
+	if f64 >= math.MaxInt64 || f64 <= math.MinInt64 {
+		log.Fatal("f64 is out of int64 range.", err)
+	}
+
+	return big.NewInt(int64(f64))
+}
+
+func FloatToBigInt(val float64) *big.Int {
+	bigval := new(big.Float)
+	bigval.SetFloat64(val)
+
+	coin := new(big.Float)
+	coin.SetInt(big.NewInt(1000000000000000000))
+
+	bigval.Mul(bigval, coin)
+
+	result := new(big.Int)
+	bigval.Int(result)
+
+	return result
+}
+
+func BigFloatToBigInt(bigval *big.Float) *big.Int {
+
+	result := new(big.Int)
+	bigval.Int(result)
+
+	return result
 }

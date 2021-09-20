@@ -40,12 +40,12 @@ func main() {
 	sw.CreatePool = 0 // *Note: if token0+token1+fee = pool exists ERROR: createPool VM Exception while processing transaction: revert
 	sw.InitialPool = 0
 	sw.DeployVault = 0
-	sw.Approve = 0
+	sw.Approve = 1
 
-	sw.Deposit = 0
-	sw.DepositAmount = [2]int64{2000000, 2000000} // amount0, amount1 to deposit
+	sw.Deposit = 1
+	sw.DepositAmount = [2]int64{200, 200} // amount0, amount1 to deposit
 
-	sw.Withdraw = 1
+	sw.Withdraw = 0
 	sw.WithDrawParam = [2]int64{0, 100} // accountid,  amount of shares in percentage %
 
 	sw.Rebalance = 0
