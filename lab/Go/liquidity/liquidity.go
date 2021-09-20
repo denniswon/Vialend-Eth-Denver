@@ -21,10 +21,6 @@ import (
 	"math"
 )
 
-var xDecimals = float64(18)
-var yDecimals = float64(6)
-var diffDecimals = math.Pow(10, xDecimals-yDecimals)
-
 func main() {
 
 	price := float64(3879.16)
@@ -66,11 +62,11 @@ func main() {
 
 	getBalance(price, P1, min, max, x, y)
 
-	test_1()
-	//	test_2()
+	test_1(18, 6)
+	test_2(18, 18)
 }
 
-func test_1() {
+func test_1(xDecimals float64, yDecimals float64) {
 	fmt.Println("test case 1")
 	p := 3879.10
 	a := 300.01
@@ -78,9 +74,23 @@ func test_1() {
 	x := float64(1)
 	y := float64(4000)
 	test(x, y, p, a, b)
+
+	//calc tick  p(i) = 1.0001i
+
+	diffDecimals := math.Pow(10, xDecimals-yDecimals)
+
+	tick := math.Log(p/diffDecimals) / math.Log(1.0001)      // log(p,1.0001)
+	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001) // log(a,1.0001)
+	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001) // log(b,1.0001)
+
+	fmt.Printf("tick={:%.f}\n", tick)
+	fmt.Printf("tickLower={:%.f}\n", tickLower)
+	fmt.Printf("tickUpper={:%.f}\n", tickUpper)
+	fmt.Printf("\n")
+
 }
 
-func test_2() {
+func test_2(xDecimals float64, yDecimals float64) {
 	fmt.Println("test case 2")
 	p := 3227.02
 	a := 1626.3
@@ -88,6 +98,20 @@ func test_2() {
 	x := float64(1)
 	y := 5096.06
 	test(x, y, p, a, b)
+
+	//calc tick  p(i) = 1.0001i
+
+	diffDecimals := math.Pow(10, xDecimals-yDecimals)
+
+	tick := math.Log(p/diffDecimals) / math.Log(1.0001)      // log(p,1.0001)
+	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001) // log(a,1.0001)
+	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001) // log(b,1.0001)
+
+	fmt.Printf("tick={:%.f}\n", tick)
+	fmt.Printf("tickLower={:%.f}\n", tickLower)
+	fmt.Printf("tickUpper={:%.f}\n", tickUpper)
+	fmt.Printf("\n")
+
 }
 
 //
@@ -202,17 +226,6 @@ func getMin(p float64, b float64, x float64, y float64) {
 	a := calculate_a2(sp, sb, x, y)
 	fmt.Printf("lower bound of the price p_a={:%.2f}\n", a)
 
-	//calc tick  p(i) = 1.0001i
-
-	tick := math.Log(p/diffDecimals) / math.Log(1.0001)      // log(p,1.0001)
-	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001) // log(a,1.0001)
-	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001) // log(b,1.0001)
-
-	fmt.Printf("tick={:%.f}\n", tick)
-	fmt.Printf("tickLower={:%.f}\n", tickLower)
-	fmt.Printf("tickUpper={:%.f}\n", tickUpper)
-	fmt.Printf("\n")
-
 }
 
 //
@@ -249,6 +262,13 @@ func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float6
 	fmt.Printf("delta_x={:%.2f} delta_y={:%.2f}\n", delta_x, delta_y)
 	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", x1, y1)
 
+}
+
+func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amount0 float64, amount1 float64, amountSwap float64, zeroForOne float64) {
+
+	fmt.Println("Example 4: getBestAmounts and swap amount from which pair?")
+
+	return amount0, amount1, amountSwap, zeroForOne
 }
 
 func get_liquidity_0(x float64, sa float64, sb float64) float64 {
