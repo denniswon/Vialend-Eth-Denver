@@ -62,11 +62,17 @@ func main() {
 
 	getBalance(price, P1, min, max, x, y)
 
-	test_1(18, 6)
-	test_2(18, 18)
+	test_1()
+	test_2()
+
+	// weth/usdc
+	getTicks(3879.10, 300, 5000, 18, 6)
+
+	// usdt/usdc
+	getTicks(0.9973, 0.9461092501, 1.045607201, 18, 18)
 }
 
-func test_1(xDecimals float64, yDecimals float64) {
+func test_1() {
 	fmt.Println("test case 1")
 	p := 3879.10
 	a := 300.01
@@ -75,13 +81,18 @@ func test_1(xDecimals float64, yDecimals float64) {
 	y := float64(4000)
 	test(x, y, p, a, b)
 
+}
+func getTicks(p float64, a float64, b float64, xDecimals float64, yDecimals float64) {
+
+	fmt.Println("test tick, tickLower, tickUpper by given price, min, and max value ")
+
 	//calc tick  p(i) = 1.0001i
 
 	diffDecimals := math.Pow(10, xDecimals-yDecimals)
 
-	tick := math.Log(p/diffDecimals) / math.Log(1.0001)      // log(p,1.0001)
-	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001) // log(a,1.0001)
-	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001) // log(b,1.0001)
+	tick := math.Log(p/diffDecimals) / math.Log(1.0001)
+	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001)
+	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001)
 
 	fmt.Printf("tick={:%.f}\n", tick)
 	fmt.Printf("tickLower={:%.f}\n", tickLower)
@@ -90,7 +101,7 @@ func test_1(xDecimals float64, yDecimals float64) {
 
 }
 
-func test_2(xDecimals float64, yDecimals float64) {
+func test_2() {
 	fmt.Println("test case 2")
 	p := 3227.02
 	a := 1626.3
@@ -98,19 +109,6 @@ func test_2(xDecimals float64, yDecimals float64) {
 	x := float64(1)
 	y := 5096.06
 	test(x, y, p, a, b)
-
-	//calc tick  p(i) = 1.0001i
-
-	diffDecimals := math.Pow(10, xDecimals-yDecimals)
-
-	tick := math.Log(p/diffDecimals) / math.Log(1.0001)      // log(p,1.0001)
-	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001) // log(a,1.0001)
-	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001) // log(b,1.0001)
-
-	fmt.Printf("tick={:%.f}\n", tick)
-	fmt.Printf("tickLower={:%.f}\n", tickLower)
-	fmt.Printf("tickUpper={:%.f}\n", tickUpper)
-	fmt.Printf("\n")
 
 }
 
