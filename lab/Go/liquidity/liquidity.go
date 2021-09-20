@@ -23,53 +23,31 @@ import (
 
 func main() {
 
-	price := float64(3879.16)
-	min := float64(300)
-	max := float64(5000)
-	x := float64(1)
+	// price, min, max, x
+	getY(3879.16, 300, 5000, 1)
+	//getY(0.9973, 0.9461092501, 1.045607201, 620)
 
-	// price = float64(0.9973)
-	// min = float64(0.9461092501)
-	// max = float64(1.045607201)
-	// x = float64(620)
+	///  https://app.uniswap.org/#/pool/668
+	//getY(1999.84, 1000.3, 3999.8, 99990)
 
-	/// https://app.uniswap.org/#/pool/668
-	// price = float64(1999.84)
-	// min = float64(1000.3)
-	// max = float64(3999.8)
-	// x = float64(99990)
+	//price, max, x, y
+	getMin(3879.6, 5000, 1, 23633)
 
-	getY(price, min, max, x)
-
-	price = float64(3879.6)
-	max = float64(5000)
-	x = float64(1)
-	y := float64(23633)
-
-	// price = float64(2000)
-	// max = float64(3000)
-	// x = float64(2)
-	// y = float64(4000)
-
-	getMin(price, max, x, y)
-
-	price = float64(2000)
-	P1 := float64(2500)
-	min = float64(1333.33)
-	max = float64(3000)
-	x = float64(2)
-	y = float64(4000)
-
-	getBalance(price, P1, min, max, x, y)
-
-	test_1()
-	test_2()
+	//	getMin(2000, 3000, 2, 4000)
 
 	// weth/usdc
 	getTicks(3879.10, 300, 5000, 18, 6)
 
 	// usdt/usdc
 	getTicks(0.9973, 0.9461092501, 1.045607201, 18, 18)
+
+	//price, P1, min, max, x, y
+	getBalance(2000, 2500, 1333.33, 3000, 2, 4000)
+
+	test_1()
+
+	test_2()
+
 }
 
 func test_1() {
