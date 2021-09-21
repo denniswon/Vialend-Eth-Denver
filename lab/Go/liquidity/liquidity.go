@@ -41,6 +41,11 @@ func main() {
 	// usdt/usdc
 	getTicks(0.9973, 0.9461092501, 1.045607201, 18, 18)
 
+	// (p , a , b , x , y)
+	getBestAmounts(0.9973, 0.9461092501, 1.045607201, 20, 200)
+
+	//getBestAmounts(3879.6, 300, 5000, 10, 5000)
+
 	//price, P1, min, max, x, y
 	getBalance(2000, 2500, 1333.33, 3000, 2, 4000)
 
@@ -51,7 +56,11 @@ func main() {
 }
 
 func test_1() {
+	fmt.Println("----------------------------------------------")
+
 	fmt.Println("test case 1")
+	fmt.Println("----------------------------------------------")
+
 	p := 3879.10
 	a := 300.01
 	b := 5000.01
@@ -62,25 +71,30 @@ func test_1() {
 }
 func getTicks(p float64, a float64, b float64, xDecimals float64, yDecimals float64) {
 
-	fmt.Println("test tick, tickLower, tickUpper by given price, min, and max value ")
+	fmt.Println("----------------------------------------------")
+	fmt.Printf("tetTicks: tick, tickLower, tickUpper by given price, min, and max value \n")
+	fmt.Println("----------------------------------------------")
 
 	//calc tick  p(i) = 1.0001i
 
 	diffDecimals := math.Pow(10, xDecimals-yDecimals)
 
+	// log(p , 1.0001)  ==  log(p)/ log(1.0001)
 	tick := math.Log(p/diffDecimals) / math.Log(1.0001)
 	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001)
 	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001)
 
-	fmt.Printf("tick={:%.f}\n", tick)
-	fmt.Printf("tickLower={:%.f}\n", tickLower)
-	fmt.Printf("tickUpper={:%.f}\n", tickUpper)
+	fmt.Printf("tick={%.f}\n", tick)
+	fmt.Printf("tickLower={%.f}\n", tickLower)
+	fmt.Printf("tickUpper={%.f}\n", tickUpper)
 	fmt.Printf("\n")
 
 }
 
 func test_2() {
+	fmt.Println("----------------------------------------------")
 	fmt.Println("test case 2")
+	fmt.Println("----------------------------------------------")
 	p := 3227.02
 	a := 1626.3
 	b := 4846.3
@@ -149,7 +163,9 @@ func test(x float64, y float64, p float64, a float64, b float64) {
 //
 func getY(p float64, a float64, b float64, x float64) {
 
+	fmt.Println("----------------------------------------------")
 	fmt.Println("Example 1: how much of USDC I need when providing 2 ETH at this price and range?")
+	fmt.Println("----------------------------------------------")
 
 	// price := float64(3879.16)
 	// min := float64(300)
@@ -190,7 +206,9 @@ func getY(p float64, a float64, b float64, x float64) {
 // calc min price
 //
 func getMin(p float64, b float64, x float64, y float64) {
+	fmt.Println("----------------------------------------------")
 	fmt.Println("Example 2: I have 2 ETH and 4000 USDC, range top set to 3000 USDC. What's the bottom of the range?")
+	fmt.Println("----------------------------------------------")
 	// p = 2000
 	// b = 3000
 	// x = 2
@@ -208,13 +226,10 @@ func getMin(p float64, b float64, x float64, y float64) {
 // Example 3 from the technical note
 // calc balances
 //
-func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float64) {
-	fmt.Printf("Example 3: Using the position created in Example 2, what are asset balances at 2500 USDC per ETH?")
-	// p = 2000
-	// a = 1333.33
-	// b = 3000
-	// x = 2
-	// y = 4000
+func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float64) (float64, float64) {
+	fmt.Println("----------------------------------------------")
+	fmt.Printf("Example 3: Using the position created in Example 2, what are asset balances at 2500 USDC per ETH?\n")
+	fmt.Println("----------------------------------------------")
 
 	sp := math.Sqrt(p) //p * *0.5
 	sa := math.Sqrt(a) //a * *0.5
@@ -233,16 +248,76 @@ func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float6
 	delta_inv_p := 1/sp1 - 1/sp
 	delta_x := delta_inv_p * L
 	delta_y := delta_p * L
-	x1 = x + delta_x
-	y1 = y + delta_y
+	xx1 := x + delta_x
+	yy1 := y + delta_y
+	fmt.Printf("alternative way, directly based on the whitepaper:")
 	fmt.Printf("delta_x={:%.2f} delta_y={:%.2f}\n", delta_x, delta_y)
-	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", x1, y1)
+	fmt.Printf("Amount of ETH x={:%.2f} amount of USDC y={:%.2f}\n", xx1, yy1)
+
+	return x1, y1
 
 }
 
-func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amount0 float64, amount1 float64, amountSwap float64, zeroForOne float64) {
+func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amount0 float64, amount1 float64, amountSwap float64, zeroForOne bool) {
+	fmt.Println("----------------------------------------------")
+	fmt.Println("Swap Amounts: getBestAmounts and swap amount")
+	fmt.Println("----------------------------------------------")
 
-	fmt.Println("Example 4: getBestAmounts and swap amount from which pair?")
+	sp := math.Sqrt(p) //p * *0.5
+	sa := math.Sqrt(a) //a * *0.5
+	sb := math.Sqrt(b) //b * *0.5
+	// calculate the initial liquidity
+	L := get_liquidity(x, y, sp, sa, sb)
+
+	P1 := p
+	sp1 := math.Sqrt(P1) // P1 * *0.5
+	x1 := calculate_x(L, sp1, sb)
+	y1 := calculate_y(L, sp1, sa)
+
+	fmt.Printf("x1={%.f}\ny1={%.f}\n", x1, y1)
+
+	var r float64
+
+	if x > x1 {
+		zeroForOne = true
+
+		r = y1 / x1
+
+		//s=swap amount
+		s := (r*x - y/p) / (1 + r)
+
+		amount0 = x - s
+		amount1 = y + (s * p)
+		amountSwap = s //swap x for y
+
+		fmt.Printf("y1/x1 Ratio={:%.4f}\n ", r)
+
+	} else if y > y1 {
+		zeroForOne = false
+
+		// x1/y1 = x+s/p / y-s
+
+		//  r = (x+s/p) / y-s
+		//  r * (y-s) = x+s/p
+		//  r * (y-s) - x=  s/p
+		// pr*(y-s) - px = s
+		// pry - prs -px  = s
+		// pry - px = s + prs = s(1+pr)
+		// s=(pry-px)/(1+pr)
+
+		r = x1 / y1
+
+		//s := (r*y - x*p) / (1 + r)
+		s := (r*y*p - x*p) / (r*p + 1)
+
+		amount0 = y - s
+		amount1 = x + (s / p)
+		amountSwap = s
+
+		fmt.Printf("x1/y1 Ratio={:%.4f}\n ", r)
+	}
+
+	fmt.Printf("newX={%.f}, newY={%.f},swapamount={%.f},zeroForOne={%t}\n", amount0, amount1, amountSwap, zeroForOne)
 
 	return amount0, amount1, amountSwap, zeroForOne
 }
