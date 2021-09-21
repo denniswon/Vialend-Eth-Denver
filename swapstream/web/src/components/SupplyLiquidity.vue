@@ -90,11 +90,8 @@
                             v-model="depositToken1"
                             :model="depositToken1"
                             dir="rtl"
-                            style="text-align:right;"
-                            pattern="^[0-9]*[.,]?[0-9]*$"
-                            autocorrect="off"
-                            autocomplete="off"
-                            inputmode="decimal"></el-input>
+                            style="text-align:right;direction:rtl;"
+                            @input="inputChange"></el-input>
                 </td>
               </tr>
               <tr>
@@ -207,8 +204,8 @@ export default {
       supplyToken0: '',
       supplyToken1: '',
       supplyDialogVisible: false,
-      depositToken0: 0,
-      depositToken1: 0,
+      depositToken0: '',
+      depositToken1: '',
       token0Approved: false,
       token1Approved: false,
       btnDepositDisabled: false,
@@ -222,8 +219,8 @@ export default {
       withdrawLoading: false,
       shareValue: 0,
       sharePercent: 25,
-      token0Balance: 1,
-      token1Balance: 2,
+      token0Balance: 0,
+      token1Balance: 0,
       token0Decimals: 0,
       token1Decimals: 0,
       myAccount: '',
@@ -255,6 +252,9 @@ export default {
     }
   },
   methods: {
+    inputChange (item) {
+      console.log('input value:', item)
+    },
     getTokenContract (index) {
       this.tokenContract = new web3.eth.Contract(
         contractABI,
