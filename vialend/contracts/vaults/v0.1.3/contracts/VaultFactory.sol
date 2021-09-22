@@ -5,5 +5,5 @@ pragma solidity >=0.5.0;
 import "./Vault.sol";
 
 
-/// @author  Swapstream
+/// @author  vialend
 /// @notice  Create a Vault for pari0,pair1, type { pool:strategy {uniswapv3, sushiswapv1, uniswapv2,...}, arb..}

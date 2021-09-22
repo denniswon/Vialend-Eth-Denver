@@ -55,7 +55,7 @@ import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
 import "../interfaces/IFeeMakerEvents.sol";
 
 
-/// @author  Swapstream
+/// @author  ViaLend
 /// @title   FeeMaker
 /// @notice  A Smart Contract that helps liquidity providers managing their funds on Uniswap V3.
 
@@ -112,7 +112,7 @@ contract FeeMaker is
         int24 _maxTwapDeviation,
         uint32 _twapDuration
         
-    ) ERC20("Token Ref","ShareRef") {
+    ) ERC20("ViaLend Token","VLT") {
 
 		pool = IUniswapV3Pool(_pool);	
 		emit GeneralA("pool", _pool);

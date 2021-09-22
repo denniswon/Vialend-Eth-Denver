@@ -19,19 +19,19 @@ To Test: ( goerli  )
 	
 	
 vault contract:
- 	\swapstream\Contracts\vaults\v0.1.2\contracts\FeeMaker.sol
+ 	\vialend\Contracts\vaults\v0.1.2\contracts\FeeMaker.sol
 
 deployed ABI:   
-	\swapstream\Contracts\vaults\v0.1.2\build\FeeMaker\FeeMaker.abi
+	\vialend\Contracts\vaults\v0.1.2\build\FeeMaker\FeeMaker.abi
 
 deployed go package:  
-	\swapstream\Contracts\vaults\v0.1.2\deploy\FeeMaker\feeMaker.go
+	\vialend\Contracts\vaults\v0.1.2\deploy\FeeMaker\feeMaker.go
 
 configure file:   
-	\swapstream\Contracts\vaults\v0.1.2\test\scripts\config\networks.go
+	\vialend\Contracts\vaults\v0.1.2\test\scripts\config\networks.go
 
 sample test scripts :   
-	\swapstream\Contracts\vaults\v0.1.2\test\scripts\index.go 
+	\vialend\Contracts\vaults\v0.1.2\test\scripts\index.go 
 
 	
 	

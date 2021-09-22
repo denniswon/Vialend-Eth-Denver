@@ -7,8 +7,8 @@ import (
 	"math/big"
 	"time"
 
-	tester "../../../../../../../swapstream/contracts/vaults/v0.1.2/deploy/tester"
 	pool "../../../../../../../uniswap/v3/deploy/UniswapV3Pool"
+	tester "../../../deploy/tester"
 	"../config"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
