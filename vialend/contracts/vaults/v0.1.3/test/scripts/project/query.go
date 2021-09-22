@@ -105,7 +105,7 @@ func PoolInfo2(do bool) {
 	///verify the price
 	fmt.Println("veryfy sqrtP*96 = ", sqrtPx962Price, ",  getPrice = ", price)
 
-	fmt.Println("Price in decimals: ", config.Pricef(price, int(config.Token[1].Decimals)))
+	fmt.Println("Price in decimals: ", price)
 
 	feeRate, _ := poolInstance.Fee(&bind.CallOpts{})
 	fmt.Println("Fee tier:", feeRate)

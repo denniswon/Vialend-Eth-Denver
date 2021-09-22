@@ -180,6 +180,7 @@ contract FeeMaker is
 		
 
         (shares, amount0, amount1) = _calcShares(amountToken0, amountToken1); 
+        //_calcSharesAndAmounts(amountToken0, amountToken1); 
 		
         require(shares > 0, _hint2("shares ", shares, 0, 0,"" ) ); 
         
@@ -193,11 +194,11 @@ contract FeeMaker is
         _mint(staker, shares);
 
 		//#debug  test send staker some ttoken tokenGiveAwayRate.div(100).mul(shares)
-		if ( ttoken.balanceOf(address(this) ) > 1000000000000000000 )
-		{
-			//uint tokenGiveAwayRate = 10; 
-	        ttoken.safeTransfer(staker, 1000000000000000000);
-        }
+		// if ( ttoken.balanceOf(address(this) ) > 1000000000000000000 )
+		// {
+		// 	//uint tokenGiveAwayRate = 10; 
+	 //        ttoken.safeTransfer(staker, 1000000000000000000);
+  //       }
 
         emit Deposit(msg.sender, staker, shares, amount0, amount1);
 
@@ -291,7 +292,46 @@ contract FeeMaker is
         shares =  amount0.mul(amount1).div(1e18);
         
     }    
-		 
+
+	/// @dev Calculates the largest possible `amount0` and `amount1` such that
+    /// they're in the same proportion as total amounts, but not greater than
+    /// `amount0Desired` and `amount1Desired` respectively.
+    function _calcSharesAndAmounts(uint256 amount0Desired, uint256 amount1Desired)
+        internal
+        view
+        returns (
+            uint256 shares,
+            uint256 amount0,
+            uint256 amount1
+        )
+    {
+        uint256 totalSupply = totalSupply();
+        (uint256 total0, uint256 total1) = getTVL();
+
+        // If total supply > 0, vault can't be empty
+        assert(totalSupply == 0 || total0 > 0 || total1 > 0);
+
+        if (totalSupply == 0) {
+            // For first deposit, just use the amounts desired
+            amount0 = amount0Desired;
+            amount1 = amount1Desired;
+            shares = Math.max(amount0, amount1);
+        } else if (total0 == 0) {
+            amount1 = amount1Desired;
+            shares = amount1.mul(totalSupply).div(total1);
+        } else if (total1 == 0) {
+            amount0 = amount0Desired;
+            shares = amount0.mul(totalSupply).div(total0);
+        } else {
+            uint256 cross = Math.min(amount0Desired.mul(total1), amount1Desired.mul(total0));
+            require(cross > 0, "cross");
+
+            // Round up amounts
+            amount0 = cross.sub(1).div(total1).add(1);
+            amount1 = cross.sub(1).div(total0).add(1);
+            shares = cross.mul(totalSupply).div(total0).div(total1);
+        }
+    }		 
 	/// collect fees and remove liquidity from Uniswap pool.
 	/// @param amount0 burned amount of token0
 	/// @param amount1 burned amount of token1
@@ -379,8 +419,15 @@ contract FeeMaker is
     
 	
 	///@notice Todo lending uni mix
-	function strategy1() external nonReentrant onlyGovernance {
-		
+	function strategy1(
+		int24 newLow,
+        int24 newHigh,
+        int256 swapAmount,
+        bool zeroForOne
+        
+		) external nonReentrant onlyGovernance  {
+			
+
 	}
 	
 	
@@ -388,7 +435,9 @@ contract FeeMaker is
 	///@notice simple univ3 with swap
 	function strategy0(
 		int24 newLow,
-        int24 newHigh
+        int24 newHigh,
+        int256 swapAmount,
+        bool zeroForOne
         
 		) external nonReentrant onlyGovernance  {
 		
@@ -417,16 +466,22 @@ contract FeeMaker is
         uint256 balance0 = getBalance0();
         uint256 balance1 = getBalance1();
         
-        
+		// to be optimized outside
+		uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
 
-        _swap(sqrtPriceX96,tick,newLow,newHigh, balance0,balance1);
-
+		if (swapAmount > 0) {
+	        swap( 
+	        	 swapAmount, 
+				 zeroForOne ,
+				sqrtPriceLimitX96 );
+		}
         
         
 
 //        int24 tickFloor = _floor(tick);
 //        int24 tickCeil = tickFloor + tickSpacing;
 
+		//add position
 		rebalance(
 	        newLow,
 	        newHigh,
@@ -444,10 +499,6 @@ contract FeeMaker is
 		bool zeroForOne ,
 		uint160 sqrtPriceLimitX96 
 		) public returns (int256 , int256) {
-		
-		
-		// to be optimized outside
-		sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
 
 
     	return pool.swap(
@@ -457,110 +508,10 @@ contract FeeMaker is
                sqrtPriceLimitX96,
                abi.encode(msg.sender)
         );
-	}
-	function TestSwap() public returns (int256 , int256) {
-		
-        (	uint160 sqrtPriceX96, 	int24 tick, , , , , ) 	= pool.slot0();
-
-		uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick); 
-		uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(cLow); 
-		uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(cHigh); 
-		
-        uint256 balance0 = getBalance0();
-        uint256 balance1 = getBalance1();
-
-		uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,balance0,balance1);
-
-        (uint256 amt0,uint256 amt1) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,liquidity);
-        
-        bool zeroFor1;
-        int256 swapAmount1;
-        
-        if ( amt0 > balance0 ) {
-        	zeroFor1 = true;
-        	swapAmount1 = int256(amt0.sub(balance0).div(2));
-        } else { //  (amt1 > balance1)
-        	zeroFor1 = false;
-			swapAmount1 = int256(-amt1.sub(balance1).div(2));
-        }
-        
-   		uint160 sqrtPriceLimitX961 = zeroFor1 ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
-
-    	return pool.swap(
-               address(this),
-               zeroFor1,
-               swapAmount1,
-               sqrtPriceLimitX961,
-               abi.encode(msg.sender)
-        );
-
-	}
-    function Test() public view  {
-
-		int24 tick = -54;
-		int24 tickLower = -554;
-		int24 tickUpper = 446;
-		uint256 amount0 = 620;
-		uint256 amount1 = 771;
-
-		uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick); 
-		uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower); 
-		uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper); 
-		
-		
-
-        uint256 intermediate = FullMath.mulDiv(sqrtRatioX96, sqrtRatioBX96, FixedPoint96.Q96);
-        
-        uint128 liquidity1 = toUint128(FullMath.mulDiv(amount1, FixedPoint96.Q96, sqrtRatioX96 - sqrtRatioAX96));
-        uint128 liquidity0 = toUint128(FullMath.mulDiv(amount0, intermediate, sqrtRatioBX96 - sqrtRatioX96));
-        uint128  liquidity = liquidity0 < liquidity1 ? liquidity0 : liquidity1;
-        uint256 amt0  = FullMath.mulDiv(
-                uint256(liquidity) << FixedPoint96.RESOLUTION,
-                sqrtRatioBX96 - sqrtRatioX96,
-                sqrtRatioBX96
-            ) / sqrtRatioX96;
-            
-        uint256 amt1 = FullMath.mulDiv(liquidity, sqrtRatioX96 - sqrtRatioAX96, FixedPoint96.Q96);
-        
-        
-        //uint128 liquidity2 = toUint128(FullMath.mulDiv(amount1, FixedPoint96.Q96, sqrtRatioBX96 - sqrtRatioAX96));
-        liquidity = LiquidityAmounts.getLiquidityForAmounts(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,amount0, amount1);
-
-        (amt0,amt1) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96,sqrtRatioAX96,sqrtRatioBX96,liquidity);
-
-        require(false, _hint2("test:", 0, liquidity,amt0,uint2str(uint(amt1))));
-    }
-
-  	function toUint128(uint256 x) private pure returns (uint128 y) {
-        require((y = uint128(x)) == x);
-    }
-    
-	function _swap( uint160 sqrtPriceX96, int24 tick, int24 tickLower, int24  tickUpper,uint256 amount0, uint256 amount1) internal returns (int256 , int256) {
-
-		// #debug temporary solution. 
-		
-		
-        uint price;
-        int256 swapAmount =   int256(amount0.mul( price ).sub(amount1 ).div(2));
-        
-        bool zeroForOne =  swapAmount  > 0 ;
-
-        // adjust sqrtPriceX96 to meet the condition of swap method
-        // #debug  shift=1 hard coded for now
-
-        // tobe optimized
-        uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
-        
-    	return pool.swap(
-               address(this),
-               zeroForOne,
-               swapAmount,
-               sqrtPriceLimitX96,
-               ""
-           );
-
 	}
 	
+
+  
 	    /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
     function getTwap() public view returns (int24) {
         uint32 _twapDuration = twapDuration;

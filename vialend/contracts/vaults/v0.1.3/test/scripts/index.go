@@ -14,7 +14,6 @@ type TransferStruct struct {
 	TokenAddress string
 	ToAddress    string
 }
-
 type Switcher struct {
 	ViewOnly         bool
 	ViewEvent        bool
@@ -53,7 +52,8 @@ func main() {
 	//...hidden step... update the new factory addres in networks.go
 
 	sw.DeployToken = 0
-	sw.TokenParam = config.TokenStruct{"aaa usdc", "usdc", 18, big.NewInt(50000000000)}
+	sw.TokenParam = config.TokenStruct{"e usdc 1", "eUSDC1", 6, big.NewInt(5000000000000)}
+	//sw.TokenParam = config.TokenStruct{"e weth 1", "eWETH1", 18, big.NewInt(5000000000000)}
 	//...hidden step... update the new token addres in networks.go
 
 	sw.TransferToken = 0
@@ -68,20 +68,26 @@ func main() {
 
 	sw.CollectFees = 0
 
-	sw.Approve = 1
+	sw.Approve = 0
 
-	sw.Deposit = 1
-	sw.DepositAmount = [2]int64{100, 100} // amount0, amount1 to deposit
+	sw.Deposit = 0
 
-	sw.Swap = 1
+	sw.DepositAmount = [2]int64{2, 4000} // amount0, amount1 to deposit
+
+	sw.Rebalance = 1
+	sw.RebalanceParam = [2]int64{5, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
+
+	sw.Swap = 0
+
 	// 1: single swap, 2: multiple swaps
+	// swapAmount, _ := new(big.Int).SetString("85175185371092425157", 10) // 85 * 1e18
+	// zeroForOne := false
+	//swapAmount, _ := new(big.Int).SetString("139190665697301284354", 10) // 139 * 1e18
+	//zeroForOne := true
 
 	sw.Withdraw = 0
 	sw.WithDrawParam = [2]int64{0, 100}
 	// accountid,  amount of shares in percentage %
-
-	sw.Rebalance = 0
-	sw.RebalanceParam = [2]int64{1000, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
 
 	sw.CreatePosition = -1
 	sw.IncreasePosition = -1
@@ -160,7 +166,7 @@ func main() {
 
 		project.VaultInfo(1)
 
-		project.Swap(sw.Swap)
+		project.Swap(sw.Swap, sw.RebalanceParam[0])
 
 		project.VaultInfo(1)
 
@@ -169,9 +175,9 @@ func main() {
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap y for x:", i)
 
-			project.Deposit(1, 2, 10)
+			project.Deposit(1, 2, 100)
 
-			project.Swap(sw.Swap)
+			project.Swap(sw.Swap, sw.RebalanceParam[0])
 
 		}
 
@@ -180,9 +186,9 @@ func main() {
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap x for y:", i)
 
-			project.Deposit(1, 10, 2)
+			project.Deposit(1, 100, 2)
 
-			project.Swap(sw.Swap)
+			project.Swap(sw.Swap, sw.RebalanceParam[0])
 
 		}
 

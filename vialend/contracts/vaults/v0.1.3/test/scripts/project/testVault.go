@@ -3,6 +3,7 @@ package include
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 	"time"
 
@@ -168,6 +169,53 @@ func Withdraw(do int, param [2]int64) {
 
 }
 
+func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount float64, zeroForOne bool) {
+
+	poolInstance := GetPoolInstance()
+	vaultInstance := GetVaultInstance()
+
+	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	tick := slot0.Tick
+	sqrtPriceX96 := slot0.SqrtPriceX96
+
+	fmt.Println("tick: ", tick)
+	fmt.Println("sqrtPriceX96: ", sqrtPriceX96)
+
+	Totals, _ := vaultInstance.GetTVL(&bind.CallOpts{})
+
+	fmt.Println("balance0 in vault and pool: ", Totals.Total0)
+	fmt.Println("balance1 in vault and pool: ", Totals.Total1)
+
+	pf := getPrice(sqrtPriceX96, tick)
+
+	min := pf - float64(rangeRatio)/100
+	max := pf + float64(rangeRatio)/100
+	x := config.BigIntToFloat64(Totals.Total0) / math.Pow10(int(config.Token[0].Decimals))
+	y := config.BigIntToFloat64(Totals.Total1) / math.Pow10(int(config.Token[1].Decimals))
+
+	xDecimals, yDecimals := math.Pow10(int(config.Token[0].Decimals)), math.Pow10(int(config.Token[1].Decimals))
+
+	a, b := getTicks(pf, min, max, xDecimals, yDecimals)
+	tickA := math.Round(a/60) * 60
+	tickB := math.Round(b/60) * 60
+
+	fmt.Println("tick a b:", tickA, tickB)
+
+	tickLower = big.NewInt(int64(tickA)) //tickA) //big.NewInt(-1140) //
+	tickUpper = big.NewInt(int64(tickB)) //tickB) //big.NewInt(840)   //
+
+	fmt.Println("---abminmax:", pf-float64(rangeRatio)/100, pf, a, b, tickLower, tickUpper)
+
+	// fmt.Println(pf, min, max, x, y)
+	// fmt.Println(priceFromsqrtP)
+	// fmt.Println(config.BigIntToFloat64(Total0))
+	// fmt.Println(config.BigIntToFloat64(Total1))
+
+	//amt0, amt1, swapAmount, zeroForOne := getBestAmounts(pf, min, max, x, y)
+	return getBestAmounts(pf, min, max, x, y)
+}
+
 /// param0 : fullRangeSize, param1: tickspacing
 func Rebalance(do int, param [2]int64) {
 
@@ -186,30 +234,22 @@ func Rebalance(do int, param [2]int64) {
 		log.Fatal("vault.NewApi ", err)
 	}
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
-
-	if err != nil {
-		log.Fatal("poolInstance err:", err)
-	}
-
-	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
-
-	//fmt.Println("slot0.Tick:", slot0.Tick)
-	//fmt.Println("slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
-	fmt.Println("Current Price from sqrtPriceX96: ", config.Pricef(getPrice(slot0.SqrtPriceX96, slot0.Tick), 6))
-
-	// set ticklower and tickupper
-	setRange(slot0.Tick, param)
+	//Swap(1, param[0])
+	_, _, swapAmount, zeroForOne := GetSwapInfo(param[0])
 
 	///require governance. redo auth
 	config.Auth = config.GetSignature(config.Networkid, 0)
 
 	config.NonceGen()
 
+	fmt.Println("ticklower tickupper in...", tickLower, tickUpper)
+	// set ticklower and tickupper
+	//setRange(param)
 	tx, err := vaultInstance.Strategy0(config.Auth,
 		tickLower,
 		tickUpper,
-	)
+		config.Float64ToBigInt(swapAmount),
+		zeroForOne)
 
 	if err != nil {
 		log.Fatal("rebalance signature err ", err)
@@ -228,7 +268,7 @@ func Rebalance(do int, param [2]int64) {
 }
 
 /// param0 : fullRangeSize, param1: tickspacing
-func Swap(do int) {
+func Swap(do int, rangeRatio int64) {
 
 	if do <= 0 {
 		return
@@ -240,70 +280,23 @@ func Swap(do int) {
 
 	fmt.Println("vaultAddress: ", vaultAddress)
 
-	poolInstance := GetPoolInstance()
+	//poolInstance := GetPoolInstance()
 	vaultInstance := GetVaultInstance()
 
-	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
-
-	tick := slot0.Tick
-	sqrtPriceX96 := slot0.SqrtPriceX96
-
-	fmt.Println("tick: ", tick)
-	fmt.Println("sqrtPriceX96: ", sqrtPriceX96)
-
-	priceFromsqrtP := getPrice(sqrtPriceX96, tick)
-
-	fmt.Println("price: ", config.Pricef(priceFromsqrtP, 18))
-
-	Total0, err := vaultInstance.GetBalance0(&bind.CallOpts{})
-	Total1, err := vaultInstance.GetBalance1(&bind.CallOpts{})
-
-	fmt.Println("balance0 in vault: ", Total0)
-	fmt.Println("balance1 in vault: ", Total1)
-
-	// swapAmount = (x-y/p/1e18)/2
-	p, _ := new(big.Float).SetString(priceFromsqrtP.String())
-	pf := new(big.Float).Quo(p, big.NewFloat(1e18))
-	fmt.Println(pf)
-	x, _ := new(big.Float).SetString(Total0.String())
-	fmt.Println(x)
-	y, _ := new(big.Float).SetString(Total1.String())
-	fmt.Println(y)
-	diff := x.Sub(x, y.Quo(y, pf))
-	fmt.Println(diff)
-	swapAmountf := diff.Quo(diff, big.NewFloat(2))
-
-	fmt.Println(swapAmountf)
-
-	swapAmount := config.BigFloatToBigInt(swapAmountf)
-
-	fmt.Println(swapAmount)
-
-	// yDivp := new(big.Int).Div(Total1, priceFromsqrtP)
-	// xDiff := new(big.Int).Sub(Total0, yDivp)
-	// swapAmount := new(big.Int).Div(xDiff, big.NewInt(2))
-
-	if swapAmount.Cmp(big.NewInt(0)) > 0 {
-		fmt.Println("swapAmount>0 : ", swapAmount)
-	} else {
-		fmt.Println("swapAmount<0 : ", swapAmount)
-	}
-
-	zeroForOne := swapAmount.Cmp(big.NewInt(0)) == 1
-
-	fmt.Println("zeroForOne: ", zeroForOne)
+	amt0, amt1, swapAmount, zeroForOne := GetSwapInfo(rangeRatio)
+	fmt.Println("amount0 , amount1 desired:", amt0, amt1)
 
 	/// sqrtPriceLimitX96 currently hardcoded in the contract
 	/// zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
-	sqrtPriceLimitX96 := big.NewInt(0)
-	/*
-		sqrtPriceLimitX96 := new(big.Int).Sub(slot0.SqrtPriceX96, big.NewInt(10))
+	MIN_SQRT_RATIO := big.NewInt(4295128739)
+	MAX_SQRT_RATIO, _ := new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
 
-		if !zeroForOne {
+	sqrtPriceLimitX96 := new(big.Int).Sub(MAX_SQRT_RATIO, big.NewInt(1))
 
-			sqrtPriceLimitX96 = new(big.Int).Add(slot0.SqrtPriceX96, big.NewInt(10))
-		}
-	*/
+	if zeroForOne {
+		sqrtPriceLimitX96 = new(big.Int).Add(MIN_SQRT_RATIO, big.NewInt(1))
+	}
+
 	///require governance. redo auth
 	config.Auth = config.GetSignature(config.Networkid, 0)
 
@@ -311,7 +304,7 @@ func Swap(do int) {
 
 	/// call vaultInstance.Swap(swapAmount,zeroForOne, sqrtPriceLimitX96 )
 	tx, err := vaultInstance.Swap(config.Auth,
-		swapAmount,
+		config.Float64ToBigInt(swapAmount),
 		zeroForOne,
 		sqrtPriceLimitX96,
 	)
@@ -328,11 +321,69 @@ func Swap(do int) {
 
 	config.Readstring("swap tx sent.....  wait for pending..next .. ")
 
-	Total0, err = vaultInstance.GetBalance0(&bind.CallOpts{})
-	Total1, err = vaultInstance.GetBalance1(&bind.CallOpts{})
+	Total0, err := vaultInstance.GetBalance0(&bind.CallOpts{})
+	Total1, err := vaultInstance.GetBalance1(&bind.CallOpts{})
 	fmt.Println("new balance0 in vault: ", Total0)
 	fmt.Println("new balance1 in vault: ", Total1)
 
+}
+
+func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amount0 float64, amount1 float64, swapAmount float64, zeroForOne bool) {
+
+	sp := math.Sqrt(p) //p * *0.5
+	sa := math.Sqrt(a) //a * *0.5
+	sb := math.Sqrt(b) //b * *0.5
+	// calculate the initial liquidity
+	L := get_liquidity(x, y, sp, sa, sb)
+
+	P1 := p
+	sp1 := math.Sqrt(P1) // P1 * *0.5
+	x1 := calculate_x(L, sp1, sb)
+	y1 := calculate_y(L, sp1, sa)
+
+	fmt.Printf("x1={%.4f}\ny1={%.4f}\n", x1, y1)
+
+	x1r := x1 / (x1 + y1/p)
+	y1r := y1 / (y1 + x1*p)
+	fmt.Println(x1r, y1r)
+
+	xr := x / (x + y/p)
+	yr := y / (y + x*p)
+	fmt.Println(xr, yr)
+	// 20/2000, 0.9908
+	// 20 * 0.9908
+	if x*p > y { // trade x for y
+		zeroForOne = true
+
+		r := xr - x1r
+
+		swapAmount = math.Abs(x * r)
+
+		amount0 = x - swapAmount
+
+		amount1 = y + swapAmount*p
+
+		fmt.Println("newX=", amount0)
+		fmt.Println("newY=", amount1)
+
+	} else if x*p < y { // trade y for x
+		zeroForOne = false
+
+		r := xr - x1r
+
+		swapAmount = math.Abs(y * r)
+
+		amount0 = x + swapAmount/p
+
+		amount1 = y - swapAmount
+
+		fmt.Println("newX=", amount0)
+		fmt.Println("newY=", amount1)
+	}
+
+	fmt.Printf("newX={%.18f}, newY={%.6f},swapamount={%.18f},zeroForOne={%t}\n", amount0, amount1, swapAmount, zeroForOne)
+
+	return amount0, amount1, swapAmount, zeroForOne
 }
 
 ///
@@ -386,19 +437,28 @@ func CollectProtocolFees(feeRate0 *big.Int, feeRate1 *big.Int) {
 	config.Readstring("collect fee sent.....  wait for pending..next .. ")
 
 }
-func setRange(tick *big.Int, param [2]int64) {
+func setRange(param [2]int64) {
 
-	fullRange := param[0]
+	rangeRatio := float64(param[0] / 100)
 	tickSpacing := param[1]
 
-	/// rangehtehrehold = fullrange / 2
-	rangeThreadhold := new(big.Int).Div(big.NewInt(fullRange), big.NewInt(2))
-	//	big0 := big.NewInt(0)
+	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
 
-	/// ticklower = current tick - rangeThread
-	tickLower = new(big.Int).Sub(tick, rangeThreadhold)
-	/// tickupper = current tick + rangeThread
-	tickUpper = new(big.Int).Add(tick, rangeThreadhold)
+	if err != nil {
+		log.Fatal("poolInstance err:", err)
+	}
+
+	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	tick, sqrtPriceX96 := slot0.SqrtPriceX96, slot0.Tick
+
+	fmt.Println("Current Price from sqrtPriceX96: ", getPrice(sqrtPriceX96, tick))
+
+	c := config.BigIntToFloat64(tick)
+	a := c * (1 - rangeRatio)
+	b := c * (1 + rangeRatio)
+	tickLower = config.Float64ToBigInt(a)
+	tickUpper = config.Float64ToBigInt(b)
 
 	fmt.Println("tick Upper:", tickUpper)
 	fmt.Println("current tick:", tick)
@@ -427,17 +487,38 @@ func setRange(tick *big.Int, param [2]int64) {
 
 /// formula:
 ///
-/// (sqrtPricex96^2 * 1e18) >> (96*2)
-/// solc: uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e18) >> (96 * 2);
-func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) *big.Int {
+// 1. price = pow(1.0001,tick) * (1e(18-6)
+///2.  (sqrtPricex96^2 * 1e(decimal0)/1e(decimal1) >> (96*2)
+///3.  (sqrtPricex96^2 * 1e(decimal0)/1e(decimal1) / 2^(96*2)
+// 4. javascript: JSBI.BigInt(sqrtPriceX96 *sqrtPriceX96* (1e(decimals_token_0))/(1e(decimals_token_1))/JSBI.BigInt(2) ** (JSBI.BigInt(192));
+///5 solc: uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e(decimalsDiff)) >> (96 * 2);
+func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) float64 {
 
-	//fmt.Println("test sqrtP * tick: ", SqrtPriceX96.Add(SqrtPriceX96, tick))
-	//SqrtPriceX96 = new(big.Int).Add(SqrtPriceX96, tick)
-	//fmt.Println("after sqrtP * tick:", SqrtPriceX96)
+	/*
+		sqrpricePow2 := new(big.Int).Mul(SqrtPriceX96, SqrtPriceX96)
 
-	sqrpricePow2 := new(big.Int).Mul(SqrtPriceX96, SqrtPriceX96)
-	oPrice := new(big.Int).Mul(sqrpricePow2, big.NewInt(1e18))
-	Price := new(big.Int).Rsh(oPrice, 96*2)
+		diff := config.Token[0].Decimals - config.Token[1].Decimals
+		eDecimals := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(diff)), nil)
+		oPrice := new(big.Int).Mul(sqrpricePow2, eDecimals)
+
+		fmt.Println(eDecimals, oPrice)
+		//Price := new(big.Int).Rsh(oPrice, 96*2)
+		rsh192 := new(big.Int).Exp(big.NewInt(2), big.NewInt(192), nil)
+		Price := new(big.Int).Div(oPrice, rsh192)
+	*/
+
+	// price = pow(1.0001,tick) * (1e(18-6) )
+	diff := config.Token[0].Decimals - config.Token[1].Decimals
+	eDecimals := math.Pow10(int(diff))
+
+	tick24 := float64(tick.Int64())
+	fmt.Println("tick24 ", tick24)
+	powTick := math.Pow(1.0001, tick24)
+
+	Price := powTick * float64(eDecimals)
+
+	fmt.Println("Price in:", Price)
+
 	return Price
 }
 
@@ -746,4 +827,53 @@ func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *
 	maxsupply, err := instance.TotalSupply(&bind.CallOpts{})
 
 	return instance, name, symbol, decimals, maxsupply
+}
+
+func get_liquidity_0(x float64, sa float64, sb float64) float64 {
+	return x * sa * sb / (sb - sa)
+}
+
+func get_liquidity_1(y float64, sa float64, sb float64) float64 {
+	return y / (sb - sa)
+}
+
+func get_liquidity(x float64, y float64, sp float64, sa float64, sb float64) float64 {
+	var liquidity, liquidity0, liquidity1 float64
+	if sp <= sa {
+		liquidity = get_liquidity_0(x, sa, sb)
+	} else if sp < sb {
+		liquidity0 = get_liquidity_0(x, sp, sb)
+		liquidity1 = get_liquidity_1(y, sa, sp)
+		liquidity = math.Min(liquidity0, liquidity1)
+	} else {
+		liquidity = get_liquidity_1(y, sa, sb)
+	}
+	return liquidity
+}
+
+func calculate_x(L float64, sp float64, sb float64) float64 {
+	return L * (sb - sp) / (sp * sb)
+}
+func calculate_y(L float64, sp float64, sa float64) float64 {
+	return L * (sp - sa)
+}
+
+func getTicks(p float64, a float64, b float64, xDecimals float64, yDecimals float64) (float64, float64) {
+
+	//calc tick  p(i) = 1.0001i
+
+	diffDecimals := math.Pow(10, xDecimals-yDecimals)
+
+	// log(p , 1.0001)  ==  log(p)/ log(1.0001)
+	tick := math.Log(p/diffDecimals) / math.Log(1.0001)
+	tickLower := math.Log(a/diffDecimals) / math.Log(1.0001)
+	tickUpper := math.Log(b/diffDecimals) / math.Log(1.0001)
+
+	fmt.Printf("tick={%.f}\n", tick)
+	fmt.Printf("tickLower={%.f}\n", tickLower)
+	fmt.Printf("tickUpper={%.f}\n", tickUpper)
+	fmt.Printf("\n")
+
+	return tickLower, tickUpper
+
 }

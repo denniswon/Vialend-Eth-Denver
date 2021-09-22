@@ -103,17 +103,17 @@ func InitialPool(do int) {
 	var price float64
 	var sqrtPriceX96 float64
 
-	if inverse { // token0 = usdc
-		price = 1e18 / 2000e18 //  1 eth = 2000usdc
-	} else { // token0 = eth
-		price = 1e18 / 1e18 //  2000usdc = 1 eth
+	if inverse { // local2 token0 = usdc
+		price = 1e18 / 3800e18 //  1 eth = 2000usdc
+	} else { //
+		price = 3800e18 / 1e18 //  2000usdc = 1 eth
 	}
 
 	fmt.Println("price:", price)
 
 	sqrtPriceX96 = getSqrtPriceX96(price)
 
-	//fmt.Println("sqrPriceX96:", sqrtPriceX96)
+	fmt.Println("sqrPriceX96:", sqrtPriceX96)
 
 	fmt.Println("sqrtP*96 -> Price ", math.Floor((sqrtPriceX96*sqrtPriceX96)/math.Pow(2, 2*96)), " == Price:", price)
 
@@ -215,7 +215,7 @@ func PoolInfo() {
 	fmt.Println("slot0.Tick:", slot0.Tick)
 
 	price := getPrice(slot0.SqrtPriceX96, slot0.Tick)
-	fmt.Println("getPrice ", price)
+	fmt.Println("price ", price)
 
 	sqrtPf := new(big.Float)
 	///convert big Int to big Float
@@ -227,7 +227,7 @@ func PoolInfo() {
 	///verify the price
 	fmt.Println("veryfy sqrtP*96 = ", sqrtPx962Price, ",  getPrice = ", price)
 
-	fmt.Println("Price in decimals: ", config.Pricef(price, int(config.Token[1].Decimals)))
+	fmt.Println("Price in decimals: ", price)
 
 	feeRate, _ := poolInstance.Fee(&bind.CallOpts{})
 	fmt.Println("Fee tier:", feeRate)
