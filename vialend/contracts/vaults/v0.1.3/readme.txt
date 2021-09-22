@@ -3,7 +3,7 @@
 	
 	new function strategy0  -- check FeeMaker.sol
 	
-	代替原来的rebalance， 需要计算并带入的参数 ： 
+	用strategy0() 代替原来的rebalance()， 需要计算并带入的参数 ： 
 		int24 newLow,
         int24 newHigh,
         int256 swapAmount,

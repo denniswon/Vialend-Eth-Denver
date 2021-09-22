@@ -179,8 +179,8 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 	tick := slot0.Tick
 	sqrtPriceX96 := slot0.SqrtPriceX96
 
-	fmt.Println("tick: ", tick)
-	fmt.Println("sqrtPriceX96: ", sqrtPriceX96)
+	//fmt.Println("tick: ", tick)
+	//fmt.Println("sqrtPriceX96: ", sqrtPriceX96)
 
 	Totals, _ := vaultInstance.GetTVL(&bind.CallOpts{})
 
@@ -189,14 +189,16 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 
 	pf := getPrice(sqrtPriceX96, tick)
 
-	min := pf - float64(rangeRatio)/100
-	max := pf + float64(rangeRatio)/100
+	min := pf * (1 - float64(rangeRatio)/100)
+	max := pf * (1 + float64(rangeRatio)/100)
 	x := config.BigIntToFloat64(Totals.Total0) / math.Pow10(int(config.Token[0].Decimals))
 	y := config.BigIntToFloat64(Totals.Total1) / math.Pow10(int(config.Token[1].Decimals))
 
-	xDecimals, yDecimals := math.Pow10(int(config.Token[0].Decimals)), math.Pow10(int(config.Token[1].Decimals))
+	xDecimals, yDecimals := config.Token[0].Decimals, config.Token[1].Decimals
 
-	a, b := getTicks(pf, min, max, xDecimals, yDecimals)
+	//fmt.Println("pf,min, max, rangeRatio: ", pf, min, max, rangeRatio)
+
+	a, b := getTicks(pf, min, max, float64(xDecimals), float64(yDecimals))
 	tickA := math.Round(a/60) * 60
 	tickB := math.Round(b/60) * 60
 
@@ -205,8 +207,8 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 	tickLower = big.NewInt(int64(tickA)) //tickA) //big.NewInt(-1140) //
 	tickUpper = big.NewInt(int64(tickB)) //tickB) //big.NewInt(840)   //
 
-	fmt.Println("---abminmax:", pf-float64(rangeRatio)/100, pf, a, b, tickLower, tickUpper)
-
+	//fmt.Println("---abminmax:", pf-float64(rangeRatio)/100, pf, a, b, tickLower, tickUpper)
+	//os.Exit(3)
 	// fmt.Println(pf, min, max, x, y)
 	// fmt.Println(priceFromsqrtP)
 	// fmt.Println(config.BigIntToFloat64(Total0))
