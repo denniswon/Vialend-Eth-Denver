@@ -77,7 +77,7 @@ func main() {
 	sw.Rebalance = 0
 	sw.RebalanceParam = [2]int64{5, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
 
-	sw.Swap = 2
+	sw.Swap = 1
 
 	// 1: single swap, 2: multiple swaps
 	// swapAmount, _ := new(big.Int).SetString("85175185371092425157", 10) // 85 * 1e18
