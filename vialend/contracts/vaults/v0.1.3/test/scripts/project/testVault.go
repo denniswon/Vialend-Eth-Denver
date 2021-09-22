@@ -196,6 +196,8 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 
 	xDecimals, yDecimals := config.Token[0].Decimals, config.Token[1].Decimals
 
+	fmt.Println("pf, min, max, rangeRatio: ", pf, min, max, rangeRatio)
+
 	//fmt.Println("pf,min, max, rangeRatio: ", pf, min, max, rangeRatio)
 
 	a, b := getTicks(pf, min, max, float64(xDecimals), float64(yDecimals))
@@ -265,6 +267,12 @@ func Rebalance(do int, param [2]int64) {
 
 	config.Readstring("Rebalance sent.....  wait for pending..next .. ")
 
+	totalfee0, _ := vaultInstance.AccruedProtocolFees0(&bind.CallOpts{})
+	totalfee1, _ := vaultInstance.AccruedProtocolFees1(&bind.CallOpts{})
+
+	fmt.Printf("AccumulatedFee0:{%.4f}\n", totalfee0)
+	fmt.Printf("AccumulatedFee1:{%.4f}\n", totalfee1)
+
 	PoolInfo()
 
 }
@@ -304,9 +312,21 @@ func Swap(do int, rangeRatio int64) {
 
 	config.NonceGen()
 
-	/// call vaultInstance.Swap(swapAmount,zeroForOne, sqrtPriceLimitX96 )
+	TokenDecimals := config.Token[0].Decimals
+
+	if !zeroForOne {
+		TokenDecimals = config.Token[1].Decimals
+	}
+
+	// swapamount * 1e(decimals)  i.e. usdc 1e6 = 10^6
+	swapAmountIn := new(big.Int).SetInt64(int64(float64(swapAmount * math.Pow10(int(TokenDecimals)))))
+
+	fmt.Println("zeroForOne:", zeroForOne)
+	fmt.Println("swap amount: ", swapAmount)
+	fmt.Println("swap amount in:", swapAmountIn)
+	//_ = swapAmount
 	tx, err := vaultInstance.Swap(config.Auth,
-		config.Float64ToBigInt(swapAmount),
+		swapAmountIn,
 		zeroForOne,
 		sqrtPriceLimitX96,
 	)
@@ -437,53 +457,6 @@ func CollectProtocolFees(feeRate0 *big.Int, feeRate1 *big.Int) {
 	fmt.Println("collect protocol tx: ", tx.Hash().Hex())
 
 	config.Readstring("collect fee sent.....  wait for pending..next .. ")
-
-}
-func setRange(param [2]int64) {
-
-	rangeRatio := float64(param[0] / 100)
-	tickSpacing := param[1]
-
-	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
-
-	if err != nil {
-		log.Fatal("poolInstance err:", err)
-	}
-
-	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
-
-	tick, sqrtPriceX96 := slot0.SqrtPriceX96, slot0.Tick
-
-	fmt.Println("Current Price from sqrtPriceX96: ", getPrice(sqrtPriceX96, tick))
-
-	c := config.BigIntToFloat64(tick)
-	a := c * (1 - rangeRatio)
-	b := c * (1 + rangeRatio)
-	tickLower = config.Float64ToBigInt(a)
-	tickUpper = config.Float64ToBigInt(b)
-
-	fmt.Println("tick Upper:", tickUpper)
-	fmt.Println("current tick:", tick)
-	fmt.Println("tick Lower:", tickLower)
-
-	/// must be dividable by tickspacing exactly.
-	tickLower = new(big.Int).Div(tickLower, big.NewInt(tickSpacing))
-	tickLower = new(big.Int).Mul(tickLower, big.NewInt(tickSpacing))
-
-	tickUpper = new(big.Int).Div(tickUpper, big.NewInt(tickSpacing))
-	tickUpper = new(big.Int).Mul(tickUpper, big.NewInt(tickSpacing))
-
-	qTickLower = tickLower
-	qTickUpper = tickUpper
-
-	fmt.Printf("tickspacing %d:\n", tickSpacing)
-	fmt.Printf("tickLower adjust by tickspacing %d:\n", tickLower)
-	fmt.Printf("tickUpper adjust by tickspacing %d:\n", tickUpper)
-
-	/// lower cannot be smaller than upper
-	if tickLower.Cmp(tickUpper) >= 0 {
-		log.Fatal("Error: tickLower >= tickUpper")
-	}
 
 }
 
@@ -697,11 +670,23 @@ func VaultInfo(do int) {
 	//tickLower := big.NewInt(194280)
 	//tickUpper := big.NewInt(206280)
 
+	qTickLower, err := vaultInstance.CLow(&bind.CallOpts{})
+	qTickUpper, err := vaultInstance.CHigh(&bind.CallOpts{})
+
+	fmt.Println("cLow,cHigh  :", qTickLower, qTickUpper)
+
 	liquidity, err := vaultInstance.GetSSLiquidity(&bind.CallOpts{}, qTickLower, qTickUpper)
-	fmt.Println("Current liquidity  :", liquidity)
+
+	fmt.Println("Current liquidity in pool :", liquidity)
+
 	if err != nil {
 		log.Fatal("getssliquidity  ", err)
 	}
+
+	xy, err := vaultInstance.GetPositionAmounts(&bind.CallOpts{}, qTickLower, qTickUpper)
+	fmt.Println("tokenA (x) in pool ", xy.Amount0)
+	fmt.Println("tokenB (y) in pool ", xy.Amount1)
+
 	///-----------accumulated fee0 的总数
 	accumulateFees0, _ := vaultInstance.AccumulateFees0(&bind.CallOpts{})
 	fmt.Println("accumulateFees0  :", accumulateFees0)
@@ -764,22 +749,6 @@ func VaultInfo(do int) {
 		log.Fatal("tokenB balanceof vaule ", err)
 	}
 	fmt.Println("tokenB in vault ", bal)
-
-	/// tokens in pool
-
-	if qTickLower.Cmp(big.NewInt(0)) == 0 || qTickUpper.Cmp(big.NewInt(0)) == 0 {
-		qTickLower, err = vaultInstance.CLow(&bind.CallOpts{})
-		qTickUpper, err = vaultInstance.CHigh(&bind.CallOpts{})
-
-		if err != nil {
-			log.Fatal("clow,chigh", err)
-		}
-	}
-
-	xy, err := vaultInstance.GetPositionAmounts(&bind.CallOpts{}, qTickLower, qTickUpper)
-	fmt.Println("tokenA (x) in pool ", xy.Amount0)
-
-	fmt.Println("tokenB (y) in pool ", xy.Amount1)
 
 }
 

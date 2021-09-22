@@ -57,6 +57,8 @@ var FromAddress common.Address
 
 var Network = Networks[Networkid]
 
+var DEBUG = true
+
 var Networks = [...]Init{
 
 	{ // 0 mainnet

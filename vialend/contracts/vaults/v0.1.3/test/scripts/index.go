@@ -74,10 +74,10 @@ func main() {
 
 	sw.DepositAmount = [2]int64{2, 4000} // amount0, amount1 to deposit
 
-	sw.Rebalance = 1
+	sw.Rebalance = 0
 	sw.RebalanceParam = [2]int64{5, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
 
-	sw.Swap = 0
+	sw.Swap = 2
 
 	// 1: single swap, 2: multiple swaps
 	// swapAmount, _ := new(big.Int).SetString("85175185371092425157", 10) // 85 * 1e18
@@ -186,7 +186,7 @@ func main() {
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap x for y:", i)
 
-			project.Deposit(1, 100, 2)
+			project.Deposit(1, 1, 20000)
 
 			project.Swap(sw.Swap, sw.RebalanceParam[0])
 
