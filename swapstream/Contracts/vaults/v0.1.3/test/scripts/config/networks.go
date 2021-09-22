@@ -42,7 +42,7 @@ type Init struct {
 	FeeTier     int64
 }
 
-var Networkid = 1 /// 0: mainnet, 1: local, 2: gorlie
+var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie
 var Account = 0
 var ProviderSortId = 0
 var Auto = true
@@ -74,7 +74,7 @@ var Networks = [...]Init{
 		3000,
 	},
 
-	{ // 1 local
+	{ // 1 local usdc/usdt
 		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
 		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
 		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
@@ -86,26 +86,41 @@ var Networks = [...]Init{
 		10,
 		"0x22a5a0Dbbfd3F70B0dEbceD881Df43b4ecb06b20", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0x5011D985Ed754a626256E6bcA48F9925AEcC4E27", //vault address
+		"0xf95B938D079Eb28393e20ddaC8C8D7381EBdcaE4", //vault address
 		3000, // fee
 	},
 
-	{ ///2  goerli admin test 1
+	{ // 2 local weth/usdc
+		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
+		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
+		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
+		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
+			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
+		"0x7E21B7575eA9CF74497f01383446d82dD6FF8e0a", //e usdc1
+		"0xB9D838caF4bDB29CF5513C2330352eB107B2791C", //e weth1
+		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
+		10,
+		"0x9B8E29337EABFdE34b6a0F5da9000418Ea228184", // pool
+		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
+		"0xD1f1eADD66D4f8b4bE86221a610913927cea6Ef7", //vault address
+		3000, // fee
+	},
+	{ ///3  goerli admin test 1
 		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///
+			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
 
-		"0x1F98431c8aD98523631AE4a59f267346ea31F984",
-		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //new uniswapv3 factory modified
+		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
+		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //callee
 		[]string{"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
 			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //test user 2
 			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a"}, //test admin 3
 		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
-		"0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8", //tokenB  eusdc
+		"0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", //tokenB  eusdc
 		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54", //new owner, test user 1
 		40, //time pending interval
-		"0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
+		"0xc4C92691f69fadDd684257E9f5A8d6f9D2c79a93", //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"0x715C2A85ad99792A6c6D4c877612a16f7Be4ba3A", //vault address
+		"0x31E84D42aB6DEf5Dac84b761b0E5004179e07778", //vault address
 		3000, // fee
 	},
 }
@@ -275,16 +290,8 @@ func GetAddress(accId int) common.Address {
 	return crypto.PubkeyToAddress(*publicKeyECDSA)
 }
 
-func Float64ToBigInt(f64 float64) *big.Int {
+func Float64ToBigInt(val float64) *big.Int {
 
-	if f64 >= math.MaxInt64 || f64 <= math.MinInt64 {
-		log.Fatal("f64 is out of int64 range.", err)
-	}
-
-	return big.NewInt(int64(f64))
-}
-
-func FloatToBigInt(val float64) *big.Int {
 	bigval := new(big.Float)
 	bigval.SetFloat64(val)
 
@@ -297,6 +304,7 @@ func FloatToBigInt(val float64) *big.Int {
 	bigval.Int(result)
 
 	return result
+
 }
 
 func BigFloatToBigInt(bigval *big.Float) *big.Int {
@@ -305,4 +313,13 @@ func BigFloatToBigInt(bigval *big.Float) *big.Int {
 	bigval.Int(result)
 
 	return result
+}
+
+func BigIntToFloat64(bigN *big.Int) float64 {
+
+	bigF, _ := new(big.Float).SetString(bigN.String())
+
+	f, _ := bigF.Float64()
+
+	return float64(f)
 }

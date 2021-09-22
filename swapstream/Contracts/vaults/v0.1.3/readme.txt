@@ -1,18 +1,23 @@
 
 #v0.1.3 
 	
-	function _strategy0(int24 newLow,       int24 newHigh )
+	new function strategy0  -- check FeeMaker.sol
+	
+	代替原来的rebalance， 需要计算并带入的参数 ： 
+		int24 newLow,
+        int24 newHigh,
+        int256 swapAmount,
+        bool zeroForOne
+    参考testVault.go 里的 GetSwapInfo（） 方法获取参数。   
 
-	aave addresses
-	https://docs.aave.com/developers/v/1.0/deployed-contracts/deployed-contract-instances
 	
 To Test: ( goerli  )
-	Vault address:  0xa31ADDf875054E817A3df66D3836BAA0e2EB2551
-	Pool address:   0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033
-	token0 eWETH: 	0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8
-	token1 eUSDC: 	0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8
+	pool "0xc4C92691f69fadDd684257E9f5A8d6f9D2c79a93", 
+	vault "0x31E84D42aB6DEf5Dac84b761b0E5004179e07778", 
+	tokenA (eWeth) "0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", 
+	tokenB (eusdc1) "0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", 
 	
-
+	
 vault contract:
  	\swapstream\Contracts\vaults\v0.1.2\contracts\FeeMaker.sol
 
@@ -28,7 +33,6 @@ configure file:
 sample test scripts :   
 	\swapstream\Contracts\vaults\v0.1.2\test\scripts\index.go 
 
-methods: 
 	
 	
 	

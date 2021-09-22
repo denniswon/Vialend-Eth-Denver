@@ -24,7 +24,7 @@ import (
 func main() {
 
 	// price, min, max, x
-	getY(3879.16, 300, 5000, 1)
+	getY(3879.16, 1982.3, 19849, 1)
 	//getY(0.9973, 0.9461092501, 1.045607201, 620)
 
 	///  https://app.uniswap.org/#/pool/668
@@ -42,12 +42,14 @@ func main() {
 	getTicks(0.9973, 0.9461092501, 1.045607201, 18, 18)
 
 	// (p , a , b , x , y)
-	getBestAmounts(0.9973, 0.9461092501, 1.045607201, 20, 200)
+	getBestAmounts(0.9973, 0.9461092501, 1.045607201, 460809334302698715646/1e18, 177936101400509812460/1e18)
 
-	//getBestAmounts(3879.6, 300, 5000, 10, 5000)
+	//getBestAmounts(3879.97, 1982.6, 19849.6, 10, 3000)
 
 	//price, P1, min, max, x, y
-	getBalance(2000, 2500, 1333.33, 3000, 2, 4000)
+	//getBalance(2000, 2500, 1333.33, 3000, 2, 4000)
+	getBalance(3879.6, 3979, 1879.6, 5879.6, 1, 4020)
+	getBalance(0.9917, 0.9917, 0.49, 1.8, 185.1, 132.1)
 
 	test_1()
 
@@ -209,10 +211,6 @@ func getMin(p float64, b float64, x float64, y float64) {
 	fmt.Println("----------------------------------------------")
 	fmt.Println("Example 2: I have 2 ETH and 4000 USDC, range top set to 3000 USDC. What's the bottom of the range?")
 	fmt.Println("----------------------------------------------")
-	// p = 2000
-	// b = 3000
-	// x = 2
-	// y = 4000
 
 	sp := math.Sqrt(p) // p * *0.5
 	sb := math.Sqrt(b) //b * *0.5
@@ -258,7 +256,7 @@ func getBalance(p float64, P1 float64, a float64, b float64, x float64, y float6
 
 }
 
-func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amount0 float64, amount1 float64, amountSwap float64, zeroForOne bool) {
+func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amount0 float64, amount1 float64, swapAmount float64, zeroForOne bool) {
 	fmt.Println("----------------------------------------------")
 	fmt.Println("Swap Amounts: getBestAmounts and swap amount")
 	fmt.Println("----------------------------------------------")
@@ -274,52 +272,49 @@ func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amou
 	x1 := calculate_x(L, sp1, sb)
 	y1 := calculate_y(L, sp1, sa)
 
-	fmt.Printf("x1={%.f}\ny1={%.f}\n", x1, y1)
+	fmt.Printf("x1={%.4f}\ny1={%.4f}\n", x1, y1)
 
-	var r float64
+	x1r := x1 / (x1 + y1/p)
+	y1r := y1 / (y1 + x1*p)
+	fmt.Println(x1r, y1r)
 
-	if x > x1 {
+	xr := x / (x + y/p)
+	yr := y / (y + x*p)
+	fmt.Println(xr, yr)
+	// 20/2000, 0.9908
+	// 20 * 0.9908
+	if x*p > y { // trade x for y
 		zeroForOne = true
 
-		r = y1 / x1
+		r := xr - x1r
 
-		//s=swap amount
-		s := (r*x - y/p) / (1 + r)
+		swapAmount = math.Abs(x * r)
 
-		amount0 = x - s
-		amount1 = y + (s * p)
-		amountSwap = s //swap x for y
+		amount0 = x - swapAmount
 
-		fmt.Printf("y1/x1 Ratio={:%.4f}\n ", r)
+		amount1 = y + swapAmount*p
 
-	} else if y > y1 {
+		fmt.Println("newX=", amount0)
+		fmt.Println("newY=", amount1)
+
+	} else if x*p < y { // trade y for x
 		zeroForOne = false
 
-		// x1/y1 = x+s/p / y-s
+		r := xr - x1r
 
-		//  r = (x+s/p) / y-s
-		//  r * (y-s) = x+s/p
-		//  r * (y-s) - x=  s/p
-		// pr*(y-s) - px = s
-		// pry - prs -px  = s
-		// pry - px = s + prs = s(1+pr)
-		// s=(pry-px)/(1+pr)
+		swapAmount = math.Abs(y * r)
 
-		r = x1 / y1
+		amount0 = x + swapAmount/p
 
-		//s := (r*y - x*p) / (1 + r)
-		s := (r*y*p - x*p) / (r*p + 1)
+		amount1 = y - swapAmount
 
-		amount0 = y - s
-		amount1 = x + (s / p)
-		amountSwap = s
-
-		fmt.Printf("x1/y1 Ratio={:%.4f}\n ", r)
+		fmt.Println("newX=", amount0)
+		fmt.Println("newY=", amount1)
 	}
 
-	fmt.Printf("newX={%.f}, newY={%.f},swapamount={%.f},zeroForOne={%t}\n", amount0, amount1, amountSwap, zeroForOne)
+	fmt.Printf("newX={%.18f}, newY={%.6f},swapamount={%.18f},zeroForOne={%t}\n", amount0, amount1, swapAmount, zeroForOne)
 
-	return amount0, amount1, amountSwap, zeroForOne
+	return amount0, amount1, swapAmount, zeroForOne
 }
 
 func get_liquidity_0(x float64, sa float64, sb float64) float64 {
