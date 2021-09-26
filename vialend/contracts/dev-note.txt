@@ -352,3 +352,31 @@ $cd $GOPATH/src/github.com/ethereum/go-ethereum/
 $make  (or try make all)
 
 $make devtools
+
+
+>>>>>>>>>>>>>>>>>>>>>> solc version select >>>>>>>>>>>>>>>>>>>
+
+solc-select use 0.7.6
+solc-select use 0.5.16
+
+solc --version
+
+solc-select versions
+Display the currently installed versions:
+
+
+solc-select install
+Available versions to install:
+0.3.6
+0.4.0
+...
+0.8.0
+0.8.1
+
+solc-select install 0.5.16
+Installing '0.5.16'...
+Version '0.5.16' installed.
+
+
+
+

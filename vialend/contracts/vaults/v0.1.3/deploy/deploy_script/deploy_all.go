@@ -8,11 +8,10 @@ import (
 	"math/big"
 
 	//api "../FundKeeper"
-	feemaker "../FeeMaker"
+	callee "../TestUniswapV3Callee"
 	tester "../tester"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -25,9 +24,9 @@ type nClient struct {
 
 func main() {
 
-	nid := 1
-	deploy_feemaker := true
+	nid := 0
 	deploy_tester := false
+	deploy_TestUniswapV3Callee := true
 
 	networks := [...]nClient{
 
@@ -95,18 +94,12 @@ func main() {
 	}
 	*/
 
-	pool := common.HexToAddress(networks[nid].pool)
-	ttoken := common.HexToAddress("0x3C3eF6Ad37F107CDd965C4da5f007526B959532f") //tto1
-
-	protocolFee := big.NewInt(10000)
-	maxTotalSupply, _ := new(big.Int).SetString("10000000000000000000000000", 10)
-
-	if deploy_feemaker {
-		address, tx, instance, err := feemaker.DeployApi(auth, client, pool, ttoken, protocolFee, maxTotalSupply)
+	if deploy_TestUniswapV3Callee {
+		address, tx, instance, err := callee.DeployApi(auth, client)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("feeMaker address:", address.Hex())
+		fmt.Println("contract address:", address.Hex())
 
 		_, _ = instance, tx
 	}

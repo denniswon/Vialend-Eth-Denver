@@ -18,12 +18,14 @@ type Switcher struct {
 	ViewOnly         bool
 	ViewEvent        bool
 	DeployToken      int
-	TokenParam       config.TokenStruct
+	TokenParam       [2]config.TokenStruct
 	TransferToken    int
-	TransferParam    TransferStruct
+	TransferParam    [2]TransferStruct
 	DeployFactory    int
 	CreatePool       int
 	InitialPool      int
+	MintPool         int
+	MintPoolParam    [3]int64
 	DeployVault      int
 	Approve          int
 	Deposit          int
@@ -46,38 +48,40 @@ func main() {
 	var sw = new(Switcher)
 
 	sw.ViewEvent = false
-	sw.ViewOnly = false
+	sw.ViewOnly = true
 
 	sw.DeployFactory = 0
-	//...hidden step... update the new factory addres in networks.go
+	//...manual step... update the new factory addres in networks.go
 
 	sw.DeployToken = 0
-	sw.TokenParam = config.TokenStruct{"e usdc 1", "eUSDC1", 6, big.NewInt(5000000000000)}
-	//sw.TokenParam = config.TokenStruct{"e weth 1", "eWETH1", 18, big.NewInt(5000000000000)}
-	//...hidden step... update the new token addres in networks.go
+	sw.TokenParam[0] = config.TokenStruct{"e weth 2", "eWETH2", 18, big.NewInt(50000000000000)}
+	sw.TokenParam[1] = config.TokenStruct{"e usdc 2", "eUSDC2", 6, big.NewInt(500000000000000000)}
+	//...manual step... update the new token addres in networks.go
 
 	sw.TransferToken = 0
-	sw.TransferParam = TransferStruct{0, config.X1E18(90000), config.Network.TokenB, "0xeBb29c07455113c30810Addc123D0D7Cd8637aea"}
+	sw.TransferParam[0] = TransferStruct{0, config.X1E18(900), config.Network.TokenA, "0xeBb29c07455113c30810Addc123D0D7Cd8637aea"}
+	sw.TransferParam[1] = TransferStruct{0, config.X1E18(900), config.Network.TokenB, "0xeBb29c07455113c30810Addc123D0D7Cd8637aea"}
 
 	sw.CreatePool = 0 // *Note: if token0+token1+fee = pool exists ERROR: createPool VM Exception while processing transaction: revert
 	sw.InitialPool = 0
-	//...hidden step... update the new pool addres in networks.go
+	//...manual step... update the new pool addres in networks.go
+
+	sw.MintPool = 0
+	sw.MintPoolParam = [3]int64{1000, 1, 1} // currently hardcoded 1000 * 1e18 as the liquidity,
+	// .... manual step.... new vault may apply
 
 	sw.DeployVault = 0
-	//...hidden step... update the new vault addres in networks.go
-
-	sw.CollectFees = 0
+	//...manual step... update the new vault addres in networks.go
 
 	sw.Approve = 0
 
 	sw.Deposit = 0
-
-	sw.DepositAmount = [2]int64{2, 4000} // amount0, amount1 to deposit
+	sw.DepositAmount = [2]int64{1, 1000} // amount0, amount1 to deposit
 
 	sw.Rebalance = 0
-	sw.RebalanceParam = [2]int64{5, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
+	sw.RebalanceParam = [2]int64{10, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
 
-	sw.Swap = 1
+	sw.Swap = 0
 
 	// 1: single swap, 2: multiple swaps
 	// swapAmount, _ := new(big.Int).SetString("85175185371092425157", 10) // 85 * 1e18
@@ -88,6 +92,8 @@ func main() {
 	sw.Withdraw = 0
 	sw.WithDrawParam = [2]int64{0, 100}
 	// accountid,  amount of shares in percentage %
+
+	sw.CollectFees = 0
 
 	sw.CreatePosition = -1
 	sw.IncreasePosition = -1
@@ -127,55 +133,66 @@ func main() {
 
 	if sw.DeployFactory > 0 {
 		project.DeployFactory() ///new factory  for crating new pools if old pool already exists
-		return
 	}
 
-	project.CreatePool(sw.CreatePool) /// need to edit networks to setup address of token0 and token1,  fee tier
-
-	project.InitialPool(sw.InitialPool)
-	//return
-
 	if sw.DeployToken > 0 {
-		project.DeployToken(sw.TokenParam.Name, sw.TokenParam.Symbol, sw.TokenParam.Decimals, sw.TokenParam.MaxTotalSupply)
 
-		return
+		token0 := project.DeployToken(sw.TokenParam[0].Name, sw.TokenParam[0].Symbol, sw.TokenParam[0].Decimals, sw.TokenParam[0].MaxTotalSupply)
+		token1 := project.DeployToken(sw.TokenParam[1].Name, sw.TokenParam[1].Symbol, sw.TokenParam[1].Decimals, sw.TokenParam[1].MaxTotalSupply)
+
+		//always make token0 = weth = tokenA
+		config.Network.TokenA = token0
+		config.Network.TokenB = token1
+
 	}
 
 	if sw.TransferToken > 0 {
 
 		config.TokenTransfer(
-			sw.TransferParam.AccountId,
-			sw.TransferParam.Amount,
-			sw.TransferParam.TokenAddress,
-			sw.TransferParam.ToAddress)
-		return
+			sw.TransferParam[0].AccountId,
+			sw.TransferParam[0].Amount,
+			sw.TransferParam[0].TokenAddress,
+			sw.TransferParam[0].ToAddress)
+
+		config.TokenTransfer(
+			sw.TransferParam[1].AccountId,
+			sw.TransferParam[1].Amount,
+			sw.TransferParam[1].TokenAddress,
+			sw.TransferParam[1].ToAddress)
+
+	}
+
+	if sw.CreatePool > 0 {
+		project.CreatePool(sw.CreatePool) /// need to edit networks to setup address of token0 and token1,  fee tier
+	}
+	if sw.InitialPool > 0 {
+		project.InitialPool(sw.InitialPool)
+	}
+
+	if sw.MintPool > 0 {
+		project.MintPool(sw.MintPoolParam[0], sw.MintPoolParam[1], sw.MintPoolParam[2])
+		//os.Exit(0)
 	}
 
 	if sw.DeployVault > 0 {
 		project.DeployVault() /// deployed by test admin 2, edit networks. token0, token1, fee to get the pool address
-		return
 	}
 
 	project.Approve(sw.Approve)
 	//return
 
 	project.Deposit(sw.Deposit, sw.DepositAmount[0], sw.DepositAmount[1]) /// deposit token0 amount * 1e18, token1 amount * 1e6
-	project.VaultInfo(1)
 
 	if sw.Swap == 1 {
 
-		project.VaultInfo(1)
-
 		project.Swap(sw.Swap, sw.RebalanceParam[0])
-
-		project.VaultInfo(1)
 
 	} else if sw.Swap == 2 {
 
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap y for x:", i)
 
-			project.Deposit(1, 2, 100)
+			project.Deposit(1, 2, 1000)
 
 			project.Swap(sw.Swap, sw.RebalanceParam[0])
 
@@ -186,13 +203,11 @@ func main() {
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap x for y:", i)
 
-			project.Deposit(1, 1, 20000)
+			project.Deposit(1, 1, 5000)
 
 			project.Swap(sw.Swap, sw.RebalanceParam[0])
 
 		}
-
-		project.VaultInfo(1)
 
 	}
 
@@ -203,6 +218,11 @@ func main() {
 	project.VaultInfo(sw.Withdraw)
 
 	project.PoolInfo()
+
+	// print all deployed addresses
+	for _, i := range config.InfoString {
+		fmt.Println(i)
+	}
 
 	//project.CreatePosition(sw.CreatePosition)
 	//project.IncreasePosition(sw.IncreasePosition)

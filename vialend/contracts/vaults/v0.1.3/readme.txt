@@ -17,23 +17,33 @@ To Test: ( goerli  )
 	tokenA (eWeth) 		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", 
 	tokenB (eusdc1) 	"0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", 
 	Admin privateKey: 	284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f
-	
-	
-vault contract:
- 	\vialend\Contracts\vaults\v0.1.2\contracts\FeeMaker.sol
 
-deployed ABI:   
-	\vialend\Contracts\vaults\v0.1.2\build\FeeMaker\FeeMaker.abi
-
-deployed go package:  
-	\vialend\Contracts\vaults\v0.1.2\deploy\FeeMaker\feeMaker.go
-
-configure file:   
-	\vialend\Contracts\vaults\v0.1.2\test\scripts\config\networks.go
-
-sample test scripts :   
-	\vialend\Contracts\vaults\v0.1.2\test\scripts\index.go 
 
 	
-	
+ external and public functions 
+
+    	deposit  ,  
+		widthdraw
+		
+		swap,  
+		strategy0, simple swap
+		strategy1, vialending
+		
+		setMaxTotalSupply
+		
+	    getBalance0
+	    getBalance1
+		
+		capacity = getTVL / maxTotalSupply 
+
+		getTVL   -- used to be getTotalAmounts  = total in vault + total position in uniswap
+		
+		getPositionAmounts	  --  pool's token0 token1
+		
+		getSSLiquidity  -- pool's liquidity
+		
+		
+		collectProtocol		
+
+		sweep
 	

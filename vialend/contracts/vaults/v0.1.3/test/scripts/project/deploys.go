@@ -39,6 +39,8 @@ func DeployFactory() *factory.Api {
 
 	fmt.Println("factory address:", address.Hex())
 
+	config.AddSettingString("factory address:", address.Hex())
+
 	return instance
 }
 
@@ -75,6 +77,7 @@ func DeployVault() {
 
 	//refresh vault address in networks.go
 	config.Network.Vault = address.Hex()
+	config.AddSettingString("vault address:", address.Hex())
 
 	fmt.Println("vault address:", address.Hex())
 
@@ -84,7 +87,7 @@ func DeployVault() {
 
 }
 
-func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.Int) {
+func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.Int) string {
 
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy Token. ..................")
@@ -101,8 +104,9 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 	_, _ = instance, tx
 
 	fmt.Println("token address:", address.Hex())
+	config.AddSettingString(symbol+" token address:", address.Hex())
 
 	config.Readstring("token deploy done, wait for pending ... next... ")
 
-	//return instance
+	return address.Hex()
 }

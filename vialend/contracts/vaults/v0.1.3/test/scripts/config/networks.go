@@ -42,7 +42,7 @@ type Init struct {
 	FeeTier     int64
 }
 
-var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie
+var Networkid = 2 /// 0: mainnet, 1: local, 2: local , 3: gorlie
 var Account = 0
 var ProviderSortId = 0
 var Auto = true
@@ -58,6 +58,13 @@ var FromAddress common.Address
 var Network = Networks[Networkid]
 
 var DEBUG = true
+
+type Info struct {
+	Name  string
+	Value string
+}
+
+var InfoString []Info
 
 var Networks = [...]Init{
 
@@ -79,32 +86,32 @@ var Networks = [...]Init{
 	{ // 1 local usdc/usdt
 		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
 		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
-		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
+		"0x210FA31C72D9F020D16BF948e54F108D1C688f81", //callee
 		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
 			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
-		"0x83c3C928F77e74fa44bbF420478991124596d5e8", //tokenB usdt
-		"0xA332D81ca86e749C76B3Fb331AD641610Ec98e06", //tokenA usdc
+		"0x59Cd9D486a8fA9b39F715915743997daA12d138e", //tokenB usdt
+		"0x9D96eC63f96A4E985e227BF520dD742315AB77c7", //tokenA usdc
 		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
 		10,
-		"0x22a5a0Dbbfd3F70B0dEbceD881Df43b4ecb06b20", // pool
+		"0x96Dd142387281a16F72962CCb659cAc67D73d882", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0xf95B938D079Eb28393e20ddaC8C8D7381EBdcaE4", //vault address
+		"0xcB0b392e747C101Ed949247730eC3aa6A75E4D3B", //vault address
 		3000, // fee
 	},
 
 	{ // 2 local weth/usdc
 		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
 		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
-		"0xE3c433a67e56BD49d93cCA86728C07bE531c2DCc", //callee
+		"0x210FA31C72D9F020D16BF948e54F108D1C688f81", //callee
 		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
 			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
-		"0x7E21B7575eA9CF74497f01383446d82dD6FF8e0a", //e usdc1
-		"0xB9D838caF4bDB29CF5513C2330352eB107B2791C", //e weth1
+		"0xB73A78A3C493ACdbA893da9331ff39Fe4E59bFA3", //e weth1
+		"0xd8F4E5E1cE1a2961b5fB401B8c2286549607B294", //e usdc1
 		"0xeBb29c07455113c30810Addc123D0D7Cd8637aea", //newOwner
 		10,
-		"0x9B8E29337EABFdE34b6a0F5da9000418Ea228184", // pool
+		"0xaEbc0569A8Ad476530d765dBE6308842Bd4D699c", // pool
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
-		"0xD1f1eADD66D4f8b4bE86221a610913927cea6Ef7", //vault address
+		"0x2723f0d5F2E60D1BF686B835e630C55453307eEA", //vault address
 		3000, // fee
 	},
 	{ ///3  goerli admin test 1
@@ -112,7 +119,7 @@ var Networks = [...]Init{
 			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
-		"0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5", //callee
+		"0xE97f1488F053251032ef358dE5b4188cD960D413", //callee
 		[]string{"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //test admin 2
 			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //test user 2
 			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a"}, //test admin 3
@@ -294,18 +301,20 @@ func GetAddress(accId int) common.Address {
 
 func Float64ToBigInt(val float64) *big.Int {
 
-	bigval := new(big.Float)
-	bigval.SetFloat64(val)
+	//price = int(sqrt(price) * (1 << 96))
+	newNum := big.NewRat(1, 1)
+	newNum.SetFloat64(val)
+	bigf := newNum.FloatString(0)
 
-	coin := new(big.Float)
-	coin.SetInt(big.NewInt(1000000000000000000))
+	//fmt.Println("val, bigf:", val,  bigf)
+	//os.Exit(3)
 
-	bigval.Mul(bigval, coin)
+	bigI, ok := new(big.Int).SetString(bigf, 10)
+	if !ok {
+		log.Fatal("float64 to bigInt err ", val, bigI)
+	}
 
-	result := new(big.Int)
-	bigval.Int(result)
-
-	return result
+	return bigI
 
 }
 
@@ -324,4 +333,10 @@ func BigIntToFloat64(bigN *big.Int) float64 {
 	f, _ := bigF.Float64()
 
 	return float64(f)
+}
+
+func AddSettingString(name string, value string) {
+
+	InfoString = append(InfoString, Info{name, value})
+
 }

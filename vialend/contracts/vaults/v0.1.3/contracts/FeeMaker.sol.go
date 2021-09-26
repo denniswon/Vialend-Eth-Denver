@@ -1,55 +1,18 @@
-// SPDX-License-Identifier: UNLICENSED
-/*
-recHdJT1QFHx0crX3
-
-
-solc --optimize --overwrite --abi feeMaker.sol -o ../build
-solc --optimize --overwrite --bin feeMaker.sol -o ../build
-abigen --abi=../build/feeMaker.abi --bin=../build/feeMaker.bin --pkg=api --out=../deploy/feeMaker/feeMaker.go
-
-    external and public functions 
-    	deposit  ,  
-		widthdraw
-		
-		swap,  
-		strategy0, simple swap
-		strategy1, vialending
-		
-		setMaxTotalSupply
-		
-	    getBalance0
-	    getBalance1
-		
-		capacity = getTVL / maxTotalSupply 
-
-		getTVL   -- used to be getTotalAmounts  = total in vault + total position in uniswap
-		
-		getPositionAmounts	  --  pool's token0 token1
-		
-		getSSLiquidity  -- pool's liquidity
-		
-		
-		collectProtocol		
-
-		sweep
-		
-
-*/
-
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0;
 
-import "./@openzeppelin/contracts/math/Math.sol";
-import "./@openzeppelin/contracts/math/SafeMath.sol";
-import "./@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "./@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "./@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
+import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
 
 
 import "../interfaces/IFeeMakerEvents.sol";
@@ -57,7 +20,7 @@ import "../interfaces/IFeeMakerEvents.sol";
 
 /// @author  ViaLend
 /// @title   FeeMaker
-/// @notice  A Smart Contract that helps liquidity providers managing their funds on Uniswap V3.
+/// @notice  A Smart Contract that helps liquidity providers managing their funds on Uniswap V3 .
 
 contract FeeMaker is 
     ERC20,
@@ -417,7 +380,7 @@ contract FeeMaker is
         
     }
     
-	
+   
 	///@notice Todo lending uni mix
 	function strategy1(
 		int24 newLow,
@@ -427,7 +390,7 @@ contract FeeMaker is
         
 		) external nonReentrant onlyGovernance  {
 			
-
+			
 	}
 	
 	
