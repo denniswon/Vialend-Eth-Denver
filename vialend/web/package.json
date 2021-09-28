@@ -9,6 +9,7 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "@uniswap/v2-sdk": "^3.0.0",
     "@uniswap/v3-sdk": "^3.3.2",
     "core-js": "^2.6.5",
     "element-ui": "^2.15.5",

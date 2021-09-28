@@ -51,7 +51,7 @@
         </div>
       </div>
     </div>
-    <MyLiquidity />
+    <MyPositions />
 
     <el-dialog title="SMART VAULTS"
                :visible.sync="treatyDialogVisible"
@@ -80,13 +80,13 @@
 <script>
 import Header from '@/components/Header.vue'
 import { Component, Vue } from 'vue-property-decorator'
-import MyLiquidity from '@/components/MyLiquidity.vue'
+import MyPositions from '@/components/MyPositions.vue'
 import SupplyLiquidity from '@/components/SupplyLiquidity.vue'
 
 const _this = this
 
 export default {
-  components: { Header, MyLiquidity, SupplyLiquidity },
+  components: { Header, MyPositions },
   data () {
     return {
       vaultAddress: this.$parent.vaultAddress,

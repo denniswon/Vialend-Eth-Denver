@@ -90,6 +90,14 @@
       <button type="button"
               class="btn btn-primary btn-sm"
               @click="toPrice">toPrice</button>
+      &nbsp;
+      <button type="button"
+              class="btn btn-primary btn-sm"
+              @click="getAmount1">getAmount1</button>
+      &nbsp;
+      <button type="button"
+              class="btn btn-primary btn-sm"
+              @click="getAmountTest">getAmountTest</button>
 
     </div>
   </div>
@@ -101,13 +109,17 @@ import Web3 from 'web3'
 import contractABI from '../ABI/UniswapV3PoolABI.json'
 import trackerABI from '../ABI/nonfungiblePositionManagerABI.json'
 import invariant from 'tiny-invariant'
+import { SqrtPriceMath } from '../utils/sqrtPriceMath'
+import { FullMath } from '../utils/fullMath'
 import { TickMath } from '../utils/tickMath'
 import { encodeSqrtRatioX96 } from '../utils/encodeSqrtRatioX96'
 import { nearestUsableTick } from '../utils/nearestUsableTick'
-import { Price, Token, Fraction } from '@uniswap/sdk-core'
+// import { Pair } from '../entities/pair'
+import { Price, Token, Fraction, CurrencyAmount } from '@uniswap/sdk-core'
+
 import { tickToPrice, priceToClosestTick } from '../utils/priceTickConversions'
 import JSBI from 'jsbi'
-import { Q192 } from '../internalConstants'
+import { Q192, ONE, ZERO, Q96 } from '../internalConstants'
 
 const _this = this
 const POOL_SQRT_RATIO_START = encodeSqrtRatioX96(100e6, 100e18)
@@ -141,7 +153,7 @@ window.ethereum.on('networkChanged', () => {
 export default {
   data () {
     return {
-      vaultAddress: '0x04b1560f4f58612a24cf13531f4706c817e8a5fe',
+      vaultAddress: '0xc4C92691f69fadDd684257E9f5A8d6f9D2c79a93',
       trackerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88',
       currentAccount: null,
       keeperContract: null,
@@ -150,7 +162,8 @@ export default {
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
       disConnectClass: 'wallet_disconnected',
-      StatusButtonText: 'Connect Wallet'
+      StatusButtonText: 'Connect Wallet',
+      pair: Pair
     }
   },
   created: function () {
@@ -207,10 +220,30 @@ export default {
       const token1 = this.getToken(1)
       console.log('tick=', priceToClosestTick(new Price(token1, token0, 2799, 3200)))
     },
+    getAmount1Delta (sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp) {
+      if (JSBI.greaterThan(sqrtRatioAX96, sqrtRatioBX96)) {
+        ;[sqrtRatioAX96, sqrtRatioBX96] = [sqrtRatioBX96, sqrtRatioAX96]
+      }
+      return roundUp
+        ? FullMath.mulDivRoundingUp(liquidity, JSBI.subtract(sqrtRatioBX96, sqrtRatioAX96), Q96)
+        : JSBI.divide(JSBI.multiply(liquidity, JSBI.subtract(sqrtRatioBX96, sqrtRatioAX96)), Q96)
+    },
+    getAmount1 () {
+      const sqrtRatioX96 = TickMath.getSqrtRatioAtTick(-193893)
+      const USDC = new Token(1, '0x6f38602e142D0Bd3BC162f5912535f543D3B73d7', 6, 'USDC', 'USD Coin')
+      console.log('Amount1=', CurrencyAmount.fromRawAmount(
+        USDC,
+        this.getAmount1Delta(
+          TickMath.getSqrtRatioAtTick(-196260),
+          sqrtRatioX96,
+          JSBI.BigInt(100e6),
+          false
+        )).quotient.toString())
+    },
     toPrice () {
       const token0 = this.getToken(0)
       const token1 = this.getToken(1)
-      const sqrtRatioX96 = TickMath.getSqrtRatioAtTick(-196950)
+      const sqrtRatioX96 = TickMath.getSqrtRatioAtTick(-193893)
 
       const ratioX192 = JSBI.multiply(sqrtRatioX96, sqrtRatioX96)
       console.log('sqrtRatioX96=', sqrtRatioX96)
@@ -251,7 +284,7 @@ export default {
           this.isConnected = true
           console.log('this.currentAccount=' + this.currentAccount)
           this.StatusButtonText = this.currentAccount
-          this.$refs.supplyliq.checkConnectionStatus()
+          // this.$refs.supplyliq.checkConnectionStatus()
         } else {
           this.connectWallet()
         }
@@ -279,8 +312,8 @@ export default {
         this.isConnected = true
         this.StatusButtonText = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
-        this.$refs.supplyliq.checkConnectionStatus()
-        this.getMyLiquidity()
+        // this.$refs.supplyliq.checkConnectionStatus()
+        // this.getMyLiquidity()
       }
     },
     async getToken0 () {
@@ -345,6 +378,36 @@ export default {
       } else {
         console.log('keeperContract is null')
       }
+    },
+    getAmountTest () {
+      // const independentAmount: CurrencyAmount<Currency> | undefined = tryParseAmount(
+      //   typedValue,
+      //   currencies[independentField]
+      // )
+      // var poolAddr = Pair.getAddress('0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', '0x6f38602e142D0Bd3BC162f5912535f543D3B73d7')
+      const eWETH = new Token(5, '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', 18, 'ETH', 'ETH Coin')
+      const eUSDC = new Token(5, '0x6f38602e142D0Bd3BC162f5912535f543D3B73d7', 6, 'USDC', 'USD Coin')
+      // var amount = wrappedCurrencyAmount(1, 5)
+      // const independentAmount = 3
+      // const wrappedIndependentAmount = independentAmount?.wrapped
+      // var pair = new Pair(CurrencyAmount.fromRawAmount(eWETH, '1'), CurrencyAmount.fromRawAmount(eUSDC, '1'))
+
+      // console.log('tokenb=', pair.priceOf(eWETH).quote(CurrencyAmount.fromRawAmount(eWETH, 3)))
+      // const wrappedIndependentAmount = independentAmount?.wrapped
+      // const [tokenA, tokenB] = [currencyA?.wrapped, currencyB?.wrapped]
+      // if (tokenA && tokenB && wrappedIndependentAmount && pair) {
+      //   const dependentCurrency = dependentField === Field.CURRENCY_B ? currencyB : currencyA
+      //   const dependentTokenAmount =
+      //     dependentField === Field.CURRENCY_B
+      //       ? pair.priceOf(tokenA).quote(wrappedIndependentAmount)
+      //       : pair.priceOf(tokenB).quote(wrappedIndependentAmount)
+      //   return dependentCurrency?.isNative
+      //     ? CurrencyAmount.fromRawAmount(dependentCurrency, dependentTokenAmount.quotient)
+      //     : dependentTokenAmount
+
+      // var pair = new Pair()
+      // var obj = pair.priceOf(1)
+      // console.log('pool address is', obj)
     }
   }
 }
