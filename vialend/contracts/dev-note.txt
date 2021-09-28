@@ -358,6 +358,7 @@ $make devtools
 
 solc-select use 0.7.6
 solc-select use 0.5.16
+solc-select use 0.4.18
 
 solc --version
 
@@ -374,6 +375,7 @@ Available versions to install:
 0.8.1
 
 solc-select install 0.5.16
+solc-select install 0.4.18
 Installing '0.5.16'...
 Version '0.5.16' installed.
 

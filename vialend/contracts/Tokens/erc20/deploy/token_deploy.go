@@ -1,3 +1,10 @@
+/*
+
+	this deploy file is deprecated. check vaults/test/scripts/deploy.go
+
+	go file still be referenced
+*/
+
 package main
 
 import (

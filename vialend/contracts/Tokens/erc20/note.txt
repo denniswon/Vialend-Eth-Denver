@@ -13,3 +13,8 @@ INFO:
 
 	copy token address
 
+
+
+  	solc --optimize --overwrite --abi WETH9.sol.go -o ../build
+	solc --optimize --overwrite --bin WETH9.sol.go -o ../build
+	abigen --abi=../build/WETH9.abi --bin=../build/WETH9.bin --pkg=api --out=../deploy/WETH9/WETH9.go
