@@ -56,7 +56,7 @@
       <!--Step1 content-->
       <div :style="{display:dialogStep1Display}">
         <el-select v-model="selectedPair"
-                   placeholder="请选择"
+                   placeholder="Please select pairs"
                    size="medium"
                    style="width:300px;"
                    @change="selectedPairChanage">
@@ -84,27 +84,27 @@
                 <td class="c1"
                     width="50%">TVL</td>
                 <td class="c2"
-                    width="50%">$111111111111111</td>
+                    width="50%">$({{tvlTotal0}} + {{tvlTotal1}})</td>
               </tr>
               <tr>
                 <td class="c1">% of cap used</td>
-                <td class="c2">99.8%</td>
+                <td class="c2">{{ofCapUsed}}</td>
               </tr>
               <tr>
                 <td class="c1">Max TVL</td>
-                <td class="c2">$3,000,000,00</td>
+                <td class="c2">{{maxTVL}}</td>
               </tr>
               <tr>
                 <td class="c1">Range</td>
-                <td class="c2">33485-69230</td>
+                <td class="c2">{{vaultRange}}</td>
               </tr>
               <tr>
                 <td class="c1">Lending</td>
-                <td class="c2">$2,390,141.00</td>
+                <td class="c2">{{vaultLending}}</td>
               </tr>
               <tr>
                 <td class="c1">Current APR</td>
-                <td class="c2">40.0%</td>
+                <td class="c2">{{currentAPR}}</td>
               </tr>
             </table>
           </div>
@@ -273,6 +273,9 @@
 
 <script>
 import PairsData from '../data/PairsData'
+import ViaLendFeeMakerABI from '../ABI/ViaLendFeeMakerABI.json'
+import ViaLendTokenABI from '../ABI/tokenABI.json'
+import ViaLendPoolABI from '../ABI/UniswapV3PoolABI.json'
 
 export default {
   name: 'MyPositions',
@@ -281,6 +284,11 @@ export default {
       selectedPair: 1,
       selectedText: '',
       pairsData: PairsData,
+      keeperContract: null,
+      token0Contract: null,
+      token1Contract: null,
+      poolContract: null,
+      poolAddress: '',
       newPositionDialogVisible: false,
       newPositionDialogTitle: 'Step1:Choose a Vault',
       dialogStep1Title: 'Step1:Choose a Vault',
@@ -293,8 +301,45 @@ export default {
       dialogResultDisplay: 'none',
       newLiqudityToken0: 0,
       newLiqudityToken1: 0,
-      signAgreement: false
+      signAgreement: false,
+      feeTier: '',
+      token0Address: '',
+      token0Name: '',
+      token0Symbol: '',
+      token0Decimal: 0,
+      token1Address: '',
+      token1Name: '',
+      token1Symbol: '',
+      token1Decimal: 0,
+      shares: 0,
+      totalShares: 0,
+      tvl: 0,
+      tvlTotal0: 0,
+      tvlTotal1: 0,
+      ofCapUsed: '',
+      maxTVL: '',
+      vaultRange: '',
+      vaultLending: '',
+      currentAPR: ''
     }
+  },
+  created: async function () {
+    var _this = this
+    this.keeperContract = new web3.eth.Contract(
+      ViaLendFeeMakerABI,
+      this.$parent.vaultAddress
+    )
+    this.poolAddress = await this.keeperContract.methods.pool().call()
+    this.token0Address = await this.keeperContract.methods.token0().call()
+    this.token1Address = await this.keeperContract.methods.token1().call()
+    // console.log('this.token0Address=', this.token0Address)
+    this.poolContract = new web3.eth.Contract(
+      ViaLendPoolABI,
+      this.poolAddress
+    )
+  },
+  mounted () {
+
   },
   methods: {
     showNewPositionDialog () {
@@ -304,6 +349,10 @@ export default {
       this.dialogStep2Display = 'none'
       this.dialogStep3Display = 'none'
       this.dialogResultDisplay = 'none'
+      this.getData()
+      this.getTokenInfo()
+      this.getPoolInfo()
+      this.getShares()
     },
     selectedPairChanage (val) {
       console.log('select value=', val)
@@ -346,6 +395,66 @@ export default {
       this.dialogStep2Display = 'none'
       this.dialogStep3Display = 'none'
       this.dialogResultDisplay = ''
+    },
+    getData () {
+      var _this = this
+      // Get TVL
+      this.keeperContract.methods
+        .getTVL()
+        .call()
+        .then(val => {
+          console.log('getTVL: ' + JSON.stringify(val))
+          _this.tvlTotal0 = val.total0
+          _this.tvlTotal1 = val.total1
+        })
+      // Get Max TVL
+      this.keeperContract.methods
+        .maxTotalSupply()
+        .call()
+        .then(val => {
+          console.log('maxTVL: ' + val)
+          _this.maxTVL = val
+          // _this.ofCapUsed =
+        })
+    },
+    async getTokenInfo () {
+      this.token0Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token0Address
+      )
+      this.token1Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token1Address
+      )
+      // Get Token0 Information
+      this.token0Name = await this.token0Contract.methods.name().call()
+      console.log('token0Name=', this.token0Name)
+      this.token0Symbol = await this.token0Contract.methods.symbol().call()
+      console.log('token0Symbol=', this.token0Symbol)
+      this.token0Decimal = await this.token0Contract.methods.decimals().call()
+      console.log('token0Decimal=', this.token0Decimal)
+      // Get Token1 Information
+      this.token1Name = await this.token1Contract.methods.name().call()
+      console.log('token1Name=', this.token1Name)
+      this.token1Symbol = await this.token1Contract.methods.symbol().call()
+      console.log('token1Symbol=', this.token1Symbol)
+      this.token1Decimal = await this.token1Contract.methods.decimals().call()
+      console.log('token1Decimal=', this.token1Decimal)
+    },
+    async getPoolInfo () {
+      this.feeTier = await this.poolContract.methods.fee().call()
+      console.log('feeTier=', this.feeTier)
+    },
+    async getShares () {
+      this.shares = await this.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+      console.log('user address=', ethereum.selectedAddress, ';shares=', this.shares)
+      this.keeperContract.methods
+        .totalSupply()
+        .call()
+        .then(val => {
+          console.log('totalSupply= ' + val)
+          this.totalShares = val
+        })
     }
   }
 }

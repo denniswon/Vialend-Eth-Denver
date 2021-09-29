@@ -119,7 +119,7 @@ import { Price, Token, Fraction, CurrencyAmount } from '@uniswap/sdk-core'
 
 import { tickToPrice, priceToClosestTick } from '../utils/priceTickConversions'
 import JSBI from 'jsbi'
-import { Q192, ONE, ZERO, Q96 } from '../internalConstants'
+// import { Q192, ONE, ZERO, Q96 } from '../internalConstants'
 
 const _this = this
 const POOL_SQRT_RATIO_START = encodeSqrtRatioX96(100e6, 100e18)
@@ -162,8 +162,7 @@ export default {
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
       disConnectClass: 'wallet_disconnected',
-      StatusButtonText: 'Connect Wallet',
-      pair: Pair
+      StatusButtonText: 'Connect Wallet'
     }
   },
   created: function () {

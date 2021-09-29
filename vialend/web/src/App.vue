@@ -34,7 +34,7 @@ export default {
   name: 'App',
   data () {
     return {
-      vaultAddress: '0x3B326e4A6aDA2C499cb838A0aE21D934f8984cf1',
+      vaultAddress: '0x31E84D42aB6DEf5Dac84b761b0E5004179e07778',
       keeperContract: null
     }
   },

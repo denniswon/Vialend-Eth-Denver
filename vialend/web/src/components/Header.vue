@@ -40,6 +40,11 @@
       ml-auto
     ">
               <div class="adminButton">
+                <router-link to='/VialendInfo'>
+                  VialendInfo
+                </router-link>
+              </div>&nbsp;&nbsp;
+              <div class="adminButton">
                 <router-link to='/admin'>
                   Admin
                 </router-link>
