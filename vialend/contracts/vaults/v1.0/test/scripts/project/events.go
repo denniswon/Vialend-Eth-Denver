@@ -11,7 +11,8 @@ import (
 
 	//	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 
-	vault "../../../deploy/FeeMaker"
+	//vault "../../../deploy/FeeMaker"
+	vault "../../../deploy/vialendFeeMaker"
 	vialend "../../../deploy/vialendcomp"
 	"../config"
 

@@ -8,7 +8,10 @@ import (
 	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 	mocktoken "../../../../../Tokens/erc20/deploy/ERC20fixedSupply"
 	weth "../../../../../Tokens/erc20/deploy/WETH9"
+
 	vault "../../../deploy/FeeMaker"
+	//	vault "../../../deploy/vialendFeeMaker"
+	vialend "../../../deploy/vialendFeeMaker"
 
 	"../config"
 	"github.com/ethereum/go-ethereum/common"
@@ -133,4 +136,63 @@ func DeployWrappedEther() *weth.Api {
 	config.Readstring("WETH deployed, wait for pending ... next... ")
 
 	return instance
+}
+
+func DeployVialendFeemaker(acc int) {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy VialendFeemaker ...................")
+	fmt.Println("----------------------------------------------")
+
+	///require governance. always use account 0 as the deployer
+	config.Auth = config.GetSignature(config.Networkid, acc)
+
+	config.NonceGen()
+
+	pool := GetPoolFromToken()
+
+	protocolFee := big.NewInt(10000)
+
+	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	if !ok {
+		log.Fatal("maxTotalSupply err ")
+	}
+	var maxTwapDeviation = big.NewInt(20000)
+	var twapDuration = uint32(2)
+	var _weth = common.HexToAddress(config.Network.LendingContracts.WETH)
+	var _cToken0 = common.HexToAddress(config.Network.LendingContracts.CETH)
+	var _cToken1 = common.HexToAddress(config.Network.LendingContracts.CUSDC)
+	var _cEth = common.HexToAddress(config.Network.LendingContracts.CETH)
+
+	var _uniPortionRate = uint8(90)
+
+	address, tx, instance, err := vialend.DeployApi(config.Auth, config.Client,
+		pool,
+		_weth,
+		_cToken0,
+		_cToken1,
+		_cEth,
+		protocolFee,
+		maxTotalSupply,
+		maxTwapDeviation,
+		twapDuration,
+		_uniPortionRate)
+
+	///set auth back to Account
+	config.Auth = config.GetSignature(config.Networkid, config.Account)
+
+	if err != nil {
+		log.Fatal("deploy vault ", err)
+	}
+
+	//refresh vault address in networks.go
+	config.Network.Vault = address.Hex()
+	config.AddSettingString("vault address:", address.Hex())
+
+	fmt.Println("vault address:", address.Hex())
+
+	config.Readstring("Vault deploy done, wait for pending ... next... ")
+
+	_, _ = instance, tx
+
 }

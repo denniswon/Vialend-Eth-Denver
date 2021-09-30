@@ -13,6 +13,10 @@ solc --optimize --overwrite --bin vialendcomp.sol.go -o ../build
 abigen --abi=../build/vialendcomp.abi --bin=../build/vialendcomp.bin --pkg=api --out=../deploy/vialendcomp/vialendcomp.go
 abigen --abi=../build/cErc20.abi --bin=../build/cErc20.bin --pkg=api --out=../deploy/cErc20/cErc20.go
 
+solc --optimize --overwrite --abi vialendfeemaker0.1.sol.go -o ../build
+solc --optimize --overwrite --bin vialendfeemaker0.1.sol.go -o ../build
+abigen --abi=../build/vialendfeemaker.abi --bin=../build/vialendfeemaker.bin --pkg=api --out=../deploy/vialendfeemaker/vialendfeemaker.go
+
 solc --optimize --overwrite --abi unwrap.sol.go -o ../build
 solc --optimize --overwrite --bin unwrap.sol.go -o ../build
 abigen --abi=../build/wrapunwrap.abi --bin=../build/wrapunwrap.bin --pkg=api --out=../deploy/unwrap/unwrap.go

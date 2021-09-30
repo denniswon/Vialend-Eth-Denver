@@ -311,6 +311,7 @@ $GOHOME/build/bin/abigen --abi=../build/UniswapV3Factory.abi --bin=../build/Unis
 
 ------solc  evm-version
  "evmVersion": "<VERSION>"
+solc --optimize --overwrite --abi --evm-version istanbul strategy1.sol.go -o ../build
 
 homestead (oldest version)
 

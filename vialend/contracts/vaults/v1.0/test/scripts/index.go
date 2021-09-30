@@ -39,15 +39,35 @@ type Switcher struct {
 	RemovePosition   int
 	Swap             int
 	CollectFees      int
+	Strategy1        int
+	Strategy1Param   [3]int64
 }
 
 func main() {
 
-	//project.Test_weth_deposit()
-	project.Test_weth_withdraw()
+	// get some weth
+	//project.Test_weth_deposit(30)
+	//project.Test_weth_withdraw(3)
+	//return
 
-	//test_vault()
+	//project.DeployVialendFeemaker(3)
+	//return
 
+	// for i := 0; i < 10; i++ {
+	// 	test_vault()
+	// }
+	//return
+
+	//project.EmergencyBurn()
+	// project.Whitehacker()
+
+	test_vault()
+
+	project.LendingInfo()
+	project.AccountInfo()
+	project.VaultInfo(1)
+	project.PoolInfo()
+	//project.GetPoolFromToken()
 }
 
 func test_vault() {
@@ -56,7 +76,7 @@ func test_vault() {
 	var sw = new(Switcher)
 
 	sw.ViewEvent = false
-	sw.ViewOnly = true
+	sw.ViewOnly = false
 
 	sw.DeployFactory = 0
 	//...manual step... update the new factory addres in networks.go
@@ -84,7 +104,14 @@ func test_vault() {
 	sw.Approve = 0
 
 	sw.Deposit = 0
-	sw.DepositAmount = [2]int64{1, 1000} // amount0, amount1 to deposit
+	sw.DepositAmount = [2]int64{1, 100} // amount0, amount1 to deposit
+
+	sw.Withdraw = 1
+	sw.WithDrawParam = [2]int64{3, 50}
+	// accountid,  amount of shares in percentage %
+
+	sw.Strategy1 = 0
+	sw.Strategy1Param = [3]int64{600, 60, 3} // {range, tickspacing, account}
 
 	sw.Rebalance = 0
 	sw.RebalanceParam = [2]int64{10, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
@@ -96,10 +123,6 @@ func test_vault() {
 	// zeroForOne := false
 	//swapAmount, _ := new(big.Int).SetString("139190665697301284354", 10) // 139 * 1e18
 	//zeroForOne := true
-
-	sw.Withdraw = 0
-	sw.WithDrawParam = [2]int64{0, 100}
-	// accountid,  amount of shares in percentage %
 
 	sw.CollectFees = 0
 
@@ -118,17 +141,6 @@ func test_vault() {
 		project.VaultInfo(1)
 
 		return
-	}
-
-	if sw.ViewOnly {
-
-		project.AccountInfo()
-		project.VaultInfo(1)
-		project.PoolInfo()
-		project.GetPoolFromToken() /// get the pool address from its  tokens and fee
-
-		return
-
 	}
 
 	if sw.ViewEvent {
@@ -206,8 +218,6 @@ func test_vault() {
 
 		}
 
-		project.VaultInfo(1)
-
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap x for y:", i)
 
@@ -219,13 +229,11 @@ func test_vault() {
 
 	}
 
+	project.Strategy1(sw.Strategy1, sw.Strategy1Param)
+
 	project.Rebalance(sw.Rebalance, sw.RebalanceParam) /// make sure Account = 0
-	project.VaultInfo(sw.Rebalance)
 
 	project.Withdraw(sw.Withdraw, sw.WithDrawParam) /// withdraw shares, input number in percentage %
-	project.VaultInfo(sw.Withdraw)
-
-	project.PoolInfo()
 
 	// print all deployed addresses
 	for _, i := range config.InfoString {

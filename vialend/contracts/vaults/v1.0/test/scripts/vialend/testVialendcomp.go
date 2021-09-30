@@ -5,7 +5,7 @@ import (
 	"log"
 	"math/big"
 
-	ctoken "../../../deploy/cerc20"
+	ctoken "../../../deploy/cErc20"
 
 	vialend "../../../deploy/vialendcomp"
 	project "../project"

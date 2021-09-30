@@ -16,14 +16,14 @@ func DeployWETH() {
 	DeployWrappedEther()
 }
 
-func Test_weth_deposit() {
+func Test_weth_deposit(amt int64) {
 
 	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
 
 	instance := GetWethInstance()
 
 	//weth deposit
-	ethAmount := config.X1E18(1)
+	ethAmount := config.X1E18(amt)
 	config.Auth.Value = ethAmount
 	tx, err := instance.Deposit(config.Auth)
 
@@ -35,14 +35,14 @@ func Test_weth_deposit() {
 
 }
 
-func Test_weth_withdraw() {
+func Test_weth_withdraw(amt int64) {
 
 	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
 
 	instance := GetWethInstance()
 
 	//weth deposit
-	ethAmount := config.X1E18(1)
+	ethAmount := config.X1E18(amt)
 
 	tx, err := instance.Withdraw(config.Auth, ethAmount)
 

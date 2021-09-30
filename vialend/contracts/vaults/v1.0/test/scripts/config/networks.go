@@ -54,8 +54,8 @@ type Init struct {
 	LendingContracts LendingStruct
 }
 
-var Networkid = 4 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: rinkeby
-var Account = 0
+var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: rinkeby
+var Account = 3
 var ProviderSortId = 0
 var Auto = true
 
@@ -145,13 +145,18 @@ var Networks = [...]Init{
 			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //test user 2
 			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a",  //test admin 3
 			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7"}, // test admin
-		"0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
-		"0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", //tokenB  eusdc
+		// "0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
+		// "0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", //tokenB  eusdc
+		"0x6fD886fd1e728D9386Ba7fE721C856790758aDd9", //tokenA Weth
+		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
 		"0x4F211267896C4D3f2388025263AC6BD67B0f2C54", //new owner, test user 1
 		40, //time pending interval
-		"0xc4C92691f69fadDd684257E9f5A8d6f9D2c79a93", //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
+		"0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023",
+		//pool 0xc4C92691f69fadDd684257E9f5A8d6f9D2c79a93", //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"0x31E84D42aB6DEf5Dac84b761b0E5004179e07778", //vault address
+		//"0x31E84D42aB6DEf5Dac84b761b0E5004179e07778", //vault address
+		"0x5A3D3D52aa406AaB48CaDc4318974f8270e7711b", //vault address
+		//0x78616f06aA7Fc1A247ab4f4eCc5B9F291A49f447
 		3000, // fee
 		LendingStruct{
 			WETH:  "0x6fD886fd1e728D9386Ba7fE721C856790758aDd9", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,

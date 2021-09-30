@@ -2,12 +2,14 @@
 pragma solidity 0.7.6;
 
 
-interface IcERC20 {
+interface IcErc20 {
     function mint(uint256) external returns (uint256);
 
-    function exchangeRateCurrent() external returns (uint256);
+	function exchangeRateStored() external  view returns (uint256);	
+	
+    function exchangeRateCurrent() external  returns (uint256);
 
-    function supplyRatePerBlock() external returns (uint256);
+    function supplyRatePerBlock() external  returns (uint256);
 
     function redeem(uint) external returns (uint);
 

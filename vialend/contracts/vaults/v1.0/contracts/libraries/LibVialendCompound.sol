@@ -1,52 +1,47 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.6;
+pragma solidity >=0.5.0;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-import "interfaces/IWETH9.sol";
-import "interfaces/IcEth.sol";
-import "interfaces/IcERC20.sol";
-
+import "../interfaces/IWETH9.sol";
+import "../interfaces/IcEth.sol";
+import "../interfaces/IcERC20.sol";
+import "../@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
-contract VialendComp {
-    event MyLog(string, uint256);
-    
-    using SafeERC20 for IERC20;
 
-   	IWETH9 internal WETH;
-	
-	address public owner;
- 
-    constructor (address payable WETHAddress ) {
-        owner = msg.sender;
-        
-        require(WETHAddress != address(0), "WETH is the zero address");
-	
-	    WETH = IWETH9(WETHAddress);
-    }
-    
-    function supplyEthToCompound(address payable _cEtherContract)
+ library libVialendCompound  {
+
+ 	ViaLendFeeMaker public immutable feemaker;
+	event MyLog(string, uint256);
+
+	modifier onlyTeam {
+        require(msg.sender == team, "team");
+        _;
+    }   
+
+
+
+///compound procedures
+
+function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
         public
+        onlyTeam
         payable
         returns (bool)
     {
         // Create a reference to the corresponding cToken contract
-        IcEther cToken = IcEther(_cEtherContract);
-        
-//        address a = address(cToken);
-//        require(a!=address(0));
+        IcEther cEth = IcEther(_cEtherContract);
+        IcErc20 ctoken = IcErc20(_ctoken);
 
         // Amount of current exchange rate from cToken to underlying
-        uint256 exchangeRateMantissa = cToken.exchangeRateCurrent();
+        uint256 exchangeRateMantissa = ctoken.exchangeRateCurrent();
         emit MyLog("Exchange Rate (scaled up by 1e18): ", exchangeRateMantissa);
 
         // Amount added to you supply balance this block
-        uint256 supplyRateMantissa = cToken.supplyRatePerBlock();
+        uint256 supplyRateMantissa = ctoken.supplyRatePerBlock();
         emit MyLog("Supply Rate: (scaled up by 1e18)", supplyRateMantissa);
 
-        cToken.mint{gas:250000,value:msg.value}();
+        cEth.mint{gas:250000,value:msg.value}();
         return true;
     }
 
@@ -54,7 +49,7 @@ contract VialendComp {
         address _erc20Contract,
         address _cErc20Contract,
         uint256 _numTokensToSupply
-    ) public returns (uint) {
+    ) public onlyTeam returns (uint) {
     	
 		
 		require(_numTokensToSupply <=  IERC20(_erc20Contract).balanceOf(address(this)) ,"balance");
@@ -84,7 +79,7 @@ contract VialendComp {
         uint256 amount,
         bool redeemType,
         address _cErc20Contract
-    ) public returns (bool) {
+    ) public onlyTeam returns (bool) {
         // Create a reference to the corresponding cToken contract, like cDAI
         IcErc20 cToken = IcErc20(_cErc20Contract);
 
@@ -104,6 +99,8 @@ contract VialendComp {
         // Error codes are listed here:
         // https://compound.finance/developers/ctokens#ctoken-error-codes
         emit MyLog("If this is not 0, there was an error", redeemResult);
+        
+        require(redeemResult == 0 , " redeemCErc20Tokens ");
 
         return true;
     }
@@ -112,9 +109,9 @@ contract VialendComp {
         uint256 amount,
         bool redeemType,
         address _cEtherContract
-    ) public returns (bool) {
+    ) public onlyTeam returns (bool) {
         // Create a reference to the corresponding cToken contract
-        IcEther cToken = IcEther(_cEtherContract);
+        IcEther cRef = IcEther(_cEtherContract);
 
         // `amount` is scaled up by 1e18 to avoid decimals
 
@@ -122,15 +119,17 @@ contract VialendComp {
 
         if (redeemType == true) {
             // Retrieve your asset based on a cToken amount
-            redeemResult = cToken.redeem(amount);
+            redeemResult = cRef.redeem(amount);
         } else {
             // Retrieve your asset based on an amount of the asset
-            redeemResult = cToken.redeemUnderlying(amount);
+            redeemResult = cRef.redeemUnderlying(amount);
         }
 
         // Error codes are listed here:
         // https://compound.finance/docs/ctokens#ctoken-error-codes
         emit MyLog("If this is not 0, there was an error", redeemResult);
+
+        require( redeemResult == 0, "redeemCEth");
 
         return true;
     }
@@ -140,7 +139,7 @@ contract VialendComp {
         uint256 amount,
         address erc20,
         address to
-    ) external  onlyOwner {
+    ) public onlyTeam {
         
         require(amount > 0, "amount");
 
@@ -157,8 +156,8 @@ contract VialendComp {
     }
 
 
-	// to do : onlyGovernance
- 	function withdrawEth(   uint256 amount  ) external  onlyOwner {
+	
+ 	function withdrawEth(   uint256 amount  ) internal {
         
          
         require(amount <= getETHBalance(), "amount");
@@ -175,9 +174,7 @@ contract VialendComp {
     }
 
 
- 
-
-	function wrap() payable public  {
+	function wrap( IWETH9  WETH) payable public onlyTeam {
 	    uint256 ETHAmount =msg.value;
 	
 	    //create WETH from ETH
@@ -188,7 +185,7 @@ contract VialendComp {
 	}
 
 
-	function unwrap(uint256 Amount) public 
+	function unwrap(IWETH9 WETH, uint256 Amount) public onlyTeam
 	{
 	    address payable sender= msg.sender;
 	
@@ -197,18 +194,16 @@ contract VialendComp {
 	        sender.transfer(address(this).balance);
 	    }
 	}   
-    
+ 
+ function getCAmounts(IcErc20 CToken0, IcErc20 CToken1) internal view returns (uint256 amountA, uint256 amountB) {
+		
+		amountA = CToken0.balanceOf(address(this) ) ;
+		amountB = CToken1.balanceOf(address(this) ) ;
 
-
-   modifier onlyOwner () {
-       require(msg.sender == owner, "This can only be called by the contract owner!");
-       _;
-     }
-
-    // This is needed to receive ETH when calling `redeemCEth`
-//    function() external payable {}
-	fallback() external payable {}
-	 receive() external payable {}
+	}
 	
-	
+
+
+
+
 }

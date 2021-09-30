@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-
 /*
 personal deposit cap
-
+E8497794
 */
 pragma solidity >=0.5.0;
 
@@ -37,15 +36,11 @@ contract ViaLendFeeMaker is
     IUniswapV3SwapCallback,
     ReentrancyGuard
 {
-	
 	event MyLog(string, uint256);
+	event MyLog2(string, uint256,uint256);
 	
-
     address public governance;
     address public team;
-
-    address public strategy;
-    
     address pendingGovernance;
     
     
@@ -85,7 +80,8 @@ contract ViaLendFeeMaker is
     uint32 public twapDuration;
 	int24 public maxTwapDeviation;    
     
-    
+	uint8 uniPortionRate ;
+	
     /// @dev 
     /// @param _pool Uniswap V3 pool address
     /// @param _protocolFee Protocol fee expressed as multiple of 1e-6
@@ -100,13 +96,14 @@ contract ViaLendFeeMaker is
         uint256 _protocolFee,
         uint256 _maxTotalSupply,
         int24 _maxTwapDeviation,
-        uint32 _twapDuration
-        
+        uint32 _twapDuration,
+		uint8 _uniPortionRate
         
     ) ERC20("ViaLend Token","VLT") {
 
         governance = msg.sender;
-        team = msg.sender;  // for now
+        team = msg.sender;  
+        // temporary team and governance are the same
 
 		pool = IUniswapV3Pool(_pool);	
 		
@@ -127,7 +124,6 @@ contract ViaLendFeeMaker is
 
         protocolFee = _protocolFee;
         
-        
 
 		tickSpacing = IUniswapV3Pool(_pool).tickSpacing();
 
@@ -138,6 +134,8 @@ contract ViaLendFeeMaker is
         maxTwapDeviation = _maxTwapDeviation;
 
         twapDuration = _twapDuration;
+        
+        uniPortionRate =  _uniPortionRate ;
 
 		require(_maxTwapDeviation > 0, "maxTwapDeviation");
 		
@@ -169,7 +167,7 @@ contract ViaLendFeeMaker is
             uint256 amount1
         )
     {
-        require(amountToken0 > 0 || amountToken1 > 0, _hint2("amountToken0,1,",amountToken0,amountToken1,0,",") );
+        //#debug require(amountToken0 > 0 || amountToken1 > 0, _hint2("amountToken0,1,",amountToken0,amountToken1,0,",") );
        
         require(staker != address(0) && staker != address(this), "staker");
 
@@ -178,18 +176,17 @@ contract ViaLendFeeMaker is
 		
 
         (shares, amount0, amount1) = _calcShares(amountToken0, amountToken1); 
-        //_calcSharesAndAmounts(amountToken0, amountToken1); 
 		
-        require(shares > 0, _hint2("shares ", shares, 0, 0,"" ) ); 
         
         //todo
-        require(amountMin(amount0,amount1), "amountMIn");
+        //#debug require(amountMin(amount0,amount1), "amountMIn");
 
         // transfer tokens from sender
         if (amount0 > 0) token0.safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) token1.safeTransferFrom(msg.sender, address(this), amount1);
 
         _mint(staker, shares);
+
 
 		//#debug  test send staker some ttoken tokenGiveAwayRate.div(100).mul(shares)
 		// if ( ttoken.balanceOf(address(this) ) > 1000000000000000000 )
@@ -201,6 +198,7 @@ contract ViaLendFeeMaker is
         emit Deposit(msg.sender, staker, shares, amount0, amount1);
 
         require(totalSupply() <= maxTotalSupply, "CAP");
+
     }
 
     // poke to update fees from uniswap. 
@@ -220,13 +218,9 @@ contract ViaLendFeeMaker is
     /// @param shares number of Shares owned by sender to be burned
     /// @return amount0 Amount of token0 sent to staker 
     /// @return amount1 Amount of token1 sent to staker
-    /// @param amount0Min Revert if resulting `amount0` is smaller than this
-    /// @param amount1Min Revert if resulting `amount1` is smaller than this
     
     function withdraw(
         uint256 shares,
-        uint256 amount0Min,
-        uint256 amount1Min,
         address staker
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
         
@@ -244,18 +238,22 @@ contract ViaLendFeeMaker is
         // Calculate token amounts proportional to unused balances
         uint256 unusedAmount0 = getBalance0().mul(shares).div(totalSupply);
         uint256 unusedAmount1 = getBalance1().mul(shares).div(totalSupply);
+        
 
         // Withdraw proportion of liquidity directly from Uniswap pool
         (uint256 poolamount0, uint256 poolamount1) =
             _burnLiquidityShare(cLow, cHigh, shares, totalSupply);
 
+        (uint256 lendingamount0, uint256 lendingamount1) =
+            _burnLendingShare(shares, totalSupply);
+
         // Sum up total amounts owed to recipient
-        amount0 = unusedAmount0.add(poolamount0);
-        amount1 = unusedAmount1.add(poolamount1);
+        amount0 = unusedAmount0.add(poolamount0).add(lendingamount0);
+        amount1 = unusedAmount1.add(poolamount1).add(lendingamount1);
 
-
-        require(amount0 >= amount0Min, _hint2(" amount0<amount0Min: ",amount0, 0,0,"") ) ;
-        require(amount1 >= amount1Min, _hint2(" amount1<amount1Min: ",amount1, 0,0,"") );
+	
+        //#debug require(amount0 >= amount0Min, _hint2(" amount0<amount0Min: ",amount0, 0,0,"") ) ;
+        //#debug require(amount1 >= amount1Min, _hint2(" amount1<amount1Min: ",amount1, 0,0,"") );
         
         // Push tokens to recipient
         if (amount0 > 0) token0.safeTransfer(staker, amount0);
@@ -263,6 +261,32 @@ contract ViaLendFeeMaker is
 
         emit Withdraw(msg.sender, staker, shares, amount0, amount1,token0.name(),token1.name());
     }
+    
+    
+	function _burnLendingShare (uint256 shares, uint256 totalShares) internal returns(uint256,uint256) {
+
+      	(uint256 amount0, uint256 amount1) = getCAmounts();
+
+		uint256 myamount0 = amount0.mul(shares).div(totalShares);
+		uint256 myamount1 = amount1.mul(shares).div(totalShares);
+		
+		removeLending(myamount0,myamount1);
+		
+		emit MyLog2("_burnLendingShare ", myamount0,myamount1);
+		
+		return (myamount0,myamount1);
+	}
+	
+	 // calculate price based on pair reserves
+	function getUniswapPrice()
+        public
+        view
+        returns (uint256 price)
+    {
+        (uint160 sqrtPriceX96,,,,,,) =  pool.slot0();
+        return uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e18) >> (96 * 2);
+    }
+
 
     function _calcShares(uint256 amountToken0, uint256 amountToken1)
         internal
@@ -274,62 +298,19 @@ contract ViaLendFeeMaker is
         )
     {
 			
-    	// total Amount of the shares in vault
-        uint256 totalSupply = totalSupply();
-        
-        //get total amount from current balance + position liquidity for each token
-        (uint256 total0, uint256 total1) = getTVL();
+		// may use getTwap() in the future
+		uint256 price = getUniswapPrice();
 
-       	assert( totalSupply == 0   || total0 >0 ||  total1>0 );
-		
-        ( uint160 sqrtPriceX96, 	int24 tick, , , , , ) 	= pool.slot0();
-        
-        //( amount0,  amount1) = _swap(sqrtPriceX96, amountToken0, amountToken1);
+		// todo : make sure amount0 is X and amount1 is Y
+		shares = amountToken0.mul(price).add(amountToken1);
+
         (amount0, amount1 ) = (amountToken0, amountToken1);
-
-        shares =  amount0.mul(amount1).div(1e18);
+      
+    	
         
     }    
 
-	/// @dev Calculates the largest possible `amount0` and `amount1` such that
-    /// they're in the same proportion as total amounts, but not greater than
-    /// `amount0Desired` and `amount1Desired` respectively.
-    function _calcSharesAndAmounts(uint256 amount0Desired, uint256 amount1Desired)
-        internal
-        view
-        returns (
-            uint256 shares,
-            uint256 amount0,
-            uint256 amount1
-        )
-    {
-        uint256 totalSupply = totalSupply();
-        (uint256 total0, uint256 total1) = getTVL();
 
-        // If total supply > 0, vault can't be empty
-        assert(totalSupply == 0 || total0 > 0 || total1 > 0);
-
-        if (totalSupply == 0) {
-            // For first deposit, just use the amounts desired
-            amount0 = amount0Desired;
-            amount1 = amount1Desired;
-            shares = Math.max(amount0, amount1);
-        } else if (total0 == 0) {
-            amount1 = amount1Desired;
-            shares = amount1.mul(totalSupply).div(total1);
-        } else if (total1 == 0) {
-            amount0 = amount0Desired;
-            shares = amount0.mul(totalSupply).div(total0);
-        } else {
-            uint256 cross = Math.min(amount0Desired.mul(total1), amount1Desired.mul(total0));
-            require(cross > 0, "cross");
-
-            // Round up amounts
-            amount0 = cross.sub(1).div(total1).add(1);
-            amount1 = cross.sub(1).div(total0).add(1);
-            shares = cross.mul(totalSupply).div(total0).div(total1);
-        }
-    }		 
 	/// collect fees and remove liquidity from Uniswap pool.
 	/// @param amount0 burned amount of token0
 	/// @param amount1 burned amount of token1
@@ -341,7 +322,7 @@ contract ViaLendFeeMaker is
     ) internal returns (uint256 amount0, uint256 amount1) {
         (uint128 totalLiquidity, , , , ) = _position(tickLower, tickUpper);
         
-        require(totalSupply > 0, _hint2("t2",totalLiquidity,0,0,"") ) ;
+        //#debug require(totalSupply > 0, _hint2("t2",totalLiquidity,0,0,"") ) ;
         
         uint256 liquidity = uint256(totalLiquidity).mul(shares).div(totalSupply);
 
@@ -362,52 +343,53 @@ contract ViaLendFeeMaker is
         return uint128(x);
     }
     
-    function getTVL() 
-    	public 
-    	view  
-    	returns (uint256 total0, uint256 total1) {
+    function getTVL() public view returns (uint256 total0, uint256 total1) {
          
-        (uint256 Amount0, uint256 Amount1) =  getPositionAmounts(cLow, cHigh);
-        
-        total0 = getBalance0().add(Amount0);
-        total1 = getBalance1().add(Amount1);
+        (uint256 uniliq0, uint256 uniliq1) =  getPositionAmounts(cLow, cHigh);
+        (uint256 lending0, uint256 lending1) =  getLendingAmounts();
+
+		// balance remaining + liquidity + lending supply
+        total0 = getBalance0().add(uniliq0).add(lending0);
+        total1 = getBalance1().add(uniliq1).add(lending1);
 
     }
     
+    function getLendingAmounts() public view returns(uint256 , uint256 ){
+
+    	(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
+       
+        uint256 amount0 = cAmount0.mul(CToken0.exchangeRateStored());
+        uint256 amount1 = cAmount1.mul(CToken1.exchangeRateStored());
+
+		return(amount0,amount1);
+    }
     
-	function removePositions() external returns(uint256, uint256){
-
-		require(msg.sender == strategy, "strategy removepositions");	
-
-		removeLending();
-		removeUniswap();
+    
+	function removePositions() internal {
 		
-				// all assets in vault
-        uint256 unUsedbalance0 = getBalance0();
-        uint256 unUsedbalance1 = getBalance1();
-        
-        return(unUsedbalance0, unUsedbalance1);
-
+		(uint256 amount0, uint256 amount1) = getCAmounts();
+		
+		removeLending( amount0, amount1);
+		
+		removeUniswap();
 	}
 
 
+	function getCAmounts() public view returns (uint256 amountA, uint256 amountB) {
+		
+		amountA = CToken0.balanceOf(address(this) ) ;
+		amountB = CToken1.balanceOf(address(this) ) ;
 
-	function removeUniswap() public returns(uint256 ,uint256){
-        
-        require(msg.sender == strategy, "strategy removeuniswap");	
+	}
+	
+
+	function removeUniswap() internal {
         
         // Withdraw all current liquidity from Uniswap pool
       
        (uint128 allLiquidity, , , , ) = _position(cLow, cHigh); 
         
   		_burnAndCollect(cLow, cHigh, allLiquidity);
-		
-		// all assets in vault
-        uint256 unUsedbalance0 = getBalance0();
-        uint256 unUsedbalance1 = getBalance1();
-        
-        return(unUsedbalance0, unUsedbalance1);
-        
 
 	}
 	
@@ -416,21 +398,16 @@ contract ViaLendFeeMaker is
     function rebalance(
         int24 newLow,
         int24 newHigh,
-        int24 tick
+        uint256 amount0,
+        uint256 amount1
         
-    ) external  { 
- 
-	require(msg.sender == strategy, "strategy rebalance");	
-	
-        // get new balance
-        uint256 balance0 = getBalance0();
-        uint256 balance1 = getBalance1();
+    ) internal { 
 
         
 		// Place position on Uniswap
-        uint128 liquidity = _liquidityForAmounts( newLow, newHigh, balance0, balance1);
+        uint128 liquidity = _liquidityForAmounts( newLow, newHigh, amount0, amount1);
         
-        require(liquidity > 0 ,append("liquidity: ",uint2str(liquidity),"","","")) ;
+        //#debug require(liquidity > 0 ,append("liquidity: ",uint2str(liquidity),"","","")) ;
 
    
         pool.mint(address(this), newLow, newHigh, liquidity, "");
@@ -438,18 +415,137 @@ contract ViaLendFeeMaker is
         uint256 newBalance0 = getBalance0();
         uint256 newBalance1 = getBalance1();
 
-        emit RebalanceLog(liquidity, balance0,balance1, newBalance0, newBalance1);
+        emit RebalanceLog(liquidity, newBalance0, newBalance1);
 
         (cLow, cHigh) = (newLow, newHigh);
         
     }
    
 	
+	function strategy0(
+		int24 newLow,
+        int24 newHigh,
+        int256 swapAmount,
+        bool zeroForOne
+        
+		) external nonReentrant onlyTeam  {
+		
+        (	, 	int24 tick, , , , , ) 	= pool.slot0();
 
-	function lendingSupply(uint256 amount0, uint256 amount1) 
-		external  returns(bool) {
-		require(msg.sender == strategy, "lendingSupply");
-			
+  		_validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382
+        
+        // Check price is not too close to min/max allowed by Uniswap. Price
+        // shouldn't be this extreme unless something was wrong with the pool.
+
+        int24 range = newHigh - newLow ;
+            
+        require(tick > TickMath.MIN_TICK + range  + tickSpacing, "tick1");
+        require(tick < TickMath.MAX_TICK - range  - tickSpacing, "tick2");
+
+        // Check price has not moved a lot recently. This mitigates price
+        // manipulation during rebalance and also prevents placing orders
+        // when it's too volatile.
+        int24 twap = getTwap();
+        int24 deviation = tick > twap ? tick - twap : twap - tick;
+        
+        //#debug using assert just because it can pass the solc compiler
+        assert(deviation <= maxTwapDeviation);  
+
+        
+        removeUniswap();
+        
+		// to be optimized outside
+		uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
+
+		if (swapAmount > 0) {
+	        swap( 
+	        	 swapAmount, 
+				 zeroForOne ,
+				sqrtPriceLimitX96 );
+		}
+        
+        
+        uint256 balance0 = getBalance0();
+        uint256 balance1 = getBalance1();
+        
+
+//        int24 tickFloor = _floor(tick);
+//        int24 tickCeil = tickFloor + tickSpacing;
+
+		//add position
+		rebalance(
+	        newLow,
+	        newHigh,
+			balance0,
+			balance1
+			);
+
+        lastRebalance = block.timestamp;
+        lastTick = tick;
+        		
+	}
+	
+
+	function strategy1(
+		int24 newLow,
+        int24 newHigh
+		) external nonReentrant onlyTeam  {
+		
+        (	,int24 tick, , , , , ) 	= pool.slot0();
+
+  		_validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382
+        
+        // Check price is not too close to min/max allowed by Uniswap. Price
+        // shouldn't be this extreme unless something was wrong with the pool.
+
+        int24 range = newHigh - newLow ;
+            
+         require(tick > TickMath.MIN_TICK + range  + tickSpacing, "tick too low");
+         require(tick < TickMath.MAX_TICK - range  - tickSpacing, "tick too high");
+
+        int24 twap = getTwap();
+        int24 deviation = tick > twap ? tick - twap : twap - tick;
+        
+        // avoid high slipage
+        require(deviation <= maxTwapDeviation, "deviation");
+
+        // remove positions from uniswap and lending pool get back to vault
+        removePositions();
+        
+        
+        // rebalance, 90% lending, 10% liquidity
+
+
+        //add xx% assets to uniswap
+        uint256 uniPortion0 =  getBalance0().mul(uniPortionRate).div(100);
+        uint256 uniPortion1 = getBalance1().mul(uniPortionRate).div(100);
+
+		//add rest portion to uniswap
+		rebalance(
+	        newLow,
+	        newHigh,
+			uniPortion0,
+			uniPortion1
+			);
+
+
+		// get remainting assets to lending
+        uint256 unUsedbalance0 = getBalance0();
+        uint256 unUsedbalance1 = getBalance1();
+        
+        bool result = lendingSupply( unUsedbalance0,  unUsedbalance1);
+        
+         require(result, "lending supply failed");
+       
+
+
+        lastRebalance = block.timestamp;
+        lastTick = tick;
+        		
+	}
+
+	function lendingSupply(uint256 amount0, uint256 amount1) internal returns(bool) {
+		
 		address underlying0 = address(token0);
 		address underlying1 = address(token1);
 		address weth = address(WETH);
@@ -458,13 +554,13 @@ contract ViaLendFeeMaker is
 		
         if (underlying0 == weth ) {
 			
-			unwrap(amount0);
+			_unwrap(amount0);
 	        supplyEthToCompound( payable(address(CEther)), cToken1 );
 	        supplyErc20ToCompound( underlying1,   cToken1, amount1);
 
 
         } else if (underlying1 == weth ) {
-			unwrap(amount1);
+			_unwrap(amount1);
 	        supplyEthToCompound( payable(address(CEther)), cToken0 );
 	        supplyErc20ToCompound( underlying0,   cToken0, amount0);
         } else {
@@ -477,31 +573,30 @@ contract ViaLendFeeMaker is
 	}
 
 
-	function removeLending() internal {
+	function removeLending(uint256 amount0, uint256 amount1) internal {
         
 		address underlying0 = address(token0);
 		address underlying1 = address(token1);
 		address weth = address(WETH);
 		address cToken0 = address(CToken0);
 		address cToken1 = address(CToken1);
-		address cEther = address(CEther);
+		//address cEther = address(CEther);
 
         // Withdraw all current supply from lending pool
         
-      	(uint256 amount0, uint256 amount1) = getCAmounts();
 		
 		bool redeemType = true;
 		
 		
         if (underlying0 == weth ) {
         	redeemCEth(amount0,redeemType,cToken0);
-			wrap();
+			_wrap();
 	        redeemCErc20Tokens( amount1, redeemType, cToken1 );
 
 
         } else if (underlying1 == weth ) {
         	redeemCEth(amount1,redeemType,cToken1);
-			wrap();
+			_wrap();
 	        redeemCErc20Tokens( amount0, redeemType, cToken0 );
         } else {
 	        redeemCErc20Tokens( amount1, redeemType, cToken1 );
@@ -512,186 +607,6 @@ contract ViaLendFeeMaker is
 
 	}
 
-	
-///compound procedures
-
-function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
-        public
-        onlyTeam
-        payable
-        returns (bool)
-    {
-        // Create a reference to the corresponding cToken contract
-        IcEther cEth = IcEther(_cEtherContract);
-        IcErc20 ctoken = IcErc20(_ctoken);
-
-        // Amount of current exchange rate from cToken to underlying
-        uint256 exchangeRateMantissa = ctoken.exchangeRateCurrent();
-        emit MyLog("Exchange Rate (scaled up by 1e18): ", exchangeRateMantissa);
-
-        // Amount added to you supply balance this block
-        uint256 supplyRateMantissa = ctoken.supplyRatePerBlock();
-        emit MyLog("Supply Rate: (scaled up by 1e18)", supplyRateMantissa);
-
-        cEth.mint{gas:250000,value:msg.value}();
-        return true;
-    }
-
-    function supplyErc20ToCompound(
-        address _erc20Contract,
-        address _cErc20Contract,
-        uint256 _numTokensToSupply
-    ) public onlyTeam returns (uint) {
-    	
-		
-		require(_numTokensToSupply <=  IERC20(_erc20Contract).balanceOf(address(this)) ,"balance");
-        // Create a reference to the underlying asset contract, like DAI.
-        ERC20 underlying = ERC20(_erc20Contract);
-
-        // Create a reference to the corresponding cToken contract, like cDAI
-        IcErc20 cToken = IcErc20(_cErc20Contract);
-
-        // Amount of current exchange rate from cToken to underlying
-        uint256 exchangeRateMantissa = cToken.exchangeRateCurrent();
-        emit MyLog("Exchange Rate (scaled up): ", exchangeRateMantissa);
-
-        // Amount added to you supply balance this block
-        uint256 supplyRateMantissa = cToken.supplyRatePerBlock();
-        emit MyLog("Supply Rate: (scaled up)", supplyRateMantissa);
-
-        // Approve transfer on the ERC20 contract
-        underlying.approve(_cErc20Contract, _numTokensToSupply);
-
-        // Mint cTokens
-        uint mintResult = cToken.mint(_numTokensToSupply);
-        return mintResult;
-    }
-
-    function redeemCErc20Tokens(
-        uint256 amount,
-        bool redeemType,
-        address _cErc20Contract
-    ) public onlyTeam returns (bool) {
-        // Create a reference to the corresponding cToken contract, like cDAI
-        IcErc20 cToken = IcErc20(_cErc20Contract);
-
-        // `amount` is scaled up, see decimal table here:
-        // https://compound.finance/docs#protocol-math
-
-        uint256 redeemResult;
-
-        if (redeemType == true) {
-            // Retrieve your asset based on a cToken amount
-            redeemResult = cToken.redeem(amount);
-        } else {
-            // Retrieve your asset based on an amount of the asset
-            redeemResult = cToken.redeemUnderlying(amount);
-        }
-
-        // Error codes are listed here:
-        // https://compound.finance/developers/ctokens#ctoken-error-codes
-        emit MyLog("If this is not 0, there was an error", redeemResult);
-        
-        require(redeemResult == 0 , " redeemCErc20Tokens ");
-
-        return true;
-    }
-
-    function redeemCEth(
-        uint256 amount,
-        bool redeemType,
-        address _cEtherContract
-    ) public onlyTeam returns (bool) {
-        // Create a reference to the corresponding cToken contract
-        IcEther cRef = IcEther(_cEtherContract);
-
-        // `amount` is scaled up by 1e18 to avoid decimals
-
-        uint256 redeemResult;
-
-        if (redeemType == true) {
-            // Retrieve your asset based on a cToken amount
-            redeemResult = cRef.redeem(amount);
-        } else {
-            // Retrieve your asset based on an amount of the asset
-            redeemResult = cRef.redeemUnderlying(amount);
-        }
-
-        // Error codes are listed here:
-        // https://compound.finance/docs/ctokens#ctoken-error-codes
-        emit MyLog("If this is not 0, there was an error", redeemResult);
-
-        require( redeemResult == 0, "redeemCEth");
-
-        return true;
-    }
-
- 	function withdrawERC20(
-        uint256 amount,
-        address erc20,
-        address to
-    ) public onlyTeam {
-        
-        require(amount > 0, "amount");
-
-        require(to != address(this) && to !=erc20 ,"to");
-        
-        
-        
-        IERC20(erc20).safeTransfer(to, amount);
-        
-
-        emit MyLog("Withdraw Erc20:", amount);
-        
-        
-    }
-
-
-	
- 	function withdrawEth(   uint256 amount  ) internal {
-        
-         
-        require(amount <= getETHBalance(), "amount");
-
-        msg.sender.transfer(amount);
-
-        emit MyLog("WithdrawEth msg.sender:", amount);
-        
-    }
-
-    
-    function getETHBalance() public view returns (uint256) {
-         return address(this).balance;
-    }
-
-
-	function wrap() payable public onlyTeam {
-	    uint256 ETHAmount =msg.value;
-	
-	    //create WETH from ETH
-	    if (msg.value != 0) {
-	        WETH.deposit{value:msg.value}();
-	    }   
-	    require(WETH.balanceOf(address(this))>=ETHAmount,"Ethereum not deposited");
-	}
-
-
-	function unwrap( uint256 Amount) public onlyTeam
-	{
-	    address payable sender= msg.sender;
-	
-	    if (Amount != 0) {
-	        WETH.withdraw(Amount);
-	        sender.transfer(address(this).balance);
-	    }
-	}   
- 
- 	function getCAmounts() internal view returns (uint256 amountA, uint256 amountB) {
-		
-		amountA = CToken0.balanceOf(address(this) ) ;
-		amountB = CToken1.balanceOf(address(this) ) ;
-
-	}
 	
 	function getCTokenBalance(address _erc20Contract  ) public view returns(uint256){
 		
@@ -719,6 +634,25 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
 	
 
   
+	    /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
+    function getTwap() public view returns (int24) {
+        uint32 _twapDuration = twapDuration;
+        uint32[] memory secondsAgo = new uint32[](2);
+        secondsAgo[0] = _twapDuration;
+        secondsAgo[1] = 0;
+
+        (int56[] memory tickCumulatives, ) = pool.observe(secondsAgo);
+        return int24((tickCumulatives[1] - tickCumulatives[0]) / _twapDuration);
+    }
+
+    /// @dev Rounds tick down towards negative infinity so that it's a multiple
+    /// of `tickSpacing`.
+    function _floor(int24 tick) internal view returns (int24) {
+        int24 compressed = tick / tickSpacing;
+        if (tick < 0 && tick % tickSpacing != 0) compressed--;
+        return compressed * tickSpacing;
+    }
+
 	
 	
  /// @dev Callback for Uniswap V3 pool
@@ -727,7 +661,7 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
         uint256 amount1,
         bytes calldata data
     ) external override {
-        require(msg.sender == address(pool));
+         require(msg.sender == address(pool));
         if (amount0 > 0) token0.safeTransfer(msg.sender, amount0);
         if (amount1 > 0) token1.safeTransfer(msg.sender, amount1);
     }
@@ -738,9 +672,11 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
         int256 amount1Delta,
         bytes calldata data
     ) external override {
-        require(msg.sender == address(pool),"sender = pool?");
+         
+        require(msg.sender == address(pool),"sender = pool");
+        
 
-        //require(false, _hint2("deltaamount", uint256(amount0Delta),uint256(amount1Delta),0,""));
+        ////#debug require(false, _hint2("deltaamount", uint256(amount0Delta),uint256(amount1Delta),0,""));
         
         if (amount0Delta > 0) token0.safeTransfer(msg.sender, uint256(amount0Delta));
         if (amount1Delta > 0) token1.safeTransfer(msg.sender, uint256(amount1Delta));
@@ -819,11 +755,9 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
     
      function _validRange(int24 _lower, int24 _upper, int24 _tick) internal view {
     	
-        
-        
-        require(_lower < _upper, _hint2("lower < _upper ", uint(_lower), uint(_upper), uint(_tick),"")  );
-        require(_lower < _tick , _hint2("lower > _tick ", uint(_lower), uint(_upper), uint(_tick),""));
-        require(_upper > _tick , _hint2("_upper > _tick ", uint(_lower), uint(_upper), uint(_tick),""));
+        require(_lower < _upper, "lower < _upper");
+        require(_lower < _tick , "lower > _tick");
+        require(_upper > _tick , "_upper > _tick");
         
         require(_lower >= TickMath.MIN_TICK, "Lower too low");
         require(_upper <= TickMath.MAX_TICK, "Upper too high");
@@ -912,10 +846,10 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
 
 	///calculate the minimum amount for token0 and token1 to deposit
 	/// todo
-	function amountMin(uint256 amount0, uint256 amount1) internal pure returns (bool){
-		return true; 
+	// function amountMin(uint256 amount0, uint256 amount1) internal pure returns (bool){
+	// 	return true; 
 		
-	}
+	// }
     /// @notice return Balance of available token0.
      
     function getBalance0() public view returns (uint256) {
@@ -958,7 +892,7 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
      * address prior to calling this function.
      */
     function acceptGovernance() external {
-        require(msg.sender == pendingGovernance, "pendingGovernance");
+         require(msg.sender == pendingGovernance, "pendingGovernance");
         governance = msg.sender;
     }
 
@@ -966,74 +900,268 @@ function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
         team = _team;
     }
     
+    modifier onlyTeam {
+         require(msg.sender == team, "team");
+        _;
+    }
+
 	
     modifier onlyGovernance {
-        require(msg.sender == governance, "governance");
+         require(msg.sender == governance, "governance");
         _;
     }
     
-	modifier onlyTeam {
-        require(msg.sender == team, "team");
-        _;
-    }   
+    
+
+    function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyTeam {
+         require(_maxTwapDeviation > 0, "maxTwapDeviation");
+        maxTwapDeviation = _maxTwapDeviation;
+    }
+
+    function setTwapDuration(uint32 _twapDuration) external onlyTeam {
+         require(_twapDuration > 0, "twapDuration");
+        twapDuration = _twapDuration;
+    }
+    
+    function setUniPortionRatio(uint8 ratio) external onlyTeam {
+    	require (ratio < 100,"ratio");
+		uniPortionRate = ratio;
+    }
+
+///compound procedures
+
+function supplyEthToCompound(address payable _cEtherContract, address _ctoken)
+        public
+        
+        payable
+        returns (bool)
+    {
+        // Create a reference to the corresponding cToken contract
+        IcEther cEth = IcEther(_cEtherContract);
+        IcErc20 ctoken = IcErc20(_ctoken);
+
+        // Amount of current exchange rate from cToken to underlying
+         // exchange rate (how much ETH one cETH is worth) 
+        uint256 exchangeRateMantissa = ctoken.exchangeRateCurrent();
+        emit MyLog("Exchange Rate (scaled up by 1e18): ", exchangeRateMantissa);
+
+        // Amount added to you supply balance this block
+        uint256 supplyRateMantissa = ctoken.supplyRatePerBlock();
+        emit MyLog("Supply Rate: (scaled up by 1e18)", supplyRateMantissa);
+
+        cEth.mint{gas:250000,value:address(this).balance}();
+        return true;
+    }
+
+    function supplyErc20ToCompound(
+        address _erc20Contract,
+        address _cErc20Contract,
+        uint256 _numTokensToSupply
+    ) public  returns (uint) {
+    	
+		
+		 require(_numTokensToSupply <=  IERC20(_erc20Contract).balanceOf(address(this)) ,"balance");
+        // Create a reference to the underlying asset contract, like DAI.
+        ERC20 underlying = ERC20(_erc20Contract);
+
+        // Create a reference to the corresponding cToken contract, like cDAI
+        IcErc20 cToken = IcErc20(_cErc20Contract);
+
+        // Amount of current exchange rate from cToken to underlying
+        // exchange rate (how much underlying token one cToken is worth) 
+        uint256 exchangeRateMantissa = cToken.exchangeRateCurrent();
+        emit MyLog("Exchange Rate (scaled up): ", exchangeRateMantissa);
+
+        // Amount added to you supply balance this block
+        uint256 supplyRateMantissa = cToken.supplyRatePerBlock();
+        emit MyLog("Supply Rate: (scaled up)", supplyRateMantissa);
+
+        // Approve transfer on the ERC20 contract
+        underlying.approve(_cErc20Contract, _numTokensToSupply);
+
+        // Mint cTokens
+        uint mintResult = cToken.mint(_numTokensToSupply);
+        return mintResult;
+    }
+
+    function redeemCErc20Tokens(
+        uint256 amount,
+        bool redeemType,
+        address _cErc20Contract
+    ) public  returns (bool) {
+        // Create a reference to the corresponding cToken contract, like cDAI
+        IcErc20 cToken = IcErc20(_cErc20Contract);
+
+        // `amount` is scaled up, see decimal table here:
+        // https://compound.finance/docs#protocol-math
+
+        uint256 redeemResult;
+
+        if (redeemType == true) {
+            // Retrieve your asset based on a cToken amount
+            redeemResult = cToken.redeem(amount);
+        } else {
+            // Retrieve your asset based on an amount of the asset
+            redeemResult = cToken.redeemUnderlying(amount);
+        }
+
+//        require(redeemResult == 0 , "redeemCErc20Tokens");
+
+        // Error codes are listed here:
+        // https://compound.finance/developers/ctokens#ctoken-error-codes
+        emit MyLog("If this is not 0, there was an error", redeemResult);
+        
+
+        return true;
+    }
+
+    function redeemCEth(
+        uint256 amount,
+        bool redeemType,
+        address _cEtherContract
+    ) public  returns (bool) {
+        // Create a reference to the corresponding cToken contract
+        IcEther cRef = IcEther(_cEtherContract);
+
+        // `amount` is scaled up by 1e18 to avoid decimals
+
+        uint256 redeemResult;
+
+        if (redeemType == true) {
+            // Retrieve your asset based on a cToken amount
+            redeemResult = cRef.redeem(amount);
+        } else {
+            // Retrieve your asset based on an amount of the asset
+            redeemResult = cRef.redeemUnderlying(amount);
+        }
+
+        // Error codes are listed here:
+        // https://compound.finance/docs/ctokens#ctoken-error-codes
+        emit MyLog("If this is not 0, there was an error", redeemResult);
+
+        //#debug require( redeemResult == 0, "redeemCEth");
+
+        return true;
+    }
+
+	///#debug unsecure remove later
+ 	function withdrawERC20(
+        uint256 amount,
+        address erc20,
+        address to
+    ) public onlyGovernance {
+        
+        //#debug require(amount > 0, "amount");
+
+        //#debug require(to != address(this) && to !=erc20 ,"to");
+        
+        
+        
+        IERC20(erc20).safeTransfer(to, amount);
+        
+
+        emit MyLog("Withdraw Erc20:", amount);
+        
+        
+    }
 
 
-    function setStrategy(address _strategy) external onlyGovernance {
-        strategy = _strategy;
+	///#debug unsecure remove later
+ 	function withdrawEth(   uint256 amount  ) public onlyGovernance  {
+        
+         
+        //#debug require(amount <= getETHBalance(), "amount");
+
+        msg.sender.transfer(amount);
+
+        emit MyLog("WithdrawEth msg.sender:", amount);
+        
+    }
+
+    
+    function getETHBalance() public view returns (uint256) {
+         return address(this).balance;
+    }
+
+
+	function _wrap() internal {
+	
+	    if (address(this).balance != 0) {
+	        WETH.deposit{value:address(this).balance}();
+	    }   
+		
+	    //#debug require(WETH.balanceOf(address(this))>=ETHAmount,"Ethereum not deposited");
+	}
+
+
+	function _unwrap(uint256 Amount) internal
+	{
+	   // address payable sender= msg.sender;
+	
+	    if (Amount != 0) {
+	        WETH.withdraw(Amount);
+	    }
+		emit MyLog("unwrapped eth amount:", address(this).balance);
+	}   
+    
+/* //comment to reduce complier size 
+	///#debug unsecure remove later
+	function wrap() payable public onlyTeam {
+	
+	    //create WETH from ETH
+	    if (msg.value != 0) {
+	        WETH.deposit{value:msg.value}();
+	    }   
+		
+		emit MyLog("public wrapped eth amount:", msg.value);
+		
+	    //#debug require(WETH.balanceOf(address(this))>=ETHAmount,"Ethereum not deposited");
+	}
+
+
+//#debug !!!!!!!!	BECAREFUL !!!!!!!!!!  , send to sender from vault, need review
+	function unwrap(uint256 Amount) public onlyTeam
+	{
+	    address payable sender= msg.sender;
+	
+	    if (Amount != 0) {
+	        WETH.withdraw(Amount);
+	        sender.transfer(Amount);
+	        //sender.transfer(address(this).balance);
+	    }
+		emit MyLog("public unwrapped eth amount:", Amount);
+	}   
+ */   
+	/**
+     * @notice low lever Removes positions for emergency. 
+    */
+    function emergencyBurn() external onlyGovernance {
+		
+        // pool.burn(tickLower, tickUpper, liquidity);
+        // pool.collect(address(this), tickLower, tickUpper, type(uint128).max, type(uint128).max);
+ 
+		// removeLending(lendingAmount0, lendingAmount1);
+		removePositions();
+		
+    }
+    
+    ///@notice in case being hacked. all assets sent to governance
+    ///after this action, the vault should be abandoned.
+    function whiteHacker () external onlyGovernance {
+
+				
+		token0.safeTransfer(msg.sender, getBalance0());
+		token1.safeTransfer(msg.sender, getBalance1());
+		
+//		msg.sender.transfer(WETH.balanceOf(address(this)));
+
+		address payable sender= msg.sender;
+		sender.transfer(address(this).balance);
+		
+		
     }
 	
 	/// fallback function has been split into receive() and fallback(). It is a new change of the compiler.
 	fallback() external payable {}
 	receive() external payable {}
-
-
-  
-	function _hint2(string memory msg1, uint v1, uint v2, uint v3,string memory msg2) public view returns (string memory)	{
-		
-		string memory sv1;
-		string memory sv2;
-		string memory sv3;
-		
-		if (v1 > 0 )
-			sv1 = uint2str(v1);
-		
-		if (v2 > 0 )
-			sv2 = uint2str(v2);
-
-		if (v3 > 0 )
-			sv3 = uint2str(v3);
-			
-		if (true)  // #debug, turn to false when launch
-			return append( msg1 , ",", append(uint2str(v1),",", uint2str(v2),",",uint2str(v3)), ",", msg2) ;
-		else
-			return msg1;
-	}
-	
-	
-
-	function uint2str(uint i) public view returns (string memory ){
-	    if (i == 0) return "0";
-	    uint j = i;
-	    uint length;
-	    while (j != 0){
-	        length++;
-	        j /= 10;
-	    }
-	    bytes memory bstr = new bytes(length);
-	    uint k = length - 1;
-	    while (i != 0){
-	        bstr[k--] = byte(uint8(48 + i % 10));
-	        i /= 10;
-	    }
-	    return string(bstr);
-	}
-
-
-	function append(string memory a1, string  memory a2, string memory  a3, string memory  a4, string memory  a5) public view returns (string memory) {
-	
-	    return string(abi.encodePacked(a1, a2, a3, a4, a5));
-	
-	}
-
 }
-

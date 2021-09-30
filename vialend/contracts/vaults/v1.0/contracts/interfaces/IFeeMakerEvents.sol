@@ -37,7 +37,7 @@ interface IFeeMakerEvents {
         uint256 feesToProtocol1
     );
 
-	event RebalanceLog(uint128 liquidity, uint256 balance0, uint256 balance1, uint256 newBalance0, uint256 newBalance1);
+	event RebalanceLog(uint128 liquidity, uint256 newBalance0, uint256 newBalance1);
 
     event Snapshot(int24 tick, uint256 totalAmount0, uint256 totalAmount1, uint256 totalSupply);
     
