@@ -32,6 +32,11 @@ export default new Router({
       component: () => import('./views/Uniswap.vue')
     },
     {
+      path: '/vialendinfo',
+      name: 'vialendinfo',
+      component: () => import('./views/VialendInfo.vue')
+    },
+    {
       path: '/admin',
       name: 'admin',
       component: () => import('./views/Admin.vue')

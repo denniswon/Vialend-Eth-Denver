@@ -794,7 +794,7 @@
     "@ethersproject/logger" "^5.4.0"
     "@ethersproject/properties" "^5.4.0"
 
-"@ethersproject/address@^5.0.2", "@ethersproject/address@^5.0.4", "@ethersproject/address@^5.4.0", "@ethersproject/address@5.4.0":
+"@ethersproject/address@^5.0.0", "@ethersproject/address@^5.0.2", "@ethersproject/address@^5.0.4", "@ethersproject/address@^5.4.0", "@ethersproject/address@5.4.0":
   "integrity" "sha1-ui0AoPjEwIVJM7ljuaOp9utKN6M="
   "resolved" "https://registry.nlark.com/@ethersproject/address/download/@ethersproject/address-5.4.0.tgz"
   "version" "5.4.0"
@@ -1007,7 +1007,7 @@
     "elliptic" "6.5.4"
     "hash.js" "1.1.7"
 
-"@ethersproject/solidity@^5.0.9", "@ethersproject/solidity@5.4.0":
+"@ethersproject/solidity@^5.0.0", "@ethersproject/solidity@^5.0.9", "@ethersproject/solidity@5.4.0":
   "integrity" "sha1-EwXgWOoC3EiR3xizMjKxGhTs6ew="
   "resolved" "https://registry.nlark.com/@ethersproject/solidity/download/@ethersproject/solidity-5.4.0.tgz"
   "version" "5.4.0"
@@ -1490,7 +1490,7 @@
   "resolved" "https://registry.nlark.com/@uniswap/lib/download/@uniswap/lib-4.0.1-alpha.tgz"
   "version" "4.0.1-alpha"
 
-"@uniswap/sdk-core@^3.0.1":
+"@uniswap/sdk-core@^3.0.0-alpha.3", "@uniswap/sdk-core@^3.0.1":
   "integrity" "sha1-0I3WgleYOvZLml9Na5zyYSS0E48="
   "resolved" "https://registry.nlark.com/@uniswap/sdk-core/download/@uniswap/sdk-core-3.0.1.tgz"
   "version" "3.0.1"
@@ -1506,6 +1506,17 @@
   "integrity" "sha1-r49Qi/GDIEd5k4lp4uVAQ+FH1CU="
   "resolved" "https://registry.npm.taobao.org/@uniswap/v2-core/download/@uniswap/v2-core-1.0.1.tgz"
   "version" "1.0.1"
+
+"@uniswap/v2-sdk@^3.0.0":
+  "integrity" "sha1-u2EHbkz5UZtK/rIjOVjMEIao740="
+  "resolved" "https://registry.nlark.com/@uniswap/v2-sdk/download/@uniswap/v2-sdk-3.0.0.tgz"
+  "version" "3.0.0"
+  dependencies:
+    "@ethersproject/address" "^5.0.0"
+    "@ethersproject/solidity" "^5.0.0"
+    "@uniswap/sdk-core" "^3.0.0-alpha.3"
+    "tiny-invariant" "^1.1.0"
+    "tiny-warning" "^1.0.3"
 
 "@uniswap/v3-core@1.0.0":
   "integrity" "sha1-bCStrMTCXc7uC6PKFCs1rb1+NZ0="

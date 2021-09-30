@@ -40,6 +40,11 @@
       ml-auto
     ">
               <div class="adminButton">
+                <router-link to='/VialendInfo'>
+                  VialendInfo
+                </router-link>
+              </div>&nbsp;&nbsp;
+              <div class="adminButton">
                 <router-link to='/admin'>
                   Admin
                 </router-link>
@@ -124,15 +129,6 @@ export default {
     },
     // connect wallet or disconnect wallet
     setWalletStatus () {
-      if (!this.checkChain()) {
-        this.StatusButtonText = 'Wrong network'
-        this.$store.state.StatusButtonText = 'Wrong network'
-        this.$message({
-          message: 'Please select Goerli Test Network.',
-          type: 'warning'
-        })
-        return
-      }
       if (this.isConnected) {
         console.log('call disconnect')
         this.isConnected = false
@@ -149,6 +145,14 @@ export default {
         } else {
           this.connectWallet()
         }
+      }
+      if (!this.checkChain()) {
+        this.StatusButtonText = 'Wrong network'
+        this.$store.state.StatusButtonText = 'Wrong network'
+        this.$message({
+          message: 'Please select Goerli Test Network.',
+          type: 'warning'
+        })
       }
     },
     connectWallet () {

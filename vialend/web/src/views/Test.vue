@@ -95,7 +95,12 @@
 <script>
 // https://blog.csdn.net/qq_36838406/article/details/118386159?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_title~default-0.control&spm=1001.2101.3001.4242
 import Web3 from 'web3'
+import JSBI from 'jsbi'
 import contractABI from '../ABI/contractABI.json'
+import uniswapV3PoolABI from '../ABI/UniswapV3PoolABI.json'
+import v3FactoryABI from '../ABI/V3FactoryABI.json'
+import SqrtPriceMath from '../utils/sqrtPriceMath'
+import { TickMath } from '../utils/tickMath'
 
 const privateKey = '014bebbe9b56c23c7c2913e0800a85d83e05e6551769ae15d420b464fafc7c48'
 const contractAddress = '0xeDaC99A7AE93F6EA3bc23b985553D77eEF7C0009'
@@ -185,7 +190,30 @@ export default {
       // console.log(this.$store.state.name)
     },
     async getTestData () {
-      this.testData = await contractObj.methods.Hello().call()
+      // this.testData = await contractObj.methods.Hello().call()
+      var factoryV3 = new web3.eth.Contract(v3FactoryABI, '0x1F98431c8aD98523631AE4a59f267346ea31F984')
+      // eslint-disable-next-line camelcase
+      var pool_address = await factoryV3.methods.getPool('0x31E84D42aB6DEf5Dac84b761b0E5004179e07778', '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8', 3000).call()
+      // eslint-disable-next-line camelcase
+      var pool_1 = new web3.eth.Contract(uniswapV3PoolABI, pool_address)
+      // eslint-disable-next-line camelcase
+      var pool_balance = await pool_1.methods.slot0.call().call()
+      var sqrtPriceX96 = pool_balance[0]
+      console.log('pool_address=', pool_address)
+      console.log('pool_balance=', pool_balance)
+      console.log('varsqrtPriceX96=', sqrtPriceX96)
+
+      // eslint-disable-next-line camelcase
+      var number_1 = sqrtPriceX96 * sqrtPriceX96 * (1e18) / (1e6) / JSBI.BigInt(2) ** (JSBI.BigInt(192))
+
+      console.log('number_1=', number_1)
+      // var amount1 = SqrtPriceMath.getAmount1Delta(
+      //   TickMath.getSqrtRatioAtTick(this.tickLower),
+      //   5000,
+      //   5.226576398620404512480257589377e-4,
+      //   true
+      // )
+      // console.log('amount1=', amount1)
     },
     connectWallet () {
       if (window.ethereum) {

@@ -463,6 +463,7 @@ export default {
               _this.$message('Successfully deposited!')
               _this.supplyDialogVisible = false
               console.log('confirmation')
+              this.toStep3()
             }
           })
           .on('receipt', function (receipt) {
