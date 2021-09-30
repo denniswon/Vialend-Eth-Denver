@@ -48,13 +48,14 @@
     </div>
     <el-dialog :visible.sync="newPositionDialogVisible"
                :append-to-body="true"
-               width="350px"
+               width="380px"
                :close-on-click-modal="false"
                center>
       <span class="dialog_title"
             slot="title">{{newPositionDialogTitle}}</span>
       <!--Step1 content-->
-      <div :style="{display:dialogStep1Display}">
+      <div v-loading="loading"
+           :style="{display:dialogStep1Display}">
         <el-select v-model="selectedPair"
                    placeholder="Please select pairs"
                    size="medium"
@@ -84,11 +85,11 @@
                 <td class="c1"
                     width="50%">TVL</td>
                 <td class="c2"
-                    width="50%">$({{tvlTotal0}} + {{tvlTotal1}})</td>
+                    width="50%">${{tvl}}</td>
               </tr>
               <tr>
                 <td class="c1">% of cap used</td>
-                <td class="c2">{{ofCapUsed}}</td>
+                <td class="c2">{{ofCapUsed}}%</td>
               </tr>
               <tr>
                 <td class="c1">Max TVL</td>
@@ -136,8 +137,9 @@
                  width="38" />
           </div>
           <div style="float:left;width:236px;">
-            <span class="token_balance">Balance:0(<el-link type="primary"
-                       class="token_balance_max">Max</el-link>)</span>
+            <span class="token_balance">Balance:{{token0Balance}}(<el-link type="primary"
+                       class="token_balance_max"
+                       @click="newLiqudityToken0 = token0Balance">Max</el-link>)</span>
             <span class="token_textbox">
               <el-input v-model="newLiqudityToken0"
                         placeholder="0.00"
@@ -157,10 +159,11 @@
                  width="38" />
           </div>
           <div style="float:left;width:236px;">
-            <span class="token_balance">Balance:0(<el-link type="primary"
-                       class="token_balance_max">Max</el-link>)</span>
+            <span class="token_balance">Balance:{{token1Balance}}(<el-link type="primary"
+                       class="token_balance_max"
+                       @click="newLiqudityToken1 = token1Balance">Max</el-link>)</span>
             <span class="token_textbox">
-              <el-input v-model="newLiqudityToken0"
+              <el-input v-model="newLiqudityToken1"
                         placeholder="0.00"
                         dir="rtl"
                         type="text"
@@ -172,12 +175,30 @@
           </div>
         </div>
         <div class="action_list">
+          <el-button type="primary"
+                     :disabled="token0Approved == true ? true : false"
+                     @click="approveToken(0)"
+                     :style="{display:isConnected?'':'none'}">Approve {{token0Name}}</el-button>
+          <el-button type="primary"
+                     :disabled="token1Approved == true ? true : false"
+                     @click="approveToken(1)"
+                     :style="{display:isConnected?'':'none'}">Approve {{token1Name}}</el-button>
+        </div>
+        <div class="action_list">
           <el-button type="info"
                      style="width:45%;"
                      @click="backToStep1">Back</el-button>
           <el-button type="next"
+                     :disabled="btnDepositDisabled"
+                     @click="deposit"
+                     :loading="depositLoading"
                      style="width:45%;float: right;"
-                     @click="toStep3">Next</el-button>
+                     :style="{display:isConnected?'':'none'}">Next</el-button>
+          <el-button type="
+                     next"
+                     style="width:100%;"
+                     @click="connectWallet"
+                     :style="{display:isConnected?'none':''}">Connect Wallet</el-button>
         </div>
       </div>
       <!--Step3 content-->
@@ -224,7 +245,7 @@
         <div class="action_list">
           <el-button type="info"
                      style="width:45%;"
-                     @click="backToStep2">Back</el-button>
+                     @click="toStep2">Back</el-button>
           <el-button type="next"
                      style="width:45%;float: right;"
                      @click="toResult">Sign & Add Funds</el-button>
@@ -283,6 +304,8 @@ export default {
     return {
       selectedPair: 1,
       selectedText: '',
+      isConnected: this.$store.state.isConnected,
+      loading: true,
       pairsData: PairsData,
       keeperContract: null,
       token0Contract: null,
@@ -307,10 +330,12 @@ export default {
       token0Name: '',
       token0Symbol: '',
       token0Decimal: 0,
+      token0Balance: 0,
       token1Address: '',
       token1Name: '',
       token1Symbol: '',
       token1Decimal: 0,
+      token1Balance: 0,
       shares: 0,
       totalShares: 0,
       tvl: 0,
@@ -320,7 +345,15 @@ export default {
       maxTVL: '',
       vaultRange: '',
       vaultLending: '',
-      currentAPR: ''
+      currentAPR: '',
+      // deposit variable
+      depositToken0: '',
+      depositToken1: '',
+      token0Approved: false,
+      token1Approved: false,
+      btnDepositDisabled: false,
+      depositLoading: false,
+      withdrawLoading: false
     }
   },
   created: async function () {
@@ -337,20 +370,258 @@ export default {
       ViaLendPoolABI,
       this.poolAddress
     )
+    this.token0Contract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      this.token0Address
+    )
+    this.token1Contract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      this.token1Address
+    )
+  },
+  watch: {
+    '$store.state.isConnected': function () {
+      this.isConnected = this.$store.state.isConnected
+    }
   },
   mounted () {
-
   },
   methods: {
+    loadPairs () {
+      this.pairsData = [{
+        'id': 1,
+        'smartVaults': [
+          { 'iconLink': 'images/weth.png', 'name': this.token0Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token0Address, 'decimals': this.token0Decimal, 'rateOfUSD': 2931.25 },
+          { 'iconLink': 'images/usdc.png', 'name': this.token1Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token1Address, 'decimals': this.token1Decimal, 'rateOfUSD': 0.9997 }
+        ],
+        'feeTier': '0.30%',
+        'currentAPR': '505.66%',
+        'capacity': '35.1%',
+        'TVL': '$2,366,149',
+        'disabled': false
+      }]
+    },
+    connectWallet () {
+      this.$parent.setWalletStatus()
+      console.log('wallet connection status:', this.isConnected)
+    },
+    async getVaultInfo () {
+      this.loading = true
+      // Get Token0 Information
+      this.token0Name = await this.token0Contract.methods.name().call()
+      console.log('token0Name=', this.token0Name)
+      this.token0Symbol = await this.token0Contract.methods.symbol().call()
+      console.log('token0Symbol=', this.token0Symbol)
+      this.token0Decimal = await this.token0Contract.methods.decimals().call()
+      console.log('token0Decimal=', this.token0Decimal)
+      // Get Token1 Information
+      this.token1Name = await this.token1Contract.methods.name().call()
+      console.log('token1Name=', this.token1Name)
+      this.token1Symbol = await this.token1Contract.methods.symbol().call()
+      console.log('token1Symbol=', this.token1Symbol)
+      this.token1Decimal = await this.token1Contract.methods.decimals().call()
+      console.log('token1Decimal=', this.token1Decimal)
+      this.loadPairs()
+      // Get Max TVL
+      this.maxTVL = await this.keeperContract.methods.maxTotalSupply().call()
+      // Get TVL
+      var tvlObj = await this.keeperContract.methods.getTVL().call()
+      if (tvlObj.total0 !== undefined && tvlObj.total1 !== undefined) {
+        this.tvlTotal0 = tvlObj.total0 * this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD
+        this.tvlTotal1 = tvlObj.total1 * this.pairsData[this.selectedPair - 1].smartVaults[1].rateOfUSD
+        console.log('rateToken0=', this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD)
+        console.log('rateToken1=', this.pairsData[this.selectedPair - 1].smartVaults[1].rateOfUSD)
+        console.log('tvlTotal0=', this.tvlTotal0)
+        console.log('tvlTotal1=', this.tvlTotal1)
+        this.tvl = parseInt(this.tvlTotal0 / Math.pow(10, this.token0Decimal) + this.tvlTotal1 / Math.pow(10, this.token1Decimal))
+        // Get % of cap used
+        this.ofCapUsed = (this.tvl / this.maxTVL * 100).toFixed(2)
+      }
+      // Get Range Data
+      var rangeObj = await this.keeperContract.methods.getPositionAmounts(-196260, -191160).call()
+      if (rangeObj !== undefined && rangeObj !== null) {
+        console.log('range object=', JSON.stringify(rangeObj))
+        this.vaultRange = rangeObj.amount0 + '-' + rangeObj.amount1
+      }
+      this.loading = false
+    },
+    async getTokensBalanceInWallet () {
+      // token0 balance in wallet
+      var balanceWei = await this.token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
+      this.token0Balance = (parseInt(balanceWei / (Math.pow(10, this.token0Decimal)) * 1000) / 1000).toFixed(3)
+      // token1 balance in wallet
+      balanceWei = await this.token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
+      this.token1Balance = (parseInt(balanceWei / (Math.pow(10, this.token1Decimal)) * 1000) / 1000).toFixed(3)
+      // console.log('token1BalanceInWallet=', this.token1Balance)
+    },
+    enableDepositFeature () {
+      if (this.token0Approved && this.token1Approved) {
+        this.btnDepositDisabled = false
+      } else {
+        this.btnDepositDisabled = true
+      }
+    },
+    approveToken (index) {
+      var _this = this
+      var tokenContract, tokenName
+      if (index === 0) {
+        this.token0Approved = true
+        tokenContract = this.token0Contract
+        tokenName = this.token0Name
+      } else {
+        this.token1Approved = true
+        tokenContract = this.token1Contract
+        tokenName = this.token1Contract
+      }
+      console.log('vaultAddress=' + this.$parent.vaultAddress)
+      if (tokenContract != null) {
+        tokenContract.methods
+          .approve(this.$parent.vaultAddress, BigInt(90000000000000000000000))
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '10000000000',
+            gas: 200000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            _this.$store.dispatch('setApproveStatus', {
+              'token': tokenName, 'status': true
+            })
+            if (_this.token0Approved && _this.token1Approved) {
+              _this.btnDepositDisabled = false
+            }
+            console.log('token' + index + ' confirmation')
+          })
+          .on('receipt', function (receipt) {
+            // $('#depositresult').text('Successfully deposited!');
+            _this.$store.dispatch('setApproveStatus', {
+              'token': tokenName, 'status': true
+            })
+            if (_this.token0Approved && _this.token1Approved) {
+              _this.btnDepositDisabled = false
+            }
+            console.log('token' + index + ' receipt')
+          })
+          .on('error', function (error) {
+            if (index === 0) {
+              _this.token0Approved = false
+            } else {
+              _this.token1Approved = false
+            }
+            _this.$message.error('token' + index + ' error' + error)
+            console.log('token' + index + ' error' + error)
+          })
+      }
+    },
+    deposit () {
+      var _this = this
+      // console.log('t0', BigInt(this.depositToken0 * Math.pow(10, this.token0Decimals)))
+      // console.log('t1', BigInt(this.depositToken1 * Math.pow(10, this.token1Decimals)))
+      // return
+      if (this.$parent.keeperContract != null) {
+        console.log('account address is ' + ethereum.selectedAddress)
+        this.depositLoading = true
+        this.$parent.keeperContract.methods
+          .deposit(
+            BigInt(this.depositToken0 * Math.pow(10, this.token0Decimals)),
+            BigInt(this.depositToken1 * Math.pow(10, this.token1Decimals)),
+            ethereum.selectedAddress
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '10000000000',
+            gas: 200000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (_this.depositLoading === true) {
+              _this.depositLoading = false
+              _this.$message('Successfully deposited!')
+              _this.supplyDialogVisible = false
+              console.log('confirmation')
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (_this.depositLoading === true) {
+              _this.depositLoading = false
+              _this.$message('Successfully deposited!')
+              _this.supplyDialogVisible = false
+              console.log('receipt')
+            }
+          })
+          .on('error', function (error) {
+            _this.$message.error(error)
+            _this.depositLoading = false
+          })
+      }
+    },
+    withdraw () {
+      var _this = this
+      if (this.$parent.keeperContract != null) {
+        console.log('account address is ' + ethereum.selectedAddress)
+        this.withdrawLoading = true
+        this.$parent.keeperContract.methods
+          .withdraw(
+            BigInt(this.shareValue),
+            BigInt(0),
+            BigInt(0),
+            ethereum.selectedAddress
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (_this.withdrawLoading === true) {
+              _this.withdrawLoading = false
+              _this.$message('Successfully withdrawed!')
+              _this.supplyDialogVisible = false
+              console.log('confirmation')
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (_this.withdrawLoading === true) {
+              _this.withdrawLoading = false
+              _this.$message('Successfully withdrawed!')
+              _this.supplyDialogVisible = false
+              console.log('receipt')
+            }
+          })
+          .on('error', function (error) {
+            _this.$message.error(error)
+            _this.withdrawLoading = false
+          })
+      }
+    },
+    async getPoolInfo () {
+      this.feeTier = await this.poolContract.methods.fee().call()
+      console.log('feeTier=', this.feeTier)
+    },
+    async getShares () {
+      this.shares = await this.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+      console.log('user address=', ethereum.selectedAddress, ';shares=', this.shares)
+      this.keeperContract.methods
+        .totalSupply()
+        .call()
+        .then(val => {
+          console.log('totalSupply= ' + val)
+          this.totalShares = val
+        })
+    },
     showNewPositionDialog () {
+      if (!this.isConnected) {
+        this.$message('Please connect wallet!')
+        return
+      }
       this.newPositionDialogTitle = this.dialogStep1Title
       this.newPositionDialogVisible = true
       this.dialogStep1Display = ''
       this.dialogStep2Display = 'none'
       this.dialogStep3Display = 'none'
       this.dialogResultDisplay = 'none'
-      this.getData()
-      this.getTokenInfo()
+      this.getVaultInfo()
       this.getPoolInfo()
       this.getShares()
     },
@@ -374,14 +645,41 @@ export default {
       this.dialogStep2Display = ''
       this.dialogStep3Display = 'none'
       this.dialogResultDisplay = 'none'
+      this.getTokensBalanceInWallet()
+      this.getTokenApproveStatus()
     },
-    backToStep2 () {
-      this.newPositionDialogTitle = this.dialogStep2Title
-      this.dialogStep1Display = 'none'
-      this.dialogStep2Display = ''
-      this.dialogStep3Display = 'none'
-      this.dialogResultDisplay = 'none'
+    getTokenApproveStatus () {
+      this.$store.dispatch('getApproveStatus', { 'token': this.token0Name }).then(res => {
+        console.log(this.token0Name + 'Approved status is:' + JSON.stringify(res))
+        if (res === 'true') {
+          this.token0Approved = true
+          console.log('this.btnToken0ApproveDisabled = true ')
+        } else {
+          this.token0Approved = false
+          console.log('this.btnToken0ApproveDisabled = false ')
+        }
+        this.enableDepositFeature()
+      })
+      this.$store.dispatch('getApproveStatus', { 'token': this.token1Name }).then(res => {
+        console.log(this.token1Name + 'Approved status is:' + JSON.stringify(res))
+        if (res === 'true') {
+          this.token1Approved = true
+          console.log('this.btnToken1ApproveDisabled = true ')
+        } else {
+          this.token1Approved = false
+          console.log('this.btnToken1ApproveDisabled = false ')
+        }
+        this.enableDepositFeature()
+      })
     },
+    // backToStep2 () {
+    //   this.newPositionDialogTitle = this.dialogStep2Title
+    //   this.dialogStep1Display = 'none'
+    //   this.dialogStep2Display = ''
+    //   this.dialogStep3Display = 'none'
+    //   this.dialogResultDisplay = 'none'
+    //   this.getTokensBalanceInWallet()
+    // },
     toStep3 () {
       this.newPositionDialogTitle = this.dialogStep3Title
       this.dialogStep1Display = 'none'
@@ -395,66 +693,6 @@ export default {
       this.dialogStep2Display = 'none'
       this.dialogStep3Display = 'none'
       this.dialogResultDisplay = ''
-    },
-    getData () {
-      var _this = this
-      // Get TVL
-      this.keeperContract.methods
-        .getTVL()
-        .call()
-        .then(val => {
-          console.log('getTVL: ' + JSON.stringify(val))
-          _this.tvlTotal0 = val.total0
-          _this.tvlTotal1 = val.total1
-        })
-      // Get Max TVL
-      this.keeperContract.methods
-        .maxTotalSupply()
-        .call()
-        .then(val => {
-          console.log('maxTVL: ' + val)
-          _this.maxTVL = val
-          // _this.ofCapUsed =
-        })
-    },
-    async getTokenInfo () {
-      this.token0Contract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        this.token0Address
-      )
-      this.token1Contract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        this.token1Address
-      )
-      // Get Token0 Information
-      this.token0Name = await this.token0Contract.methods.name().call()
-      console.log('token0Name=', this.token0Name)
-      this.token0Symbol = await this.token0Contract.methods.symbol().call()
-      console.log('token0Symbol=', this.token0Symbol)
-      this.token0Decimal = await this.token0Contract.methods.decimals().call()
-      console.log('token0Decimal=', this.token0Decimal)
-      // Get Token1 Information
-      this.token1Name = await this.token1Contract.methods.name().call()
-      console.log('token1Name=', this.token1Name)
-      this.token1Symbol = await this.token1Contract.methods.symbol().call()
-      console.log('token1Symbol=', this.token1Symbol)
-      this.token1Decimal = await this.token1Contract.methods.decimals().call()
-      console.log('token1Decimal=', this.token1Decimal)
-    },
-    async getPoolInfo () {
-      this.feeTier = await this.poolContract.methods.fee().call()
-      console.log('feeTier=', this.feeTier)
-    },
-    async getShares () {
-      this.shares = await this.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
-      console.log('user address=', ethereum.selectedAddress, ';shares=', this.shares)
-      this.keeperContract.methods
-        .totalSupply()
-        .call()
-        .then(val => {
-          console.log('totalSupply= ' + val)
-          this.totalShares = val
-        })
     }
   }
 }
