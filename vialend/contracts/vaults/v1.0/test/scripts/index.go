@@ -53,15 +53,15 @@ func main() {
 	//project.DeployVialendFeemaker(3)
 	//return
 
-	// for i := 0; i < 10; i++ {
-	// 	test_vault()
-	// }
+	for i := 0; i < 10; i++ {
+		test_vault()
+	}
 	//return
 
 	//project.EmergencyBurn()
 	// project.Whitehacker()
 
-	test_vault()
+	//test_vault()
 
 	project.LendingInfo()
 	project.AccountInfo()
@@ -106,11 +106,11 @@ func test_vault() {
 	sw.Deposit = 0
 	sw.DepositAmount = [2]int64{1, 100} // amount0, amount1 to deposit
 
-	sw.Withdraw = 1
+	sw.Withdraw = 0
 	sw.WithDrawParam = [2]int64{3, 50}
 	// accountid,  amount of shares in percentage %
 
-	sw.Strategy1 = 0
+	sw.Strategy1 = 1
 	sw.Strategy1Param = [3]int64{600, 60, 3} // {range, tickspacing, account}
 
 	sw.Rebalance = 0
