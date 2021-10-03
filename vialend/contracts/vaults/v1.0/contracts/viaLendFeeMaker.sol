@@ -460,6 +460,9 @@ contract ViaLendFeeMaker is
         int24 newHigh
 		) external nonReentrant onlyTeam  {
 		
+		
+		require(totalSupply() > 0,"Sts0");
+		
         (	,int24 tick, , , , , ) 	= pool.slot0();
 
   		_validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382

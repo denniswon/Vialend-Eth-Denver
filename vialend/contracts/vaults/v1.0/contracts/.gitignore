@@ -3,3 +3,4 @@
 @uniswap/
 @openzeppelin/
 *.go
+*.bat
