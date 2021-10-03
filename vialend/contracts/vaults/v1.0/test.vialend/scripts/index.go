@@ -102,20 +102,20 @@ func test_vault() {
 	sw.DeployVault = 0
 	//...manual step... update the new vault addres in networks.go
 
-	sw.Approve = 0
+	sw.Approve = 1
 
-	sw.Deposit = 0
+	sw.Deposit = 1
 	sw.DepositAmount = [2]int64{1, 100} // {amount0, amount1 }
 
 	sw.Strategy1 = 1
-	sw.Strategy1Param = [3]int64{600, 60, 3} // {range, tickspacing, account}
+	sw.Strategy1Param = [3]int64{600, 60, 3} // {tick range, tickspacing, account}
 
-	sw.Withdraw = 1
+	sw.Withdraw = 0
 	sw.WithDrawParam = [2]int64{3, 100} // {account, percent}
 	// accountid,  amount of shares in percentage %
 
 	sw.Rebalance = 0
-	sw.RebalanceParam = [2]int64{10, 60} //[2]int64{22000, 60} // 12000,60   {full range , tickspacing}
+	sw.RebalanceParam = [2]int64{10, 60} //[2]int64{22000, 60} // 12000,60   {tick range , tickspacing}
 
 	sw.Swap = 0
 

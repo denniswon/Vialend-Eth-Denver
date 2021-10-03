@@ -60,7 +60,7 @@ func DeployVault() {
 	config.NonceGen()
 
 	pool := GetPoolFromToken()
-	ttoken := common.HexToAddress(config.Network.BonusToken)
+	// ttoken := common.HexToAddress(config.Network.BonusToken)
 	protocolFee := big.NewInt(10000)
 
 	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
@@ -70,7 +70,7 @@ func DeployVault() {
 	var maxTwapDeviation = big.NewInt(20)
 	var twapDuration = uint32(2)
 
-	address, tx, instance, err := vault.DeployApi(config.Auth, config.Client, pool, ttoken, protocolFee, maxTotalSupply, maxTwapDeviation, twapDuration)
+	address, tx, instance, err := vault.DeployApi(config.Auth, config.Client, pool, protocolFee, maxTotalSupply, maxTwapDeviation, twapDuration)
 
 	///set auth back to Account
 	config.Auth = config.GetSignature(config.Networkid, config.Account)
