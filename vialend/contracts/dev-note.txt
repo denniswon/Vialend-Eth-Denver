@@ -14,11 +14,6 @@ network set:
 		3000, // fee
 
 
-	
-
-
-
-
 
 
  solc --optimize --overwrite --abi tester.sol -o ../build
@@ -382,4 +377,9 @@ Version '0.5.16' installed.
 
 
 
+
+ERRORS TROUBLESHOOTING:
+
+Fail with error 'SafeERC20: low-level call failed'
+查看转出账号中的余额是否不足
 

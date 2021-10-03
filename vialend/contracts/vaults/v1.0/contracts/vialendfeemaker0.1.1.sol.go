@@ -298,6 +298,7 @@ contract ViaLendFeeMaker is
         )
     {
 			
+			
 		// may use getTwap() in the future
 		uint256 price = getUniswapPrice();
 
@@ -305,8 +306,6 @@ contract ViaLendFeeMaker is
 		shares = amountToken0.mul(price).add(amountToken1);
 
         (amount0, amount1 ) = (amountToken0, amountToken1);
-      
-    	
         
     }    
 

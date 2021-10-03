@@ -23,6 +23,11 @@ abigen --abi=../build/wrapunwrap.abi --bin=../build/wrapunwrap.bin --pkg=api --o
 
 
 
+
+solc --optimize --overwrite --abi feemaker.sol.go -o ../build
+solc --optimize --overwrite --bin feemaker.sol.go -o ../build
+abigen --abi=../build/feemaker.abi --bin=../build/feemaker.bin --pkg=api --out=../deploy/feemaker/feemaker.go
+
 */
 
 

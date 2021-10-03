@@ -85,7 +85,6 @@ func Deposit(do int, amount0 int64, amount1 int64) {
 	tx, err := instance.Deposit(config.Auth,
 		amountToken0,
 		amountToken1,
-		config.FromAddress,
 	)
 
 	if err != nil {
@@ -118,42 +117,39 @@ func Withdraw(do int, param [2]int64) {
 
 	fmt.Println("vaultAddress: ", common.HexToAddress(config.Network.Vault))
 
-	percent := param[1]
+	percent := big.NewInt(param[1])
 
 	instance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
 	}
+	/*
+		///get account's available shares
+		myshares, err := instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
+		if err != nil {
+			log.Fatal("balance of myshare ", err)
+		}
 
-	///get account's available shares
-	myshares, err := instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
-	if err != nil {
-		log.Fatal("balance of myshare ", err)
-	}
+		fmt.Println("myshares  = ", myshares, 18)
 
-	fmt.Println("myshares  = ", myshares, 18)
+		///calc required shares to withdraw
 
-	///calc required shares to withdraw
+		shares := new(big.Int).Mul(myshares, percent)
+		shares.Div(shares, big.NewInt(100))
+		fmt.Println("shares required = ", percent, "% = ", shares)
 
-	shares := new(big.Int).Mul(myshares, big.NewInt(percent))
-	shares.Div(shares, big.NewInt(100))
-	fmt.Println("shares required = ", percent, "% = ", shares)
+		/// if required share > available share, set withdraw shares = awailable shares
+		if shares.Cmp(myshares) == 1 {
+			shares = myshares
+		}
 
-	/// if required share > available share, set withdraw shares = awailable shares
-	if shares.Cmp(myshares) == 1 {
-		shares = myshares
-	}
-
-	if shares.Cmp(big.NewInt(0)) <= 0 {
-		fmt.Println("share<=0 ", shares)
-		return
-	}
-
+		if shares.Cmp(big.NewInt(0)) <= 0 {
+			fmt.Println("share<=0 ", shares)
+			return
+		}
+	*/
 	config.NonceGen()
-	tx, err := instance.Withdraw(config.Auth,
-		shares,
-		recipient,
-	)
+	tx, err := instance.Withdraw(config.Auth, percent)
 
 	if err != nil {
 		log.Fatal("withdraw: ", err)
@@ -344,6 +340,11 @@ func LendingInfo() {
 	checkCTokenBalance("CUSDC", config.Network.LendingContracts.CUSDC)
 	checkCTokenBalance("CETH", config.Network.LendingContracts.CETH)
 	checkETHBalance()
+
+	vaultInstance := GetVaultInstance()
+	lendingamts, _ := vaultInstance.GetCAmounts(&bind.CallOpts{})
+
+	fmt.Println("CToken0, Ctoken1:", lendingamts)
 
 }
 
@@ -742,7 +743,7 @@ func Approve(do int) {
 
 	config.NonceGen()
 
-	var maxToken0, _ = new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = config.X1E18(9e18) //new(big.Int).SetString("900000000000000000000000000000", 10)
 	tx0, err := token0Instance.Approve(config.Auth, common.HexToAddress(config.Network.Vault), maxToken0)
 
 	if err != nil {
@@ -760,7 +761,7 @@ func Approve(do int) {
 	}
 	config.NonceGen()
 	//var amountToken0, _ = new(big.Int).SetString("90000000000000000000000", 10)
-	var maxToken1, _ = new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = config.X1E18(9e18) // new(big.Int).SetString("900000000000000000000000000000", 10)
 
 	tx1, err := token1Instance.Approve(config.Auth, common.HexToAddress(config.Network.Vault), maxToken1)
 
@@ -826,9 +827,13 @@ func getAccountInfo(accId int) {
 	fmt.Println("myShares in vault ", mybal)
 
 	totalbal, _ := vaultTokenInstance.TotalSupply(&bind.CallOpts{})
+
 	fmt.Println("totalSupply in vault ", totalbal)
 
-	fmt.Println("my share / totalSupply ", mybal.Div(mybal, totalbal).Mul(mybal, big.NewInt(100)), "%")
+	if totalbal.Cmp(big.NewInt(0)) > 0 {
+
+		fmt.Println("my share / totalSupply ", mybal.Div(mybal, totalbal).Mul(mybal, big.NewInt(100)), "%")
+	}
 
 	fmt.Println()
 
@@ -879,10 +884,10 @@ func VaultInfo(do int) {
 	fmt.Println("tokenB (y) in pool ", xy.Amount1)
 
 	///-----------accumulated fee0 的总数
-	accumulateFees0, _ := vaultInstance.AccumulateFees0(&bind.CallOpts{})
+	accumulateFees0, _ := vaultInstance.AccumulateUniswapFees0(&bind.CallOpts{})
 	fmt.Println("accumulateFees0  :", accumulateFees0)
 	///-----------accumulated fee1 的总数
-	accumulateFees1, _ := vaultInstance.AccumulateFees1(&bind.CallOpts{})
+	accumulateFees1, _ := vaultInstance.AccumulateUniswapFees1(&bind.CallOpts{})
 	fmt.Println("accumulateFees1  :", accumulateFees1)
 
 	totalfee0, _ := vaultInstance.AccruedProtocolFees0(&bind.CallOpts{})
@@ -899,43 +904,21 @@ func VaultInfo(do int) {
 
 	///-----------
 
-	///----------- account x 的 shares
-	// tokenInstance, err := token.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
-	// if err != nil {
-	// 	log.Fatal("tokenInstance,", err)
-	// }
+}
 
-	// for i, _ := range config.Network.PrivateKey {
+func SetUniswapPortionRatio(ratio uint8) {
 
-	// 	accAddress := config.GetAddress(i)
-	// 	bal, err := tokenInstance.BalanceOf(&bind.CallOpts{}, accAddress)
-	// 	fmt.Printf("shares in vault for Account %d\n", i)
-	// 	if err != nil {
-	// 		log.Fatal("account ", i, " share balanceOf ", err)
-	// 	}
-	// 	if bal.Cmp(big.NewInt(0)) > 0 {
-	// 		fmt.Println(bal, " ,  ", new(big.Int).Div(new(big.Int).Mul(bal, big.NewInt(100)), totalSupply), "% of total ", totalSupply)
-	// 	} else {
-	// 		fmt.Println("	N/A")
-	// 	}
+	vaultInstance := GetVaultInstance()
 
-	// }
+	tx, err := vaultInstance.SetUniPortionRatio(config.Auth, ratio)
 
-	/// token 0 and token1 balance in vault
-	// tokenAInstance, _, _, _, _ := GetTokenInstance(config.Network.TokenA)
-	// bal, err := tokenAInstance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(config.Network.Vault))
-	// if err != nil {
-	// 	log.Fatal("tokenA balanceof vaule ", err)
-	// }
-	// fmt.Println("tokenA in vault ", bal)
+	if err != nil {
+		log.Fatal("vaultInstance. setuniportion err ", err)
+	}
 
-	// tokenBInstance, _, _, _, _ := GetTokenInstance(config.Network.TokenB)
+	fmt.Println("setuniportionp tx: ", tx.Hash().Hex())
 
-	// bal, err = tokenBInstance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(config.Network.Vault))
-	// if err != nil {
-	// 	log.Fatal("tokenB balanceof vaule ", err)
-	// }
-	// fmt.Println("tokenB in vault ", bal)
+	config.Readstring("tx sent.....  wait for pending..next .. ")
 
 }
 

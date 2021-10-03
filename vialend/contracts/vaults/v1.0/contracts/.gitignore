@@ -1,0 +1,5 @@
+#*
+#!.gitignore
+@uniswap/
+@openzeppelin/
+*.go
