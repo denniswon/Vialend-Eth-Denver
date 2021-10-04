@@ -11,6 +11,7 @@
   "dependencies": {
     "@uniswap/v2-sdk": "^3.0.0",
     "@uniswap/v3-sdk": "^3.3.2",
+    "axios": "^0.22.0",
     "core-js": "^2.6.5",
     "element-ui": "^2.15.5",
     "ethereumjs-tx": "^1.3.7",
@@ -19,6 +20,7 @@
     "solc": "^0.8.7-fixed",
     "update": "^0.7.4",
     "vue": "^2.6.10",
+    "vue-axios": "^3.3.7",
     "vue-class-component": "^7.0.2",
     "vue-property-decorator": "^8.1.0",
     "vue-router": "^3.0.3",

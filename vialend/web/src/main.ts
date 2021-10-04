@@ -5,9 +5,11 @@ import App from './App.vue'
 import store from './store'
 import router from './router'
 import Web3 from 'web3'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
 
 Vue.config.productionTip = false
-Vue.use(ElementUI)
+Vue.use(ElementUI, VueAxios, axios)
 Vue.prototype.Web3 = Web3
 
 new Vue({

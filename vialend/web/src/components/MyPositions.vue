@@ -353,7 +353,11 @@ export default {
       token1Approved: false,
       btnDepositDisabled: false,
       depositLoading: false,
-      withdrawLoading: false
+      withdrawLoading: false,
+      allTokensList: null,
+      // position data
+      cLow: 0,
+      cHigh: 0
     }
   },
   created: async function () {
@@ -378,6 +382,9 @@ export default {
       ViaLendTokenABI,
       this.token1Address
     )
+    this.cLow = await this.keeperContract.methods.cLow().call()
+    this.cHigh = await this.keeperContract.methods.cHigh().call()
+    // console.log('cLow=', this.cLow, ';cHigh=', this.cHigh)
   },
   watch: {
     '$store.state.isConnected': function () {
@@ -391,8 +398,8 @@ export default {
       this.pairsData = [{
         'id': 1,
         'smartVaults': [
-          { 'iconLink': 'images/weth.png', 'name': this.token0Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token0Address, 'decimals': this.token0Decimal, 'rateOfUSD': 2931.25 },
-          { 'iconLink': 'images/usdc.png', 'name': this.token1Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token1Address, 'decimals': this.token1Decimal, 'rateOfUSD': 0.9997 }
+          { 'iconLink': 'images/weth.png', 'name': this.token0Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token0Address, 'decimals': this.token0Decimal, 'rateOfUSD': 0 },
+          { 'iconLink': 'images/usdc.png', 'name': this.token1Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token1Address, 'decimals': this.token1Decimal, 'rateOfUSD': 0 }
         ],
         'feeTier': '0.30%',
         'currentAPR': '505.66%',
@@ -400,6 +407,20 @@ export default {
         'TVL': '$2,366,149',
         'disabled': false
       }]
+      // console.log('pairstoke=', this.$store.state.allTokensList)
+      this.allTokensList = this.$store.state.allTokensList
+      for (var i = 0; i < this.allTokensList.length; i++) {
+        if (this.allTokensList[i].symbol === 'ETH') {
+          this.pairsData[0].smartVaults[0].rateOfUSD = this.allTokensList[i].price_usd
+        } else if (this.allTokensList[i].symbol === 'USDC') {
+          this.pairsData[0].smartVaults[1].rateOfUSD = this.allTokensList[i].price_usd
+        }
+        if (this.pairsData[0].smartVaults[0].rateOfUSD > 0 && this.pairsData[0].smartVaults[1].rateOfUSD > 0) {
+          break
+        }
+      }
+      // console.log('token0_reteOfUSD=', this.pairsData[0].smartVaults[0].rateOfUSD)
+      // console.log('token1_reteOfUSD=', this.pairsData[0].smartVaults[1].rateOfUSD)
     },
     connectWallet () {
       this.$parent.setWalletStatus()
@@ -433,16 +454,19 @@ export default {
         console.log('rateToken1=', this.pairsData[this.selectedPair - 1].smartVaults[1].rateOfUSD)
         console.log('tvlTotal0=', this.tvlTotal0)
         console.log('tvlTotal1=', this.tvlTotal1)
+        console.log('maxTVL=', this.maxTVL)
         this.tvl = parseInt(this.tvlTotal0 / Math.pow(10, this.token0Decimal) + this.tvlTotal1 / Math.pow(10, this.token1Decimal))
         // Get % of cap used
-        this.ofCapUsed = (this.tvl / this.maxTVL * 100).toFixed(2)
+        this.ofCapUsed = (this.totalShares / this.maxTVL * 100).toFixed(2)
       }
       // Get Range Data
-      var rangeObj = await this.keeperContract.methods.getPositionAmounts(-196260, -191160).call()
-      if (rangeObj !== undefined && rangeObj !== null) {
-        console.log('range object=', JSON.stringify(rangeObj))
-        this.vaultRange = rangeObj.amount0 + '-' + rangeObj.amount1
-      }
+      // var rangeObj = await this.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
+      // if (rangeObj !== undefined && rangeObj !== null) {
+      //   console.log('range object=', JSON.stringify(rangeObj))
+      //   this.vaultRange = rangeObj.amount0 + '-' + rangeObj.amount1
+      // }
+      this.vaultRange = (Math.pow(1.0001, this.cLow) * Math.pow(10, 12)).toFixed(1) + '-' + (Math.pow(1.0001, this.cHigh) * Math.pow(10, 12)).toFixed(1)
+      console.log('cLow1=', this.cLow, ';cHigh1=', this.cHigh)
       this.loading = false
     },
     async getTokensBalanceInWallet () {
@@ -621,9 +645,9 @@ export default {
       this.dialogStep2Display = 'none'
       this.dialogStep3Display = 'none'
       this.dialogResultDisplay = 'none'
+      this.getShares()
       this.getVaultInfo()
       this.getPoolInfo()
-      this.getShares()
     },
     selectedPairChanage (val) {
       console.log('select value=', val)
@@ -710,6 +734,11 @@ export default {
 .el-button--next {
   background: #9900ff;
   border-color: #9900ff;
+  color: #ffffff;
+}
+.el-button--next.is-disabled {
+  background: #ba6af0;
+  border-color: #ba6af0;
   color: #ffffff;
 }
 .el-button--next:hover {

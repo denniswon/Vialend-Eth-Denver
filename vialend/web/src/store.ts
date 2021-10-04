@@ -8,7 +8,8 @@ export default new Vuex.Store({
     name: 'SwapStream.',
     isConnected: false,
     StatusButtonText: '',
-    chainId: 0
+    chainId: 0,
+    allTokensList: null
   },
   mutations: {
 

@@ -11,6 +11,32 @@
         Token0 balance in pool:{{token0BalanceInPool}}<br>
         Token1 balance in pool:{{token1BalanceInPool}}<br>
         <hr>
+        <div class="token_exchange_form">
+          <div style="margin-bottom:20px;">Currency Converter</div>
+          <el-form :inline="true"
+                   class="demo-form-inline">
+            <el-form-item>
+              <el-input v-model="currTokenVal"
+                        placeholder="1"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-select v-model="currTokenId"
+                         placeholder="请选择"
+                         @change="exchangeTokenChange">
+                <el-option v-for="item in tokensList"
+                           :key="item.nameid"
+                           :label="item.symbol"
+                           :value="item.symbol">
+                </el-option>
+              </el-select>
+            </el-form-item>
+            =
+            <el-form-item>
+              <el-input v-model="usdTokenVal"></el-input>
+            </el-form-item>USD
+          </el-form>
+        </div>
+        <hr>
         Min Tick:{{tickLower}}<br>
         Max Tick:{{tickUpper}}<br>
         Current Tick:{{currentTick}}
@@ -108,7 +134,12 @@ export default {
       dotStyle: 'dot',
       rangeStatusStyle: '',
       rangeStatusDisplay: 'none',
-      rangeStatus: ''
+      rangeStatus: '',
+      tokensList: null,
+      currTokenId: 'BTC',
+      currTokenVal: 1,
+      usdTokenVal: 0,
+      priceUSD: 0
     }
   },
   created: function () {
@@ -125,8 +156,24 @@ export default {
     this.getTokensBalanceInWallet()
     this.getTokensBalanceInVaultAndPool()
     console.log('this.$store.state.isConnected admin=', this.$store.state.isConnected)
+    // axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
+    //   // console.log('data=', JSON.stringify(response.data.data))
+    //   // var obj = JSON.parse(response.data.data)
+    //   this.tokensList = response.data.data
+    //   for (var i = 0; i < this.tokensList.length; i++) {
+    //     if (this.tokensList[i].symbol === this.currTokenId) {
+    //       this.usdTokenVal = this.tokensList[i].price_usd
+    //       this.priceUSD = this.tokensList[i].price_usd
+    //       break
+    //     }
+    //   }
+
+    // })
+
+    // console.log('len=', this.tokensList.length)
   },
   mounted () {
+
   },
   computed: {
     newMinPrice () {
@@ -157,6 +204,28 @@ export default {
     },
     '$store.state.isConnected': function () {
       this.isConnected = this.$store.state.isConnected
+    },
+    '$store.state.allTokensList': function () {
+      this.tokensList = this.$store.state.allTokensList
+      // console.log('tokenslist123123=', this.tokensList)
+      if (this.tokensList !== null) {
+        // console.log('len123=', this.tokensList.length)
+        for (var i = 0; i < this.tokensList.length; i++) {
+          if (this.tokensList[i].symbol === this.currTokenId) {
+            this.usdTokenVal = this.tokensList[i].price_usd
+            this.priceUSD = this.tokensList[i].price_usd
+            break
+          }
+        }
+      }
+    },
+    currTokenVal (val) {
+      if (val !== '') {
+        if (!isNaN(val)) {
+          console.log('currTokenVal=', val)
+          this.usdTokenVal = val * this.priceUSD
+        }
+      }
     }
   },
   methods: {
@@ -196,6 +265,16 @@ export default {
               this.currentTick = slot['tick']
             }
           })
+      }
+    },
+    exchangeTokenChange (val) {
+      console.log('token change=', val)
+      for (var i = 0; i < this.tokensList.length; i++) {
+        if (this.tokensList[i].symbol === val) {
+          this.usdTokenVal = this.tokensList[i].price_usd
+          this.priceUSD = this.tokensList[i].price_usd
+          break
+        }
       }
     },
     async getTokensBalanceInWallet () {
@@ -343,6 +422,12 @@ export default {
 
 <style scoped>
 .range_title {
+  font-size: 20px;
+  color: black;
+  padding: 10px;
+}
+.token_exchange_form {
+  width: 100%;
   font-size: 20px;
   color: black;
   padding: 10px;

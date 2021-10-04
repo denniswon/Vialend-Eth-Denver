@@ -20,6 +20,7 @@
 <script>
 import Web3 from 'web3'
 import contractABI from './ABI/contractABI.json'
+import axios from 'axios'
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
@@ -35,7 +36,8 @@ export default {
   data () {
     return {
       vaultAddress: '0x31E84D42aB6DEf5Dac84b761b0E5004179e07778',
-      keeperContract: null
+      keeperContract: null,
+      allTokensList: null
     }
   },
   created: function () {
@@ -43,6 +45,12 @@ export default {
       contractABI,
       this.vaultAddress
     )
+    axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
+      // console.log('data=', JSON.stringify(response.data.data))
+      // var obj = JSON.parse(response.data.data)
+      this.$store.state.allTokensList = response.data.data
+      console.log('tokenaxios=', this.allTokensList)
+    })
   },
   methods: {
     getName () {
