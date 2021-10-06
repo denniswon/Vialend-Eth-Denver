@@ -26,13 +26,12 @@ type Switcher struct {
 	MintPool         int
 	MintPoolParam    [3]int64
 	DeployVault      int
-	Approve          int
 	Deposit          int
-	DepositAmount    [2]int64
+	DepositParam     [4]int64
 	Withdraw         int
 	WithDrawParam    [2]int64
 	Rebalance        int
-	RebalanceParam   [2]int64
+	RebalanceParam   [3]int64
 	CreatePosition   int
 	IncreasePosition int
 	RemovePosition   int
@@ -42,29 +41,47 @@ type Switcher struct {
 	Strategy1Param   [3]int64
 }
 
+var sw = new(Switcher)
+
 func main() {
+
+	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
+
+	project.Init()
 
 	// get some weth
 	//project.Test_weth_deposit(30)
 	//project.Test_weth_withdraw(3)
-	//return
+	//project.Deposit(1, [4]int64{1, 1, 3, 1})
+
+	//for i := 0; i < 5; i++ {
+	// project.Strategy1(1, [3]int64{600, 60, 3})
+
+	// project.EmergencyBurn()
+	// project.AccountInfo()
+	// project.VaultInfo(1)
+	// return
 
 	//project.DeployVialendFeemaker(3)
-	//return
+
+	//	project.LendingInfo()
+	// project.AccountInfo()
+
+	//project.GetCapital(1)
+	//	project.GetCapital(3)
+
+	//	return
 
 	//project.SetUniswapPortionRatio(1)
 
-	// for i := 0; i < 10; i++ {
-	// 	test_vault()
-	// }
-	// // //return
+	fullCycleTest()
+	//project.VaultInfo(1)
 
-	//project.EmergencyBurn()
-	//project.Whitehacker()
-	//return
+	// return
+	//test_vault()
 
-	test_vault()
-
+	project.GetCapital(1)
+	project.GetCapital(3)
 	project.LendingInfo()
 	project.AccountInfo()
 	project.VaultInfo(1)
@@ -72,10 +89,31 @@ func main() {
 	//project.GetPoolFromToken()
 }
 
-func test_vault() {
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
+func fullCycleTest() {
 
-	var sw = new(Switcher)
+	project.Deposit(1, [4]int64{1, 1, 1, 1}) //{amount0,amount1,account, approve}
+	project.Deposit(1, [4]int64{2, 2, 3, 1})
+
+	// for i := 0; i < 5; i++ {
+	// 	project.Deposit(1, [4]int64{1, 100, 3, 0})
+	// 	project.Deposit(1, [4]int64{1, 10, 1, 0})
+
+	// 	project.VaultInfo(1)
+
+	// }
+
+	for i := 0; i < 5; i++ {
+		//project.Deposit(1, [4]int64{1, 100, 3, 0})
+		//project.Deposit(1, [4]int64{1, 10, 1, 0})
+		project.Strategy1(1, [3]int64{600, 60, 3})
+		project.VaultInfo(1)
+	}
+
+	project.Withdraw(1, [2]int64{100, 1})
+	project.Withdraw(1, [2]int64{100, 3})
+
+}
+func test_vault() {
 
 	sw.ViewOnly = false
 
@@ -102,20 +140,18 @@ func test_vault() {
 	sw.DeployVault = 0
 	//...manual step... update the new vault addres in networks.go
 
-	sw.Approve = 0
+	sw.Deposit = 1
+	sw.DepositParam = [4]int64{1, 1, 1, 1} // {amount0, amount1 , account, approve}
 
-	sw.Deposit = 0
-	sw.DepositAmount = [2]int64{1, 100} // {amount0, amount1 }
-
-	sw.Strategy1 = 0
+	sw.Strategy1 = 1
 	sw.Strategy1Param = [3]int64{600, 60, 3} // {tick range, tickspacing, account}
 
 	sw.Withdraw = 1
-	sw.WithDrawParam = [2]int64{3, 100} // {account, percent}
+	sw.WithDrawParam = [2]int64{100, 1} // { percent, account}
 	// accountid,  amount of shares in percentage %
 
 	sw.Rebalance = 0
-	sw.RebalanceParam = [2]int64{10, 60} //[2]int64{22000, 60} // 12000,60   {tick range , tickspacing}
+	sw.RebalanceParam = [3]int64{10, 60, 3} //[2]int64{22000, 60} // 12000,60   {tick range , tickspacing, account}
 
 	sw.Swap = 0
 
@@ -131,13 +167,11 @@ func test_vault() {
 	sw.IncreasePosition = -1
 	sw.RemovePosition = -1
 
-	project.Init()
-
 	if sw.CollectFees > 0 {
 
 		project.AccountInfo()
 		project.VaultInfo(1)
-		project.CollectProtocolFees(big.NewInt(100), big.NewInt(100))
+		project.CollectProtocolFees(big.NewInt(100), big.NewInt(100), 3) // fee0, fee1, account
 		project.AccountInfo()
 		project.VaultInfo(1)
 
@@ -191,32 +225,29 @@ func test_vault() {
 		project.DeployVault() /// deployed by test admin 2, edit networks. token0, token1, fee to get the pool address
 	}
 
-	project.Approve(sw.Approve)
-	//return
-
-	project.Deposit(sw.Deposit, sw.DepositAmount[0], sw.DepositAmount[1]) /// deposit token0 amount * 1e18, token1 amount * 1e6
+	project.Deposit(sw.Deposit, sw.DepositParam) /// deposit token0 amount * 1e18, token1 amount * 1e6
 
 	if sw.Swap == 1 {
 
-		project.Swap(sw.Swap, sw.RebalanceParam[0])
+		project.Swap(sw.Swap, sw.RebalanceParam[0], sw.RebalanceParam[2])
 
 	} else if sw.Swap == 2 {
 
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap y for x:", i)
 
-			project.Deposit(1, 2, 1000)
+			project.Deposit(1, [4]int64{2, 1000, 3, 0})
 
-			project.Swap(sw.Swap, sw.RebalanceParam[0])
+			project.Swap(sw.Swap, sw.RebalanceParam[0], sw.RebalanceParam[2])
 
 		}
 
 		for i := 0; i < 5; i++ {
 			fmt.Println("swap x for y:", i)
 
-			project.Deposit(1, 1, 5000)
+			project.Deposit(1, [4]int64{1, 5000, 3, 0})
 
-			project.Swap(sw.Swap, sw.RebalanceParam[0])
+			project.Swap(sw.Swap, sw.RebalanceParam[0], sw.RebalanceParam[2])
 
 		}
 

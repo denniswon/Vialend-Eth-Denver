@@ -1,0 +1,6 @@
+#*
+#!.gitignore
+@uniswap/
+@openzeppelin/
+*.go
+*.bat
