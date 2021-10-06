@@ -1,18 +1,21 @@
-#v1.0
-	contract source code: VialendFeemaker.sol
+#v1.1
+	contracts source code: 
+		VialendFeemaker.sol  
+		ViaUniswap.sol
+		ViaCompound.sol
+		ownable.sol
 	
 addresses: ( goerli  )
 
 	pool 				"0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023", 
-	vault 				"0xCF61ef07AA57089C7431599f239f7Dc144D31863", 
+	vault 				"0x912798B4Fe2E2E240B8D3e5136001f1dB07609D9", 
 	tokenA (Weth) 	"0x6fD886fd1e728D9386Ba7fE721C856790758aDd9", 
 	tokenB (usdc)   "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", 
-	(#NOTE 这俩token 不是咱们自己发的， 换token用eth在uniswap上swap)
 	
-	privatekey   （ metamask import）
-		onlygovernance:	
+	
+	onlygovernance privatekey  :	
 			2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7
-		onlyteam: 			
+	onlyteam privatekey  : 			
 			2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7
 	 	
 ABIs：
@@ -48,9 +51,10 @@ public functions:
 		
 		setTeam()  // ** reset team address 
 		
-		EmergencyBurn()   //** emergency button burn all positions from uniswap and lending pool back to vault. 
+		EmergencyBurn()   //** emergency button burn all positions from uniswap and lending pool back to vault and send all assets to users. 
 		
-		WhiteHacker()   //** withdraw all assets back to governance address
+		getLendingAmounts() // may remove later 
+		
 
 ** onlygovernance
 * onlyteam
