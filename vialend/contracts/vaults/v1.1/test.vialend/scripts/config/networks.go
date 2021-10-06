@@ -153,7 +153,7 @@ var Networks = [...]Init{
 		40, //time pending interval
 		"0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023", //pool 0xc4C92691f69fadDd684257E9f5A8d6f9D2c79a93", //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // tto  token
-		"0x912798B4Fe2E2E240B8D3e5136001f1dB07609D9", //vault address
+		"0x884e301Be789B7A059786FCD091c74b440CAdf38", //vault address
 
 		3000, // fee
 		LendingStruct{

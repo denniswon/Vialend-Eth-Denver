@@ -152,9 +152,8 @@ contract ViaLendFeeMaker is
         //_poke(cLow, cHigh);
 		
 		//to be optimized
-		removePositions();
-		
-		reCalcShares();
+		//removePositions();
+		//reCalcShares();
 		
 
 		//now calc the sender's share
@@ -177,6 +176,8 @@ contract ViaLendFeeMaker is
     /// recalcShares and collect protocol fees
     function reCalcShares() internal {
 
+		return ;// to do 
+		
 		uint256 new0 = token0.balanceOf(address(this));
 		uint256 new1 = token1.balanceOf(address(this));
 		

@@ -202,7 +202,7 @@ function lendingSupply(address underlying0, address underlying1,uint256 amount0,
 	}
 
 
-	function removeLending(address underlying0, address underlying1, uint256 amount0, uint256 amount1) internal {
+	function removeLending(address underlying0, address underlying1, uint256 cAmount0, uint256 cAmount1) internal {
         
 		address weth = address(WETH);
 		address cToken0 = address(CToken0);
@@ -213,18 +213,18 @@ function lendingSupply(address underlying0, address underlying1,uint256 amount0,
         
 		
         if (underlying0 == weth ) {
-        	redeemCEth(amount0,cToken0);
+        	redeemCEth(cAmount0,cToken0);
 			_wrap();
-	        redeemCErc20Tokens( amount1, cToken1 );
+	        redeemCErc20Tokens( cAmount1, cToken1 );
 
 
         } else if (underlying1 == weth ) {
-        	redeemCEth(amount1,cToken1);
+        	redeemCEth(cAmount1,cToken1);
 			_wrap();
-	        redeemCErc20Tokens( amount0,  cToken0 );
+	        redeemCErc20Tokens( cAmount0,  cToken0 );
         } else {
-	        redeemCErc20Tokens( amount1,  cToken1 );
-	        redeemCErc20Tokens( amount0,  cToken0 );
+	        redeemCErc20Tokens( cAmount1,  cToken1 );
+	        redeemCErc20Tokens( cAmount0,  cToken0 );
         }
         
   		

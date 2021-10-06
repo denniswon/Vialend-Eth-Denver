@@ -13,9 +13,12 @@ addresses: ( goerli  )
 	tokenB (usdc)   "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", 
 	
 	
-	onlygovernance privatekey  :	
-			2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7
+	onlygovernance   :	
+			0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
+			(privatekey) 2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7
+			
 	onlyteam privatekey  : 			
+			0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
 			2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7
 	 	
 ABIs：

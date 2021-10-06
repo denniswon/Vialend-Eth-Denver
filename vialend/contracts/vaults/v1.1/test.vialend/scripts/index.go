@@ -49,28 +49,45 @@ func main() {
 
 	project.Init()
 
-	// get some weth
-	//project.Test_weth_deposit(30)
-	//project.Test_weth_withdraw(3)
-	//project.Deposit(1, [4]int64{1, 1, 3, 1})
-
-	//for i := 0; i < 5; i++ {
-	// project.Strategy1(1, [3]int64{600, 60, 3})
-
+	//-- test emergency
 	// project.EmergencyBurn()
-	// project.AccountInfo()
+
+	//project.DeployVialendFeemaker(3)
+
+	//-- test deposit and withdraw
+	// project.Deposit(1, [4]int64{2, 2, 3, 1})
+	// project.Deposit(1, [4]int64{1, 1, 1, 1})
+	// project.VaultInfo(1)
+
+	// project.Withdraw(1, [2]int64{100, 3})
+	// project.Withdraw(1, [2]int64{100, 1})
 	// project.VaultInfo(1)
 	// return
 
-	//project.DeployVialendFeemaker(3)
+	//project.Test_weth_deposit(30)
+	//project.Test_weth_withdraw(3)
+
+	// test deposit strategy1 withdraw, redeposit and more rebalance, withdraw
+	project.Deposit(1, [4]int64{1, 100, 3, 0})
+	project.Strategy1(1, [3]int64{600, 60, 3})
+	project.Withdraw(1, [2]int64{100, 3})
+	project.Deposit(1, [4]int64{2, 200, 3, 0})
+	project.Strategy1(1, [3]int64{600, 60, 3})
+	project.Strategy1(1, [3]int64{600, 60, 3})
+	project.Strategy1(1, [3]int64{600, 60, 3})
+	project.Withdraw(1, [2]int64{100, 3})
+
+	return
+
+	// project.AccountInfo()
+	// project.VaultInfo(1)
+	// return
 
 	//	project.LendingInfo()
 	// project.AccountInfo()
 
 	//project.GetCapital(1)
 	//	project.GetCapital(3)
-
-	//	return
 
 	//project.SetUniswapPortionRatio(1)
 
@@ -91,8 +108,8 @@ func main() {
 
 func fullCycleTest() {
 
-	project.Deposit(1, [4]int64{1, 1, 1, 1}) //{amount0,amount1,account, approve}
-	project.Deposit(1, [4]int64{2, 2, 3, 1})
+	//project.Deposit(1, [4]int64{1, 1, 1, 1}) //{amount0,amount1,account, approve}
+	//project.Deposit(1, [4]int64{2, 2, 3, 1})
 
 	// for i := 0; i < 5; i++ {
 	// 	project.Deposit(1, [4]int64{1, 100, 3, 0})
@@ -103,8 +120,8 @@ func fullCycleTest() {
 	// }
 
 	for i := 0; i < 5; i++ {
-		//project.Deposit(1, [4]int64{1, 100, 3, 0})
-		//project.Deposit(1, [4]int64{1, 10, 1, 0})
+		project.Deposit(1, [4]int64{1, 100, 3, 0})
+		project.Deposit(1, [4]int64{1, 10, 1, 0})
 		project.Strategy1(1, [3]int64{600, 60, 3})
 		project.VaultInfo(1)
 	}
