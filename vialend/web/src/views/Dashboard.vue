@@ -94,7 +94,10 @@ export default {
       currentAccount: null,
       isConnected: false,
       treatyDialogVisible: false,
-      myLiquidity: 0
+      myLiquidity: 0,
+      myShare: 0,
+      totalSupply: 0,
+      tvl: 0
     }
   },
   created: function () {
@@ -120,6 +123,17 @@ export default {
     },
     setWalletStatus () {
       this.$refs.headerComp.setWalletStatus()
+    },
+    async getShares () {
+      this.myShare = await this.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+      console.log('user address=', ethereum.selectedAddress, ';shares=', this.shares)
+      this.keeperContract.methods
+        .totalSupply()
+        .call()
+        .then(val => {
+          console.log('totalSupply= ' + val)
+          this.totalSupply = val
+        })
     }
   }
 }

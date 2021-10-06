@@ -93,7 +93,7 @@
               </tr>
               <tr>
                 <td class="c1">Max TVL</td>
-                <td class="c2">{{maxTVL}}</td>
+                <td class="c2">${{maxTVL}}</td>
               </tr>
               <tr>
                 <td class="c1">Range</td>
@@ -346,6 +346,8 @@ export default {
       vaultRange: '',
       vaultLending: '',
       currentAPR: '',
+      myValueLocked: 0,
+      myEarnedValue: 0,
       // deposit variable
       depositToken0: '',
       depositToken1: '',
@@ -358,6 +360,7 @@ export default {
       // position data
       cLow: 0,
       cHigh: 0
+
     }
   },
   created: async function () {
@@ -458,6 +461,8 @@ export default {
         this.tvl = parseInt(this.tvlTotal0 / Math.pow(10, this.token0Decimal) + this.tvlTotal1 / Math.pow(10, this.token1Decimal))
         // Get % of cap used
         this.ofCapUsed = (this.totalShares / this.maxTVL * 100).toFixed(2)
+        this.myValueLocked = this.shares / this.totalSupply * this.tvl
+        this.myEarnedValue = this.shares / this.totalSupply * this.tvl - this.shares
       }
       // Get Range Data
       // var rangeObj = await this.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
@@ -465,8 +470,10 @@ export default {
       //   console.log('range object=', JSON.stringify(rangeObj))
       //   this.vaultRange = rangeObj.amount0 + '-' + rangeObj.amount1
       // }
-      this.vaultRange = (Math.pow(1.0001, this.cLow) * Math.pow(10, 12)).toFixed(1) + '-' + (Math.pow(1.0001, this.cHigh) * Math.pow(10, 12)).toFixed(1)
+      this.vaultRange = (Math.pow(1.0001, this.cLow) * Math.pow(10, this.token0Decimal - this.token1Decimal)).toFixed(1) + '-' + (Math.pow(1.0001, this.cHigh) * Math.pow(10, this.token0Decimal - this.token1Decimal)).toFixed(1)
       console.log('cLow1=', this.cLow, ';cHigh1=', this.cHigh)
+      // Current APR
+      this.currentAPR = this.shares / this.totalShares * this.tvl
       this.loading = false
     },
     async getTokensBalanceInWallet () {
@@ -624,6 +631,7 @@ export default {
       console.log('feeTier=', this.feeTier)
     },
     async getShares () {
+      // myshare-
       this.shares = await this.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
       console.log('user address=', ethereum.selectedAddress, ';shares=', this.shares)
       this.keeperContract.methods

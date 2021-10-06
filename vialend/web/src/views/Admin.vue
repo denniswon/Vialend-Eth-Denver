@@ -84,6 +84,60 @@
         <span slot="label"><i class="el-icon-date"></i> Security</span>
         remove all liquidity from uniswap
       </el-tab-pane>
+      <el-tab-pane>
+        <span slot="label"><i class="el-icon-date"></i> Settings</span>
+        <el-form :inline="true"
+                 class="demo-form-inline">
+          <el-form-item>UniPortionRatio:</el-form-item>
+          <el-form-item>
+            <el-input v-model="uniPortionRatio"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"
+                       @click="SetUniPortionRatio">SetUniPortionRatio</el-button>
+          </el-form-item>
+          <br>
+          <el-form-item>MaxTotalSupply:</el-form-item>
+          <el-form-item>
+            <el-input v-model="maxTotalSupply"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"
+                       @click="SetMaxTotalSupply">SetMaxTotalSupply</el-button>
+          </el-form-item>
+          <br>
+          <el-form-item>Governance:</el-form-item>
+          <el-form-item>
+            <el-input v-model="governanceAddress"
+                      style="width:500px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"
+                       @click="SetGovernance">SetGovernance</el-button>
+            <el-button type="primary"
+                       @click="acceptGovernance">AccecptGovernance</el-button>
+          </el-form-item>
+          <br>
+          <el-form-item>Team:</el-form-item>
+          <el-form-item>
+            <el-input v-model="teamAddress"
+                      style="width:500px;"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"
+                       @click="SetTeam">SetTeam</el-button>
+          </el-form-item>
+          <br>
+          <el-form-item>
+            <el-button type="warning"
+                       @click="EmergencyBurn">EmergencyBurn</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="danger"
+                       @click="WhiteHacker">WhiteHacker</el-button>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
     </el-tabs>
 
   </div>
@@ -139,7 +193,11 @@ export default {
       currTokenId: 'BTC',
       currTokenVal: 1,
       usdTokenVal: 0,
-      priceUSD: 0
+      priceUSD: 0,
+      maxTotalSupply: 0,
+      uniPortionRatio: 0,
+      governanceAddress: '',
+      teamAddress: ''
     }
   },
   created: function () {
@@ -171,6 +229,7 @@ export default {
     // })
 
     // console.log('len=', this.tokensList.length)
+    this.getSettingData()
   },
   mounted () {
 
@@ -263,6 +322,251 @@ export default {
               // this.tickLower = Math.round(parseInt(this.rangeForm.tickLower) / 60) * 60
               // this.tickUpper = Math.round(parseInt(this.rangeForm.tickUpper) / 60) * 60
               this.currentTick = slot['tick']
+            }
+          })
+      }
+    },
+    async SetUniPortionRatio () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        this.$parent.keeperContract.methods
+          .setUniPortionRatio(
+            BigInt(this.uniPortionRatio)
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('Set UniPortionRatio Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('Set UniPortionRatio Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
+            }
+          })
+      }
+    },
+    async SetMaxTotalSupply () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        // var result = await this.$parent.keeperContract.methods.setMaxTotalSupply(this.maxTotalSupply).call()
+        // console.log('result=', result)
+        this.$parent.keeperContract.methods
+          .setMaxTotalSupply(
+            BigInt(this.maxTotalSupply)
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('Set MaxTotalSupply Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('Set MaxTotalSupply Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
+            }
+          })
+      }
+    },
+    async SetGovernance () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        // var result = await this.$parent.keeperContract.methods.setMaxTotalSupply(this.maxTotalSupply).call()
+        // console.log('result=', result)
+        this.$parent.keeperContract.methods
+          .setGovernance(
+            this.governanceAddress
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('Set Governance Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('Set Governance Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
+            }
+          })
+      }
+    },
+    async acceptGovernance () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        // var result = await this.$parent.keeperContract.methods.setMaxTotalSupply(this.maxTotalSupply).call()
+        // console.log('result=', result)
+        this.$parent.keeperContract.methods
+          .acceptGovernance()
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('Accept Governance Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('Accept Governance Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
+            }
+          })
+      }
+    },
+    async SetTeam () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        this.$parent.keeperContract.methods
+          .setTeam(
+            this.teamAddress
+          )
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('SetTeam Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('SetTeam Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
+            }
+          })
+      }
+    },
+    async EmergencyBurn () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        this.$parent.keeperContract.methods
+          .emergencyBurn()
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('Emergency Burn Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('Emergency Burn Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
+            }
+          })
+      }
+    },
+    async WhiteHacker () {
+      var _this = this
+      var showMessage = false
+      if (this.$parent.keeperContract != null) {
+        this.$parent.keeperContract.methods
+          .whiteHacker()
+          .send({
+            from: ethereum.selectedAddress,
+            gasPrice: '80000000000',
+            gas: 600000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+            if (showMessage === false) {
+              _this.$message('WhiteHacker Successful!')
+              showMessage = true
+            }
+          })
+          .on('receipt', function (receipt) {
+            if (showMessage === false) {
+              _this.$message('WhiteHacker Successful!')
+              showMessage = true
+            }
+          })
+          .on('error', function (error) {
+            if (showMessage === false) {
+              _this.$message.error(error)
+              showMessage = true
+              console.log(error)
             }
           })
       }
@@ -415,7 +719,13 @@ export default {
       var D = Math.pow(id, 2)
       console.log('D=', D)
       console.log('p_a=', D * p, ',(', D * 100, ' of P),p_b=', C * p, ',(', C * 100, ' of P')
+    },
+    async getSettingData () {
+      this.maxTotalSupply = await this.$parent.keeperContract.methods.maxTotalSupply().call()
+      this.governanceAddress = await this.$parent.keeperContract.methods.governance().call()
+      // this.teamAddress = await this.$parent.keeperContract.methods.team().call()
     }
+
   }
 }
 </script>

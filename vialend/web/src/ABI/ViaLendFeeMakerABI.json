@@ -12,8 +12,23 @@
         "type": "address"
       },
       {
+        "internalType": "address",
+        "name": "_cToken0",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_cToken1",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_cEth",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
-        "name": "_protocolFee",
+        "name": "_protocolFeeRate",
         "type": "uint256"
       },
       {
@@ -30,6 +45,11 @@
         "internalType": "uint32",
         "name": "_twapDuration",
         "type": "uint32"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_uniPortionRate",
+        "type": "uint8"
       }
     ],
     "stateMutability": "nonpayable",
@@ -222,21 +242,34 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "MyLog2",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "uint128",
         "name": "liquidity",
         "type": "uint128"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "balance0",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "balance1",
-        "type": "uint256"
       },
       {
         "indexed": false,
@@ -365,7 +398,7 @@
   },
   {
     "inputs": [],
-    "name": "AccumulateFees0",
+    "name": "AccumulateUniswapFees0",
     "outputs": [
       {
         "internalType": "uint256",
@@ -378,12 +411,51 @@
   },
   {
     "inputs": [],
-    "name": "AccumulateFees1",
+    "name": "AccumulateUniswapFees1",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CEther",
+    "outputs": [
+      {
+        "internalType": "contract IcEther",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CToken0",
+    "outputs": [
+      {
+        "internalType": "contract IcErc20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CToken1",
+    "outputs": [
+      {
+        "internalType": "contract IcErc20",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -586,11 +658,6 @@
         "internalType": "uint256",
         "name": "amountToken1",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "staker",
-        "type": "address"
       }
     ],
     "name": "deposit",
@@ -611,6 +678,13 @@
         "type": "uint256"
       }
     ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emergencyBurn",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -642,8 +716,63 @@
   },
   {
     "inputs": [],
+    "name": "getCAmounts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "amountA",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountB",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_erc20Contract",
+        "type": "address"
+      }
+    ],
+    "name": "getCTokenBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getETHBalance",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLendingAmounts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -732,6 +861,19 @@
         "internalType": "int24",
         "name": "",
         "type": "int24"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getUniswapPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -854,7 +996,7 @@
   },
   {
     "inputs": [],
-    "name": "protocolFee",
+    "name": "protocolFeeRate",
     "outputs": [
       {
         "internalType": "uint256",
@@ -991,6 +1133,19 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "ratio",
+        "type": "uint8"
+      }
+    ],
+    "name": "setUniPortionRatio",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "int24",
         "name": "newLow",
         "type": "int24"
@@ -1012,6 +1167,24 @@
       }
     ],
     "name": "strategy0",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int24",
+        "name": "newLow",
+        "type": "int24"
+      },
+      {
+        "internalType": "int24",
+        "name": "newHigh",
+        "type": "int24"
+      }
+    ],
+    "name": "strategy1",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1050,6 +1223,11 @@
       {
         "internalType": "address payable",
         "name": "_cEtherContract",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_ctoken",
         "type": "address"
       }
     ],
@@ -1312,14 +1490,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "Amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "unwrap",
+    "inputs": [],
+    "name": "whiteHacker",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1328,23 +1500,8 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "shares",
+        "name": "percent",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount0Min",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount1Min",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "staker",
-        "type": "address"
       }
     ],
     "name": "withdraw",
@@ -1364,10 +1521,39 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "wrap",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "erc20",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawERC20",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawEth",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

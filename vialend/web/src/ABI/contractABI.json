@@ -7,19 +7,49 @@
         "type": "address"
       },
       {
+        "internalType": "address payable",
+        "name": "_weth",
+        "type": "address"
+      },
+      {
         "internalType": "address",
-        "name": "_ttoken",
+        "name": "_cToken0",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_cToken1",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_cEth",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_protocolFee",
+        "name": "_protocolFeeRate",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
         "name": "_maxTotalSupply",
         "type": "uint256"
+      },
+      {
+        "internalType": "int24",
+        "name": "_maxTwapDeviation",
+        "type": "int24"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_twapDuration",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_uniPortionRate",
+        "type": "uint8"
       }
     ],
     "stateMutability": "nonpayable",
@@ -193,6 +223,75 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "MyLog",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "MyLog2",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint128",
+        "name": "liquidity",
+        "type": "uint128"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newBalance0",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newBalance1",
+        "type": "uint256"
+      }
+    ],
+    "name": "RebalanceLog",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "int24",
         "name": "tick",
         "type": "int24"
@@ -294,8 +393,12 @@
     "type": "event"
   },
   {
+    "stateMutability": "payable",
+    "type": "fallback"
+  },
+  {
     "inputs": [],
-    "name": "AccumulateFees0",
+    "name": "AccumulateUniswapFees0",
     "outputs": [
       {
         "internalType": "uint256",
@@ -308,7 +411,7 @@
   },
   {
     "inputs": [],
-    "name": "AccumulateFees1",
+    "name": "AccumulateUniswapFees1",
     "outputs": [
       {
         "internalType": "uint256",
@@ -320,35 +423,49 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "str",
-        "type": "string"
-      }
-    ],
-    "name": "Greet",
+    "inputs": [],
+    "name": "CEther",
     "outputs": [
       {
-        "internalType": "string",
+        "internalType": "contract IcEther",
         "name": "",
-        "type": "string"
+        "type": "address"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "Hello",
+    "name": "CToken0",
     "outputs": [
       {
-        "internalType": "string",
+        "internalType": "contract IcErc20",
         "name": "",
-        "type": "string"
+        "type": "address"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CToken1",
+    "outputs": [
+      {
+        "internalType": "contract IcErc20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "acceptGovernance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -541,11 +658,6 @@
         "internalType": "uint256",
         "name": "amountToken1",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "staker",
-        "type": "address"
       }
     ],
     "name": "deposit",
@@ -571,6 +683,13 @@
   },
   {
     "inputs": [],
+    "name": "emergencyBurn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getBalance0",
     "outputs": [
       {
@@ -586,6 +705,74 @@
     "inputs": [],
     "name": "getBalance1",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getCAmounts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "amountA",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountB",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_erc20Contract",
+        "type": "address"
+      }
+    ],
+    "name": "getCTokenBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getETHBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLendingAmounts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -650,7 +837,7 @@
   },
   {
     "inputs": [],
-    "name": "getTotalAmounts",
+    "name": "getTVL",
     "outputs": [
       {
         "internalType": "uint256",
@@ -660,6 +847,32 @@
       {
         "internalType": "uint256",
         "name": "total1",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTwap",
+    "outputs": [
+      {
+        "internalType": "int24",
+        "name": "",
+        "type": "int24"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getUniswapPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
         "type": "uint256"
       }
     ],
@@ -705,12 +918,51 @@
   },
   {
     "inputs": [],
+    "name": "lastRebalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastTick",
+    "outputs": [
+      {
+        "internalType": "int24",
+        "name": "",
+        "type": "int24"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "maxTotalSupply",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxTwapDeviation",
+    "outputs": [
+      {
+        "internalType": "int24",
+        "name": "",
+        "type": "int24"
       }
     ],
     "stateMutability": "view",
@@ -730,30 +982,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "x",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "y",
-        "type": "uint256"
-      }
-    ],
-    "name": "plus",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "pool",
     "outputs": [
@@ -768,7 +996,7 @@
   },
   {
     "inputs": [],
-    "name": "protocolFee",
+    "name": "protocolFeeRate",
     "outputs": [
       {
         "internalType": "uint256",
@@ -782,22 +1010,70 @@
   {
     "inputs": [
       {
-        "internalType": "int24",
-        "name": "newLow",
-        "type": "int24"
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       },
       {
-        "internalType": "int24",
-        "name": "newHigh",
-        "type": "int24"
+        "internalType": "bool",
+        "name": "redeemType",
+        "type": "bool"
       },
       {
-        "internalType": "int256",
-        "name": "swapAmount",
-        "type": "int256"
+        "internalType": "address",
+        "name": "_cErc20Contract",
+        "type": "address"
       }
     ],
-    "name": "rebalance",
+    "name": "redeemCErc20Tokens",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "redeemType",
+        "type": "bool"
+      },
+      {
+        "internalType": "address",
+        "name": "_cEtherContract",
+        "type": "address"
+      }
+    ],
+    "name": "redeemCEth",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_governance",
+        "type": "address"
+      }
+    ],
+    "name": "setGovernance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -818,27 +1094,209 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_strategist",
-        "type": "address"
+        "internalType": "int24",
+        "name": "_maxTwapDeviation",
+        "type": "int24"
       }
     ],
-    "name": "setStrategist",
+    "name": "setMaxTwapDeviation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "strategist",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "_team",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
+    "name": "setTeam",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_twapDuration",
+        "type": "uint32"
+      }
+    ],
+    "name": "setTwapDuration",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "ratio",
+        "type": "uint8"
+      }
+    ],
+    "name": "setUniPortionRatio",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int24",
+        "name": "newLow",
+        "type": "int24"
+      },
+      {
+        "internalType": "int24",
+        "name": "newHigh",
+        "type": "int24"
+      },
+      {
+        "internalType": "int256",
+        "name": "swapAmount",
+        "type": "int256"
+      },
+      {
+        "internalType": "bool",
+        "name": "zeroForOne",
+        "type": "bool"
+      }
+    ],
+    "name": "strategy0",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int24",
+        "name": "newLow",
+        "type": "int24"
+      },
+      {
+        "internalType": "int24",
+        "name": "newHigh",
+        "type": "int24"
+      }
+    ],
+    "name": "strategy1",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_erc20Contract",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_cErc20Contract",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_numTokensToSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "supplyErc20ToCompound",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "_cEtherContract",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_ctoken",
+        "type": "address"
+      }
+    ],
+    "name": "supplyEthToCompound",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int256",
+        "name": "swapAmount",
+        "type": "int256"
+      },
+      {
+        "internalType": "bool",
+        "name": "zeroForOne",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint160",
+        "name": "sqrtPriceLimitX96",
+        "type": "uint160"
+      }
+    ],
+    "name": "swap",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      },
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "sweep",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -849,6 +1307,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "team",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -961,12 +1432,12 @@
   },
   {
     "inputs": [],
-    "name": "ttoken",
+    "name": "twapDuration",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "uint32",
         "name": "",
-        "type": "address"
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -1019,26 +1490,18 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "whiteHacker",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "shares",
+        "name": "percent",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount0Min",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount1Min",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "staker",
-        "type": "address"
       }
     ],
     "name": "withdraw",
@@ -1056,5 +1519,45 @@
     ],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "erc20",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawERC20",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawEth",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]
