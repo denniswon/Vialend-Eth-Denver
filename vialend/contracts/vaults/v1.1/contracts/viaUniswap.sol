@@ -28,7 +28,7 @@ contract ViaUniswap is
     using SafeMath for uint256;
 	
 
-    IUniswapV3Pool internal  pool;
+    IUniswapV3Pool public  pool;
 
     int24 internal  tickSpacing;
 

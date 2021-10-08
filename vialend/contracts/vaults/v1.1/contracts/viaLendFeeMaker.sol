@@ -2,6 +2,19 @@
 /*
 personal deposit cap
 
+Contract code size exceeds 24576 bytes 
+(a limit introduced in Spurious Dragon). 
+This contract may not be deployable on mainnet. 
+Consider enabling the optimizer (with a low "runs" value!), 
+turning off revert strings, or using libraries.
+
+where the share used:
+_burnLiquidityShare(cLow, cHigh, shares, totalSupply);
+_burnLendingShare(shares, totalSupply);
+unusedbalance (share, totalsupply)
+withdraw
+deposit
+
 */
 pragma solidity >=0.5.0;
 
@@ -71,7 +84,7 @@ contract ViaLendFeeMaker is
         uint32 _twapDuration,
 		uint8 _uniPortionRate
         
-    ) ERC20("ViaLend Token","VLT") {
+    ) ERC20("ViaLend Token0","VLT0") {
 
         governance = msg.sender;
         team = msg.sender;  
@@ -253,11 +266,22 @@ contract ViaLendFeeMaker is
     /// @return amount0 Amount of token0 sent to staker 
     /// @return amount1 Amount of token1 sent to staker
     
+   
     function withdraw(
         uint256 percent
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
         
-		
+        
+        // shares <=  cantor_pair_calculate(deposit0,deposit1) 
+        // totalShares <= mint(user, shares) 
+        //
+        //(deposit0,deposit1) <= cantor_pair_reverse(shares);
+        // (storedtotal0, storedtotal1) <= cantor_pair_reverse(totalShares);
+        // currentTotal0 , currentTotal1 = token0.balanceOf(vault), token1.balanceOf(vault), 
+        // withdrawAmount0 = currentTotal0*deposit0/storedtotal0 
+        
+        //percent = 100;  //for now
+
 		address to = msg.sender;
 		
         require(to != address(0) && to != address(this), "to2");
@@ -265,13 +289,18 @@ contract ViaLendFeeMaker is
         require(percent > 0 && percent <= 100, "pcent");
         
         uint256 shares = balanceOf(to).mul(percent).div(100);
-        
+
         uint256 totalSupply = totalSupply();
+
 
         require(totalSupply > 0, "ts0");
 
 		require(shares <= totalSupply , "sh1");
         
+
+		//(uint256 share0, uint256 share1) = lib._fetchAmounts(shares);
+
+
         _burn(to, shares);
 
        
@@ -284,6 +313,9 @@ contract ViaLendFeeMaker is
             _burnLendingShare(shares, totalSupply);
 
         // Calculate token amounts proportional to unused balances
+        //amount0 = getBalance0().mul(share0).div(100);
+        //amount1 = getBalance1().mul(share1).div(100);
+
         amount0 = getBalance0().mul(shares).div(totalSupply);
         amount1 = getBalance1().mul(shares).div(totalSupply);
 
@@ -336,15 +368,15 @@ contract ViaLendFeeMaker is
         )
     {
 
+		
         (amount0, amount1 ) = (amountToken0, amountToken1);
 
-		shares = lib.sqrt (amountToken0.mul(amountToken1) );
+		shares = lib._sqrt (amountToken0.mul(amountToken1) );
+		//shares = lib.cantor_pair_calculate(amount0,amount1); 
 
         
     }    
 
-
-    
     
  /*// COMMENT OUT BECAUSE CODE SIZE EXCEEDS DEPLOYER LIMIT. MOVE TO FRONTEND
 

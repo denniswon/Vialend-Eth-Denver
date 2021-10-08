@@ -389,4 +389,6 @@ Fail with No error msg:
 2. 查看调用方法中账号余额
 
 
-
+Fatal: Contract has additional library references, please use other mode(e.g. --combined-json) to catch library infos
+solution: 
+	if the function in library is public , change public to internal, or view to pure 
