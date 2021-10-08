@@ -7,8 +7,9 @@
 	
 addresses: ( goerli  )
 
-	pool 				"0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023", 
 	vault 				"0xAda1AC9D1dBFFF1270f0009d8f20bd0332F48113", 
+
+	pool 			"0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023", 
 	tokenA (Weth) 	"0x6fD886fd1e728D9386Ba7fE721C856790758aDd9", 
 	tokenB (usdc)   "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", 
 	
