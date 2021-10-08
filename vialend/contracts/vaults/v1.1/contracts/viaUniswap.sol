@@ -28,7 +28,7 @@ contract ViaUniswap is
     using SafeMath for uint256;
 	
 
-    IUniswapV3Pool public  pool;
+    IUniswapV3Pool internal  pool;
 
     int24 internal  tickSpacing;
 
@@ -303,5 +303,9 @@ contract ViaUniswap is
     	( liquidity , , , , ) = _position(tickLower, tickUpper);
     }
 
+
+	function poolAddress() public view returns (address) {
+         return address(pool);
+    }
 
 }

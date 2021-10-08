@@ -54,8 +54,9 @@ func main() {
 	// return
 	//-- test emergency
 	project.EmergencyBurn()
+	return
 
-	project.DeployVialendFeemaker(3)
+	//project.DeployVialendFeemaker(3)
 
 	//-- test deposit and withdraw
 	// project.Deposit(1, [4]int64{2, 2, 3, 1})
@@ -71,16 +72,24 @@ func main() {
 	//project.Test_weth_withdraw(3)
 
 	// test deposit strategy1 withdraw, redeposit and more rebalance, withdraw
-	project.Deposit(1, [4]int64{1, 1, 1, 1})
-	project.Deposit(1, [4]int64{2, 2, 3, 1})
+	project.Deposit(1, [4]int64{1, 1, 1, 0})
+	project.Deposit(1, [4]int64{2, 2, 0, 0})
 
-	// project.Strategy1(1, [3]int64{600, 60, 3})
-	// project.Strategy1(1, [3]int64{400, 60, 3})
-	// project.Strategy1(1, [3]int64{200, 60, 3})
-	// project.Strategy1(1, [3]int64{1600, 60, 3})
+	project.Strategy1(1, [3]int64{600, 60, 3})
+	project.Deposit(1, [4]int64{1, 1, 1, 0})
+	project.Deposit(1, [4]int64{2, 2, 0, 0})
+	project.Strategy1(1, [3]int64{400, 60, 3})
+	project.Deposit(1, [4]int64{1, 1, 1, 0})
+	project.Deposit(1, [4]int64{2, 2, 0, 0})
+	project.Strategy1(1, [3]int64{200, 60, 3})
+	project.Deposit(1, [4]int64{1, 1, 1, 0})
+	project.Deposit(1, [4]int64{2, 2, 0, 0})
+	project.Strategy1(1, [3]int64{1600, 60, 3})
+	project.Deposit(1, [4]int64{1, 1, 1, 0})
+	project.Deposit(1, [4]int64{2, 2, 0, 0})
 
 	project.VaultInfo(1)
-	project.Withdraw(1, [2]int64{100, 3})
+	project.Withdraw(1, [2]int64{100, 0})
 	project.Withdraw(1, [2]int64{100, 1})
 	project.VaultInfo(1)
 

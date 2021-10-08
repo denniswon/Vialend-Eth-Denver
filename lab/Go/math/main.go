@@ -8,9 +8,35 @@ import (
 )
 
 func main() {
+	test()
+	return
+	//	cantor_pair_reverse2(cantor_pair_calculate2(big.NewInt(1), big.NewInt(23)))
+	//	fmt.Println()
+	// https://en.wikipedia.org/wiki/Cantor_function
+	// https://en.wikipedia.org/wiki/Pairing_function
+	// https://gist.github.com/hannesl/8031402
 
-	x, _ := new(big.Int).SetString("10000000000000000000000000000000000000000000000000000", 10)
-	fmt.Println(X1E18X(x))
+	// cantor_pair_reverse(cantor_pair_calculate(21, 23333))
+	// cantor_pair_reverse(cantor_pair_calculate(21, 23333))
+	// cantor_pair_reverse(cantor_pair_calculate(23333, 21))
+	// cantor_pair_reverse(cantor_pair_calculate(444444, 555555))
+	// cantor_pair_reverse(cantor_pair_calculate(1, 33))
+	// cantor_pair_reverse(cantor_pair_calculate(33, 1))
+	x := int64(1)
+	y := int64(33)
+	z := int64(1)
+
+	if x > y {
+		cantor_pair_reverse(cantor_pair_calculate(y, x))
+
+	} else {
+		cantor_pair_reverse(cantor_pair_calculate(x, y))
+		z = -1 * z
+	}
+	fmt.Println("z ", z)
+
+	// x, _ := new(big.Int).SetString("10000000000000000000000000000000000000000000000000000", 10)
+	// fmt.Println(X1E18X(x))
 
 	//	convert()
 	//bigInt()
@@ -18,6 +44,93 @@ func main() {
 	//bigFloat()
 
 	//	test()
+
+}
+
+func cantor_pair_calculate2(x *big.Int, y *big.Int) *big.Int {
+	//result := ((x+y)*(x+y+1))/2 + y
+
+	x.Add(x, y).Mul(x, new(big.Int).Add(x, big.NewInt(1))).Div(x, big.NewInt(2)).Add(x, y)
+	fmt.Println(x)
+
+	return x
+}
+
+/**
+ * Return the source integers from a cantor pair integer.
+ */
+func cantor_pair_reverse2(z *big.Int) {
+
+	negOne := big.NewFloat(-1)
+	eight := big.NewFloat(8)
+	one := big.NewFloat(1)
+	two := big.NewFloat(2)
+	three := big.NewFloat(3)
+	zFloat := new(big.Float)
+	zFloat.SetString(z.String())
+
+	//t := math.floor((-1 + math.sqrt(1+8*z)) / 2)
+	zFloat8 := new(big.Float).Mul(zFloat, eight)
+	z81 := new(big.Float).Add(one, zFloat8)
+	sqrtZ81 := new(big.Float).Sqrt(z81)
+	sqrtZ81S1 := new(big.Float).Add(negOne, sqrtZ81)
+	fmt.Println("z81.Sqrt(z81).Quo(z81, two)=", sqrtZ81S1)
+	t := new(big.Float).Quo(sqrtZ81S1, two)
+
+	fmt.Println("t:", t)
+
+	t = big.NewFloat(24)
+
+	//x := t*(t+3)/2 - float64(z)
+	tx := new(big.Float)
+	tx.SetString(t.String())
+
+	t3 := new(big.Float).Add(tx, three)
+
+	tx.Mul(tx, t3).Quo(tx, two)
+	fmt.Println("t*(t+3)/2:", tx)
+
+	tx.Sub(tx, zFloat)
+
+	x := tx.Mul(tx, new(big.Float).Add(tx, three).Quo(tx, two))
+	x.Sub(x, zFloat)
+
+	//y := z - t*(t+1)/2
+	ty := new(big.Float)
+	ty.SetString(t.String())
+	y := ty.Add(zFloat, ty.Mul(new(big.Float).Add(ty, one), t).Quo(ty, two))
+	fmt.Println(x, y)
+}
+
+/**
+Cantor pairing functions in PHP. Pass any two positive integers and get a unique integer back. Feed the unique integer back into the reverse function and get the original integers back.
+https://gist.github.com/hannesl/8031402
+
+ * Calculate a unique integer based on two integers (cantor pairing).
+*/
+func cantor_pair_calculate(x int64, y int64) int64 {
+
+	fmt.Println(x, y)
+
+	result := ((x+y)*(x+y+1))/2 + y
+
+	fmt.Println(result)
+
+	return result
+}
+
+/**
+ * Return the source integers from a cantor pair integer.
+ */
+func cantor_pair_reverse(z int64) {
+
+	t := math.Floor((-1 + math.Sqrt(1+8*float64(z))) / 2)
+	x := t*(t+3)/2 - float64(z)
+	y := float64(z) - t*(t+1)/2
+
+	fmt.Println(x, y)
+
+	fmt.Println()
 
 }
 
@@ -29,8 +142,15 @@ func test() {
 	fmt.Println(".........移位 左移， 右移 .........  ")
 	fmt.Println("----------------------------------------------")
 	/// bit shift
-	fmt.Println("i<<j = i * (1<<j) ", 3<<2, "==", 3.0*(1<<2))
-	fmt.Println("i>>j = i/(2^j) ", 164>>4, "==", math.Floor(164/math.Pow(2, 4)))
+	// i << j  => i* (1<<j) => i * pow(2,j)
+	fmt.Println("左移:")
+	fmt.Println("i <<j  = ", 3<<2)
+	fmt.Println("i * (1<<j) =", 3.0*(1<<2))
+	fmt.Println("i * pow(2,j) =", 3.0*(math.Pow(2, 2)))
+
+	fmt.Println("右移:")
+	fmt.Println("i>>j ", 164>>4)
+	fmt.Println("i/pow(2,j) ", math.Floor(164/math.Pow(2, 4)))
 
 	/// example
 	price = 1e18 / 2000e6

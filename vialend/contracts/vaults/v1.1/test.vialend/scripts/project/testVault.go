@@ -902,6 +902,12 @@ func VaultInfo(do int) {
 
 	vaultInstance := GetVaultInstance()
 
+	poolAddress, err := vaultInstance.PoolAddress(&bind.CallOpts{})
+	fmt.Println("pool address from vault:", poolAddress)
+	if err != nil {
+		log.Fatal("poolAddress err ", err)
+	}
+
 	///----------- 当前vault 里的 totalSupply
 	totalSupply, err := vaultInstance.TotalSupply(&bind.CallOpts{})
 	fmt.Println("totalSupply (total shares in vault) :", totalSupply)

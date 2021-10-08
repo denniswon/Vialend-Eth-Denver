@@ -189,10 +189,12 @@ contract ViaLendFeeMaker is
     /// recalcShares and collect protocol fees
     function reCalcShares() internal {
 
-		return ;// to do 
+		//return ;// to do 
 		
 		uint256 new0 = token0.balanceOf(address(this));
 		uint256 new1 = token1.balanceOf(address(this));
+		
+		if (new0 <=0 && new1 <=0 ) return;
 		
 		if (prev0 <= 0 ) prev0 = new0;
 		if (prev1 <= 0 ) prev1 = new1;
@@ -360,7 +362,7 @@ contract ViaLendFeeMaker is
 	
     function _calcShares(uint256 amountToken0, uint256 amountToken1)
         internal
-        pure
+        view
         returns (
             uint256 shares,
             uint256 amount0,
@@ -373,6 +375,8 @@ contract ViaLendFeeMaker is
 
 		shares = lib._sqrt (amountToken0.mul(amountToken1) );
 		//shares = lib.cantor_pair_calculate(amount0,amount1); 
+		
+		//shares = amount0.mul(getUniswapPrice() ).add(amount1);
 
         
     }    
@@ -591,7 +595,8 @@ contract ViaLendFeeMaker is
      * @notice low lever Removes positions for emergency. 
     */
     function emergencyBurn() external onlyGovernance {
-			removePositions();
+			
+		removePositions();
 
 		uint cnt = accounts.length;
 		

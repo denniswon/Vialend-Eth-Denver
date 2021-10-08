@@ -34,7 +34,7 @@ contract Ownable is ReentrancyGuard {
     uint32 public twapDuration;
 	int24 public maxTwapDeviation;    
     
-	uint8 uniPortionRate ;
+	uint8 public uniPortionRate ;
 
 
     function push(address _address ) internal {
@@ -118,6 +118,7 @@ contract Ownable is ReentrancyGuard {
 	  	return (Assetholder[who].capital0,Assetholder[who].capital1 , Assetholder[who].fees0 , Assetholder[who].fees1 );
 	}
 
+	
 
 
 }
