@@ -2,7 +2,6 @@
   <div>
     <Header ref="headerComp" />
     <!-- Menu -->
-
     <div class="menu">
       <div class="background_image"></div>
       <div class="
@@ -19,7 +18,6 @@
         <div class="menu_review"><a href="#">Launch App</a></div>
       </div>
     </div>
-
     <div class="home">
       <div class="parallax_background parallax-window"
            data-parallax="scroll"
@@ -79,9 +77,7 @@
 
 <script>
 import Header from '@/components/Header.vue'
-import { Component, Vue } from 'vue-property-decorator'
 import MyPositions from '@/components/MyPositions.vue'
-import SupplyLiquidity from '@/components/SupplyLiquidity.vue'
 
 const _this = this
 

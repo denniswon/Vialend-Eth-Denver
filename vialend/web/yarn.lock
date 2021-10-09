@@ -8346,6 +8346,11 @@
   "resolved" "https://registry.nlark.com/invert-kv/download/invert-kv-2.0.0.tgz"
   "version" "2.0.0"
 
+"ion-rangeslider@^2.3.1":
+  "integrity" "sha1-kq3lLLVvwwuRYtBIP/Arb57SN8I="
+  "resolved" "https://registry.nlark.com/ion-rangeslider/download/ion-rangeslider-2.3.1.tgz"
+  "version" "2.3.1"
+
 "ip-regex@^2.1.0":
   "integrity" "sha1-+ni/XS5pE8kRzp+BnuUUa7bYROk="
   "resolved" "https://registry.npm.taobao.org/ip-regex/download/ip-regex-2.1.0.tgz?cache=0&sync_timestamp=1611327118718&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fip-regex%2Fdownload%2Fip-regex-2.1.0.tgz"
@@ -9016,6 +9021,11 @@
   "integrity" "sha1-FC0RHzpuPa6PSpr9d9RYVbWpzOM="
   "resolved" "https://registry.nlark.com/javascript-stringify/download/javascript-stringify-1.6.0.tgz"
   "version" "1.6.0"
+
+"jquery@^3.6.0", "jquery@>=1.8":
+  "integrity" "sha1-xyoJ8Vwb3OFC9J2/EXC9+K2sJHA="
+  "resolved" "https://registry.nlark.com/jquery/download/jquery-3.6.0.tgz"
+  "version" "3.6.0"
 
 "js-base64@^2.1.8":
   "integrity" "sha1-9OaGxd4eofhn28rT1G2WlCjfmMQ="

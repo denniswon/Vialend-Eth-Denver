@@ -4,12 +4,32 @@
     <el-tabs type="border-card">
       <el-tab-pane>
         <span slot="label"><i class="el-icon-date"></i> Rebalance</span>
-        Token0 balance in wallet:{{token0BalanceInWallet}}<br>
-        Token1 balance in wallet:{{token1BalanceInWallet}}<br>
-        Token0 balance in vault:{{token0BalanceInVault}}<br>
-        Token1 balance in vault:{{token1BalanceInVault}}<br>
-        Token0 balance in pool:{{token0BalanceInPool}}<br>
-        Token1 balance in pool:{{token1BalanceInPool}}<br>
+        <div style="width:50%">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Token balance</th>
+                <th>Wallet</th>
+                <th>Vault</th>
+                <th>Pool</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Token0</th>
+                <td>{{token0BalanceInWallet}}</td>
+                <td>{{token0BalanceInVault}}</td>
+                <td>{{token0BalanceInPool}}</td>
+              </tr>
+              <tr>
+                <th>Token1</th>
+                <td>{{token1BalanceInWallet}}</td>
+                <td>{{token1BalanceInVault}}</td>
+                <td>{{token1BalanceInPool}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <hr>
         <div class="token_exchange_form">
           <div style="margin-bottom:20px;">Currency Converter</div>
@@ -39,20 +59,25 @@
         <hr>
         Min Tick:{{tickLower}}<br>
         Max Tick:{{tickUpper}}<br>
-        Current Tick:{{currentTick}}
+        Current Tick:{{currentTick}}<br>
+        Current Price:{{currentPrice}}
         <el-button size="mini"
                    :style="{display:rangeStatusDisplay}">
           <span :class="[dotStyle,rangeStatusStyle]"></span>
           <span class="status">{{rangeStatus}}</span>
         </el-button><br>
         <div class="block"
-             style="width:30%">
-          <el-slider v-model="tickRange"
+             style="width:50%">
+          <!-- <el-slider v-model="tickRange"
                      range
                      :marks="getMarks">
-          </el-slider>
-
+          </el-slider> -->
+          <input type="text"
+                 class="js-range-slider"
+                 name="my_range"
+                 value="" />
         </div>
+
         <hr>
         <div class="range_title">Set Price Range</div>
         <el-form :inline="true"
@@ -62,20 +87,24 @@
             <el-input-number v-model="rangeForm.minPrice"
                              :precision="1"
                              :step="1"></el-input-number><br>
-            eUSDC per eWETH
+            {{token1Name}} per {{token0Name}}
           </el-form-item>
           <el-form-item label="Max Price">
             <el-input-number v-model="rangeForm.maxPrice"
                              :precision="1"
                              :step="1"></el-input-number><br>
-            eUSDC per eWETH
+            {{token1Name}} per {{token0Name}}
           </el-form-item>
           <el-form-item>
             <el-button type="primary"
-                       @click="doRebalance"
-                       :disabled="!isConnected">Rebalance</el-button>
+                       @click="doRebalance">Rebalance</el-button>
+            <!-- <el-button type="primary"
+                       @click="getY">getY</el-button> -->
             <el-button type="primary"
-                       @click="getY">getY</el-button>
+                       plain>
+              <a :href="goToEtherscan"
+                 target="_blank">View on etherscan</a>
+            </el-button>
           </el-form-item>
         </el-form>
         {{errorRebalance}}
@@ -132,10 +161,6 @@
             <el-button type="warning"
                        @click="EmergencyBurn">EmergencyBurn</el-button>
           </el-form-item>
-          <el-form-item>
-            <el-button type="danger"
-                       @click="WhiteHacker">WhiteHacker</el-button>
-          </el-form-item>
         </el-form>
       </el-tab-pane>
     </el-tabs>
@@ -147,8 +172,8 @@
 import Web3 from 'web3'
 import Header from '@/components/Header.vue'
 import uniswapV3PoolABI from '../ABI/UniswapV3PoolABI.json'
-import contractABI from '../ABI/contractABI.json'
-import tokenABI from '../ABI/tokenABI.json'
+import ViaLendTokenABI from '../ABI/tokenABI.json'
+import axios from 'axios'
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
@@ -165,10 +190,11 @@ export default {
     return {
       isConnected: this.$store.state.isConnected,
       keeperUniswapV3Contract: null,
-      keeperContract: null,
+      poolAddress: '',
       tickLower: 0,
       tickUpper: 0,
       currentTick: 0,
+      currentPrice: 0,
       tickRange: [20, 80],
       currentPercent: 0,
       marks: {
@@ -179,6 +205,17 @@ export default {
       },
       errorRebalance: '',
       rebalanceLoading: false,
+      token0Contract: null,
+      token1Contract: null,
+      token0Address: '',
+      token0Name: '',
+      token0Symbol: '',
+      token0Decimal: 0,
+      token0Balance: 0,
+      token1Address: '',
+      token1Name: '',
+      token1Symbol: '',
+      token1Decimal: 0,
       token0BalanceInWallet: 0,
       token1BalanceInWallet: 0,
       token0BalanceInVault: 0,
@@ -197,42 +234,36 @@ export default {
       maxTotalSupply: 0,
       uniPortionRatio: 0,
       governanceAddress: '',
-      teamAddress: ''
+      teamAddress: '',
+      goToEtherscan: 'https://goerli.etherscan.io/address/' + this.$parent.vaultAddress
     }
   },
-  created: function () {
+  created: async function () {
     console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
+    this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
+    console.log('this.poolAddress=', this.poolAddress)
     this.keeperUniswapV3Contract = new web3.eth.Contract(
       uniswapV3PoolABI,
-      '0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033'
-    )
-    this.keeperContract = new web3.eth.Contract(
-      contractABI,
-      this.$parent.vaultAddress
+      this.poolAddress
     )
     this.getSlot0()
-    this.getTokensBalanceInWallet()
     this.getTokensBalanceInVaultAndPool()
-    console.log('this.$store.state.isConnected admin=', this.$store.state.isConnected)
-    // axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
-    //   // console.log('data=', JSON.stringify(response.data.data))
-    //   // var obj = JSON.parse(response.data.data)
-    //   this.tokensList = response.data.data
-    //   for (var i = 0; i < this.tokensList.length; i++) {
-    //     if (this.tokensList[i].symbol === this.currTokenId) {
-    //       this.usdTokenVal = this.tokensList[i].price_usd
-    //       this.priceUSD = this.tokensList[i].price_usd
-    //       break
-    //     }
-    //   }
-
-    // })
-
-    // console.log('len=', this.tokensList.length)
+    this.loadPriceRange()
     this.getSettingData()
+    this.getTokensInfo()
+    axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
+      this.tokensList = response.data.data
+      for (var i = 0; i < this.tokensList.length; i++) {
+        if (this.tokensList[i].symbol === this.currTokenId) {
+          this.usdTokenVal = this.tokensList[i].price_usd
+          this.priceUSD = this.tokensList[i].price_usd
+          break
+        }
+      }
+      console.log('tokensList length=', this.tokensList.length)
+    })
   },
   mounted () {
-
   },
   computed: {
     newMinPrice () {
@@ -252,12 +283,14 @@ export default {
   watch: {
     newMinPrice (price) {
       console.log('new min price=', price)
+      $('.js-range-slider').data('ionRangeSlider').update({ from: price })
       if (!isNaN(price)) { this.tickLower = this.priceToTick(price) } else { this.tickLower = 0 }
       this.drawTickRangeChart()
     },
     newMaxPrice (price) {
       console.log('new max price=', price)
       this.tickUpper = this.priceToTick(price)
+      $('.js-range-slider').data('ionRangeSlider').update({ to: price })
       if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
       this.drawTickRangeChart()
     },
@@ -265,18 +298,18 @@ export default {
       this.isConnected = this.$store.state.isConnected
     },
     '$store.state.allTokensList': function () {
-      this.tokensList = this.$store.state.allTokensList
-      // console.log('tokenslist123123=', this.tokensList)
-      if (this.tokensList !== null) {
-        // console.log('len123=', this.tokensList.length)
-        for (var i = 0; i < this.tokensList.length; i++) {
-          if (this.tokensList[i].symbol === this.currTokenId) {
-            this.usdTokenVal = this.tokensList[i].price_usd
-            this.priceUSD = this.tokensList[i].price_usd
-            break
-          }
-        }
-      }
+      // this.tokensList = this.$store.state.allTokensList
+      // // console.log('tokenslist123123=', this.tokensList)
+      // if (this.tokensList !== null) {
+      //   // console.log('len123=', this.tokensList.length)
+      //   for (var i = 0; i < this.tokensList.length; i++) {
+      //     if (this.tokensList[i].symbol === this.currTokenId) {
+      //       this.usdTokenVal = this.tokensList[i].price_usd
+      //       this.priceUSD = this.tokensList[i].price_usd
+      //       break
+      //     }
+      //   }
+      // }
     },
     currTokenVal (val) {
       if (val !== '') {
@@ -288,6 +321,69 @@ export default {
     }
   },
   methods: {
+    async getTokensInfo () {
+      this.token0Address = await this.$parent.keeperContract.methods.token0().call()
+      this.token1Address = await this.$parent.keeperContract.methods.token1().call()
+      this.token0Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token0Address
+      )
+      this.token1Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token1Address
+      )
+      // Get Token0 Information
+      this.token0Name = await this.token0Contract.methods.name().call()
+      console.log('token0Name=', this.token0Name)
+      this.token0Symbol = await this.token0Contract.methods.symbol().call()
+      console.log('token0Symbol=', this.token0Symbol)
+      this.token0Decimal = await this.token0Contract.methods.decimals().call()
+      console.log('token0Decimal=', this.token0Decimal)
+      this.token0BalanceInWallet = await this.token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
+      console.log('token0BalanceInWallet=', this.token0BalanceInWallet)
+      // Get Token1 Information
+      this.token1Name = await this.token1Contract.methods.name().call()
+      console.log('token1Name=', this.token1Name)
+      this.token1Symbol = await this.token1Contract.methods.symbol().call()
+      console.log('token1Symbol=', this.token1Symbol)
+      this.token1Decimal = await this.token1Contract.methods.decimals().call()
+      console.log('token1Decimal=', this.token1Decimal)
+      this.token1BalanceInWallet = await this.token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
+      console.log('token1BalanceInWallet=', this.token1BalanceInWallet)
+    },
+    async loadPriceRange () {
+      var _this = this
+      var tmpTickLower, tmpTickUpper
+      tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
+      tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
+      if (tmpTickLower !== '0' && tmpTickUpper !== '0') {
+        this.tickLower = tmpTickLower
+        this.tickUpper = tmpTickUpper
+        console.log('tickLower_price=', this.tickLower)
+        console.log('tickUpper_price=', this.tickUpper)
+      }
+      this.rangeForm.minPrice = this.tickToPrice(this.tickLower)
+      this.rangeForm.maxPrice = this.tickToPrice(this.tickUpper)
+
+      console.log('maxPrice123=', this.rangeForm.maxPrice)
+      var maxPriceVal = parseFloat(this.rangeForm.maxPrice) + 800
+      $('.js-range-slider').ionRangeSlider({
+        skin: 'big',
+        type: 'double',
+        grid: true,
+        min: (parseFloat(this.rangeForm.minPrice) - 230).toFixed(1),
+        max: (parseFloat(this.rangeForm.maxPrice) + 230).toFixed(1),
+        from: this.rangeForm.minPrice,
+        to: this.rangeForm.maxPrice,
+        prefix: '$',
+
+        onChange: function (data) {
+          console.log('from=', data.from)
+          _this.rangeForm.minPrice = data.from
+          _this.rangeForm.maxPrice = data.to
+        }
+      })
+    },
     drawTickRangeChart () {
       if (this.tickLower !== 0 && this.tickUpper !== 0) {
         var leftMargin = this.tickLower - 10000
@@ -309,6 +405,7 @@ export default {
     },
     async getSlot0 () {
       if (this.keeperUniswapV3Contract !== null) {
+        var _this = this
         this.keeperUniswapV3Contract.methods
           .slot0()
           .call()
@@ -321,7 +418,18 @@ export default {
               // this.rangeForm.tickUpper = parseInt(slot['tick']) + 1000
               // this.tickLower = Math.round(parseInt(this.rangeForm.tickLower) / 60) * 60
               // this.tickUpper = Math.round(parseInt(this.rangeForm.tickUpper) / 60) * 60
-              this.currentTick = slot['tick']
+              _this.currentTick = slot['tick']
+              console.log('currentTick0=', _this.currentTick)
+              if (_this.tickLower === 0 || _this.tickUpper === 0) {
+                console.log('currentTick1=', _this.currentTick)
+                _this.tickLower = parseInt(_this.currentTick) - 1000
+                _this.tickUpper = parseInt(_this.currentTick) + 1000
+                console.log('tickLower0=', _this.tickLower)
+                console.log('tickUpper0=', _this.tickUpper)
+              } else {
+                console.log('tickLower1=', _this.tickLower)
+                console.log('tickUpper1=', _this.tickUpper)
+              }
             }
           })
       }
@@ -365,8 +473,6 @@ export default {
       var _this = this
       var showMessage = false
       if (this.$parent.keeperContract != null) {
-        // var result = await this.$parent.keeperContract.methods.setMaxTotalSupply(this.maxTotalSupply).call()
-        // console.log('result=', result)
         this.$parent.keeperContract.methods
           .setMaxTotalSupply(
             BigInt(this.maxTotalSupply)
@@ -402,8 +508,6 @@ export default {
       var _this = this
       var showMessage = false
       if (this.$parent.keeperContract != null) {
-        // var result = await this.$parent.keeperContract.methods.setMaxTotalSupply(this.maxTotalSupply).call()
-        // console.log('result=', result)
         this.$parent.keeperContract.methods
           .setGovernance(
             this.governanceAddress
@@ -439,8 +543,6 @@ export default {
       var _this = this
       var showMessage = false
       if (this.$parent.keeperContract != null) {
-        // var result = await this.$parent.keeperContract.methods.setMaxTotalSupply(this.maxTotalSupply).call()
-        // console.log('result=', result)
         this.$parent.keeperContract.methods
           .acceptGovernance()
           .send({
@@ -538,68 +640,16 @@ export default {
           })
       }
     },
-    async WhiteHacker () {
-      var _this = this
-      var showMessage = false
-      if (this.$parent.keeperContract != null) {
-        this.$parent.keeperContract.methods
-          .whiteHacker()
-          .send({
-            from: ethereum.selectedAddress,
-            gasPrice: '80000000000',
-            gas: 600000,
-            value: 0
-          })
-          .on('confirmation', function (confirmationNumber, receipt) {
-            if (showMessage === false) {
-              _this.$message('WhiteHacker Successful!')
-              showMessage = true
-            }
-          })
-          .on('receipt', function (receipt) {
-            if (showMessage === false) {
-              _this.$message('WhiteHacker Successful!')
-              showMessage = true
-            }
-          })
-          .on('error', function (error) {
-            if (showMessage === false) {
-              _this.$message.error(error)
-              showMessage = true
-              console.log(error)
-            }
-          })
-      }
-    },
     exchangeTokenChange (val) {
       console.log('token change=', val)
       for (var i = 0; i < this.tokensList.length; i++) {
         if (this.tokensList[i].symbol === val) {
           this.usdTokenVal = this.tokensList[i].price_usd
           this.priceUSD = this.tokensList[i].price_usd
+          this.currTokenVal = 1
           break
         }
       }
-    },
-    async getTokensBalanceInWallet () {
-      var coinContract
-      coinContract = new web3.eth.Contract(
-        tokenABI,
-        '0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8')
-      this.token0BalanceInWallet = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
-      // const format = Web3Client.utils.fromWei(result) // 29803630.997051883414242659
-      console.log('token0BalanceInWallet=', this.token0BalanceInWallet)
-      var tokenDecimal = await coinContract.methods.decimals().call()
-      console.log('decimal_0x48=', tokenDecimal)
-      // token1BalanceInWallet
-      coinContract = new web3.eth.Contract(
-        tokenABI,
-        '0xFdA9705FdB20E9A633D4283AfbFB4a0518418Af8')
-      this.token1BalanceInWallet = await coinContract.methods.balanceOf(ethereum.selectedAddress).call() // 29803630997051883414242659
-      // const format = Web3Client.utils.fromWei(result) // 29803630.997051883414242659
-      console.log('token1BalanceInWallet=', this.token1BalanceInWallet)
-      tokenDecimal = await coinContract.methods.decimals().call()
-      console.log('decimal_0xFd=', tokenDecimal)
     },
     async getTokensBalanceInVaultAndPool () {
       if (this.$parent.keeperContract != null) {
@@ -607,17 +657,23 @@ export default {
         console.log('token0BalanceInVault=', this.token0BalanceInVault)
         this.token1BalanceInVault = await this.$parent.keeperContract.methods.getBalance1().call()
         console.log('token1BalanceInVault=', this.token1BalanceInVault)
-        var result = await this.$parent.keeperContract.methods.getPositionAmounts(-201360, -198910).call()
+        var tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
+        var tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
+        var result = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(tmpTickLower), BigInt(tmpTickUpper)).call()
         if (result !== undefined && result !== null) {
           this.token0BalanceInPool = result.amount0
           this.token1BalanceInPool = result.amount1
           console.log('result000=', result)
         }
-        var decimal = await this.$parent.keeperContract.methods.decimals().call()
-        console.log('decimal=', decimal)
+        // var decimal = await this.$parent.keeperContract.methods.decimals().call()
+        // console.log('decimal=', decimal)
       }
     },
     doRebalance () {
+      if (!this.isConnected) {
+        this.$message('Please connect wallet!')
+        return
+      }
       var _this = this
       this.rebalanceLoading = true
       if (isNaN(this.rangeForm.minPrice) || this.rangeForm.minPrice <= 0) {
@@ -634,21 +690,20 @@ export default {
         })
         return
       }
-      if (this.keeperContract != null) {
+      if (this.$parent.keeperContract != null) {
         console.log('account address is ' + ethereum.selectedAddress)
         console.log('this.rangeForm.tickLower=', Math.round(parseInt(this.tickLower) / 60) * 60)
         console.log('this.rangeForm.tickUpper=', Math.round(parseInt(this.tickUpper) / 60) * 60)
 
-        this.keeperContract.methods
-          .rebalance(
+        this.$parent.keeperContract.methods
+          .strategy1(
             BigInt(Math.round(parseInt(this.tickLower) / 60) * 60),
-            BigInt(Math.round(parseInt(this.tickUpper) / 60) * 60),
-            0
+            BigInt(Math.round(parseInt(this.tickUpper) / 60) * 60)
           )
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '80000000000',
-            gas: 600000,
+            gasPrice: '800000000000',
+            gas: 6000000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
@@ -678,6 +733,9 @@ export default {
     },
     priceToTick (price) {
       return parseInt(Math.log(price / 1000000000000) / Math.log(1.0001))
+    },
+    tickToPrice (tick) {
+      return (Math.pow(1.0001, tick) * Math.pow(10, 12)).toFixed(1)
     },
     onSubmit () {
       console.log('submit!')

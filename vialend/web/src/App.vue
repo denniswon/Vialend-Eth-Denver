@@ -35,7 +35,8 @@ export default {
   name: 'App',
   data () {
     return {
-      vaultAddress: '0x31E84D42aB6DEf5Dac84b761b0E5004179e07778',
+      vaultAddress: '0xAda1AC9D1dBFFF1270f0009d8f20bd0332F48113',
+      poolAddress: '',
       keeperContract: null,
       allTokensList: null
     }
@@ -45,6 +46,7 @@ export default {
       contractABI,
       this.vaultAddress
     )
+    this.getPoolAddress()
     axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
       // console.log('data=', JSON.stringify(response.data.data))
       // var obj = JSON.parse(response.data.data)
@@ -53,6 +55,9 @@ export default {
     })
   },
   methods: {
+    async getPoolAddress () {
+      this.poolAddress = await this.keeperContract.methods.poolAddress().call()
+    },
     getName () {
       console.log('name=' + this.$store.state.name)
     }
