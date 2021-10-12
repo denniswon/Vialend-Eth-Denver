@@ -25,24 +25,34 @@
       <div class="home_container">
         <div class="container">
           <div class="row align-items-center my-financial">
-            <div class="col-md-3 text-center">
+            <div class="col-md-3 text-center"
+                 v-loading="myValueLockLoading"
+                 element-loading-spinner="el-icon-loading"
+                 element-loading-background="rgba(0, 0, 0, 0.8)">
               <ul>
                 <li class="title">My Value Locked</li>
-                <li class="value">{{myLiquidity}}</li>
+                <li class="value">{{token0Symbol + ':' + myValueToken0Locked.toFixed(2)}}</li>
+                <li class="value">{{token1Symbol + ':' + myValueToken1Locked.toFixed(2)}}</li>
               </ul>
             </div>
             <div class="col-md-6 text-center apy-container">
-              <div class="apy-style">
+              <div class="apy-style"
+                   v-loading="netAPYLoading"
+                   element-loading-spinner="el-icon-loading"
+                   element-loading-background="rgba(0, 0, 0, 0.8)">
                 <ul>
                   <li class="apy-title">Net APY</li>
                   <li class="apy-content">...</li>
                 </ul>
               </div>
             </div>
-            <div class="col-md-3 text-center">
+            <div class="col-md-3 text-center"
+                 v-loading="myEarnedValueLoading"
+                 element-loading-spinner="el-icon-loading"
+                 element-loading-background="rgba(0, 0, 0, 0.8)">
               <ul>
                 <li class="title">My Earned Value</li>
-                <li class="value">$0.00000000000000</li>
+                <li class="value">-</li>
               </ul>
             </div>
           </div>
@@ -85,6 +95,9 @@ export default {
   components: { Header, MyPositions },
   data () {
     return {
+      myValueLockLoading: false,
+      myEarnedValueLoading: false,
+      netAPYLoading: false,
       vaultAddress: this.$parent.vaultAddress,
       keeperContract: this.$parent.keeperContract,
       currentAccount: null,
@@ -93,7 +106,13 @@ export default {
       myLiquidity: 0,
       myShare: 0,
       totalSupply: 0,
-      tvl: 0
+      myValueLocked: 0,
+      myValueToken0Locked: 0,
+      myValueToken1Locked: 0,
+      myEarnedValue: 0,
+      tvl: 0,
+      token0Symbol: '',
+      token1Symbol: ''
     }
   },
   created: function () {

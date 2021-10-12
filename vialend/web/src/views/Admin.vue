@@ -12,25 +12,90 @@
                 <th>Wallet</th>
                 <th>Vault</th>
                 <th>Pool</th>
+                <th>Lending</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th>Token0</th>
-                <td>{{token0BalanceInWallet}}</td>
-                <td>{{token0BalanceInVault}}</td>
-                <td>{{token0BalanceInPool}}</td>
+                <th>{{token0Symbol}}</th>
+                <td>{{(Number(token0BalanceInWallet) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
+                <td>{{(Number(token0BalanceInVault) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
+                <td>{{(Number(token0BalanceInPool) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
+                <td>{{(Number(token0BalanceInLending) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
               </tr>
               <tr>
-                <th>Token1</th>
-                <td>{{token1BalanceInWallet}}</td>
-                <td>{{token1BalanceInVault}}</td>
-                <td>{{token1BalanceInPool}}</td>
+                <th>{{token1Symbol}}</th>
+                <td>{{(Number(token1BalanceInWallet) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
+                <td>{{(Number(token1BalanceInVault) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
+                <td>{{(Number(token1BalanceInPool) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
+                <td>{{(Number(token1BalanceInLending) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
               </tr>
             </tbody>
           </table>
         </div>
         <hr>
+
+        Min Tick:{{tickLower}}<br>
+        Max Tick:{{tickUpper}}<br>
+        Current Tick:{{currentTick}}<br>
+        <span style="color:#ff0000;margin-right:10px;">Current Price:{{currentPrice}}</span>
+        <el-button size="mini"
+                   :style="{display:rangeStatusDisplay}">
+          <span :class="[dotStyle,rangeStatusStyle]"></span>
+          <span class="status">{{rangeStatus}}</span>
+        </el-button><br>
+        <div class="block"
+             style="width:50%;margin-top:20px;">
+          <!-- <el-slider v-model="tickRange"
+                     range
+                     :marks="getMarks">
+          </el-slider> -->
+          <input type="text"
+                 class="js-range-slider"
+                 name="my_range"
+                 value="" />
+        </div>
+
+        <hr>
+        <div class="range_title">Set Price Range</div>
+        <el-form :inline="true"
+                 :model="rangeForm"
+                 class="demo-form-inline">
+          <el-form-item label="Min Price">
+            <el-input-number v-model="rangeForm.minPrice"
+                             @change="minPriceChange"
+                             :precision="1"
+                             :step="0.1"></el-input-number><br>
+            {{token1Symbol}} per {{token0Symbol}}
+          </el-form-item>
+          <el-form-item label="Max Price">
+            <el-input-number v-model="rangeForm.maxPrice"
+                             @change="maxPriceChange"
+                             :precision="1"
+                             :step="0.1"></el-input-number><br>
+            {{token1Symbol}} per {{token0Symbol}}
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"
+                       :loading="rebalanceLoading"
+                       @click="doRebalance">Rebalance</el-button>
+            <!-- <el-button type="primary"
+                       @click="getY">getY</el-button> -->
+            &nbsp;&nbsp;
+            <a :href="goToEtherscan"
+               target="_blank"
+               :class="['btn','btn-primary',viewOnEtherscanDisable?'disabled':'']"
+               role="button">View on etherscan</a>
+          </el-form-item>
+        </el-form>
+        {{errorRebalance}}
+      </el-tab-pane>
+      <el-tab-pane>
+        <span slot="label"><i class="el-icon-date"></i> Security</span>
+        remove all liquidity from uniswap
+      </el-tab-pane>
+      <el-tab-pane>
+        <span slot="label"><i class="el-icon-date"></i> Settings</span>
         <div class="token_exchange_form">
           <div style="margin-bottom:20px;">Currency Converter</div>
           <el-form :inline="true"
@@ -57,64 +122,6 @@
           </el-form>
         </div>
         <hr>
-        Min Tick:{{tickLower}}<br>
-        Max Tick:{{tickUpper}}<br>
-        Current Tick:{{currentTick}}<br>
-        Current Price:{{currentPrice}}
-        <el-button size="mini"
-                   :style="{display:rangeStatusDisplay}">
-          <span :class="[dotStyle,rangeStatusStyle]"></span>
-          <span class="status">{{rangeStatus}}</span>
-        </el-button><br>
-        <div class="block"
-             style="width:50%">
-          <!-- <el-slider v-model="tickRange"
-                     range
-                     :marks="getMarks">
-          </el-slider> -->
-          <input type="text"
-                 class="js-range-slider"
-                 name="my_range"
-                 value="" />
-        </div>
-
-        <hr>
-        <div class="range_title">Set Price Range</div>
-        <el-form :inline="true"
-                 :model="rangeForm"
-                 class="demo-form-inline">
-          <el-form-item label="Min Price">
-            <el-input-number v-model="rangeForm.minPrice"
-                             :precision="1"
-                             :step="1"></el-input-number><br>
-            {{token1Name}} per {{token0Name}}
-          </el-form-item>
-          <el-form-item label="Max Price">
-            <el-input-number v-model="rangeForm.maxPrice"
-                             :precision="1"
-                             :step="1"></el-input-number><br>
-            {{token1Name}} per {{token0Name}}
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary"
-                       @click="doRebalance">Rebalance</el-button>
-            <!-- <el-button type="primary"
-                       @click="getY">getY</el-button> -->
-            <el-button type="primary"
-                       plain>
-              <a :href="goToEtherscan"
-                 target="_blank">View on etherscan</a>
-            </el-button>
-          </el-form-item>
-        </el-form>
-        {{errorRebalance}}
-      </el-tab-pane>
-      <el-tab-pane>
-        <span slot="label"><i class="el-icon-date"></i> Security</span>
-        remove all liquidity from uniswap
-      </el-tab-pane>
-      <el-tab-pane>
-        <span slot="label"><i class="el-icon-date"></i> Settings</span>
         <el-form :inline="true"
                  class="demo-form-inline">
           <el-form-item>UniPortionRatio:</el-form-item>
@@ -222,6 +229,8 @@ export default {
       token1BalanceInVault: 0,
       token0BalanceInPool: 0,
       token1BalanceInPool: 0,
+      token0BalanceInLending: 0,
+      token1BalanceInLending: 0,
       dotStyle: 'dot',
       rangeStatusStyle: '',
       rangeStatusDisplay: 'none',
@@ -235,33 +244,13 @@ export default {
       uniPortionRatio: 0,
       governanceAddress: '',
       teamAddress: '',
-      goToEtherscan: 'https://goerli.etherscan.io/address/' + this.$parent.vaultAddress
+      viewOnEtherscanDisable: true,
+      transactionHash: '',
+      goToEtherscan: ''
     }
   },
-  created: async function () {
-    console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
-    this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
-    console.log('this.poolAddress=', this.poolAddress)
-    this.keeperUniswapV3Contract = new web3.eth.Contract(
-      uniswapV3PoolABI,
-      this.poolAddress
-    )
-    this.getSlot0()
-    this.getTokensBalanceInVaultAndPool()
-    this.loadPriceRange()
-    this.getSettingData()
-    this.getTokensInfo()
-    axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
-      this.tokensList = response.data.data
-      for (var i = 0; i < this.tokensList.length; i++) {
-        if (this.tokensList[i].symbol === this.currTokenId) {
-          this.usdTokenVal = this.tokensList[i].price_usd
-          this.priceUSD = this.tokensList[i].price_usd
-          break
-        }
-      }
-      console.log('tokensList length=', this.tokensList.length)
-    })
+  created: function () {
+    this.initData()
   },
   mounted () {
   },
@@ -283,14 +272,14 @@ export default {
   watch: {
     newMinPrice (price) {
       console.log('new min price=', price)
-      $('.js-range-slider').data('ionRangeSlider').update({ from: price })
+      // $('.js-range-slider').data('ionRangeSlider').update({ from: price })
       if (!isNaN(price)) { this.tickLower = this.priceToTick(price) } else { this.tickLower = 0 }
       this.drawTickRangeChart()
     },
     newMaxPrice (price) {
       console.log('new max price=', price)
       this.tickUpper = this.priceToTick(price)
-      $('.js-range-slider').data('ionRangeSlider').update({ to: price })
+      // $('.js-range-slider').data('ionRangeSlider').update({ to: price })
       if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
       this.drawTickRangeChart()
     },
@@ -321,6 +310,38 @@ export default {
     }
   },
   methods: {
+    async initData () {
+      console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
+      this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
+      console.log('this.poolAddress=', this.poolAddress)
+      var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
+      console.log('lendingAmounts=', lendingAmounts)
+      if (lendingAmounts !== null) {
+        this.token0BalanceInLending = lendingAmounts[0]
+        this.token1BalanceInLending = lendingAmounts[1]
+      }
+      this.keeperUniswapV3Contract = new web3.eth.Contract(
+        uniswapV3PoolABI,
+        this.poolAddress
+      )
+      this.getSlot0()
+      this.getTokensBalanceInVaultAndPool()
+      this.loadPriceRange()
+      this.getSettingData()
+      this.getTokensInfo()
+
+      axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
+        this.tokensList = response.data.data
+        for (var i = 0; i < this.tokensList.length; i++) {
+          if (this.tokensList[i].symbol === this.currTokenId) {
+            this.usdTokenVal = this.tokensList[i].price_usd
+            this.priceUSD = this.tokensList[i].price_usd
+            break
+          }
+        }
+        console.log('tokensList length=', this.tokensList.length)
+      })
+    },
     async getTokensInfo () {
       this.token0Address = await this.$parent.keeperContract.methods.token0().call()
       this.token1Address = await this.$parent.keeperContract.methods.token1().call()
@@ -376,13 +397,21 @@ export default {
         from: this.rangeForm.minPrice,
         to: this.rangeForm.maxPrice,
         prefix: '$',
-
+        step: 0.1,
         onChange: function (data) {
           console.log('from=', data.from)
           _this.rangeForm.minPrice = data.from
           _this.rangeForm.maxPrice = data.to
         }
       })
+    },
+    minPriceChange (val) {
+      // console.log('min price:', val)
+      $('.js-range-slider').data('ionRangeSlider').update({ from: val })
+    },
+    maxPriceChange (val) {
+      // console.log('max price:', val)
+      $('.js-range-slider').data('ionRangeSlider').update({ to: val })
     },
     drawTickRangeChart () {
       if (this.tickLower !== 0 && this.tickUpper !== 0) {
@@ -419,6 +448,7 @@ export default {
               // this.tickLower = Math.round(parseInt(this.rangeForm.tickLower) / 60) * 60
               // this.tickUpper = Math.round(parseInt(this.rangeForm.tickUpper) / 60) * 60
               _this.currentTick = slot['tick']
+              _this.currentPrice = this.tickToPrice(_this.currentTick)
               console.log('currentTick0=', _this.currentTick)
               if (_this.tickLower === 0 || _this.tickUpper === 0) {
                 console.log('currentTick1=', _this.currentTick)
@@ -681,14 +711,12 @@ export default {
           message: 'Please input positive number greater than 0 in Min Price.',
           type: 'warning'
         })
-        return
       }
       if (isNaN(this.rangeForm.maxPrice) || this.rangeForm.maxPrice <= 0) {
         this.$message({
           message: 'Please input positive number greater than 0 in Max Price.',
           type: 'warning'
         })
-        return
       }
       if (this.$parent.keeperContract != null) {
         console.log('account address is ' + ethereum.selectedAddress)
@@ -702,24 +730,34 @@ export default {
           )
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '800000000000',
-            gas: 6000000,
+            gasPrice: '1000000000',
+            gas: 900000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
             if (_this.rebalanceLoading) {
               _this.rebalanceLoading = false
               _this.$message('rebalance confirmed!')
-              console.log('confirmation')
+              console.log('confirmation,confirmationNumber:' + confirmationNumber + ',receipt:' + JSON.stringify(receipt))
+              if (receipt != null) {
+                _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
+                _this.viewOnEtherscanDisable = false
+              }
               // _this.errorRebalance = receipt
+              _this.initData()
             }
           })
           .on('receipt', function (receipt) {
             if (_this.rebalanceLoading) {
               _this.rebalanceLoading = false
               _this.$message('rebalance receipt!')
-              console.log('receipt')
+              console.log('receipt:' + JSON.stringify(receipt))
               // _this.errorRebalance = receipt
+              if (receipt != null) {
+                _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
+                _this.viewOnEtherscanDisable = false
+              }
+              _this.initData()
             }
           })
           .on('error', function (error) {

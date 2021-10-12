@@ -24,9 +24,10 @@
             <nav class="main_nav">
               <ul class="d-flex flex-row align-items-center justify-content-start">
                 <li>
-                  <router-link to='/dashboard'>
+                  <!-- <router-link to='/dashboard'>
                     Dashboard
-                  </router-link>
+                  </router-link> -->
+                  <a href="/dashboard">Dashboard</a>
                 </li>
                 <li><a href="#">Vote</a></li>
               </ul>
