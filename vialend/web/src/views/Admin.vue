@@ -309,6 +309,9 @@ export default {
           this.usdTokenVal = val * this.priceUSD
         }
       }
+    },
+    currentTick (val) {
+      this.drawTickRangeChart()
     }
   },
   methods: {
