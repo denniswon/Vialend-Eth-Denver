@@ -214,6 +214,8 @@ export default {
       rebalanceLoading: false,
       token0Contract: null,
       token1Contract: null,
+      token0LendingContract: null,
+      token1LendingContract: null,
       token0Address: '',
       token0Name: '',
       token0Symbol: '',
@@ -316,9 +318,27 @@ export default {
       console.log('this.poolAddress=', this.poolAddress)
       var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
       console.log('lendingAmounts=', lendingAmounts)
-      if (lendingAmounts !== null) {
-        this.token0BalanceInLending = lendingAmounts[0]
-        this.token1BalanceInLending = lendingAmounts[1]
+      // test start
+      this.token0LendingContract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+      )
+      this.token1LendingContract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
+      )
+      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
+      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
+      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
+      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
+      console.log('underlying0=', underlying0)
+      console.log('underlying1=', underlying1)
+      // test end
+      if (!isNaN(underlying0) && !isNaN(underlying1)) {
+        this.token0BalanceInLending = underlying0
+        this.token1BalanceInLending = underlying1
       }
       this.keeperUniswapV3Contract = new web3.eth.Contract(
         uniswapV3PoolABI,
@@ -730,8 +750,8 @@ export default {
           )
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '1000000000',
-            gas: 900000,
+            // gasPrice: '1000000000',
+            // gas: 900000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {

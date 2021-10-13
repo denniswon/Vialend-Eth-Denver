@@ -373,6 +373,9 @@
 import PairsData from '../data/PairsData'
 import ViaLendTokenABI from '../ABI/tokenABI.json'
 import ViaLendPoolABI from '../ABI/UniswapV3PoolABI.json'
+import contractABI from '../ABI/contractABI.json'
+var InputDataEncoder = require('../modules/input-data-enconder')
+var ContractWrapper = require('../modules/contract-wraper')
 
 export default {
   name: 'MyPositions',
@@ -388,6 +391,8 @@ export default {
       pairsData: PairsData,
       token0Contract: null,
       token1Contract: null,
+      token0LendingContract: null,
+      token1LendingContract: null,
       poolContract: null,
       poolAddress: '',
       withdrawDialogVisible: false,
@@ -452,12 +457,16 @@ export default {
       uniToken0Rate: 0,
       uniToken1Rate: 0,
       lendingToken0Rate: 0,
-      lendingToken1Rate: 0
+      lendingToken1Rate: 0,
+      contractWraper: null
     }
   },
   created: async function () {
     var _this = this
+    console.log('abi=', contractABI)
+    // this.contractWraper = new ContractWrapper(web3, this.$parent.vaultAddress, this.$parent.contractABI)
     this.poolAddress = this.$parent.poolAddress
+    console.log('get tokens address.')
     this.token0Address = await this.$parent.keeperContract.methods.token0().call()
     this.token1Address = await this.$parent.keeperContract.methods.token1().call()
     // console.log('this.token0Address=', this.token0Address)
@@ -472,6 +481,14 @@ export default {
     this.token1Contract = new web3.eth.Contract(
       ViaLendTokenABI,
       this.token1Address
+    )
+    this.token0LendingContract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+    )
+    this.token1LendingContract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
     )
     this.cLow = await this.$parent.keeperContract.methods.cLow().call()
     this.cHigh = await this.$parent.keeperContract.methods.cHigh().call()
@@ -575,9 +592,19 @@ export default {
       var uniliqs = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
       console.log('balance in uniswap:', uniliqs)
       // --Get Lending
-      var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
-      console.log('lendingAmounts:', lendingAmounts)
-      this.vaultLending = Number(lendingAmounts[0]) + Number(lendingAmounts[1]) // Not yet converted to USD
+      // test start
+      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
+      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
+      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
+      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
+      console.log('underlying0=', underlying0)
+      console.log('underlying1=', underlying1)
+      // test end
+      // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
+      // console.log('lendingAmounts:', lendingAmounts)
+      this.vaultLending = Number(underlying0) + Number(underlying1) // Not yet converted to USD
       var cLending = await this.$parent.keeperContract.methods.getCAmounts().call()
       this.token0BalanceInVault = await this.token0Contract.methods.balanceOf(this.$parent.vaultAddress).call()
       console.log('this.token0BalanceInVault=', this.token0BalanceInVault)
@@ -587,9 +614,9 @@ export default {
       // tokenDecimal temporary solution
       var t0Decimal = await this.token0Contract.methods.decimals().call()
       var t1Decimal = await this.token1Contract.methods.decimals().call()
-      this.tvlTotal0 = (Number(this.token0BalanceInVault) + Number(uniliqs.amount0) + Number(lendingAmounts[0])) / Number(Math.pow(10, t0Decimal))
+      this.tvlTotal0 = (Number(this.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)) / Number(Math.pow(10, t0Decimal))
       var rateofusd = this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD
-      this.tvlTotal1 = (Number(this.token1BalanceInVault) + Number(uniliqs.amount1) + Number(lendingAmounts[1])) / Number(Math.pow(10, t1Decimal))
+      this.tvlTotal1 = (Number(this.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)) / Number(Math.pow(10, t1Decimal))
       console.log('tvlTotal0=', this.tvlTotal0, 'tvlTotal1=', this.tvlTotal1)
       console.log('token0USD=', this.pairsData[0].smartVaults[0].rateOfUSD)
       console.log('token1USD=', this.pairsData[0].smartVaults[1].rateOfUSD)
@@ -632,9 +659,9 @@ export default {
           token1BalanceInPool = result.amount1
         }
         var token0BalanceInLending, token1BalanceInLending
-        if (lendingAmounts !== null) {
-          token0BalanceInLending = lendingAmounts[0]
-          token1BalanceInLending = lendingAmounts[1]
+        if (!isNaN(underlying0) && !isNaN(underlying1)) {
+          token0BalanceInLending = underlying0
+          token1BalanceInLending = underlying1
         }
         var totalUniswap = Number(token0BalanceInPool) * 300 + Number(token1BalanceInPool)
         var totalLending = Number(token0BalanceInLending) * 300 + Number(token1BalanceInLending)
@@ -815,33 +842,33 @@ export default {
           )
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '80000000000',
-            gas: 600000,
+            // gasPrice: '80000000000',
+            // gas: 600000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
-            if (_this.depositLoading === true) {
-              _this.depositLoading = false
-              _this.$message('Successfully deposited!')
-              _this.supplyDialogVisible = false
-              console.log('confirmation')
-              _this.getVaultInfo()
-              _this.toResult()
-            }
+            // if (_this.depositLoading === true) {
+            // _this.depositLoading = false
+            // _this.$message('Successfully deposited!')
+            // console.log('deposited confirmation')
+            // _this.getVaultInfo()
+            // _this.toResult()
+            // }
+            console.log((new Date()).toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
           })
           .on('receipt', function (receipt) {
             if (_this.depositLoading === true) {
               _this.depositLoading = false
-              _this.$message('Successfully deposited!')
-              _this.supplyDialogVisible = false
-              console.log('receipt')
+              if (receipt.status) { _this.$message('Successfully deposit!') } else { _this.$message('Deposit failed!') }
               _this.getVaultInfo()
               _this.toResult()
             }
+            console.log((new Date()).toLocaleString(), 'deposit receipt status:', receipt.status)
           })
           .on('error', function (error) {
             _this.$message.error(error)
             _this.depositLoading = false
+            console.log('Withdraw error:', error)
           })
       }
     },
@@ -856,29 +883,33 @@ export default {
           )
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '80000000000',
-            gas: 600000,
+            // gasPrice: '80000000000',
+            // gas: 600000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
-            if (_this.withdrawLoading === true) {
-              _this.withdrawLoading = false
-              _this.$message('Successfully withdrawed!')
-              _this.withdrawDialogVisible = false
-              console.log('confirmation')
-            }
+            // if (_this.withdrawLoading === true) {
+            //   _this.withdrawLoading = false
+            //   _this.$message('Successfully withdrawed!')
+            //   _this.withdrawDialogVisible = false
+            //   _this.getVaultInfo()
+            //   console.log('confirmation')
+            // }
+            console.log((new Date()).toLocaleString(), ':{withdraw confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
           })
           .on('receipt', function (receipt) {
             if (_this.withdrawLoading === true) {
               _this.withdrawLoading = false
-              _this.$message('Successfully withdrawed!')
+              if (receipt.status) { _this.$message('Successfully withdraw!') } else { _this.$message('Withdraw failed!') }
               _this.withdrawDialogVisible = false
-              console.log('receipt')
+              _this.getVaultInfo()
+              console.log((new Date()).toLocaleString(), 'withdraw receipt status:', receipt.status)
             }
           })
           .on('error', function (error) {
             _this.$message.error(error)
             _this.withdrawLoading = false
+            console.log('Withdraw error:', error)
           })
       }
     },

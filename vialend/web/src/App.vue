@@ -51,7 +51,7 @@ export default {
       // console.log('data=', JSON.stringify(response.data.data))
       // var obj = JSON.parse(response.data.data)
       this.$store.state.allTokensList = response.data.data
-      console.log('tokenaxios=', this.allTokensList)
+      if (this.$store.state.allTokensList !== null && this.$store.state.allTokensList !== undefined) { console.log('the tokens count:', this.$store.state.allTokensList.length) }
     })
   },
   methods: {
