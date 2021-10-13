@@ -122,10 +122,12 @@ export default {
     window.connectWallet = this.connectWallet
   },
   watch: {
-    isConnected (newStatus, oldStatus) {
-      this.isConnected = newStatus
-      // set the sub-component wallet connection status
-      // this.$refs.supplyliq.isConnected = newStatus
+    '$store.state.isConnected': function () {
+      this.isConnected = this.$store.state.isConnected
+      if (!this.isConnected) {
+        this.myValueToken0Locked = 0
+        this.myValueToken1Locked = 0
+      }
     }
   },
   methods: {

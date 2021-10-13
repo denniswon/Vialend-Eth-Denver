@@ -41,7 +41,7 @@
                     <td>
                       <span v-loading="tvlDataLoading"
                             element-loading-spinner="el-icon-loading"
-                            element-loading-background="rgba(0, 0, 0, 0)">{{Number(myValueToken0Locked).toFixed(2)}}/{{Number(myValueToken1Locked).toFixed(2)}}
+                            element-loading-background="rgba(0, 0, 0, 0)">{{Number(tvlTotal0).toFixed(2)}}/{{Number(tvlTotal1).toFixed(2)}}
                       </span>
                     </td>
                     <td>
@@ -149,7 +149,7 @@
           <span style=" color: #8492a6; font-size: 13px"><img :src="this.pairsData[selectedPair-1].smartVaults[0].iconLink"
                  width="30" />&nbsp;&nbsp;<img :src="this.pairsData[selectedPair-1].smartVaults[1].iconLink"
                  width="30" /></span>&nbsp;&nbsp;
-          <span>{{this.pairsData[selectedPair-1].smartVaults[0].name}} / {{this.pairsData[selectedPair-1].smartVaults[1].name}}({{this.pairsData[selectedPair-1].feeTier}})</span>
+          <span>{{this.pairsData[selectedPair-1].smartVaults[0].symbol}} / {{this.pairsData[selectedPair-1].smartVaults[1].symbol}}({{this.pairsData[selectedPair-1].feeTier}})</span>
         </div>
         <div class="step2_intro">
           <p>To supply or withdraw liquidity for USDC / WETH to the Vialend protocol,you need to enable it first.</p>
@@ -203,14 +203,14 @@
                      :disabled="token0Approved == true ? true : false"
                      :loading="approve0Loading"
                      @click="approveToken(0)"
-                     :style="{width:'100%',display:(token0Approved ? 'none':'')}">Approve {{token0Name}}</el-button>
+                     :style="{width:'100%',display:(token0Approved ? 'none':'')}">Approve {{token0Symbol}}</el-button>
         </div>
         <div class="action_list">
           <el-button type="primary"
                      :disabled="token1Approved == true ? true : false"
                      :loading="approve1Loading"
                      @click="approveToken(1)"
-                     :style="{width:'100%',display:(token1Approved ? 'none':'')}">Approve {{token1Name}}</el-button>
+                     :style="{width:'100%',display:(token1Approved ? 'none':'')}">Approve {{token1Symbol}}</el-button>
         </div>
         <div class="action_list">
           <el-button type="info"
@@ -494,7 +494,8 @@ export default {
     this.cHigh = await this.$parent.keeperContract.methods.cHigh().call()
     console.log('cLow=', this.cLow, ';cHigh=', this.cHigh)
     this.getTokensInfo()
-    this.getVaultInfo()
+    this.initData()
+    // this.getVaultInfo()
   },
   watch: {
     '$store.state.isConnected': function () {
@@ -569,8 +570,64 @@ export default {
         'TVL': '$2,366,149',
         'disabled': false
       }]
-      // console.log('token0_reteOfUSD=', this.pairsData[0].smartVaults[0].rateOfUSD)
-      // console.log('token1_reteOfUSD=', this.pairsData[0].smartVaults[1].rateOfUSD)
+    },
+    async initData () {
+      this.tvlDataLoading = true
+      this.assetsRatioLoading = true
+
+      // ---------- Get TVL Begin-----------------
+      var uniliqs = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
+      console.log('balance in uniswap:', uniliqs, 'getVaultInfo_cLow=', this.cLow, 'getVaultInfo_cHigh=', this.cHigh)
+      // -->Get Lending Amounts begin
+      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
+      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
+      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
+      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
+      console.log('underlying0=', underlying0, 'underlying1=', underlying1)
+      // -->Get Lending Amounts end
+      // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
+      this.vaultLending = Number(underlying0) + Number(underlying1) // Not yet converted to USD
+      // var cLending = await this.$parent.keeperContract.methods.getCAmounts().call()
+      this.token0BalanceInVault = await this.token0Contract.methods.balanceOf(this.$parent.vaultAddress).call()
+      this.token1BalanceInVault = await this.token1Contract.methods.balanceOf(this.$parent.vaultAddress).call()
+      console.log('token0BalanceInVault=', this.token0BalanceInVault, ';token1BalanceInVault=', this.token1BalanceInVault)
+      var t0Decimal = await this.token0Contract.methods.decimals().call()
+      var t1Decimal = await this.token1Contract.methods.decimals().call()
+      this.tvlTotal0 = (Number(this.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)) / Number(Math.pow(10, t0Decimal))
+      this.tvlTotal1 = (Number(this.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)) / Number(Math.pow(10, t1Decimal))
+      this.tvl = this.tvlTotal0 * this.pairsData[0].smartVaults[0].rateOfUSD +
+        this.tvlTotal1 * this.pairsData[0].smartVaults[1].rateOfUSD
+      console.log('tvlTotal0=', this.tvlTotal0, 'tvlTotal1=', this.tvlTotal1)
+      console.log('TVL=', this.tvl, ';token0RateOfUSD=', this.pairsData[0].smartVaults[0].rateOfUSD, ';token1RateOfUSD=', this.pairsData[0].smartVaults[1].rateOfUSD)
+      // ---------- Get TVL End-----------------
+      // Assets ratio
+      var tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
+      var tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
+      var result = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(tmpTickLower), BigInt(tmpTickUpper)).call()
+      var token0BalanceInPool, token1BalanceInPool, token0BalanceInLending, token1BalanceInLending
+      if (result !== undefined && result !== null) {
+        token0BalanceInPool = result.amount0
+        token1BalanceInPool = result.amount1
+      }
+      if (!isNaN(underlying0) && !isNaN(underlying1)) {
+        token0BalanceInLending = underlying0
+        token1BalanceInLending = underlying1
+      }
+      var totalUniswap = Number(token0BalanceInPool) * 300 + Number(token1BalanceInPool)
+      var totalLending = Number(token0BalanceInLending) * 300 + Number(token1BalanceInLending)
+      var totalUsdc = totalUniswap + totalLending
+      this.uniswapRatio = totalUniswap / totalUsdc * 100
+      this.lendingRatio = totalLending / totalUsdc * 100
+      this.uniToken0Rate = Number(token0BalanceInPool) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
+      this.uniToken1Rate = Number(token1BalanceInPool) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
+      this.lendingToken0Rate = Number(token0BalanceInLending) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
+      this.lendingToken1Rate = Number(token1BalanceInLending) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
+      console.log('totalUniswap=', totalUniswap, 'totalLending=', totalLending, 'total_usdc=', totalUsdc, 'uniswapRatio=', this.uniswapRatio, 'lendingRatio=', this.lendingRatio)
+      // Cancel loading status
+      this.tvlDataLoading = false
+      this.assetsRatioLoading = false
     },
     async getVaultInfo () {
       if (!this.isConnected) {
@@ -579,57 +636,27 @@ export default {
       // Set loading status
       this.vaultInfoLoading = true
       this.$parent.myValueLockLoading = true
-      this.tvlDataLoading = true
-      this.assetsRatioLoading = true
-      // Get Shares
-      this.shares = await this.$parent.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
-      console.log('user address=', ethereum.selectedAddress, ';shares=', this.shares)
-      this.totalShares = await this.$parent.keeperContract.methods.totalSupply().call()
 
-      // ---------- Get TVL Start-----------------
-      console.log('getVaultInfo_cLow=', this.cLow)
-      console.log('getVaultInfo_cHigh=', this.cHigh)
-      var uniliqs = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
-      console.log('balance in uniswap:', uniliqs)
-      // --Get Lending
-      // test start
-      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
-      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
-      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
-      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
-      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
-      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
-      console.log('underlying0=', underlying0)
-      console.log('underlying1=', underlying1)
-      // test end
-      // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
-      // console.log('lendingAmounts:', lendingAmounts)
-      this.vaultLending = Number(underlying0) + Number(underlying1) // Not yet converted to USD
-      var cLending = await this.$parent.keeperContract.methods.getCAmounts().call()
-      this.token0BalanceInVault = await this.token0Contract.methods.balanceOf(this.$parent.vaultAddress).call()
-      console.log('this.token0BalanceInVault=', this.token0BalanceInVault)
-      this.token1BalanceInVault = await this.token1Contract.methods.balanceOf(this.$parent.vaultAddress).call()
-      console.log('balance1=', this.token1BalanceInVault)
-      console.log('rateOfUSD', this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD)
-      // tokenDecimal temporary solution
-      var t0Decimal = await this.token0Contract.methods.decimals().call()
-      var t1Decimal = await this.token1Contract.methods.decimals().call()
-      this.tvlTotal0 = (Number(this.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)) / Number(Math.pow(10, t0Decimal))
-      var rateofusd = this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD
-      this.tvlTotal1 = (Number(this.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)) / Number(Math.pow(10, t1Decimal))
-      console.log('tvlTotal0=', this.tvlTotal0, 'tvlTotal1=', this.tvlTotal1)
-      console.log('token0USD=', this.pairsData[0].smartVaults[0].rateOfUSD)
-      console.log('token1USD=', this.pairsData[0].smartVaults[1].rateOfUSD)
-      this.tvl = this.tvlTotal0 * this.pairsData[0].smartVaults[0].rateOfUSD +
-        this.tvlTotal1 * this.pairsData[0].smartVaults[1].rateOfUSD
-      console.log('TVL=', this.tvl)
-      // ---------- Get TVL End-----------------
+      // ---------- Get Shares -------------------
+      this.shares = await this.$parent.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+      this.totalShares = await this.$parent.keeperContract.methods.totalSupply().call()
+      console.log('this.shares=', this.shares, ';this.totalShares=', this.totalShares)
+
       // Get Max TVL
       this.maxTVL = await this.$parent.keeperContract.methods.maxTotalSupply().call()
       console.log('getVaultInfo_maxTVL=', this.maxTVL)
+
       // Get % of cap used
       this.ofCapUsed = (this.totalShares / this.maxTVL * 100).toFixed(2)
-      // Get myValueLocked and myEarnedValue
+
+      // Get APR
+      if (Number(this.shares) === 0 || Number(this.totalShares) === 0) {
+        this.currentAPR = 0
+      } else {
+        console.log('share=', this.shares, ';totalshares=', this.totalShares, ';tvl=', (this.tvlTotal0 + this.tvlTotal1))
+        this.currentAPR = this.shares / this.totalShares * (this.tvlTotal0 + this.tvlTotal1)
+      }
+      // ---------- Get myValueLocked and myEarnedValue Begin
       if (Number(this.shares) === 0 || Number(this.totalShares) === 0) {
         this.myValueLocked = 0
         this.myEarnedValue = 0
@@ -649,72 +676,11 @@ export default {
         this.$parent.myValueToken0Locked = this.shares / this.totalShares * this.tvlTotal0
         this.$parent.myValueToken1Locked = this.shares / this.totalShares * this.tvlTotal1
         this.$parent.myEarnedValue = this.myEarnedValue
-        // Assets ratio
-        var tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
-        var tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
-        var result = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(tmpTickLower), BigInt(tmpTickUpper)).call()
-        var token0BalanceInPool, token1BalanceInPool
-        if (result !== undefined && result !== null) {
-          token0BalanceInPool = result.amount0
-          token1BalanceInPool = result.amount1
-        }
-        var token0BalanceInLending, token1BalanceInLending
-        if (!isNaN(underlying0) && !isNaN(underlying1)) {
-          token0BalanceInLending = underlying0
-          token1BalanceInLending = underlying1
-        }
-        var totalUniswap = Number(token0BalanceInPool) * 300 + Number(token1BalanceInPool)
-        var totalLending = Number(token0BalanceInLending) * 300 + Number(token1BalanceInLending)
-        var totalUsdc = totalUniswap + totalLending
-        this.uniswapRatio = totalUniswap / totalUsdc * 100
-        this.lendingRatio = totalLending / totalUsdc * 100
-        this.uniToken0Rate = Number(token0BalanceInPool) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
-        this.uniToken1Rate = Number(token1BalanceInPool) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
-        this.lendingToken0Rate = Number(token0BalanceInLending) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
-        this.lendingToken1Rate = Number(token1BalanceInLending) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
-
-        console.log('totalUniswap=', totalUniswap)
-        console.log('totalLending=', totalLending)
-        console.log('total_usdc=', totalUsdc)
-        console.log('uniswapRatio=', this.uniswapRatio)
-        console.log('lendingRatio=', this.lendingRatio)
       }
-      // Cancel loading status
-      this.$parent.myValueLockLoading = false
-      this.tvlDataLoading = false
-      this.assetsRatioLoading = false
-
-      console.log('this.shares=', this.shares, ';this.totalShares=', this.totalShares, ';this.tvl=', this.tvl)
-      // Get APR
-      if (Number(this.shares) === 0 || Number(this.totalShares) === 0) {
-        this.currentAPR = 0
-      } else {
-        console.log('share=', this.shares, ';totalshares=', this.totalShares, ';tvl=', (this.tvlTotal0 + this.tvlTotal1))
-        this.currentAPR = this.shares / this.totalShares * (this.tvlTotal0 + this.tvlTotal1)
-      }
-      // Get TVL
-      // var tvlObj = await this.keeperContract.methods.getTVL().call()
-      // if (tvlObj.total0 !== undefined && tvlObj.total1 !== undefined) {
-      //   this.tvlTotal0 = tvlObj.total0 * this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD
-      //   this.tvlTotal1 = tvlObj.total1 * this.pairsData[this.selectedPair - 1].smartVaults[1].rateOfUSD
-      //   console.log('rateToken0=', this.pairsData[this.selectedPair - 1].smartVaults[0].rateOfUSD)
-      //   console.log('rateToken1=', this.pairsData[this.selectedPair - 1].smartVaults[1].rateOfUSD)
-      //   console.log('tvlTotal0=', this.tvlTotal0)
-      //   console.log('tvlTotal1=', this.tvlTotal1)
-      //   console.log('maxTVL=', this.maxTVL)
-      //   this.tvl = parseInt(this.tvlTotal0 / Math.pow(10, this.token0Decimal) + this.tvlTotal1 / Math.pow(10, this.token1Decimal))
-
-      // }
-      // Get Range Data
-      // var rangeObj = await this.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
-      // if (rangeObj !== undefined && rangeObj !== null) {
-      //   console.log('range object=', JSON.stringify(rangeObj))
-      //   this.vaultRange = rangeObj.amount0 + '-' + rangeObj.amount1
-      // }
       this.vaultRange = (Math.pow(1.0001, this.cLow) * Math.pow(10, this.token0Decimal - this.token1Decimal)).toFixed(1) + '-' + (Math.pow(1.0001, this.cHigh) * Math.pow(10, this.token0Decimal - this.token1Decimal)).toFixed(1)
       console.log('cLow1=', this.cLow, ';cHigh1=', this.cHigh)
-
       this.vaultInfoLoading = false
+      this.$parent.myValueLockLoading = false
     },
     async getPoolInfo () {
       // this.feeTier = await this.poolContract.methods.fee().call()
@@ -766,8 +732,8 @@ export default {
           .approve(this.$parent.vaultAddress, BigInt(90000000000000000000000))
           .send({
             from: ethereum.selectedAddress,
-            gasPrice: '10000000000',
-            gas: 200000,
+            // gasPrice: '10000000000',
+            // gas: 200000,
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
