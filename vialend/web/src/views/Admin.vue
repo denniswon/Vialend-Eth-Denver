@@ -4,37 +4,48 @@
     <el-tabs type="border-card">
       <el-tab-pane>
         <span slot="label"><i class="el-icon-date"></i> Rebalance</span>
-        <div style="width:50%">
+        <div style="width:65%"
+             v-loading="loadingTokensInfoStatus">
           <table class="table table-striped">
             <thead>
               <tr>
                 <th>Token balance</th>
                 <th>Wallet</th>
                 <th>Vault</th>
-                <th>Pool</th>
-                <th>Lending</th>
+                <th>Uni-V3</th>
+                <th>Compound</th>
+                <!-- <th>fees</th> -->
               </tr>
             </thead>
             <tbody>
               <tr>
                 <th>{{token0Symbol}}</th>
-                <td>{{(Number(token0BalanceInWallet) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
-                <td>{{(Number(token0BalanceInVault) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
-                <td>{{(Number(token0BalanceInPool) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
-                <td>{{(Number(token0BalanceInLending) / Number(Math.pow(10, token0Decimal))).toFixed(2)}}</td>
+                <td>{{Number(token0BalanceInWallet).toFixed(2) + ' / $' + token0BalanceUSDInWallet.toFixed(2)}}</td>
+                <td>{{Number(token0BalanceInVault).toFixed(2) + ' / $' + token0BalanceUSDInVault.toFixed(2)}}</td>
+                <td>{{Number(token0BalanceInPool).toFixed(2) + ' / $' + token0BalanceUSDInPool.toFixed(2)}}</td>
+                <td>{{Number(token0BalanceInLending).toFixed(2) + ' / $' + token0BalanceUSDInLending.toFixed(2)}}</td>
+                <!-- <td>{{accruedProtocolFees0}}</td> -->
               </tr>
               <tr>
                 <th>{{token1Symbol}}</th>
-                <td>{{(Number(token1BalanceInWallet) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
-                <td>{{(Number(token1BalanceInVault) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
-                <td>{{(Number(token1BalanceInPool) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
-                <td>{{(Number(token1BalanceInLending) / Number(Math.pow(10, token1Decimal))).toFixed(2)}}</td>
+                <td>{{Number(token1BalanceInWallet).toFixed(2) + ' / $' + token1BalanceUSDInWallet.toFixed(2)}}</td>
+                <td>{{Number(token1BalanceInVault).toFixed(2) + ' / $' + token1BalanceUSDInVault.toFixed(2)}}</td>
+                <td>{{Number(token1BalanceInPool).toFixed(2) + ' / $' + token1BalanceUSDInPool.toFixed(2)}}</td>
+                <td>{{Number(token1BalanceInLending).toFixed(2) + ' / $' + token1BalanceUSDInLending.toFixed(2)}}</td>
+                <!-- <td>{{accruedProtocolFees1}}</td> -->
+              </tr>
+              <tr>
+                <th>USD</th>
+                <td>${{(Number(token0BalanceUSDInWallet) + Number(token1BalanceUSDInWallet)).toFixed(2)}}</td>
+                <td>${{(Number(token0BalanceUSDInVault) + Number(token1BalanceUSDInVault)).toFixed(2)}}</td>
+                <td>${{(Number(token0BalanceUSDInPool) + Number(token1BalanceUSDInPool)).toFixed(2)}}</td>
+                <td>${{(Number(token0BalanceUSDInLending) + Number(token1BalanceUSDInLending)).toFixed(2)}}</td>
+                <!-- <td>{{accruedProtocolFees1}}</td> -->
               </tr>
             </tbody>
           </table>
         </div>
         <hr>
-
         Min Tick:{{tickLower}}<br>
         Max Tick:{{tickUpper}}<br>
         Current Tick:{{currentTick}}<br>
@@ -45,7 +56,7 @@
           <span class="status">{{rangeStatus}}</span>
         </el-button><br>
         <div class="block"
-             style="width:50%;margin-top:20px;">
+             style="width:65%;margin-top:20px;">
           <!-- <el-slider v-model="tickRange"
                      range
                      :marks="getMarks">
@@ -212,6 +223,7 @@ export default {
       },
       errorRebalance: '',
       rebalanceLoading: false,
+      loadingTokensInfoStatus: true,
       token0Contract: null,
       token1Contract: null,
       token0LendingContract: null,
@@ -225,14 +237,22 @@ export default {
       token1Name: '',
       token1Symbol: '',
       token1Decimal: 0,
-      token0BalanceInWallet: 0,
-      token1BalanceInWallet: 0,
-      token0BalanceInVault: 0,
-      token1BalanceInVault: 0,
+      token0BalanceInWallet: 0.00,
+      token1BalanceInWallet: 0.00,
+      token0BalanceUSDInWallet: 0.00,
+      token1BalanceUSDInWallet: 0.00,
+      token0BalanceInVault: 0.00,
+      token1BalanceInVault: 0.00,
+      token0BalanceUSDInVault: 0.00,
+      token1BalanceUSDInVault: 0.00,
       token0BalanceInPool: 0,
       token1BalanceInPool: 0,
+      token0BalanceUSDInPool: 0,
+      token1BalanceUSDInPool: 0,
       token0BalanceInLending: 0,
       token1BalanceInLending: 0,
+      token0BalanceUSDInLending: 0,
+      token1BalanceUSDInLending: 0,
       dotStyle: 'dot',
       rangeStatusStyle: '',
       rangeStatusDisplay: 'none',
@@ -248,11 +268,45 @@ export default {
       teamAddress: '',
       viewOnEtherscanDisable: true,
       transactionHash: '',
-      goToEtherscan: ''
+      goToEtherscan: '',
+      accruedProtocolFees0: 0,
+      accruedProtocolFees1: 0
     }
   },
-  created: function () {
-    this.initData()
+  created: async function () {
+    this.getTokensList()
+    this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
+    this.token0Address = await this.$parent.keeperContract.methods.token0().call()
+    this.token1Address = await this.$parent.keeperContract.methods.token1().call()
+    console.log('poolAddress=', this.poolAddress)
+    console.log('token0Address=', this.token0Address)
+    console.log('token1Address=', this.token1Address)
+    // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
+    this.token0LendingContract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+    )
+    this.token1LendingContract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
+    )
+    this.token0Contract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      this.token0Address
+    )
+    this.token1Contract = new web3.eth.Contract(
+      ViaLendTokenABI,
+      this.token1Address
+    )
+    this.keeperUniswapV3Contract = new web3.eth.Contract(
+      uniswapV3PoolABI,
+      this.poolAddress
+    )
+    await this.getSlot0()
+    this.getTokensInfo()
+    this.loadPriceRange()
+    this.getSettingData()
+    // this.loadFees()
   },
   mounted () {
   },
@@ -274,33 +328,18 @@ export default {
   watch: {
     newMinPrice (price) {
       console.log('new min price=', price)
-      // $('.js-range-slider').data('ionRangeSlider').update({ from: price })
       if (!isNaN(price)) { this.tickLower = this.priceToTick(price) } else { this.tickLower = 0 }
       this.drawTickRangeChart()
     },
     newMaxPrice (price) {
       console.log('new max price=', price)
       this.tickUpper = this.priceToTick(price)
-      // $('.js-range-slider').data('ionRangeSlider').update({ to: price })
       if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
       this.drawTickRangeChart()
     },
     '$store.state.isConnected': function () {
       this.isConnected = this.$store.state.isConnected
-    },
-    '$store.state.allTokensList': function () {
-      // this.tokensList = this.$store.state.allTokensList
-      // // console.log('tokenslist123123=', this.tokensList)
-      // if (this.tokensList !== null) {
-      //   // console.log('len123=', this.tokensList.length)
-      //   for (var i = 0; i < this.tokensList.length; i++) {
-      //     if (this.tokensList[i].symbol === this.currTokenId) {
-      //       this.usdTokenVal = this.tokensList[i].price_usd
-      //       this.priceUSD = this.tokensList[i].price_usd
-      //       break
-      //     }
-      //   }
-      // }
+      this.getTokensBalanceInWallet()
     },
     currTokenVal (val) {
       if (val !== '') {
@@ -315,44 +354,7 @@ export default {
     }
   },
   methods: {
-    async initData () {
-      console.log('this.$parent.vaultAddress=', this.$parent.vaultAddress)
-      this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
-      console.log('this.poolAddress=', this.poolAddress)
-      var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
-      console.log('lendingAmounts=', lendingAmounts)
-      // test start
-      this.token0LendingContract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
-      )
-      this.token1LendingContract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
-      )
-      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
-      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
-      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
-      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
-      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
-      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
-      console.log('underlying0=', underlying0)
-      console.log('underlying1=', underlying1)
-      // test end
-      if (!isNaN(underlying0) && !isNaN(underlying1)) {
-        this.token0BalanceInLending = underlying0
-        this.token1BalanceInLending = underlying1
-      }
-      this.keeperUniswapV3Contract = new web3.eth.Contract(
-        uniswapV3PoolABI,
-        this.poolAddress
-      )
-      this.getSlot0()
-      this.getTokensBalanceInVaultAndPool()
-      this.loadPriceRange()
-      this.getSettingData()
-      this.getTokensInfo()
-
+    async getTokensList () {
       axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
         this.tokensList = response.data.data
         for (var i = 0; i < this.tokensList.length; i++) {
@@ -366,16 +368,7 @@ export default {
       })
     },
     async getTokensInfo () {
-      this.token0Address = await this.$parent.keeperContract.methods.token0().call()
-      this.token1Address = await this.$parent.keeperContract.methods.token1().call()
-      this.token0Contract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        this.token0Address
-      )
-      this.token1Contract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        this.token1Address
-      )
+      this.loadingTokensInfoStatus = true
       // Get Token0 Information
       this.token0Name = await this.token0Contract.methods.name().call()
       console.log('token0Name=', this.token0Name)
@@ -383,8 +376,6 @@ export default {
       console.log('token0Symbol=', this.token0Symbol)
       this.token0Decimal = await this.token0Contract.methods.decimals().call()
       console.log('token0Decimal=', this.token0Decimal)
-      this.token0BalanceInWallet = await this.token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
-      console.log('token0BalanceInWallet=', this.token0BalanceInWallet)
       // Get Token1 Information
       this.token1Name = await this.token1Contract.methods.name().call()
       console.log('token1Name=', this.token1Name)
@@ -392,8 +383,64 @@ export default {
       console.log('token1Symbol=', this.token1Symbol)
       this.token1Decimal = await this.token1Contract.methods.decimals().call()
       console.log('token1Decimal=', this.token1Decimal)
-      this.token1BalanceInWallet = await this.token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
-      console.log('token1BalanceInWallet=', this.token1BalanceInWallet)
+      // ----------------------Tokens balance ------------------------------
+      // Token0 balance in wallet and vault
+      // console.log('ethereum.selectedAddress=', ethereum.selectedAddress)
+      this.getTokensBalanceInWallet()
+      // Token0 and token1 balance in pool
+      var tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
+      var tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
+      var result = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(tmpTickLower), BigInt(tmpTickUpper)).call()
+      if (result !== undefined && result !== null) {
+        this.token0BalanceInPool = result.amount0 / Number(Math.pow(10, this.token0Decimal))
+        this.token0BalanceUSDInPool = Number(this.token0BalanceInPool) * Number(this.$store.state.token0RateOfUSD)
+        this.token1BalanceInPool = result.amount1 / Number(Math.pow(10, this.token1Decimal))
+        this.token1BalanceUSDInPool = Number(this.token1BalanceInPool) * Number(this.$store.state.token1RateOfUSD)
+      }
+      // Token0 and token1 balance in Compound
+      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
+      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
+      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
+      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
+      console.log('underlying0=', underlying0, 'underlying1=', underlying1)
+      if (!isNaN(underlying0) && !isNaN(underlying1)) {
+        this.token0BalanceInLending = underlying0 / Number(Math.pow(10, this.token0Decimal))
+        this.token0BalanceUSDInLending = Number(this.token0BalanceInLending) * Number(this.$store.state.token0RateOfUSD)
+        this.token1BalanceInLending = underlying1 / Number(Math.pow(10, this.token1Decimal))
+        this.token1BalanceUSDInLending = Number(this.token1BalanceInLending) * Number(this.$store.state.token1RateOfUSD)
+      }
+      this.loadingTokensInfoStatus = false
+    },
+    async getTokensBalanceInWallet () {
+      if (!this.isConnected) {
+        this.$message('Please connect wallet!')
+      } else {
+        var token0BalanceWeiInWallet = await this.token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
+        this.token0BalanceInWallet = (Number(token0BalanceWeiInWallet) / Number(Math.pow(10, this.token0Decimal))).toFixed(2)
+        this.token0BalanceUSDInWallet = Number(this.token0BalanceInWallet) * Number(this.$store.state.token0RateOfUSD)
+        var token0BalanceWeiInVault = await this.$parent.keeperContract.methods.getBalance0().call()
+        this.token0BalanceInVault = (Number(token0BalanceWeiInVault) / Number(Math.pow(10, this.token0Decimal))).toFixed(2)
+        this.token0BalanceUSDInVault = Number(this.token0BalanceInVault) * Number(this.$store.state.token0RateOfUSD)
+        // Token1 balance in wallet and vault
+        var token1BalanceWeiInWallet = await this.token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
+        this.token1BalanceInWallet = (Number(token1BalanceWeiInWallet) / Number(Math.pow(10, this.token1Decimal))).toFixed(2)
+        this.token1BalanceUSDInWallet = Number(this.token1BalanceInWallet) * Number(this.$store.state.token1RateOfUSD)
+        var token1BalanceWeiInVault = await this.$parent.keeperContract.methods.getBalance1().call()
+        this.token1BalanceInVault = (Number(token1BalanceWeiInVault) / Number(Math.pow(10, this.token1Decimal))).toFixed(2)
+        this.token1BalanceUSDInVault = Number(this.token1BalanceInVault) * Number(this.$store.state.token1RateOfUSD)
+      }
+    },
+    async loadFees () {
+      var accumulateUniswapFees0 = await this.$parent.keeperContract.methods.AccumulateUniswapFees0().call()
+      var accumulateUniswapFees1 = await this.$parent.keeperContract.methods.AccumulateUniswapFees1().call()
+      this.accruedProtocolFees0 = await this.$parent.keeperContract.methods.accruedProtocolFees0().call()
+      this.accruedProtocolFees1 = await this.$parent.keeperContract.methods.accruedProtocolFees1().call()
+      console.log('accumulateUniswapFees0=', accumulateUniswapFees0)
+      console.log('accumulateUniswapFees1=', accumulateUniswapFees1)
+      console.log('accruedProtocolFees0=', this.accruedProtocolFees0)
+      console.log('accruedProtocolFees1=', this.accruedProtocolFees1)
     },
     async loadPriceRange () {
       var _this = this
@@ -464,10 +511,6 @@ export default {
           .then(slot => {
             if (slot !== undefined && slot !== null && slot !== '') {
               console.log('slot0=' + JSON.stringify(slot))
-              // var slot0 = JSON.parse(val)
-              console.log('tick=', parseInt(slot['tick']) - 1000)
-              // this.rangeForm.tickLower = parseInt(slot['tick']) - 1000
-              // this.rangeForm.tickUpper = parseInt(slot['tick']) + 1000
               // this.tickLower = Math.round(parseInt(this.rangeForm.tickLower) / 60) * 60
               // this.tickUpper = Math.round(parseInt(this.rangeForm.tickUpper) / 60) * 60
               _this.currentTick = slot['tick']
@@ -477,11 +520,9 @@ export default {
                 console.log('currentTick1=', _this.currentTick)
                 _this.tickLower = parseInt(_this.currentTick) - 1000
                 _this.tickUpper = parseInt(_this.currentTick) + 1000
-                console.log('tickLower0=', _this.tickLower)
-                console.log('tickUpper0=', _this.tickUpper)
+                console.log('tickLower0=', _this.tickLower, 'tickUpper0=', _this.tickUpper)
               } else {
-                console.log('tickLower1=', _this.tickLower)
-                console.log('tickUpper1=', _this.tickUpper)
+                console.log('tickLower1=', _this.tickLower, 'tickUpper1=', _this.tickUpper)
               }
             }
           })
@@ -702,24 +743,6 @@ export default {
           this.currTokenVal = 1
           break
         }
-      }
-    },
-    async getTokensBalanceInVaultAndPool () {
-      if (this.$parent.keeperContract != null) {
-        this.token0BalanceInVault = await this.$parent.keeperContract.methods.getBalance0().call()
-        console.log('token0BalanceInVault=', this.token0BalanceInVault)
-        this.token1BalanceInVault = await this.$parent.keeperContract.methods.getBalance1().call()
-        console.log('token1BalanceInVault=', this.token1BalanceInVault)
-        var tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
-        var tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
-        var result = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(tmpTickLower), BigInt(tmpTickUpper)).call()
-        if (result !== undefined && result !== null) {
-          this.token0BalanceInPool = result.amount0
-          this.token1BalanceInPool = result.amount1
-          console.log('result000=', result)
-        }
-        // var decimal = await this.$parent.keeperContract.methods.decimals().call()
-        // console.log('decimal=', decimal)
       }
     },
     doRebalance () {

@@ -9,10 +9,12 @@ export default new Vuex.Store({
     isConnected: false,
     StatusButtonText: '',
     chainId: 0,
-    allTokensList: null
+    allTokensList: null,
+    token0RateOfUSD: 0,
+    token1RateOfUSD: 0,
+    tokenExchangeRateLoaded: false
   },
   mutations: {
-
   },
   actions: {
     setApproveStatus (state, dt) {

@@ -18,12 +18,16 @@
   -webkit-text-shadow: rgba(0, 0, 0, 0.01) 0 0 1px;
   text-shadow: rgba(0, 0, 0, 0.01) 0 0 1px;
 }
+html {
+  height: 100%;
+}
 body {
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
   font-weight: 400;
   background: #ffffff;
   color: #a5a5a5;
+  height: 100%;
 }
 ul {
   list-style: none;
@@ -183,6 +187,7 @@ section {
 }
 .super_container {
   width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 .prlx_parent {

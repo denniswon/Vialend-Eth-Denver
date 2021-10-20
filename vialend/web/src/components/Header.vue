@@ -40,11 +40,7 @@
       justify-content-start
       ml-auto
     ">
-              <div class="adminButton">
-                <router-link to='/VialendInfo'>
-                  VialendInfo
-                </router-link>
-              </div>&nbsp;&nbsp;
+
               <div class="adminButton">
                 <router-link to='/admin'>
                   Admin
@@ -185,21 +181,6 @@ export default {
         this.$store.state.StatusButtonText = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
         // this.$refs.supplyliq.checkConnectionStatus()
-        // this.getMyLiquidity()
-      }
-    },
-    getMyLiquidity () {
-      if (this.keeperContract != null) {
-        var myLiq = this.keeperContract.methods
-          .balanceOf(this.currentAccount)
-          .call()
-          .then(val => {
-            this.myLiquidity = val
-            console.log('BalanceOf=' + val)
-          })
-        // console.log('BalanceOf=' + myLiq + '|' + JSON.stringify(myLiq))
-      } else {
-        console.log('keeperContract is null')
       }
     }
   }

@@ -382,9 +382,6 @@ export default {
   data () {
     return {
       selectedPair: 1,
-      selectedText: '',
-      isConnected: this.$store.state.isConnected,
-      newPositionButtonDisable: true,
       vaultInfoLoading: true,
       tvlDataLoading: false,
       assetsRatioLoading: false,
@@ -462,10 +459,7 @@ export default {
     }
   },
   created: async function () {
-    var _this = this
-    console.log('abi=', contractABI)
-    // this.contractWraper = new ContractWrapper(web3, this.$parent.vaultAddress, this.$parent.contractABI)
-    this.poolAddress = this.$parent.poolAddress
+    this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
     console.log('get tokens address.')
     this.token0Address = await this.$parent.keeperContract.methods.token0().call()
     this.token1Address = await this.$parent.keeperContract.methods.token1().call()
@@ -681,10 +675,6 @@ export default {
       console.log('cLow1=', this.cLow, ';cHigh1=', this.cHigh)
       this.vaultInfoLoading = false
       this.$parent.myValueLockLoading = false
-    },
-    async getPoolInfo () {
-      // this.feeTier = await this.poolContract.methods.fee().call()
-      console.log('feeTier=', this.feeTier)
     },
     async getTokensBalanceInWallet () {
       // token0 balance in wallet

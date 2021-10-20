@@ -35,10 +35,8 @@ export default {
   name: 'App',
   data () {
     return {
-      vaultAddress: '0xAda1AC9D1dBFFF1270f0009d8f20bd0332F48113',
-      poolAddress: '',
-      keeperContract: null,
-      allTokensList: null
+      vaultAddress: '0x58b008535DC1d06dbAe22201D3F10b79c80f9dd4',
+      keeperContract: null
     }
   },
   created: function () {
@@ -46,32 +44,35 @@ export default {
       contractABI,
       this.vaultAddress
     )
-    this.getPoolAddress()
-    axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
-      // console.log('data=', JSON.stringify(response.data.data))
-      // var obj = JSON.parse(response.data.data)
-      this.$store.state.allTokensList = response.data.data
-      if (this.$store.state.allTokensList !== null && this.$store.state.allTokensList !== undefined) { console.log('the tokens count:', this.$store.state.allTokensList.length) }
-    })
+    this.getTokensRateOfUSD()
   },
   methods: {
-    async getPoolAddress () {
-      this.poolAddress = await this.keeperContract.methods.poolAddress().call()
-    },
     getName () {
       console.log('name=' + this.$store.state.name)
+    },
+    getTokensRateOfUSD () {
+      axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
+        // console.log('data=', JSON.stringify(response.data.data))
+        var allTokensList = response.data.data
+        if (allTokensList !== null && allTokensList !== undefined) {
+          this.$store.state.allTokensList = response.data.data
+          console.log('allTokensList count:', allTokensList.length)
+          for (var i = 0; i < allTokensList.length; i++) {
+            if (allTokensList[i].symbol === 'ETH') {
+              this.$store.state.token0RateOfUSD = allTokensList[i].price_usd
+              console.log('Get token0RateOfUSD is ', this.$store.state.token0RateOfUSD)
+            } else if (allTokensList[i].symbol === 'USDC') {
+              this.$store.state.token1RateOfUSD = allTokensList[i].price_usd
+              console.log('Get token1RateOfUSD is ', this.$store.state.token1RateOfUSD)
+            }
+            if (this.$store.state.token0RateOfUSD > 0 && this.$store.state.token1RateOfUSD > 0) {
+              this.$store.state.tokenExchangeRateLoaded = true
+              break
+            }
+          }
+        }
+      })
     }
   }
 }
 </script>
-
-<style>
-/* @import "./assets/styles/bootstrap-4.1.2/bootstrap.min.css";
-@import "./assets/plugins/font-awesome-4.7.0/css/font-awesome.min.css";
-@import "./assets/plugins/OwlCarousel2-2.2.1/owl.carousel.css";
-@import "./assets/plugins/OwlCarousel2-2.2.1/owl.theme.default.css";
-@import "./assets/plugins/OwlCarousel2-2.2.1/animate.css";
-@import "./assets/plugins/colorbox/colorbox.css";
-@import "./assets/styles/main_styles.css";
-@import "./assets/styles/responsive.css"; */
-</style>
