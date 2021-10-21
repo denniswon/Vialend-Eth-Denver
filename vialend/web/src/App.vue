@@ -45,10 +45,18 @@ export default {
       this.vaultAddress
     )
     this.getTokensRateOfUSD()
+    this.checkCurrentChain()
   },
   methods: {
     getName () {
       console.log('name=' + this.$store.state.name)
+    },
+    async checkCurrentChain () {
+      var chainId = await web3.eth.getChainId()
+      console.log('ChainId in app is', chainId)
+      // var available = this.$store.state.availableChainId.includes(chainId)
+      // console.log('chain available is', available)
+      return this.$store.state.availableChainId.includes(chainId)
     },
     getTokensRateOfUSD () {
       axios.get('https://api.coinlore.net/api/tickers/').then((response) => {

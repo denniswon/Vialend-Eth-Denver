@@ -223,7 +223,7 @@ export default {
       },
       errorRebalance: '',
       rebalanceLoading: false,
-      loadingTokensInfoStatus: true,
+      loadingTokensInfoStatus: false,
       token0Contract: null,
       token1Contract: null,
       token0LendingContract: null,
@@ -273,40 +273,8 @@ export default {
       accruedProtocolFees1: 0
     }
   },
-  created: async function () {
-    this.getTokensList()
-    this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
-    this.token0Address = await this.$parent.keeperContract.methods.token0().call()
-    this.token1Address = await this.$parent.keeperContract.methods.token1().call()
-    console.log('poolAddress=', this.poolAddress)
-    console.log('token0Address=', this.token0Address)
-    console.log('token1Address=', this.token1Address)
-    // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
-    this.token0LendingContract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
-    )
-    this.token1LendingContract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
-    )
-    this.token0Contract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      this.token0Address
-    )
-    this.token1Contract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      this.token1Address
-    )
-    this.keeperUniswapV3Contract = new web3.eth.Contract(
-      uniswapV3PoolABI,
-      this.poolAddress
-    )
-    await this.getSlot0()
-    this.getTokensInfo()
-    this.loadPriceRange()
-    this.getSettingData()
-    // this.loadFees()
+  created: function () {
+    this.initData()
   },
   mounted () {
   },
@@ -339,7 +307,20 @@ export default {
     },
     '$store.state.isConnected': function () {
       this.isConnected = this.$store.state.isConnected
+      if (this.isConnected) {
+        this.getTokensBalanceInWallet()
+      } else {
+        this.token0BalanceInWallet = 0.00
+        this.token1BalanceInWallet = 0.00
+        this.token0BalanceUSDInWallet = 0.00
+        this.token1BalanceUSDInWallet = 0.00
+      }
+    },
+    '$store.state.currentAccount': function () {
       this.getTokensBalanceInWallet()
+    },
+    '$store.state.chainId': function () {
+      this.initData()
     },
     currTokenVal (val) {
       if (val !== '') {
@@ -354,6 +335,60 @@ export default {
     }
   },
   methods: {
+    async initData () {
+      if (await this.$parent.checkCurrentChain() === false) {
+        this.token0BalanceInWallet = 0.00
+        this.token1BalanceInWallet = 0.00
+        this.token0BalanceUSDInWallet = 0.00
+        this.token1BalanceUSDInWallet = 0.00
+        this.token0BalanceInVault = 0.00
+        this.token1BalanceInVault = 0.00
+        this.token0BalanceUSDInVault = 0.00
+        this.token1BalanceUSDInVault = 0.00
+        this.token0BalanceInPool = 0.00
+        this.token1BalanceInPool = 0.00
+        this.token0BalanceUSDInPool = 0.00
+        this.token1BalanceUSDInPool = 0.00
+        this.token0BalanceInLending = 0.00
+        this.token1BalanceInLending = 0.00
+        this.token0BalanceUSDInLending = 0.00
+        this.token1BalanceUSDInLending = 0.00
+        return
+      }
+      this.getTokensList()
+      this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
+      this.token0Address = await this.$parent.keeperContract.methods.token0().call()
+      this.token1Address = await this.$parent.keeperContract.methods.token1().call()
+      console.log('poolAddress=', this.poolAddress)
+      console.log('token0Address=', this.token0Address)
+      console.log('token1Address=', this.token1Address)
+      // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
+      this.token0LendingContract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+      )
+      this.token1LendingContract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
+      )
+      this.token0Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token0Address
+      )
+      this.token1Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token1Address
+      )
+      this.keeperUniswapV3Contract = new web3.eth.Contract(
+        uniswapV3PoolABI,
+        this.poolAddress
+      )
+      await this.getSlot0()
+      this.getTokensInfo()
+      this.loadPriceRange()
+      this.getSettingData()
+      // this.loadFees()
+    },
     async getTokensList () {
       axios.get('https://api.coinlore.net/api/tickers/').then((response) => {
         this.tokensList = response.data.data
@@ -415,7 +450,7 @@ export default {
     },
     async getTokensBalanceInWallet () {
       if (!this.isConnected) {
-        this.$message('Please connect wallet!')
+        // this.$message('Please connect wallet!')
       } else {
         var token0BalanceWeiInWallet = await this.token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
         this.token0BalanceInWallet = (Number(token0BalanceWeiInWallet) / Number(Math.pow(10, this.token0Decimal))).toFixed(2)

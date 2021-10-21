@@ -575,38 +575,8 @@ export default {
       contractWraper: null
     }
   },
-  created: async function () {
-    this.initDataLoading = true
-    this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
-    this.token0Address = await this.$parent.keeperContract.methods.token0().call()
-    this.token1Address = await this.$parent.keeperContract.methods.token1().call()
-    // console.log('this.token0Address=', this.token0Address)
-    this.poolContract = new web3.eth.Contract(
-      ViaLendPoolABI,
-      this.poolAddress
-    )
-    this.token0Contract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      this.token0Address
-    )
-    this.token1Contract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      this.token1Address
-    )
-    this.token0LendingContract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
-    )
-    this.token1LendingContract = new web3.eth.Contract(
-      ViaLendTokenABI,
-      '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
-    )
-    await this.getTokensInfo()
-    this.cLow = await this.$parent.keeperContract.methods.cLow().call()
-    this.cHigh = await this.$parent.keeperContract.methods.cHigh().call()
-    console.log('cLow=', this.cLow, ';cHigh=', this.cHigh)
-    await this.loadPublicData()
-    this.initDataLoading = false
+  created: function () {
+    this.initData()
   },
   mounted () {
     window.connectWallet = this.connectWallet
@@ -625,6 +595,8 @@ export default {
       } else {
         this.myValueToken0Locked = 0
         this.myValueToken1Locked = 0
+        this.myValueToken0USDLocked = 0
+        this.myValueToken1USDLocked = 0
       }
     },
     '$store.state.tokenExchangeRateLoaded': function () {
@@ -635,10 +607,12 @@ export default {
         if (this.myValueToken1Locked > 0) this.myValueToken1USDLocked = Number(this.myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
       }
     },
-    '$store.state.StatusButtonText': function () {
-      console.log('loadmydata isConnected:', this.$refs.headerComponents.isConnected)
-      this.isConnected = this.$refs.headerComponents.isConnected
+    '$store.state.currentAccount': function () {
+      console.log('$store.state.currentAccount:', this.$store.state.currentAccount)
       this.loadMyData()
+    },
+    '$store.state.chainId': function () {
+      this.initData()
     },
     async newPositionDialogVisible (val) {
       if (val === false) {
@@ -678,7 +652,7 @@ export default {
       }
     },
     myValueToken0Locked (newval) {
-      if (Number(newval) > 0) {
+      if (Number(newval) >= 0) {
         if (this.$store.state.tokenExchangeRateLoaded) {
           this.myValueToken0USDLocked = Number(this.myValueToken0Locked) * Number(this.$store.state.token0RateOfUSD)
           console.log('myValueToken0USDLocked=', this.myValueToken0USDLocked)
@@ -686,7 +660,7 @@ export default {
       }
     },
     myValueToken1Locked (newval) {
-      if (Number(newval) > 0) {
+      if (Number(newval) >= 0) {
         if (this.$store.state.tokenExchangeRateLoaded) {
           this.myValueToken1USDLocked = Number(this.myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
           console.log('myValueToken1USDLocked=', this.myValueToken1USDLocked)
@@ -695,6 +669,55 @@ export default {
     }
   },
   methods: {
+    async initData () {
+      if (await this.$parent.checkCurrentChain() === false) {
+        this.myValueToken0Locked = 0.00
+        this.myValueToken1Locked = 0.00
+        this.myValueToken0USDLocked = 0
+        this.myValueToken1USDLocked = 0
+        this.tvlTotal0 = 0.00
+        this.tvlTotal1 = 0.00
+        this.tvlTotal0USD = 0
+        this.tvlTotal1USD = 0
+        this.lendingRatio = 0
+        this.uniswapRatio = 0
+        return
+      }
+      this.initDataLoading = true
+      this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
+      this.token0Address = await this.$parent.keeperContract.methods.token0().call()
+      this.token1Address = await this.$parent.keeperContract.methods.token1().call()
+      // console.log('this.token0Address=', this.token0Address)
+      this.poolContract = new web3.eth.Contract(
+        ViaLendPoolABI,
+        this.poolAddress
+      )
+      this.token0Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token0Address
+      )
+      this.token1Contract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        this.token1Address
+      )
+      this.token0LendingContract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+      )
+      this.token1LendingContract = new web3.eth.Contract(
+        ViaLendTokenABI,
+        '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
+      )
+      await this.getTokensInfo()
+      this.cLow = await this.$parent.keeperContract.methods.cLow().call()
+      this.cHigh = await this.$parent.keeperContract.methods.cHigh().call()
+      console.log('cLow=', this.cLow, ';cHigh=', this.cHigh)
+      await this.loadPublicData()
+      if (this.$store.state.isConnected) {
+        this.loadMyData()
+      }
+      this.initDataLoading = false
+    },
     connectWallet () {
       this.$parent.setWalletStatus()
       console.log('wallet connection status:', this.isConnected)

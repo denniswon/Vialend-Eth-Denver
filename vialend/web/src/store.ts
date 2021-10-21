@@ -5,7 +5,9 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    name: 'SwapStream.',
+    name: 'Vialend',
+    availableChainId: [5],
+    currentAccount: '',
     isConnected: false,
     StatusButtonText: '',
     chainId: 0,

@@ -24,10 +24,10 @@
             <nav class="main_nav">
               <ul class="d-flex flex-row align-items-center justify-content-start">
                 <li>
-                  <!-- <router-link to='/dashboard'>
+                  <router-link to='/dashboard'>
                     Dashboard
-                  </router-link> -->
-                  <a href="/dashboard">Dashboard</a>
+                  </router-link>
+                  <!-- <a href="/dashboard">Dashboard</a> -->
                 </li>
                 <li><a href="#">Vote</a></li>
               </ul>
@@ -138,12 +138,13 @@ export default {
           console.log('this.currentAccount=' + this.currentAccount)
           this.StatusButtonText = this.currentAccount
           this.$store.state.StatusButtonText = this.currentAccount
-          // this.$refs.supplyliq.checkConnectionStatus()
+          this.$store.state.currentAccount = this.currentAccount
         } else {
           this.connectWallet()
         }
       }
       if (!this.checkChain()) {
+        this.isConnected = false
         this.StatusButtonText = 'Wrong network'
         this.$store.state.StatusButtonText = 'Wrong network'
         this.$message({
@@ -179,6 +180,7 @@ export default {
         this.isConnected = true
         this.StatusButtonText = this.currentAccount
         this.$store.state.StatusButtonText = this.currentAccount
+        this.$store.state.currentAccount = this.currentAccount
         console.log('account status:' + ethereum.isConnected())
         // this.$refs.supplyliq.checkConnectionStatus()
       }
