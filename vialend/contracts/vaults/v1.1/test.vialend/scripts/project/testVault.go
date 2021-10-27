@@ -439,6 +439,13 @@ func Rebalance(do int, param [3]int64) {
 
 }
 
+func JustSwap(account int64) {
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".........Just Swap .........  ")
+	fmt.Println("----------------------------------------------")
+
+}
+
 /// param0 : fullRangeSize, param1: tickspacing
 func Swap(do int, rangeRatio int64, account int64) {
 
@@ -456,7 +463,7 @@ func Swap(do int, rangeRatio int64, account int64) {
 	vaultInstance := GetVaultInstance()
 
 	amt0, amt1, swapAmount, zeroForOne := GetSwapInfo(rangeRatio)
-	//fmt.Println("amount0 , amount1 desired:", amt0, amt1)
+	fmt.Println("amount0 , amount1 desired:", amt0, amt1)
 	_, _ = amt0, amt1
 
 	/// sqrtPriceLimitX96 currently hardcoded in the contract
@@ -484,9 +491,9 @@ func Swap(do int, rangeRatio int64, account int64) {
 	// swapamount * 1e(decimals)  i.e. usdc 1e6 = 10^6
 	swapAmountIn := new(big.Int).SetInt64(int64(float64(swapAmount * math.Pow10(int(TokenDecimals)))))
 
-	//fmt.Println("zeroForOne:", zeroForOne)
-	//fmt.Println("swap amount: ", swapAmount)
-	//fmt.Println("swap amount in:", swapAmountIn)
+	fmt.Println("zeroForOne:", zeroForOne)
+	fmt.Println("swap amount: ", swapAmount)
+	fmt.Println("swap amount in:", swapAmountIn)
 	//_ = swapAmount
 
 	cTotal0, err := vaultInstance.GetBalance0(&bind.CallOpts{})
@@ -940,11 +947,11 @@ func VaultInfo(do int) {
 	fmt.Println("tokenB (y) in pool ", xy.Amount1)
 
 	// ///-----------accumulated fee0 的总数
-	// accumulateFees0, _ := vaultInstance.AccumulateUniswapFees0(&bind.CallOpts{})
-	// fmt.Println("accumulateFees0  :", accumulateFees0)
+	accumulateFees0, _ := vaultInstance.AccumulateUniswapFees0(&bind.CallOpts{})
+	fmt.Println("accumulateFees0  :", accumulateFees0)
 	// ///-----------accumulated fee1 的总数
-	// accumulateFees1, _ := vaultInstance.AccumulateUniswapFees1(&bind.CallOpts{})
-	// fmt.Println("accumulateFees1  :", accumulateFees1)
+	accumulateFees1, _ := vaultInstance.AccumulateUniswapFees1(&bind.CallOpts{})
+	fmt.Println("accumulateFees1  :", accumulateFees1)
 
 	totalfee0, _ := vaultInstance.AccruedProtocolFees0(&bind.CallOpts{})
 	totalfee1, _ := vaultInstance.AccruedProtocolFees1(&bind.CallOpts{})

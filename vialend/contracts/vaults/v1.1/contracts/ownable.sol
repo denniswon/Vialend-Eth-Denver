@@ -25,8 +25,10 @@ contract Ownable is ReentrancyGuard {
 //		uint256[] deposittime;  // {1624136400, 1624136405... }
     }
     
-    mapping(address => Asset)  Assetholder;
+    mapping(address => Asset) public Assetholder;
 	
+    
+
     //Asset storage c = Assetholder[accounts[i]]
   	//Asset({capital0:amountToken0, capital1:0,fees0:0,fees1:0});
     

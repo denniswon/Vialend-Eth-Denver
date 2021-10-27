@@ -1,5 +1,13 @@
 #v1.1
-	contracts source code: 
+
+-2021/10/08 05:10 
+	**
+		public pool 改为 internal pool.  may break your front end code. 
+		call poolAddress() to get the pool address instead
+	
+	
+contracts source code: 
+	
 		VialendFeemaker.sol  
 		ViaUniswap.sol
 		ViaCompound.sol

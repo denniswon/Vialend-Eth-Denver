@@ -1,3 +1,20 @@
+vault v1.2p
+	0x0d256db81eEeecA70399C9bF50c611B1FeBdF429	
+"0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool
+"0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", // tokenA Weth
+"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
+		
+value: v1.1
+		0x58b008535dc1d06dbae22201d3f10b79c80f9dd4
+		0x48a815cF2bC8cECBc8C548d1585B209B9Cd51A18
+		
+0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023 //pool	
+0x6fd886fd1e728d9386ba7fe721c856790758add9 //weth
+"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //  usdc
+
+
+
+
 network set:
 		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
 		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
@@ -392,3 +409,9 @@ Fail with No error msg:
 Fatal: Contract has additional library references, please use other mode(e.g. --combined-json) to catch library infos
 solution: 
 	if the function in library is public , change public to internal, or view to pure 
+	
+abigen ERROR:
+Fatal: Contract has additional library references, please use other mode
+solution:
+change public function to internal	
+	

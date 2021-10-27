@@ -49,6 +49,13 @@ func main() {
 
 	project.Init()
 
+	// swap()
+	// // TVL token0=13306011020350061173
+	// // TVL token0=13306018616624467994
+
+	// // TVL token1=41551879097
+	// // TVL token1=284829419543
+
 	// project.AccountInfo()
 	// project.VaultInfo(1)
 	// return
@@ -59,14 +66,20 @@ func main() {
 	//project.DeployVialendFeemaker(3)
 
 	//-- test deposit and withdraw
-	// project.Deposit(1, [4]int64{2, 2, 3, 1})
-	// project.Deposit(1, [4]int64{1, 1, 1, 1})
-	// project.VaultInfo(1)
+	project.Deposit(1, [4]int64{1, 1, 3, 1})
+	project.Deposit(1, [4]int64{1, 1, 1, 1})
+	project.Strategy1(1, [3]int64{600, 60, 3})
+	// project.Strategy1(1, [3]int64{600, 60, 3})
+	// project.Strategy1(1, [3]int64{600, 60, 3})
+	project.Withdraw(1, [2]int64{100, 3})
+	project.Withdraw(1, [2]int64{100, 1})
+
+	project.VaultInfo(1)
 
 	// project.Withdraw(1, [2]int64{100, 3})
 	// project.Withdraw(1, [2]int64{100, 1})
 	// project.VaultInfo(1)
-	// return
+	return
 
 	//project.Test_weth_deposit(30)
 	//project.Test_weth_withdraw(3)
@@ -122,6 +135,18 @@ func main() {
 	//project.GetPoolFromToken()
 }
 
+func swap() {
+
+	//	project.Deposit(1, [4]int64{2, 100, 3, 0})
+
+	// for i := 0; i < 5; i++ {
+	// 	fmt.Println("swap y for x:", i)
+
+	project.Swap(1, 60, 3)
+
+	// }
+
+}
 func fullCycleTest() {
 
 	//project.Deposit(1, [4]int64{1, 1, 1, 1}) //{amount0,amount1,account, approve}
