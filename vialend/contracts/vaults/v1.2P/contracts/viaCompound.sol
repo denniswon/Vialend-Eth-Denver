@@ -22,9 +22,6 @@ import "./ownable.sol";
  	IcEther internal  CEther; 
   	IWETH9 internal WETH;
 	
-	uint256 public lFees0;
-	uint256 public lFees1;
-	
 	uint256 public curComp0;	// current amount of token0 in Compound pool
 	uint256 public curComp1;	// current amount of token1 in Compound pool
 ///compound procedures

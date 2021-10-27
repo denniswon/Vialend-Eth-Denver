@@ -60,7 +60,7 @@ contract ViaUniswap is
         //#debug require(liquidity > 0 ,append("liquidity: ",uint2str(liquidity),"","","")) ;
 
    
-        (curUni0, curUni1) = pool.mint(address(this), newLow, newHigh, liquidity, "");
+        pool.mint(address(this), newLow, newHigh, liquidity, "");
 
         // // uint256 newBalance0 = getBalance0();
         // // uint256 newBalance1 = getBalance1();
@@ -84,9 +84,7 @@ contract ViaUniswap is
     	if (liquidity > 0) {
 	        uFees0 = collect0.sub(burned0);
 	       	uFees1 = collect1.sub(burned1);
-	        AccumulateUniswapFees0 = AccumulateUniswapFees0 + uFees0;
-	        AccumulateUniswapFees1 = AccumulateUniswapFees1 + uFees1;
-        }
+       }
 
 
 	}
@@ -142,7 +140,7 @@ contract ViaUniswap is
             );
 
         
-        emit CollectFees(liquidity, burned0, burned1,collect0,collect1);
+     
         
     }    
 	

@@ -29,13 +29,14 @@ interface IFeeMakerEvents {
     );
 
     event CollectFees(
-    	uint128 liquidity,
-        uint256 burned0, 
-        uint256 burned1, 
-        uint256 collect0,
-        uint256 collect1
-		);
+        address indexed maker,
+        uint256 uFees0,
+        uint256 uFees1,
+        uint256 lFees0,
+        uint256 lFees1
+    );
 
+  
 
 	event RebalanceLog(uint128 liquidity, uint256 newBalance0, uint256 newBalance1);
 

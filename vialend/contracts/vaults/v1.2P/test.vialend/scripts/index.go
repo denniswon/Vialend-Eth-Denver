@@ -49,7 +49,8 @@ func main() {
 
 	project.Init()
 
-	newSet()
+	// newVault()
+	// return
 
 	// project.GetCapital(1)
 	// project.GetCapital(3)
@@ -58,7 +59,9 @@ func main() {
 	// project.VaultInfo(1)
 	// project.PoolInfo()
 	//project.GetPoolFromToken()
-
+	//project.Test_weth_deposit(5)
+	// project.Test_weth_withdraw("0x6fd886fd1e728d9386ba7fe721c856790758add9", 3, 15)
+	// return
 	//project.SetProtocolFee(big.NewInt(10))
 	//project.SetUniswapPortionRatio(50)
 	// project.Alloc(0)
@@ -73,7 +76,7 @@ func main() {
 
 	// return
 
-	// project.Strategy1(1, [3]int64{400, 60, 0})
+	// // project.Strategy1(1, [3]int64{400, 60, 0})
 	// project.Withdraw(1, [2]int64{100, 0})
 	// project.Withdraw(1, [2]int64{100, 3})
 	// project.Withdraw(1, [2]int64{100, 4})
@@ -81,18 +84,31 @@ func main() {
 	// project.VaultInfo(1)
 	// return
 
-	// project.DeployVialendFeemaker(0, big.NewInt(10), 50, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440") //account, protocolfee, uniportion, team address
-	// project.Deposit(1, [3]int64{1, 1, 0}, false)
-	// project.Deposit(1, [3]int64{1, 1, 3}, false)
-	// // project.AccountInfo()
-	// // project.VaultInfo(1)
-	// project.Strategy1(1, [3]int64{500, 60, 0})
 	// project.Withdraw(1, [2]int64{100, 0})
 	// project.Withdraw(1, [2]int64{100, 3})
 	// project.Withdraw(1, [2]int64{100, 4})
-	// project.AccountInfo()
-	// project.VaultInfo(1)
-	// return
+
+	project.DeployVialendFeemaker(0, big.NewInt(10), 50, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440") //account, protocolfee, uniportion, team address
+	project.Deposit(1, [3]int64{1, 300, 0}, false)
+	project.Deposit(1, [3]int64{2, 0, 3}, false)
+	project.AccountInfo()
+	project.VaultInfo(1)
+	project.Strategy1(1, [3]int64{500, 60, 0})
+	project.AccountInfo()
+	project.VaultInfo(1)
+	genFees()
+	project.Alloc(0)
+	project.AccountInfo()
+	project.VaultInfo(1)
+	project.Strategy1(1, [3]int64{500, 60, 0})
+	//project.Strategy1(1, [3]int64{500, 60, 0})
+	//project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 3})
+	//project.Withdraw(1, [2]int64{100, 4})
+	project.Deposit(1, [3]int64{0, -1, 3}, false)
+	project.AccountInfo()
+	project.VaultInfo(1)
+	return
 
 	// project.Strategy1(1, [3]int64{500, 60, 0})
 	// // project.AccountInfo()
@@ -119,23 +135,23 @@ func main() {
 	//time.Sleep(60 * time.Second)
 	return
 
-	//project.Test_weth_deposit(30)
-	//project.Test_weth_withdraw(3)
-
 }
 
-func newSet() {
-	pool =
-		_weth,
-		_cToken0,
-		_cToken1,
-		_cEth,
-		protocolFee,
-		maxTotalSupply,
-		maxTwapDeviation,
-		twapDuration,
-		uniPortionRate,
-		common.HexToAddress(team)
+func newVault() {
+
+	networkId := 3
+	acc := 0
+	token0 := config.Network.TokenA
+	token1 := config.Network.TokenB
+
+	feetier := int64(10000) //10000, 3000, 500 //config.Network.FeeTier
+
+	_protocolfee := big.NewInt(10)
+	_uniPortion := 20
+	team := "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440"
+	strategy := config.Indi(0)
+
+	project.VaultGen(networkId, acc, token0, token1, feetier, _protocolfee, _uniPortion, team, strategy)
 
 }
 
@@ -147,7 +163,7 @@ func genFees() {
 
 	amount := config.X1E18(1)
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 4; i++ {
 
 		project.Swap2(accountId, amount, zeroForOne)
 		project.Swap2(accountId, amount, !zeroForOne)
@@ -212,17 +228,6 @@ func test_vault() {
 	sw.CreatePosition = -1
 	sw.IncreasePosition = -1
 	sw.RemovePosition = -1
-
-	if sw.CollectFees > 0 {
-
-		project.AccountInfo()
-		project.VaultInfo(1)
-		project.CollectProtocolFees(big.NewInt(100), big.NewInt(100), 3) // fee0, fee1, account
-		project.AccountInfo()
-		project.VaultInfo(1)
-
-		return
-	}
 
 	if sw.DeployFactory > 0 {
 		project.DeployFactory() ///new factory  for crating new pools if old pool already exists

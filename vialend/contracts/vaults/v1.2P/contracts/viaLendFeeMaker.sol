@@ -161,13 +161,14 @@ contract ViaLendFeeMaker is
         if (amount0 > 0) token0.safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) token1.safeTransferFrom(msg.sender, address(this), amount1);
 
-		
         _mint(to, shares);
 
         require(totalSupply() <= maxTotalSupply, "CAP");
 
 	    Assetholder[to].deposit0 += amount0;		// add or increase msg.sender's asset0
 		Assetholder[to].deposit1 += amount1;		// add or increase msg.sender's asset1
+		Assetholder[to].current0 += amount0;
+		Assetholder[to].current1 += amount1;
 
 		if (doRebalence )  rebalance(0,0);		// rebalance
 
@@ -209,8 +210,8 @@ contract ViaLendFeeMaker is
 						_mint(accounts[i], nshare) ;
 		
 						// update user assets with new amounts
-						Assetholder[accounts[i]].deposit0 = myamount0;		
-						Assetholder[accounts[i]].deposit1 = myamount1;
+						Assetholder[accounts[i]].current0 = myamount0;		
+						Assetholder[accounts[i]].current1 = myamount1;
 					}
 				}
         	}
@@ -225,36 +226,15 @@ contract ViaLendFeeMaker is
     /// allocate fees and adjust user's share
     function _alloc() internal returns ( bool ){
 		
-		removePositions();		// remove all positions off v3 and lending pool
 
-		
 		uint256 _totalSupply = totalSupply();
-		if (_totalSupply <=0) return false;
-
-		if (_totalSupply > 0 ) {
-			
-			//*** important
-			(uint256 fees0, uint256 fees1, uint256 netfees0, uint256 netfees1) = collectProtocolFees();
-			
-			if (fees0 == 0 && fees1==0 ) return(false);  // no fees need to be allocated
-
-			uint cnt = accounts.length;
 		
-			// update recording fees for each shareholder
-			for (uint i=0; i< cnt; i++) {
-				uint256 _share = balanceOf(accounts[i]);
-				
-				uint256 myfees0 = netfees0.mul(_share).div(_totalSupply);
-				uint256 myfees1 = netfees1.mul(_share).div(_totalSupply);
-			
-				//record the fees in each account's total
-				Assetholder[accounts[i]].fees0 += myfees0;
-				Assetholder[accounts[i]].fees1 += myfees1;
-			}
+		if (_totalSupply <=0) return false;    // if totalsupply is 0,  there is no asset in vault
 
+		removePositions();		// get all assets back to vault
 
-		} 
-		
+		if (_totalSupply > 0 ) collectProtocolFees();
+
 		
 		return(true);  // fees are allocated
 		    	
@@ -262,19 +242,25 @@ contract ViaLendFeeMaker is
     
     
     //calculate net fees and protocol fees 
-	function collectProtocolFees() internal 
-		returns(
-			uint256 fees0, 			// total fees0  from univ3 and lending
-			uint256 fees1, 			// total fess1 from univ3 and lending
-			uint256 netfees0, 		// fees0 after protocol cut
-			uint256 netfees1)		// fees0 after protocol cut
-	{
+	function collectProtocolFees() internal 	{
 		
 		uint256 _protocolFee = protocolFee;
 		
 		// add up all earned fees
-		fees0 = uFees0.add(lFees0);
-		fees1 = uFees1.add(lFees1);
+		( uint256 fees0, uint256 fees1) = ( uFees0.add(lFees0),  uFees1.add(lFees1) ) ;
+
+		// log current collected fees		
+		emit CollectFees(address(this),uFees0,uFees1,lFees0,lFees1);
+
+
+		//log fees
+		Fees.U3Fees0 =  Fees.U3Fees0.add(uFees0); 
+		Fees.U3Fees1 =  Fees.U3Fees1.add(uFees1); 
+		Fees.LcFees0 =  Fees.LcFees0.add(lFees0); 
+		Fees.LcFees1 =  Fees.LcFees1.add(lFees1); 
+
+		// clear temp fees variables
+		( uFees0,uFees1, lFees0, lFees1) = (0,0,0,0);
 		
 		uint256 feesToProtocol0;
 		uint256 feesToProtocol1;
@@ -284,16 +270,16 @@ contract ViaLendFeeMaker is
 			// calculate protocol fees
 			if (fees0 > 0 ) {
 	            feesToProtocol0 = fees0.mul(_protocolFee).div(100);
-	            netfees0 = fees0.sub(feesToProtocol0);
-	            accruedProtocolFees0 = accruedProtocolFees0.add(feesToProtocol0);
+	            //netfees0 = fees0.sub(feesToProtocol0);
+	            Fees.AccruedProtocolFees0 = Fees.AccruedProtocolFees0.add(feesToProtocol0);
 			}
 			
 			if (fees1 > 0 ) {
 	            feesToProtocol1 = fees1.mul(_protocolFee).div(100);
 	            // generate net fees
-	            netfees1 = fees1.sub(feesToProtocol1);
+	            //netfees1 = fees1.sub(feesToProtocol1);
 	            //record the protocol fees
-	            accruedProtocolFees1 = accruedProtocolFees1.add(feesToProtocol1);
+	            Fees.AccruedProtocolFees1 = Fees.AccruedProtocolFees1.add(feesToProtocol1);
 			}
             
             //collect protocol fees to team
@@ -308,11 +294,7 @@ contract ViaLendFeeMaker is
 				//token1.safeTransfer(team, feesToProtocol1);
 			}
 
-        } else {
-	        netfees0 = fees0;
-            netfees1 = fees1;
-        }
-        
+        } 
  
         
 	}
@@ -353,19 +335,31 @@ contract ViaLendFeeMaker is
 
 		// burn user's share
         _burn(to, shares);
+        
+        // update overall fees record
+        Fees.U3Fees0 = Fees.U3Fees0.sub(Fees.U3Fees0.mul(shares).div(totalSupply) ) ;
+        Fees.U3Fees1 = Fees.U3Fees1.sub(Fees.U3Fees1.mul(shares).div(totalSupply) ) ;
+        Fees.LcFees0 = Fees.LcFees0.sub(Fees.LcFees0.mul(shares).div(totalSupply) ) ;
+        Fees.LcFees1 = Fees.LcFees1.sub(Fees.LcFees1.mul(shares).div(totalSupply) ) ;
 
-        // update user's record
+        // if amount > 0 , do transfer and update user Assets record. 
         if (amount0 > 0) {
         	token0.safeTransfer(to, amount0);
-			Assetholder[to].deposit0 -= (Assetholder[to].deposit0 > amount0 ) ? amount0 : Assetholder[to].deposit0;
+			Assetholder[to].current0 -= (Assetholder[to].current0 > amount0 ) ? amount0 : Assetholder[to].current0;	
 		}
         if (amount1 > 0) {
         	token1.safeTransfer(to, amount1);
-			Assetholder[to].deposit1 -= (Assetholder[to].deposit1 > amount1 ) ? amount1 : Assetholder[to].deposit1;
+			Assetholder[to].current1 -= (Assetholder[to].current1 > amount1 ) ? amount1 : Assetholder[to].current1;
 		}
-
-		//if ( totalSupply > 0 ) 	rebalance(0,0);
 		
+		// clean up assets record if user's share is 0
+		if ( balanceOf(to) == 0 ) {
+			Assetholder[to].deposit0 = 0;
+			Assetholder[to].deposit1 = 0;
+			Assetholder[to].current0 = 0;
+			Assetholder[to].current1 = 0;
+		}
+			
 		//log
         emit Withdraw(msg.sender, shares, amount0, amount1);
     }
@@ -581,15 +575,15 @@ contract ViaLendFeeMaker is
         address to
     ) external onlyGovernance {
     	
-    	require (accruedProtocolFees0 >= amount0 && accruedProtocolFees1 >= amount1,"CP");
+    	require (Fees.AccruedProtocolFees0 >= amount0 && Fees.AccruedProtocolFees1 >= amount1,"CP");
 
 		if (amount0 > 0) {
-	        accruedProtocolFees0 = accruedProtocolFees0.sub(amount0);
+	        Fees.AccruedProtocolFees0 = Fees.AccruedProtocolFees0.sub(amount0);
 	        token0.safeTransfer(to, amount0);
 		}
 							
         if (amount1 > 0) {
-        	accruedProtocolFees1 = accruedProtocolFees1.sub(amount1);
+        	Fees.AccruedProtocolFees1 = Fees.AccruedProtocolFees1.sub(amount1);
         	token1.safeTransfer(to, amount1);
         }
     }
@@ -652,6 +646,9 @@ contract ViaLendFeeMaker is
 
 		    Assetholder[accounts[i]].deposit0 = 0;
 			Assetholder[accounts[i]].deposit1 = 0;
+			Assetholder[accounts[i]].current0 = 0;
+			Assetholder[accounts[i]].current1 = 0;
+
 		    
 			uint256 amount0 = total0.mul( share ).div(tt);
 			uint256 amount1 = total1.mul( share ).div(tt);

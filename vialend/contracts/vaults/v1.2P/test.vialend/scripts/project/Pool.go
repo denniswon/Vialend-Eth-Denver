@@ -227,19 +227,36 @@ func InitialPool(do int) {
 func GetPoolFromToken() common.Address {
 
 	fmt.Println("----------------------------------------------")
-	fmt.Println(".......................Calculate Pool address by token and fee tier ..................")
+	fmt.Println(".......................get Pool by presetting tokens and fee tier ..................")
+	fmt.Println("----------------------------------------------")
+
+	tokenA := config.Network.TokenA
+	tokenB := config.Network.TokenB
+	fee := config.Network.FeeTier
+
+	poolAddress := GetPool(tokenA, tokenB, fee)
+
+	return poolAddress
+
+}
+
+func GetPool(token0 string, token1 string, feetier int64) common.Address {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Get Pool ..................")
 	fmt.Println("----------------------------------------------")
 
 	factoryAddress := common.HexToAddress(config.Network.Factory)
 
 	factoryInstance, err := factory.NewApi(factoryAddress, config.Client)
+
 	if err != nil {
 		log.Fatal("factory.NewApi ", err)
 	}
 
-	tokenA := common.HexToAddress(config.Network.TokenA)
-	tokenB := common.HexToAddress(config.Network.TokenB)
-	fee := big.NewInt(config.Network.FeeTier)
+	tokenA := common.HexToAddress(token0)
+	tokenB := common.HexToAddress(token1)
+	fee := big.NewInt(feetier)
 
 	poolAddress, err := factoryInstance.GetPool(&bind.CallOpts{}, tokenA, tokenB, fee)
 	if err != nil {

@@ -143,13 +143,11 @@ func DeployWrappedEther() *weth.Api {
 	return instance
 }
 
-func DeployVialendFeemaker(networkId int, acc int, _protocolfee *big.Int, _uniPortion int, team string) {
+func DeployVialendFeemaker(acc int, _protocolfee *big.Int, _uniPortion int, team string) {
 
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy VialendFeemaker ...................")
 	fmt.Println("----------------------------------------------")
-
-	config.Networkid = networkId
 
 	///require governance. always use account 0 as the deployer
 	config.Auth = config.GetSignature(config.Networkid, acc)
@@ -157,6 +155,80 @@ func DeployVialendFeemaker(networkId int, acc int, _protocolfee *big.Int, _uniPo
 	config.NonceGen()
 
 	pool := GetPoolFromToken() //tokens based on network selection
+
+	protocolFee := _protocolfee
+
+	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	if !ok {
+		log.Fatal("maxTotalSupply err ")
+	}
+	var maxTwapDeviation = big.NewInt(20000)
+	var twapDuration = uint32(2)
+	var _weth = common.HexToAddress(config.Network.LendingContracts.WETH)
+	var _cEth = common.HexToAddress(config.Network.LendingContracts.CETH)
+	var _cToken0 = common.HexToAddress(config.Network.CTOKEN0)
+	var _cToken1 = common.HexToAddress(config.Network.CTOKEN1)
+
+	var uniPortionRate = uint8(_uniPortion)
+
+	fmt.Println(".......................Deploy vault ...................")
+
+	address, tx, instance, err := vialend.DeployApi(config.Auth, config.Client,
+		pool,
+		_weth,
+		_cToken0,
+		_cToken1,
+		_cEth,
+		protocolFee,
+		maxTotalSupply,
+		maxTwapDeviation,
+		twapDuration,
+		uniPortionRate,
+		common.HexToAddress(team))
+
+	///set auth back to Account
+	config.Auth = config.GetSignature(config.Networkid, config.Account)
+
+	if err != nil {
+		log.Fatal("deploy vault ", err)
+	}
+
+	//refresh vault address in networks.go
+	config.Network.Vault = address.Hex()
+	config.AddSettingString("vault address:", address.Hex())
+
+	fmt.Println("vault address:", address.Hex())
+
+	_, _ = instance, tx
+
+	config.Readstring("Vault deploy done, wait for pending ... next... ")
+
+}
+
+func VaultGen(
+	networkId int,
+	acc int,
+	token0 string,
+	token1 string,
+	feetier int64,
+	_protocolfee *big.Int,
+	_uniPortion int,
+	team string,
+	strategy config.Indi) {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Vault Gen ...................")
+	fmt.Println("----------------------------------------------")
+
+	temp := config.Networkid
+	config.Networkid = networkId
+
+	///require governance. always use account 0 as the deployer
+	config.Auth = config.GetSignature(config.Networkid, acc)
+
+	config.NonceGen()
+
+	pool := GetPool(token0, token1, feetier) //tokens based on network selection
 
 	protocolFee := _protocolfee
 
@@ -187,6 +259,8 @@ func DeployVialendFeemaker(networkId int, acc int, _protocolfee *big.Int, _uniPo
 		common.HexToAddress(team))
 
 	///set auth back to Account
+
+	config.Networkid = temp
 	config.Auth = config.GetSignature(config.Networkid, config.Account)
 
 	if err != nil {
@@ -194,6 +268,7 @@ func DeployVialendFeemaker(networkId int, acc int, _protocolfee *big.Int, _uniPo
 	}
 
 	//refresh vault address in networks.go
+
 	config.Network.Vault = address.Hex()
 	config.AddSettingString("vault address:", address.Hex())
 

@@ -24,34 +24,35 @@ contract Ownable is ReentrancyGuard {
     int24 public cLow;
     int24 public cHigh;
 
-	uint256 public uFees0;	// uniswap fee of token0 for the current position
-	uint256 public uFees1;	// uniswap fee of token1 for the current position
+	uint256 internal uFees0;	// uniswap fee of token0 for the current position
+	uint256 internal uFees1;	// uniswap fee of token1 for the current position
+	uint256 internal lFees0;
+	uint256 internal lFees1;
 
-	uint256 public curUni0;
-	uint256 public curUni1;
-	
-    
-    uint256 public accruedProtocolFees0;
-    uint256 public accruedProtocolFees1;
-
-    uint256 public AccumulateUniswapFees0;
-    uint256 public AccumulateUniswapFees1;
-    
-  	uint256 public lastRebalance;
-    int24 public lastTick;    
+	struct FeeStruct {
+		uint256 U3Fees0;
+		uint256 U3Fees1;
+		uint256 LcFees0;
+		uint256 LcFees1;
+	    uint256 AccruedProtocolFees0;
+	    uint256 AccruedProtocolFees1;
+	}
 
      // Asset of each user.
 	struct Assets  {
     	uint256 deposit0;   	// user's accumulative deposits for token0
 		uint256 deposit1; 	// user's accumulative deposits for token1
-		uint256 fees0;		// user's dividend of token0 from uniswap v3
-		uint256 fees1;		// user's dividend of token1 from lending pool
+		uint256 current0;		// log current value of token0
+		uint256 current1;		// log current value of token1
 		uint256 block; 		// the block number that added an account
     }
     
     address[] public accounts;
     
+    
     mapping(address => Assets)  public Assetholder;
+    
+    FeeStruct public Fees;
 
 	
     //Asset storage c = Assetholder[accounts[i]]
@@ -74,19 +75,6 @@ contract Ownable is ReentrancyGuard {
 	/// maintain a user address array
     function _push(address _address ) internal {
     	
-		// bool _exists= false;
-		// uint cnt = accounts.length;
-		
-		
-		// for (uint i=0; i< cnt; i++) {
-		// 	if (accounts[i] == _address) {
-		// 		_exists = true;
-		// 		break;
-		// 	}
-  //       }
-        
-  //       if (!_exists) {
-		
 		if (Assetholder[_address].block == 0 ) {
         	accounts.push(_address);
 			Assetholder[_address].block = block.number;
@@ -154,12 +142,12 @@ contract Ownable is ReentrancyGuard {
     }
 
 	// /// return capital amount
-	function getStoredAssets(address who) public view returns( uint256 , uint256,uint256, uint256 ) {
+	function getStoredAssets(address who) public view returns( uint256 , uint256, uint256, uint256 ) {
 	   	return (
 			Assetholder[who].deposit0,
 			Assetholder[who].deposit1 , 
-			Assetholder[who].fees0 , 
-			Assetholder[who].fees1 );
+			Assetholder[who].current0 , 
+			Assetholder[who].current1 );
 	}
 
 

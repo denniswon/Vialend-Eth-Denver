@@ -57,6 +57,14 @@ type Init struct {
 	LendingContracts LendingStruct
 }
 
+type Indi int
+
+const (
+	Envelope Indi = iota
+	Bollinger
+	TMA
+)
+
 var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: rinkeby
 var Account = 0
 var ProviderSortId = 0
@@ -164,15 +172,16 @@ var Networks = [...]Init{
 
 		"0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", // tokenA Weth
 		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
-		CTOKEN0: "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF", // CETH
-		CTOKEN1: "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0", //CUSDC
+		"0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF", // CETH
+		"0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0", //CUSDC
 
 		"0x4a9c85e96C30EA642728926bC8df23eFC95224dF", //new owner, test user 1
 		40, //time pending interval
 		"0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token
-		"0x72Af1F62A49b7c79db5336257A701c110D52B48a", // vault use block in Accounts
+		"0x0f709dEF24704030d679FaE929EbD41E8935a31f", // vault , clear uffes after use
+		//"0x72Af1F62A49b7c79db5336257A701c110D52B48a", // vault use block in Accounts
 		//"0x30512A3BC4C607753AA5884226D0B1863E86D90c", // working vault with protocol fees to team
 		//"0xc94B4f89E2B4a2F94f862B794B399a81262eCAe1", // vault
 		//"0x1F29d545D863f70a9AD8e9e69E324f7998476804", // "0x52A1C1067ab22486971Fab15c5b5bbdeDCb99E8D", //vault address
@@ -208,8 +217,8 @@ var Networks = [...]Init{
 
 		"0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05", // tokenA Wbtc
 		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
-		CTOKEN0: "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF", //	CWBTC
-		CTOKEN1: "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0", // CUSDC
+		"0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF", //	CWBTC
+		"0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0", // CUSDC
 
 		"0x4a9c85e96C30EA642728926bC8df23eFC95224dF", //new owner, test user 1
 		40, //time pending interval
@@ -242,6 +251,8 @@ var Networks = [...]Init{
 		[]string{"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7"},
 		"",   //tokenA eWeth
 		"",   //tokenB  eusdc
+		"",   //ctoken0
+		"",   //ctoken1
 		"",   //new owner, test user 1
 		40,   //time pending interval
 		"",   //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
