@@ -77,7 +77,9 @@ contract Ownable is ReentrancyGuard {
     	
 		if (Assetholder[_address].block == 0 ) {
         	accounts.push(_address);
-			Assetholder[_address].block = block.number;
+			Assetholder[_address].block = block.number;	
+		} else {
+			Assetholder[_address].block = block.number;	// update block number
 		}
 
     }

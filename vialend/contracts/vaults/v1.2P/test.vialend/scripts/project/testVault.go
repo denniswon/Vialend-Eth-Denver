@@ -597,7 +597,7 @@ func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amou
 }
 
 ///
-func CheckFees() {
+func CheckFees(xPrice *big.Int) {
 
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".........Check Fees .........  ")
@@ -648,6 +648,7 @@ func CheckFees() {
 				ListAccounts, _ := vaultInstance.Assetholder(&bind.CallOpts{}, storedAccount)
 				fmt.Println("*Assetsholder: ", ListAccounts)
 
+				// calc APY  below
 				blockNumber := Assets.Block
 
 				block, err := config.Client.BlockByNumber(context.Background(), blockNumber)
@@ -656,7 +657,7 @@ func CheckFees() {
 				}
 
 				// get block info
-				//			fmt.Println(block.Number().Uint64())           // 5671744
+
 				timestamp := block.Time()
 
 				fmt.Println("deposit block info:", blockNumber, block.Time()) // 1527211625
@@ -696,25 +697,18 @@ func CheckFees() {
 				fmt.Println("deposit0,deposit1 {", deposit0, deposit1, "}")
 				fmt.Println("mytvl0, mytvl1 {", mytvl0, mytvl1, "}")
 
-				usPrice0 := big.NewInt(320) // eth/usd
-				usPrice1 := big.NewInt(1)   // usdc/usd
+				fd0 := config.BigIntToFloat64(deposit0)
 
-				dusd0 := new(big.Int).Mul(deposit0, usPrice0)
-				fd0 := config.BigIntToFloat64(dusd0) / 1e18
+				fd1 := config.BigIntToFloat64(deposit1) * 1e18 / config.BigIntToFloat64(xPrice)
 
-				dusd1 := new(big.Int).Mul(deposit1, usPrice1)
-				fd1 := config.BigIntToFloat64(dusd1) / 1e6
+				fm0 := config.BigIntToFloat64(mytvl0)
 
-				musd0 := new(big.Int).Mul(mytvl0, usPrice0)
-				fm0 := config.BigIntToFloat64(musd0) / 1e18
-
-				musd1 := new(big.Int).Mul(mytvl1, usPrice1)
-				fm1 := config.BigIntToFloat64(musd1) / 1e6
+				fm1 := config.BigIntToFloat64(mytvl1) * 1e18 / config.BigIntToFloat64(xPrice)
 
 				fdd := fd0 + fd1
 				fmm := fm0 + fm1
 
-				APY := (fmm - fdd) / fdd * config.BigIntToFloat64(oneyearINsec) / float64(timediff)
+				APY := (fmm - fdd) / float64(timediff) * config.BigIntToFloat64(oneyearINsec) / fdd
 
 				fmt.Println("APY:", APY)
 
@@ -1071,25 +1065,27 @@ func VaultInfo(do int) {
 	protocolFeeRate, _ := vaultInstance.ProtocolFee(&bind.CallOpts{})
 	fmt.Println("ProtocolFeeRate:", protocolFeeRate)
 
-	CheckFees()
-
-	//	sqrtPriceX96 := slot0.SqrtPriceX96
-	// uniswapPriceBySqrtP, _ := vaultInstance.GetPriceBySQRTP(&bind.CallOpts{}, sqrtPriceX96)
-	// fmt.Println("GetPriceBySQRTP:", uniswapPriceBySqrtP)
-
 	var twapDuration = uint32(2)
 	twap, _ := vaultInstance.GetTwap(&bind.CallOpts{}, poolAddress, twapDuration)
 	fmt.Println("twap:", twap)
 
+	var oraclePriceTwap *big.Int
 	if twap != nil {
 		//	twap = big.NewInt(-192874)
 		baseAmount := big.NewInt(1e18)
 		baseToken := common.HexToAddress(config.Network.TokenA)
 		quoteToken := common.HexToAddress(config.Network.TokenB)
 
-		oraclePriceTwap, _ := vaultInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
+		oraclePriceTwap, _ = vaultInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
 		fmt.Println("oraclePriceTwap:", oraclePriceTwap)
 	}
+
+	//	sqrtPriceX96 := slot0.SqrtPriceX96
+	// uniswapPriceBySqrtP, _ := vaultInstance.GetPriceBySQRTP(&bind.CallOpts{}, sqrtPriceX96)
+	// fmt.Println("GetPriceBySQRTP:", uniswapPriceBySqrtP)
+
+	CheckFees(oraclePriceTwap)
+
 	///-----------
 
 }
