@@ -180,7 +180,7 @@ var Networks = [...]Init{
 		"0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token
-		"0x0f709dEF24704030d679FaE929EbD41E8935a31f", // vault , clear uffes after use
+		"0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b", // vault , clear uffes after use
 		//"0x72Af1F62A49b7c79db5336257A701c110D52B48a", // vault use block in Accounts
 		//"0x30512A3BC4C607753AA5884226D0B1863E86D90c", // working vault with protocol fees to team
 		//"0xc94B4f89E2B4a2F94f862B794B399a81262eCAe1", // vault

@@ -70,9 +70,9 @@ func main() {
 	//project.EmergencyBurn()
 
 	// // //project.Strategy1(1, [3]int64{500, 60, 0})
-	// project.AccountInfo()
-	// project.VaultInfo(1)
-	// return
+	project.AccountInfo()
+	project.VaultInfo(1)
+	return
 
 	// return
 
@@ -84,11 +84,11 @@ func main() {
 	// project.VaultInfo(1)
 	// return
 
-	project.Withdraw(1, [2]int64{100, 0})
-	project.Withdraw(1, [2]int64{100, 3})
-	project.Withdraw(1, [2]int64{100, 4})
+	// project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 3})
+	// project.Withdraw(1, [2]int64{100, 4})
 
-	project.DeployVialendFeemaker(0, big.NewInt(10), 50, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440") //account, protocolfee, uniportion, team address
+	//project.DeployVialendFeemaker(0, big.NewInt(10), 50, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440") //account, protocolfee, uniportion, team address
 	project.Deposit(1, [3]int64{1, 300, 0}, false)
 	project.Deposit(1, [3]int64{2, 0, 3}, false)
 	project.AccountInfo()

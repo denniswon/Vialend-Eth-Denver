@@ -596,7 +596,7 @@ func getBestAmounts(p float64, a float64, b float64, x float64, y float64) (amou
 	return amount0, amount1, swapAmount, zeroForOne
 }
 
-///
+/// protocol fees, my earned value, APY
 func CheckFees(xPrice *big.Int) {
 
 	fmt.Println("----------------------------------------------")
@@ -604,7 +604,6 @@ func CheckFees(xPrice *big.Int) {
 	fmt.Println("----------------------------------------------")
 
 	fmt.Println("vaultAddress: ", common.HexToAddress(config.Network.Vault))
-	fmt.Println("PoolAddress: ", config.Network.Pool)
 
 	vaultInstance := GetVaultInstance()
 
@@ -617,7 +616,16 @@ func CheckFees(xPrice *big.Int) {
 
 	fmt.Println("totalFees0, totalFees1: {", totalFees0, totalFees1, "}")
 
+	// accumulative protocol fees
 	fmt.Println("accruedProtocolFees0, accruedProtocolFees1 : {", Fees.AccruedProtocolFees0, Fees.AccruedProtocolFees1, "}")
+
+	// // check team share
+	// Team, _ := vaultInstance.Team(&bind.CallOpts{})
+	// tokenIns, _, _, _, _ := GetTokenInstance(config.Network.Vault)
+	// teamShare, _ := tokenIns.BalanceOf(&bind.CallOpts{}, Team)
+	// totalShare, _ := tokenIns.TotalSupply(&bind.CallOpts{})
+	// fmt.Println("Team address: ", Team)
+
 	fmt.Println()
 
 	for j, _ := range config.Network.PrivateKey {
@@ -713,9 +721,9 @@ func CheckFees(xPrice *big.Int) {
 				fmt.Println("APY:", APY)
 
 				// timediff, myshare, totalshare, tvl0, tvl1, deposit0, deposit1, usPrice0, usPrice1
-				// assetsNow0 = tvl0 * myshare/totalshare
-				// assetsNow1 = tvl1 * myshare/totalshare
-				//APY =  ( (assetsNow0 - deposit0)*usPrice0 + (assetNow1 -deposit1)*usPrice1  ) / timediff * oneyearINsec
+				// mytvl0 = tvl0 * myshare/totalshare
+				// mytvl1 = tvl1 * myshare/totalshare
+				//APY =  ( (mytvl0 - deposit0) + (mytvl1 -deposit1) ) / blocktimediff * oneyearINsec
 
 				//			fmt.Println(block.Difficulty().Uint64())       // 3217000136609065
 				//			fmt.Println("block hash:", block.Hash().Hex()) // 0x9e8751ebb5069389b855bba72d949
