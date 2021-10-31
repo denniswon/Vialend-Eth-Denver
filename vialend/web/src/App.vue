@@ -20,6 +20,8 @@
 <script>
 import Web3 from 'web3'
 import contractABI from './ABI/contractABI.json'
+import ViaLendTokenABI from './ABI/tokenABI.json'
+import ViaLendPoolABI from './ABI/UniswapV3PoolABI.json'
 import axios from 'axios'
 
 if (typeof web3 !== 'undefined') {
@@ -44,14 +46,24 @@ export default {
       contractABI,
       this.vaultAddress
     )
+    // load the basic information of the token pair
+    // this.loadPairInfo()
     this.getTokensRateOfUSD()
-    this.checkCurrentChain()
+    this.currentChainIsAvailable()
   },
   methods: {
     getName () {
       console.log('name=' + this.$store.state.name)
     },
-    async checkCurrentChain () {
+    loadPairInfo () {
+      // load tokenpair1 information
+      // var pair1 = this.getPairInfo(this.keeperContract)
+      // this.tokenPairsList.add(pair1)
+      // console.log('pair1 token0 name is', pair1.token0.name)
+      // console.log('pair1 token1 name is', pair1.token1.name)
+    },
+
+    async currentChainIsAvailable () {
       var chainId = await web3.eth.getChainId()
       console.log('ChainId in app is', chainId)
       // var available = this.$store.state.availableChainId.includes(chainId)

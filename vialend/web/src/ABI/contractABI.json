@@ -670,6 +670,11 @@
         "internalType": "uint256",
         "name": "amountToken1",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "doRebalance",
+        "type": "bool"
       }
     ],
     "name": "deposit",

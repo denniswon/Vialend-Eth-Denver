@@ -28,35 +28,45 @@
       <div class="home_container">
         <div class="container">
           <div class="row align-items-center my-financial">
-            <div class="col-md-3 text-center"
+            <div class="col-md-4 text-center"
                  v-loading="myValueLockLoading"
                  element-loading-spinner="el-icon-loading"
                  element-loading-background="rgba(0, 0, 0, 0.8)">
               <ul>
                 <li class="title">My Value Locked</li>
-                <li class="value">{{token0Symbol + ':' + myValueToken0Locked.toFixed(2)}}</li>
-                <li class="value">{{token1Symbol + ':' + myValueToken1Locked.toFixed(2)}}</li>
-                <li class="value">USD:${{ (Number(myValueToken0USDLocked) + Number(myValueToken1USDLocked)).toFixed(2)}}</li>
+                <!-- <li class="value"
+                    v-if="pairsList.size() > 0">
+                  <ul>
+                    <li v-for="pair in pairsList._getData()"
+                        :key="pair.id">
+                      {{pair.token0.symbol}} / {{pair.token1.symbol}} : {{pair.myValueToken0Locked.toFixed(2)}} / {{pair.myValueToken1Locked.toFixed(2)}} <br>
+                      USD:${{ (Number(pair.myValueToken0USDLocked) + Number(pair.myValueToken1USDLocked)).toFixed(2)}}
+                    </li>
+                  </ul>
+                </li> -->
+                <li class="value">USD {{Number(myValueLocked).toFixed(2)}}</li>
               </ul>
             </div>
-            <div class="col-md-6 text-center apy-container">
+            <div class="col-md-4 text-center apy-container">
               <div class="apy-style"
-                   v-loading="netAPYLoading"
+                   v-loading="myValueLockLoading"
                    element-loading-spinner="el-icon-loading"
                    element-loading-background="rgba(0, 0, 0, 0.8)">
                 <ul>
                   <li class="apy-title">Net APY</li>
-                  <li class="apy-content">...</li>
+                  <li class="apy-content">{{netAPYTotal.toFixed(2)}}%</li>
                 </ul>
               </div>
             </div>
-            <div class="col-md-3 text-center"
-                 v-loading="myEarnedValueLoading"
+            <div class="col-md-4 text-center"
+                 v-loading="myValueLockLoading"
                  element-loading-spinner="el-icon-loading"
                  element-loading-background="rgba(0, 0, 0, 0.8)">
               <ul>
                 <li class="title">My Earned Value</li>
-                <li class="value">-</li>
+                <li class="value">WETH {{Number(userFee0Total).toFixed(2)}}</li>
+                <li class="value">USDC {{Number(userFee1Total).toFixed(2)}}</li>
+                <li class="value">USD {{Number(myEarnedValue).toFixed(2)}}</li>
               </ul>
             </div>
           </div>
@@ -85,38 +95,38 @@
                     <th>Assets ratio</th>
                     <th>&nbsp;</th>
                   </thead>
-                  <tbody>
-                    <tr v-for="item in pairsData"
-                        :key="item.id">
+                  <tbody v-if="pairsList.size() > 0">
+                    <tr v-for="pair in pairsList._getData()"
+                        :key="pair.id">
                       <td>
                         <span>
-                          <img :src="item.smartVaults[0].iconLink"
+                          <img :src="pair.token0.iconLink"
                                width="30"
                                height="30" />
-                          <img :src="item.smartVaults[1].iconLink"
+                          <img :src="pair.token1.iconLink"
                                width="30"
                                height="30" />
                         </span>&nbsp;&nbsp;
-                        <span>{{ item.smartVaults[0].symbol }} / {{ item.smartVaults[1].symbol }}</span>
+                        <span>{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</span>
                       </td>
                       <td><input class="btn btn-default btn-sm"
                                type="button"
-                               value="0.30%"></td>
-                      <td>-</td>
+                               :value="pair.feeTier"></td>
+                      <td>{{Number(pair.currentAPR).toFixed(2)}}%</td>
                       <td>
                         <span v-loading="tvlDataLoading"
                               element-loading-spinner="el-icon-loading"
                               element-loading-background="rgba(0, 0, 0, 0)">
-                          {{Number(tvlTotal0).toFixed(2)}} / {{Number(tvlTotal1).toFixed(2)}}<br>
-                          ${{(Number(tvlTotal0USD) + Number(tvlTotal1USD)).toFixed(2)}}
+                          {{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
+                          ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}}
                         </span>
                       </td>
                       <td>
                         <span v-loading="assetsRatioLoading"
                               element-loading-spinner="el-icon-loading"
                               element-loading-background="rgba(0, 0, 0, 0)">
-                          {{Number(lendingRatio).toFixed(2)}}% Compound<br>
-                          {{Number(uniswapRatio).toFixed(2)}}% Uniswap V3</span>
+                          {{Number(pair.lendingRatio).toFixed(2)}}% Compound<br>
+                          {{Number(pair.uniswapRatio).toFixed(2)}}% Uniswap V3</span>
                       </td>
                       <td>
                         <el-dropdown @command="handleCommand">
@@ -128,6 +138,12 @@
                           </el-dropdown-menu>
                         </el-dropdown>
                       </td>
+                    </tr>
+                  </tbody>
+                  <tbody v-else>
+                    <tr>
+                      <td colspan="5"
+                          style="text-align:center;">no data</td>
                     </tr>
                   </tbody>
                 </table>
@@ -147,18 +163,18 @@
         <div v-loading="vaultInfoLoading"
              :style="
            {display:dialogStep1Display}">
-          <el-select v-model="selectedPair"
+          <el-select v-model="selectedPairIndex"
                      placeholder="Please select pairs"
                      size="medium"
                      style="width:300px;"
                      @change="selectedPairChanage">
-            <el-option v-for="item in pairsData"
-                       :key="item.id"
-                       :label="item.smartVaults[0].symbol + '/' + item.smartVaults[1].symbol + '(' + item.feeTier + ')'"
-                       :value="item.id">
-              <span style="float: right">{{ item.smartVaults[0].symbol }} / {{ item.smartVaults[1].symbol }}({{item.feeTier}})</span>
-              <span style="float: left; color: #8492a6; font-size: 13px"><img :src="item.smartVaults[0].iconLink"
-                     width="20" />&nbsp;&nbsp;<img :src="item.smartVaults[1].iconLink"
+            <el-option v-for="pair in pairsList._getData()"
+                       :key="pair.index"
+                       :label="pair.token0.symbol + '/' + pair.token1.symbol + '(' + pair.feeTier + ')'"
+                       :value="pair.index">
+              <span style="float: right">{{ pair.token0.symbol }} / {{ pair.token1.symbol }}({{pair.feeTier}})</span>
+              <span style="float: left; color: #8492a6; font-size: 13px"><img :src="pair.token0.iconLink"
+                     width="20" />&nbsp;&nbsp;<img :src="pair.token1.iconLink"
                      width="20" /></span>
             </el-option>
           </el-select>
@@ -177,19 +193,23 @@
                       width="50%">TVL</td>
                   <td class="c2"
                       width="50%"
-                      :loading="newPositionTVLLoading">${{Number(tvl).toFixed(2)}}</td>
+                      :loading="newPositionTVLLoading"
+                      v-if="pairsList.size() > 0">${{Number(pairsList.get(selectedPairIndex).tvl).toFixed(2)}}</td>
                 </tr>
                 <tr>
                   <td class="c1">% of cap used</td>
-                  <td class="c2">{{ofCapUsed}}%</td>
+                  <td class="c2"
+                      v-if="pairsList.size() > 0">{{pairsList.get(selectedPairIndex).ofCapUsed}}%</td>
                 </tr>
                 <tr>
                   <td class="c1">Max TVL</td>
-                  <td class="c2">${{maxTVL}}</td>
+                  <td class="c2"
+                      v-if="pairsList.size() > 0">${{pairsList.get(selectedPairIndex).maxTVL}}</td>
                 </tr>
                 <tr>
                   <td class="c1">Range</td>
-                  <td class="c2">{{vaultRange}}</td>
+                  <td class="c2"
+                      v-if="pairsList.size() > 0">{{pairsList.get(selectedPairIndex).vaultRange}}</td>
                 </tr>
                 <!-- <tr>
                   <td class="c1">Lending</td>
@@ -197,7 +217,9 @@
                 </tr> -->
                 <tr>
                   <td class="c1">Current APR</td>
-                  <td class="c2">{{currentAPR}}</td>
+                  <td class="c2"
+                      v-if="pairsList.size() > 0">-</td>
+                  <!--{{Number(pairsList.get(selectedPairIndex).currentAPR).toFixed(2)}} -->
                 </tr>
               </table>
             </div>
@@ -213,25 +235,27 @@
         </div>
         <!--Step2 content-->
         <div :style="{display:dialogStep2Display}">
-          <div class="step2_pair">
-            <span style=" color: #8492a6; font-size: 13px"><img :src="this.pairsData[selectedPair-1].smartVaults[0].iconLink"
-                   width="30" />&nbsp;&nbsp;<img :src="this.pairsData[selectedPair-1].smartVaults[1].iconLink"
+          <div class="step2_pair"
+               v-if="pairsList.size() > 0">
+            <span style=" color: #8492a6; font-size: 13px"><img :src="pairsList.get(selectedPairIndex).token0.iconLink"
+                   width="30" />&nbsp;&nbsp;<img :src="pairsList.get(selectedPairIndex).token1.iconLink"
                    width="30" /></span>&nbsp;&nbsp;
-            <span>{{this.pairsData[selectedPair-1].smartVaults[0].symbol}} / {{this.pairsData[selectedPair-1].smartVaults[1].symbol}}({{this.pairsData[selectedPair-1].feeTier}})</span>
+            <span>{{pairsList.get(selectedPairIndex).token0.symbol}} / {{pairsList.get(selectedPairIndex).token1.symbol}}({{pairsList.get(selectedPairIndex).feeTier}})</span>
           </div>
           <div class="step2_intro">
             <p>To supply or withdraw liquidity for USDC / WETH to the Vialend protocol,you need to enable it first.</p>
             <p>All funds are compounded during rebalance. 10% of fees earned from Uniswap and Compound will go to a Vialend treasury to be controlled by the Vialend governance community.</p>
           </div>
-          <div class="step_token">
+          <div class="step_token"
+               v-if="pairsList.size() > 0">
             <div style="float: left;margin:8px;width:40px;">
-              <img :src="this.pairsData[selectedPair-1].smartVaults[0].iconLink"
+              <img :src="pairsList.get(selectedPairIndex).token0.iconLink"
                    width="38" />
             </div>
             <div style="float:left;width:236px;">
-              <span class="token_balance">Balance:{{token0BalanceInWallet}}(<el-link type="primary"
+              <span class="token_balance">Balance:{{pairsList.get(selectedPairIndex).token0BalanceInWallet}}(<el-link type="primary"
                          class="token_balance_max"
-                         @click="newLiqudityToken0 = token0BalanceInWallet">Max</el-link>)</span>
+                         @click="newLiqudityToken0 = pairsList.get(selectedPairIndex).token0BalanceInWallet">Max</el-link>)</span>
               <span class="token_textbox">
                 <el-input v-model="newLiqudityToken0"
                           placeholder="0.00"
@@ -245,15 +269,16 @@
             </div>
           </div>
 
-          <div class="step_token">
+          <div class="step_token"
+               v-if="pairsList.size() > 0">
             <div style="float: left;margin:8px;width:40px;">
-              <img :src="this.pairsData[selectedPair-1].smartVaults[1].iconLink"
+              <img :src="pairsList.get(selectedPairIndex).token1.iconLink"
                    width="38" />
             </div>
             <div style="float:left;width:236px;">
-              <span class="token_balance">Balance:{{token1BalanceInWallet}}(<el-link type="primary"
+              <span class="token_balance">Balance:{{pairsList.get(selectedPairIndex).token1BalanceInWallet}}(<el-link type="primary"
                          class="token_balance_max"
-                         @click="newLiqudityToken1 = token1BalanceInWallet">Max</el-link>)</span>
+                         @click="newLiqudityToken1 = pairsList.get(selectedPairIndex).token1BalanceInWallet">Max</el-link>)</span>
               <span class="token_textbox">
                 <el-input v-model="newLiqudityToken1"
                           placeholder="0.00"
@@ -266,19 +291,21 @@
               </span>
             </div>
           </div>
-          <div class="action_list">
+          <div class="action_list"
+               v-if="pairsList.size() > 0">
             <el-button type="primary"
-                       :disabled="token0Approved == true ? true : false"
+                       :disabled="pairsList.get(selectedPairIndex).token0Approved == true ? true : false"
                        :loading="approve0Loading"
                        @click="approveToken(0)"
-                       :style="{width:'100%',display:(token0Approved ? 'none':'')}">Approve {{token0Symbol}}</el-button>
+                       :style="{width:'100%',display:(pairsList.get(selectedPairIndex).token0Approved ? 'none':'')}">Approve {{pairsList.get(selectedPairIndex).token0.symbol}}</el-button>
           </div>
-          <div class="action_list">
+          <div class="action_list"
+               v-if="pairsList.size() > 0">
             <el-button type="primary"
-                       :disabled="token1Approved == true ? true : false"
+                       :disabled="pairsList.get(selectedPairIndex).token1Approved == true ? true : false"
                        :loading="approve1Loading"
                        @click="approveToken(1)"
-                       :style="{width:'100%',display:(token1Approved ? 'none':'')}">Approve {{token1Symbol}}</el-button>
+                       :style="{width:'100%',display:(pairsList.get(selectedPairIndex).token1Approved ? 'none':'')}">Approve {{pairsList.get(selectedPairIndex).token1.symbol}}</el-button>
           </div>
           <div class="action_list">
             <el-button type="info"
@@ -355,7 +382,8 @@
             </div>
           </div>
           <div class="result_tokens">
-            <table class="result_tokens_list">
+            <table class="result_tokens_list"
+                   v-if="pairsList.size() > 0">
               <thead>
                 <tr>
                   <td class="result_tokens_title"
@@ -364,15 +392,15 @@
               </thead>
               <tr>
                 <td class="c1"
-                    width="25%"><img :src="this.pairsData[selectedPair-1].smartVaults[0].iconLink"
-                       width="20" />&nbsp;&nbsp;{{this.pairsData[selectedPair-1].smartVaults[0].symbol}}</td>
+                    width="25%"><img :src="pairsList.get(selectedPairIndex).token0.iconLink"
+                       width="20" />&nbsp;&nbsp;{{pairsList.get(selectedPairIndex).token0.symbol}}</td>
                 <td class="c2"
-                    width="75%">{{(Number(token0BalanceInVault) / Number(Math.pow(10, token0Decimal))).toFixed(2) }}<br>({{(uniToken0Rate * 100).toFixed(2)}}% in Uniswap {{(lendingToken0Rate * 100).toFixed(2)}}% in Compound)</td>
+                    width="75%">{{(Number(pairsList.get(selectedPairIndex).token0BalanceInVault) / Number(Math.pow(10, pairsList.get(selectedPairIndex).token0.decimals))).toFixed(2) }}<br>({{(pairsList.get(selectedPairIndex).uniToken0Rate * 100).toFixed(2)}}% in Uniswap {{(pairsList.get(selectedPairIndex).lendingToken0Rate * 100).toFixed(2)}}% in Compound)</td>
               </tr>
               <tr>
-                <td class="c1"><img :src="this.pairsData[selectedPair-1].smartVaults[1].iconLink"
-                       width="20" />&nbsp;&nbsp;{{this.pairsData[selectedPair-1].smartVaults[1].symbol}}</td>
-                <td class="c2">{{(Number(token1BalanceInVault) / Number(Math.pow(10, token1Decimal))).toFixed(2) }}<br>({{(uniToken1Rate * 100).toFixed(2)}}% in Uniswap {{(lendingToken1Rate * 100).toFixed(2)}}% in Compound)</td>
+                <td class="c1"><img :src="pairsList.get(selectedPairIndex).token1.iconLink"
+                       width="20" />&nbsp;&nbsp;{{pairsList.get(selectedPairIndex).token1.symbol}}</td>
+                <td class="c2">{{(Number(pairsList.get(selectedPairIndex).token1BalanceInVault) / Number(Math.pow(10, pairsList.get(selectedPairIndex).token1.decimals))).toFixed(2) }}<br>({{(pairsList.get(selectedPairIndex).uniToken1Rate * 100).toFixed(2)}}% in Uniswap {{(pairsList.get(selectedPairIndex).lendingToken1Rate * 100).toFixed(2)}}% in Compound)</td>
               </tr>
             </table>
           </div>
@@ -472,119 +500,94 @@
 
 <script>
 import Header from '@/components/Header.vue'
-import PairsData from '../data/PairsData'
+import contractABI from '../ABI/ViaLendFeeMakerABI.json'
 import ViaLendTokenABI from '../ABI/tokenABI.json'
+import Token from '../model/Token'
+import Pairs from '../model/Pairs'
+import ArrayList from '../common/ArrayList'
+import PairsData from '../data/PairsData'
 import ViaLendPoolABI from '../ABI/UniswapV3PoolABI.json'
-import axios from 'axios'
+import { createContext } from 'react'
 
 export default {
   components: { Header },
   data () {
     return {
+      exchangeTimer: '',
       currentAccount: '',
+      isConnected: this.$store.state.isConnected,
+      pairsList: new ArrayList(),
+      selectedPair: 1,
+      selectedPairIndex: 0,
+      // control's load state
       initDataLoading: false,
       myValueLockLoading: false,
       myEarnedValueLoading: false,
       netAPYLoading: false,
-      isConnected: this.$store.state.isConnected,
-      treatyDialogVisible: false,
-      selectedPair: 1,
       vaultInfoLoading: true,
       tvlDataLoading: false,
       newPositionTVLLoading: false,
       assetsRatioLoading: false,
-      pairsData: PairsData,
-      token0Contract: null,
-      token1Contract: null,
-      token0LendingContract: null,
-      token1LendingContract: null,
-      poolAddress: '',
-      poolContract: null,
-      withdrawDialogVisible: false,
       withdrawLoading: false,
-      shareValue: 0,
-      sharePercent: 25,
+      approve0Loading: false,
+      approve1Loading: false,
+      depositLoading: false,
+      // Whether the control is displayed
+      treatyDialogVisible: false,
+      withdrawDialogVisible: false,
       newPositionDialogVisible: false,
+      dialogStep1Display: '',
+      dialogStep2Display: 'none',
+      dialogStep3Display: 'none',
+      dialogResultDisplay: 'none',
+      // Whether the control is available
+      btnDepositDisabled: false,
+      btnWithdrawDisabled: false,
+      depositedEtherscanDisable: true,
+      withdrawedEtherscanDisable: true,
+      // Dialog data information
       newPositionDialogTitle: 'Step1:Choose a Vault',
       dialogStep1Title: 'Step1:Choose a Vault',
       dialogStep2Title: 'Step2:Add Liquidity',
       dialogStep3Title: 'Step3:Sign Agreement',
       dialogResultTitle: 'Successful!',
-      dialogStep1Display: '',
-      dialogStep2Display: 'none',
-      dialogStep3Display: 'none',
-      dialogResultDisplay: 'none',
+      // Page-level variables
+      signAgreement: false,
+      shareValue: 0,
+      sharePercent: 25,
       newLiqudityToken0: null,
       newLiqudityToken1: null,
-      signAgreement: false,
-      feeTier: '',
-      token0Address: '',
-      token0Name: '',
-      token0Symbol: '',
-      token0Decimal: 0,
-      token0BalanceInWallet: 0,
-      token0BalanceInVault: 0,
-      token1Address: '',
-      token1Name: '',
-      token1Symbol: '',
-      token1Decimal: 0,
-      token1BalanceInWallet: 0,
-      token1BalanceInVault: 0,
-      shares: 0,
-      totalShares: 0,
-      tvl: 0,
-      tvlTotal0: 0,
-      tvlTotal1: 0,
-      tvlTotal0USD: 0,
-      tvlTotal1USD: 0,
-      tvlTotalCalculated: false,
-      ofCapUsed: '',
-      maxTVL: '',
-      vaultRange: '',
-      vaultLending: '',
-      currentAPR: 0,
-      myValueLocked: 0,
       myValueToken0Locked: 0,
       myValueToken0USDLocked: 0,
       myValueToken1Locked: 0,
       myValueToken1USDLocked: 0,
-      myEarnedValue: 0,
-      // deposit variable
-      depositToken0: '',
-      depositToken1: '',
-      token0Approved: false,
-      token1Approved: false,
-      btnDepositDisabled: false,
-      btnWithdrawDisabled: false,
-      approve0Loading: false,
-      approve1Loading: false,
-      depositLoading: false,
-      allTokensList: null,
-      depositedEtherscanDisable: true,
-      withdrawedEtherscanDisable: true,
-      goToEtherscan: '',
-      // position data
-      cLow: 0,
-      cHigh: 0,
-      uniswapRatio: 0.0,
-      lendingRatio: 0.0,
-      uniToken0Rate: 0,
-      uniToken1Rate: 0,
-      lendingToken0Rate: 0,
-      lendingToken1Rate: 0,
-      contractWraper: null
+      myValueLocked_Token0Sum: 0,
+      myValueLocked_Token1Sum: 0,
+      fees0Total: 0,
+      fees1Total: 0,
+      userFee0Total: 0,
+      userFee1Total: 0,
+      myValueLocked: 0.00,
+      myEarnedValue: 0.00,
+      myEarnedValue1: 0.00,
+      netAPYTotal: 0.00,
+      goToEtherscan: ''
     }
   },
-  created: function () {
-    this.initData()
+  created: async function () {
+    this.initPageData()
   },
   mounted () {
     window.connectWallet = this.connectWallet
+    this.exchangeTimer = setInterval(this.exchangeTokensIntoUSD, 1000)
   },
   computed: {
     rateOfUSDStatus () {
       return this.$store.state.token0RateOfUSD > 0 && this.$store.state.token1RateOfUSD > 0
     }
+  },
+  beforeDestroy () {
+    clearInterval(this.exchangeTimer)
   },
   watch: {
     '$store.state.isConnected': function () {
@@ -599,20 +602,24 @@ export default {
         this.myValueToken1USDLocked = 0
       }
     },
-    '$store.state.tokenExchangeRateLoaded': function () {
-      if (this.$store.state.tokenExchangeRateLoaded) {
-        if (this.tvlTotal0 > 0) this.tvlTotal0USD = Number(this.tvlTotal0USD) * Number(this.$store.state.token0RateOfUSD)
-        if (this.tvlTotal1 > 0) this.tvlTotal1USD = Number(this.tvlTotal1USD) * Number(this.$store.state.token1RateOfUSD)
-        if (this.myValueToken0Locked > 0) this.myValueToken0USDLocked = Number(this.myValueToken0Locked) * Number(this.$store.state.token0RateOfUSD)
-        if (this.myValueToken1Locked > 0) this.myValueToken1USDLocked = Number(this.myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
-      }
-    },
+    // '$store.state.tokenExchangeRateLoaded': function () {
+    //   if (this.$store.state.tokenExchangeRateLoaded) {
+    //     if (this.tvlTotal0 > 0) this.tvlTotal0USD = Number(this.tvlTotal0USD) * Number(this.$store.state.token0RateOfUSD)
+    //     if (this.tvlTotal1 > 0) this.tvlTotal1USD = Number(this.tvlTotal1USD) * Number(this.$store.state.token1RateOfUSD)
+    //     if (this.myValueToken0Locked > 0) this.myValueToken0USDLocked = Number(this.myValueToken0Locked) * Number(this.$store.state.token0RateOfUSD)
+    //     if (this.myValueToken1Locked > 0) this.myValueToken1USDLocked = Number(this.myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
+    //   }
+    // },
     '$store.state.currentAccount': function () {
       console.log('$store.state.currentAccount:', this.$store.state.currentAccount)
       this.loadMyData()
     },
-    '$store.state.chainId': function () {
-      this.initData()
+    '$store.state.chainId': function (newVal, oldVal) {
+      if (oldVal > 0) {
+        this.initPageData()
+      }
+      console.log('current chainid changed,id:', this.$store.state.chainId)
+      console.log('newVal=', newVal, 'oldVal=', oldVal)
     },
     async newPositionDialogVisible (val) {
       if (val === false) {
@@ -627,147 +634,186 @@ export default {
     },
     sharePercent (val) {
       this.getShares(val)
-    },
-    rateOfUSDStatus (status) {
-      if (status) {
-        console.log('USD exchange rate has been loaded,token0RateOfUSD:', this.$store.state.token0RateOfUSD, ',token1RateOfUSD:', this.$store.state.token1RateOfUSD)
-        this.getTVL()
-      } else {
-        console.log('USD exchange rate is loading')
-      }
-    },
-    tvlTotal0 (newval) {
-      if (Number(newval) > 0) {
-        if (this.$store.state.tokenExchangeRateLoaded) {
-          this.tvlTotal0USD = Number(this.tvlTotal0) * Number(this.$store.state.token0RateOfUSD)
-          console.log('tvlTotal0USD=', this.tvlTotal0USD)
-        }
-      }
-    },
-    tvlTotal1 (newval) {
-      if (Number(newval) > 0) {
-        if (this.$store.state.tokenExchangeRateLoaded) {
-          this.tvlTotal1USD = Number(this.tvlTotal1) * Number(this.$store.state.token1RateOfUSD)
-        }
-      }
-    },
-    myValueToken0Locked (newval) {
-      if (Number(newval) >= 0) {
-        if (this.$store.state.tokenExchangeRateLoaded) {
-          this.myValueToken0USDLocked = Number(this.myValueToken0Locked) * Number(this.$store.state.token0RateOfUSD)
-          console.log('myValueToken0USDLocked=', this.myValueToken0USDLocked)
-        }
-      }
-    },
-    myValueToken1Locked (newval) {
-      if (Number(newval) >= 0) {
-        if (this.$store.state.tokenExchangeRateLoaded) {
-          this.myValueToken1USDLocked = Number(this.myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
-          console.log('myValueToken1USDLocked=', this.myValueToken1USDLocked)
-        }
-      }
     }
+    // tvlTotal0 (newval) {
+    //   if (Number(newval) > 0) {
+    //     if (this.$store.state.tokenExchangeRateLoaded) {
+    //       this.tvlTotal0USD = Number(this.tvlTotal0) * Number(this.$store.state.token0RateOfUSD)
+    //       console.log('tvlTotal0USD=', this.tvlTotal0USD)
+    //     }
+    //   }
+    // },
+    // tvlTotal1 (newval) {
+    //   if (Number(newval) > 0) {
+    //     if (this.$store.state.tokenExchangeRateLoaded) {
+    //       this.tvlTotal1USD = Number(this.tvlTotal1) * Number(this.$store.state.token1RateOfUSD)
+    //     }
+    //   }
+    // },
+    // myValueToken0Locked (newval) {
+    //   if (Number(newval) >= 0) {
+    //     if (this.$store.state.tokenExchangeRateLoaded) {
+    //       this.myValueToken0USDLocked = Number(this.myValueToken0Locked) * Number(this.$store.state.token0RateOfUSD)
+    //       console.log('myValueToken0USDLocked=', this.myValueToken0USDLocked)
+    //     }
+    //   }
+    // },
+    // myValueToken1Locked (newval) {
+    //   if (Number(newval) >= 0) {
+    //     if (this.$store.state.tokenExchangeRateLoaded) {
+    //       this.myValueToken1USDLocked = Number(this.myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
+    //       console.log('myValueToken1USDLocked=', this.myValueToken1USDLocked)
+    //     }
+    //   }
+    // }
   },
   methods: {
-    async initData () {
-      if (await this.$parent.checkCurrentChain() === false) {
-        this.myValueToken0Locked = 0.00
-        this.myValueToken1Locked = 0.00
-        this.myValueToken0USDLocked = 0
-        this.myValueToken1USDLocked = 0
-        this.tvlTotal0 = 0.00
-        this.tvlTotal1 = 0.00
-        this.tvlTotal0USD = 0
-        this.tvlTotal1USD = 0
-        this.lendingRatio = 0
-        this.uniswapRatio = 0
-        return
-      }
-      this.initDataLoading = true
-      this.poolAddress = await this.$parent.keeperContract.methods.poolAddress().call()
-      this.token0Address = await this.$parent.keeperContract.methods.token0().call()
-      this.token1Address = await this.$parent.keeperContract.methods.token1().call()
-      // console.log('this.token0Address=', this.token0Address)
-      this.poolContract = new web3.eth.Contract(
-        ViaLendPoolABI,
-        this.poolAddress
-      )
-      this.token0Contract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        this.token0Address
-      )
-      this.token1Contract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        this.token1Address
-      )
-      this.token0LendingContract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
-      )
-      this.token1LendingContract = new web3.eth.Contract(
-        ViaLendTokenABI,
-        '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
-      )
-      await this.getTokensInfo()
-      this.cLow = await this.$parent.keeperContract.methods.cLow().call()
-      this.cHigh = await this.$parent.keeperContract.methods.cHigh().call()
-      console.log('cLow=', this.cLow, ';cHigh=', this.cHigh)
-      await this.loadPublicData()
-      if (this.$store.state.isConnected) {
-        this.loadMyData()
-      }
-      this.initDataLoading = false
-    },
     connectWallet () {
       this.$parent.setWalletStatus()
       console.log('wallet connection status:', this.isConnected)
     },
+    contractInstance (abi, address) {
+      return new web3.eth.Contract(abi, address)
+    },
+    exchangeTokensIntoUSD () {
+      if (this.$store.state.tokenExchangeRateLoaded) {
+        this.myValueLocked_Token0Sum = 0
+        this.myValueLocked_Token1Sum = 0
+        for (var i = 0; i < this.pairsList.size(); i++) {
+          if (this.pairsList.get(i).tvlTotal0 >= 0) this.pairsList.get(i).tvlTotal0USD = Number(this.pairsList.get(i).tvlTotal0) * Number(this.$store.state.token0RateOfUSD)
+          if (this.pairsList.get(i).tvlTotal1 >= 0) this.pairsList.get(i).tvlTotal1USD = Number(this.pairsList.get(i).tvlTotal1) * Number(this.$store.state.token1RateOfUSD)
+          if (this.pairsList.get(i).myValueToken0Locked >= 0) {
+            this.myValueLocked_Token0Sum += this.pairsList.get(i).myValueToken0Locked
+            this.pairsList.get(i).myValueToken0USDLocked = Number(this.pairsList.get(i).myValueToken0Locked) * Number(this.$store.state.token0RateOfUSD)
+          }
+          if (this.pairsList.get(i).myValueToken1Locked >= 0) {
+            this.myValueLocked_Token1Sum += this.pairsList.get(i).myValueToken1Locked
+            this.pairsList.get(i).myValueToken1USDLocked = Number(this.pairsList.get(i).myValueToken1Locked) * Number(this.$store.state.token1RateOfUSD)
+          }
+        }
+        if (this.myValueLocked_Token0Sum >= 0 && this.myValueLocked_Token1Sum >= 0) {
+          this.myValueLocked = this.myValueLocked_Token0Sum * Number(this.$store.state.token0RateOfUSD) + this.myValueLocked_Token1Sum * Number(this.$store.state.token1RateOfUSD)
+        }
+        // this.myEarnedValue = this.fees0Total * Number(this.$store.state.token0RateOfUSD) + this.fees1Total * Number(this.$store.state.token1RateOfUSD)
+        this.myEarnedValue = Number(this.userFee0Total) * Number(this.$store.state.token0RateOfUSD) + Number(this.userFee1Total) * Number(this.$store.state.token1RateOfUSD)
+      }
+      console.log('tokenExchangeRateLoaded:', this.$store.state.tokenExchangeRateLoaded)
+    },
+    async initPageData () {
+      if (await this.$parent.currentChainIsAvailable() === false) {
+        for (var i = 0; i < this.pairsList.size(); i++) {
+          this.pairsList.get(i).Empty()
+          // console.log('pair feeTier=', this.pairsList.get(i).feeTier)
+        }
+        console.log('Chain is unavailable,clear pairsList:', this.pairsList.size())
+        // to be used
+        this.myValueToken0Locked = 0.00
+        this.myValueToken1Locked = 0.00
+        this.myValueToken0USDLocked = 0
+        this.myValueToken1USDLocked = 0
+      } else {
+        this.initDataLoading = true
+        this.pairsList.clear()
+        var pair1 = new Pairs()
+        pair1.index = 0
+        pair1.id = 1
+        pair1.vaultAddress = '0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b'
+        pair1.token0LendingAddress = '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+        pair1.token1LendingAddress = '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
+        pair1 = await this.getPairBasicInfo(pair1)
+        pair1 = await this.getPairPublicInfo(pair1)
+        this.pairsList.add(pair1)
+        var pair2 = new Pairs()
+        pair2.index = 1
+        pair1.id = 2
+        pair2.vaultAddress = '0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b'
+        pair2.token0LendingAddress = '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
+        pair2.token1LendingAddress = '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
+        pair2 = await this.getPairBasicInfo(pair2)
+        pair2 = await this.getPairPublicInfo(pair2)
+        this.pairsList.add(pair2)
+        console.log('pair1 token0 name is', pair1.token0.iconLink)
+        console.log('pair1 token1 name is', pair1.token1.iconLink)
+        console.log('pairsList.length=', this.pairsList.size())
+        if (this.$store.state.isConnected) {
+          this.loadMyData()
+        }
+        this.initDataLoading = false
+      }
+    },
     async updatePageData () {
-      await this.loadPublicData()
+      await this.getPairPublicInfo(this.pairsList.get(this.selectedPairIndex))
       await this.loadMyData()
     },
-    async getTVL () {
-      // this.newPositionTVLLoading = true
-      // this.newPositionTVLLoading = false
-      console.log('getTVL token0RateOfUSD=', this.$store.state.token0RateOfUSD)
-      console.log('getTVL token1RateOfUSD=', this.$store.state.token1RateOfUSD)
+    async getPairBasicInfo (pair) {
+      var token0 = new Token()
+      var token1 = new Token()
+      var keeperContract = this.contractInstance(contractABI, pair.vaultAddress)
+      // poolAddress = await vaultContract.methods.poolAddress().call()
+      token0.tokenAddress = await keeperContract.methods.token0().call()
+      token1.tokenAddress = await keeperContract.methods.token1().call()
+      // poolContract = new web3.eth.Contract(
+      //   ViaLendPoolABI,
+      //   poolAddress
+      // )
+      var token0Contract = this.contractInstance(ViaLendTokenABI, token0.tokenAddress)
+      var token1Contract = this.contractInstance(ViaLendTokenABI, token1.tokenAddress)
+      token0.iconLink = 'images/weth.png'
+      token0.name = await token0Contract.methods.name().call()
+      token0.symbol = await token0Contract.methods.symbol().call()
+      token0.decimals = await token0Contract.methods.decimals().call()
+      token1.iconLink = 'images/usdc.png'
+      token1.name = await token1Contract.methods.name().call()
+      token1.symbol = await token1Contract.methods.symbol().call()
+      token1.decimals = await token1Contract.methods.decimals().call()
+      pair.cLow = await keeperContract.methods.cLow().call()
+      pair.cHigh = await keeperContract.methods.cHigh().call()
+      console.log('clow===========', pair.cLow)
+      pair.token0 = token0
+      pair.token1 = token1
+      return pair
     },
-    async loadPublicData () {
+    async getPairPublicInfo (pair) {
       this.tvlDataLoading = true
       this.assetsRatioLoading = true
-      this.tvlTotalCalculated = false
-
+      console.log('pair.vaultAddress=', pair.vaultAddress)
+      console.log('pair.token0LendingAddress=', pair.token0LendingAddress)
+      console.log('pair.token1LendingAddress=', pair.token1LendingAddress)
+      console.log('pair.token0.tokenAddress=', pair.token0.tokenAddress)
+      console.log('pair.token1.tokenAddress=', pair.token1.tokenAddress)
+      var keeperContract = this.contractInstance(contractABI, pair.vaultAddress)
+      var token0LendingContract = this.contractInstance(ViaLendTokenABI, pair.token0LendingAddress)
+      var token1LendingContract = this.contractInstance(ViaLendTokenABI, pair.token1LendingAddress)
+      var token0Contract = this.contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
+      var token1Contract = this.contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
       // ---------- Get TVL Begin-----------------
-      var uniliqs = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(this.cLow), BigInt(this.cHigh)).call()
-      console.log('balance in uniswap:', uniliqs, 'getVaultInfo_cLow=', this.cLow, 'getVaultInfo_cHigh=', this.cHigh)
+      var uniliqs = await keeperContract.methods.getPositionAmounts(BigInt(pair.cLow), BigInt(pair.cHigh)).call()
+      console.log('balance in uniswap:', uniliqs, 'getVaultInfo_cLow=', pair.cLow, 'getVaultInfo_cHigh=', pair.cHigh)
       // -->Get Lending Amounts begin
-      var exchangeRate0 = await this.token0LendingContract.methods.exchangeRateStored().call()
-      var exchangeRate1 = await this.token1LendingContract.methods.exchangeRateStored().call()
-      var CAmount0 = await this.token0LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
-      var CAmount1 = await this.token1LendingContract.methods.balanceOf(this.$parent.vaultAddress).call()
+      var exchangeRate0 = await token0LendingContract.methods.exchangeRateStored().call()
+      var exchangeRate1 = await token1LendingContract.methods.exchangeRateStored().call()
+      var CAmount0 = await token0LendingContract.methods.balanceOf(pair.vaultAddress).call()
+      var CAmount1 = await token1LendingContract.methods.balanceOf(pair.vaultAddress).call()
       var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
       var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
       console.log('underlying0=', underlying0, 'underlying1=', underlying1)
       // -->Get Lending Amounts end
       // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
-      this.vaultLending = Number(underlying0) + Number(underlying1) // Not yet converted to USD
+      pair.vaultLending = Number(underlying0) + Number(underlying1) // Not yet converted to USD
       // var cLending = await this.$parent.keeperContract.methods.getCAmounts().call()
-      this.token0BalanceInVault = await this.token0Contract.methods.balanceOf(this.$parent.vaultAddress).call()
-      this.token1BalanceInVault = await this.token1Contract.methods.balanceOf(this.$parent.vaultAddress).call()
-      console.log('token0BalanceInVault=', this.token0BalanceInVault, ';token1BalanceInVault=', this.token1BalanceInVault)
-      var t0Decimal = await this.token0Contract.methods.decimals().call()
-      var t1Decimal = await this.token1Contract.methods.decimals().call()
-      this.tvlTotal0 = (Number(this.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)) / Number(Math.pow(10, t0Decimal))
-      this.tvlTotal1 = (Number(this.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)) / Number(Math.pow(10, t1Decimal))
-      this.tvlTotalCalculated = true
-      this.tvl = this.tvlTotal0 * 3768.67 + this.tvlTotal1 * 0.998117
-      console.log('tvlTotal0=', this.tvlTotal0, 'tvlTotal1=', this.tvlTotal1)
-      console.log('TVL=', this.tvl, ';token0RateOfUSD=', this.pairsData[0].smartVaults[0].rateOfUSD, ';token1RateOfUSD=', this.pairsData[0].smartVaults[1].rateOfUSD)
+      pair.token0BalanceInVault = await token0Contract.methods.balanceOf(pair.vaultAddress).call()
+      pair.token1BalanceInVault = await token1Contract.methods.balanceOf(pair.vaultAddress).call()
+      console.log('token0BalanceInVault=', pair.token0BalanceInVault, ';token1BalanceInVault=', pair.token1BalanceInVault)
+      var t0Decimal = await token0Contract.methods.decimals().call()
+      var t1Decimal = await token1Contract.methods.decimals().call()
+      pair.tvlTotal0 = (Number(pair.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)) / Number(Math.pow(10, t0Decimal))
+      pair.tvlTotal1 = (Number(pair.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)) / Number(Math.pow(10, t1Decimal))
+      pair.tvl = pair.tvlTotal0 * 3768.67 + pair.tvlTotal1 * 0.998117
+      console.log('tvlTotal0=', pair.tvlTotal0, 'tvlTotal1=', pair.tvlTotal1)
+      // console.log('TVL=', this.tvl, ';token0RateOfUSD=', this.pairsList[0].smartVaults[0].rateOfUSD, ';token1RateOfUSD=', this.pairsList[0].smartVaults[1].rateOfUSD)
       // ---------- Get TVL End--------------------------
       // ---------- Get Assets ratio Begin --------------
-      var tmpTickLower = await this.$parent.keeperContract.methods.cLow().call()
-      var tmpTickUpper = await this.$parent.keeperContract.methods.cHigh().call()
-      var result = await this.$parent.keeperContract.methods.getPositionAmounts(BigInt(tmpTickLower), BigInt(tmpTickUpper)).call()
+      var result = await keeperContract.methods.getPositionAmounts(BigInt(pair.cLow), BigInt(pair.cHigh)).call()
       var token0BalanceInPool, token1BalanceInPool, token0BalanceInLending, token1BalanceInLending
       if (result !== undefined && result !== null) {
         token0BalanceInPool = result.amount0
@@ -781,137 +827,88 @@ export default {
       var totalLending = Number(token0BalanceInLending) * 300 + Number(token1BalanceInLending)
       var totalUsdc = totalUniswap + totalLending
       if (totalUsdc === 0) {
-        this.uniswapRatio = 0
-        this.lendingRatio = 0
+        pair.uniswapRatio = 0
+        pair.lendingRatio = 0
       } else {
-        this.uniswapRatio = totalUniswap / totalUsdc * 100
-        this.lendingRatio = totalLending / totalUsdc * 100
+        pair.uniswapRatio = totalUniswap / totalUsdc * 100
+        pair.lendingRatio = totalLending / totalUsdc * 100
       }
       if ((Number(token0BalanceInPool) + Number(token0BalanceInLending)) === 0) {
-        this.uniToken0Rate = 0
+        pair.uniToken0Rate = 0
       } else {
-        this.uniToken0Rate = Number(token0BalanceInPool) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
+        pair.uniToken0Rate = Number(token0BalanceInPool) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
       }
       if ((Number(token1BalanceInPool) + Number(token1BalanceInLending)) === 0) {
-        this.uniToken1Rate = 0
+        pair.uniToken1Rate = 0
       } else {
-        this.uniToken1Rate = Number(token1BalanceInPool) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
+        pair.uniToken1Rate = Number(token1BalanceInPool) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
       }
       if ((Number(token0BalanceInPool) + Number(token0BalanceInLending)) === 0) {
-        this.lendingToken0Rate = 0
+        pair.lendingToken0Rate = 0
       } else {
-        this.lendingToken0Rate = Number(token0BalanceInLending) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
+        pair.lendingToken0Rate = Number(token0BalanceInLending) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
       }
       if ((Number(token1BalanceInPool) + Number(token1BalanceInLending)) === 0) {
-        this.lendingToken1Rate = 0
+        pair.lendingToken1Rate = 0
       } else {
-        this.lendingToken1Rate = Number(token1BalanceInLending) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
+        pair.lendingToken1Rate = Number(token1BalanceInLending) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
       }
-
-      console.log('totalUniswap=', totalUniswap, 'totalLending=', totalLending, 'total_usdc=', totalUsdc, 'uniswapRatio=', this.uniswapRatio, 'lendingRatio=', this.lendingRatio)
+      console.log('totalUniswap=', pair.totalUniswap, 'totalLending=', pair.totalLending, 'total_usdc=', pair.totalUsdc, 'uniswapRatio=', pair.uniswapRatio, 'lendingRatio=', pair.lendingRatio)
       // ---------- Get Assets ratio End --------------
       // Cancel loading status
       this.tvlDataLoading = false
       this.assetsRatioLoading = false
-    },
-    async getTokensInfo () {
-      // ----------------Get Token0 Information------------------------
-      this.token0Name = await this.token0Contract.methods.name().call()
-      console.log('token0Name=', this.token0Name)
-      this.token0Symbol = await this.token0Contract.methods.symbol().call()
-      console.log('token0Symbol=', this.token0Symbol)
-      this.token0Decimal = await this.token0Contract.methods.decimals().call()
-      console.log('token0Decimal=', this.token0Decimal)
-      // ----------------- Get Token1 Information---------------------------
-      this.token1Name = await this.token1Contract.methods.name().call()
-      console.log('token1Name=', this.token1Name)
-      this.token1Symbol = await this.token1Contract.methods.symbol().call()
-      console.log('token1Symbol=', this.token1Symbol)
-      this.token1Decimal = await this.token1Contract.methods.decimals().call()
-      console.log('token1Decimal01=', this.token1Decimal)
-      // -----------------Set the data of pairs -------------------------
-      this.pairsData = [{
-        'id': 1,
-        'smartVaults': [
-          { 'iconLink': 'images/weth.png', 'name': this.token0Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token0Address, 'decimals': this.token0Decimal, 'symbol': this.token0Symbol, 'rateOfUSD': 0 },
-          { 'iconLink': 'images/usdc.png', 'name': this.token1Name, 'abi': 'ABI/contractABI.js', 'tokenAddress': this.token1Address, 'decimals': this.token1Decimal, 'symbol': this.token1Symbol, 'rateOfUSD': 0 }
-        ],
-        'feeTier': '0.30%',
-        'currentAPR': '0%',
-        'capacity': '0%',
-        'TVL': '$0',
-        'disabled': false
-      }]
+      return pair
     },
     async getVaultInfo () {
-      if (!this.isConnected) {
-        return
-      }
-      // Set loading status
+      if (!this.isConnected) { return }
       this.vaultInfoLoading = true
       this.myValueLockLoading = true
-
-      // ---------- Get Shares -------------------
-      this.shares = await this.$parent.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
-      this.totalShares = await this.$parent.keeperContract.methods.totalSupply().call()
-      console.log('this.shares=', this.shares, ';this.totalShares=', this.totalShares)
-
+      var pair = this.pairsList.get(this.selectedPairIndex)
+      var keeperContract = this.contractInstance(contractABI, pair.vaultAddress)
       // Get Max TVL
-      this.maxTVL = await this.$parent.keeperContract.methods.maxTotalSupply().call()
-      console.log('getVaultInfo_maxTVL=', this.maxTVL)
-
+      pair.maxTVL = await keeperContract.methods.maxTotalSupply().call()
+      console.log('getVaultInfo_maxTVL=', pair.maxTVL)
       // Get % of cap used
-      this.ofCapUsed = (this.totalShares / this.maxTVL * 100).toFixed(2)
-
+      pair.ofCapUsed = (pair.totalShares / pair.maxTVL * 100).toFixed(2)
       // Get APR
-      if (Number(this.shares) === 0 || Number(this.totalShares) === 0) {
-        this.currentAPR = 0
-      } else {
-        console.log('share=', this.shares, ';totalshares=', this.totalShares, ';tvl=', (this.tvlTotal0 + this.tvlTotal1))
-        this.currentAPR = this.shares / this.totalShares * (this.tvlTotal0 + this.tvlTotal1)
-      }
-      // ---------- Get myValueLocked and myEarnedValue Begin
-      // if (Number(this.shares) === 0 || Number(this.totalShares) === 0) {
-      //   this.myValueLocked = 0
-      //   this.myEarnedValue = 0
-      //   this.myValueToken0Locked = 0
-      //   this.myValueToken1Locked = 0
+      // if (Number(pair.myShare) === 0 || Number(pair.totalShares) === 0) {
+      //   pair.currentAPR = 0
       // } else {
-      //   this.myValueLocked = this.shares / this.totalShares * (this.tvlTotal0 + this.tvlTotal1)
-      //   // this.myEarnedValue = this.shares / this.totalShares * (this.tvlTotal0 + this.tvlTotal1) - this.shares
-      //   this.myValueToken0Locked = this.shares / this.totalShares * this.tvlTotal0
-      //   this.myValueToken1Locked = this.shares / this.totalShares * this.tvlTotal1
-      //   this.myEarnedValue = 0
+      //   pair.currentAPR = pair.myShare / pair.totalShares * (pair.tvlTotal0 + pair.tvlTotal1)
       // }
-      this.vaultRange = (Math.pow(1.0001, this.cLow) * Math.pow(10, this.token0Decimal - this.token1Decimal)).toFixed(1) + '-' + (Math.pow(1.0001, this.cHigh) * Math.pow(10, this.token0Decimal - this.token1Decimal)).toFixed(1)
-      console.log('cLow1=', this.cLow, ';cHigh1=', this.cHigh)
+      pair.vaultRange = (Math.pow(1.0001, pair.cLow) * Math.pow(10, pair.token0.decimals - pair.token1.decimals)).toFixed(1) + '-' + (Math.pow(1.0001, pair.cHigh) * Math.pow(10, pair.token0.decimals - pair.token1.decimals)).toFixed(1)
       this.vaultInfoLoading = false
       this.myValueLockLoading = false
     },
     async getTokensBalanceInWallet () {
+      var pair = this.pairsList.get(this.selectedPairIndex)
+      var token0Contract = this.contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
+      var token1Contract = this.contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
       // token0 balance in wallet
-      var balanceWei = await this.token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
-      this.token0BalanceInWallet = (parseInt(balanceWei / (Math.pow(10, this.token0Decimal)) * 1000) / 1000).toFixed(3)
+      var balanceWei = await token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
+      pair.token0BalanceInWallet = (parseInt(balanceWei / (Math.pow(10, pair.token0.decimals)) * 1000) / 1000).toFixed(3)
       // token1 balance in wallet
-      balanceWei = await this.token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
-      this.token1BalanceInWallet = (parseInt(balanceWei / (Math.pow(10, this.token1Decimal)) * 1000) / 1000).toFixed(3)
+      balanceWei = await token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
+      pair.token1BalanceInWallet = (parseInt(balanceWei / (Math.pow(10, pair.token1.decimals)) * 1000) / 1000).toFixed(3)
       // console.log('token1BalanceInWallet=', this.token1Balance)
     },
     setSharePercent (percent) {
       this.sharePercent = percent
     },
     async getShares (percent) {
-      if (this.$parent.keeperContract != null) {
-        this.ashares = await this.$parent.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
-        console.log('ashares1=', this.ashares)
-        this.shareValue = BigInt(parseInt(this.ashares * percent / 100))
+      var keeperContract = this.contractInstance(contractABI, this.pairsList.get(this.selectedPairIndex).vaultAddress)
+      if (keeperContract != null) {
+        var ashares = await keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+        console.log('ashares=', ashares)
+        this.shareValue = BigInt(parseInt(ashares * percent / 100))
         console.log('shares=', this.shareValue)
         if (this.shareValue > 0) this.btnWithdrawDisabled = false
         else this.btnWithdrawDisabled = true
       }
     },
     enableDepositFeature () {
-      if (this.token0Approved && this.token1Approved) {
+      if (this.pairsList.get(this.selectedPairIndex).token0Approved && this.pairsList.get(this.selectedPairIndex).token1Approved) {
         this.btnDepositDisabled = false
       } else {
         this.btnDepositDisabled = true
@@ -921,19 +918,19 @@ export default {
       var _this = this
       var tokenContract, tokenName
       if (index === 0) {
-        this.token0Approved = false
-        tokenContract = this.token0Contract
-        tokenName = this.token0Name
+        this.pairsList.get(this.selectedPairIndex).token0Approved = false
+        tokenContract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(this.selectedPairIndex).token0.tokenAddress)
+        tokenName = this.pairsList.get(this.selectedPairIndex).token0.name
       } else {
-        this.token1Approved = false
-        tokenContract = this.token1Contract
-        tokenName = this.token1Name
+        this.pairsList.get(this.selectedPairIndex).token1Approved = false
+        tokenContract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(this.selectedPairIndex).token1.tokenAddress)
+        tokenName = this.pairsList.get(this.selectedPairIndex).token1.name
       }
       console.log('vaultAddress=' + this.$parent.vaultAddress)
       if (tokenContract != null) {
         if (index === 0) { _this.approve0Loading = true } else { _this.approve1Loading = true }
         tokenContract.methods
-          .approve(this.$parent.vaultAddress, BigInt(90000000000000000000000))
+          .approve(_this.pairsList.get(this.selectedPairIndex).vaultAddress, BigInt(90000000000000000000000))
           .send({
             from: ethereum.selectedAddress,
             // gasPrice: '10000000000',
@@ -941,55 +938,39 @@ export default {
             value: 0
           })
           .on('confirmation', function (confirmationNumber, receipt) {
-            _this.$store.dispatch('setApproveStatus', {
-              'token': tokenName, 'status': true
-            })
-            if (index === 0) {
-              _this.token0Approved = true
-              if (_this.approve0Loading) {
-                _this.approve0Loading = false
-                _this.$message(tokenName + ' approved!')
-              }
-            } else {
-              _this.token1Approved = true
-              if (_this.approve1Loading) {
-                _this.approve1Loading = false
-                _this.$message(tokenName + ' approved!')
-              }
-            }
-            if (_this.token0Approved && _this.token1Approved) {
-              _this.btnDepositDisabled = false
-            }
-            console.log('token' + index + ' confirmation')
+            console.log((new Date()).toLocaleString(), ':{approve confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
           })
           .on('receipt', function (receipt) {
-            // $('#depositresult').text('Successfully deposited!');
-            _this.$store.dispatch('setApproveStatus', {
-              'token': tokenName, 'status': true
-            })
-            if (index === 0) {
-              _this.token0Approved = true
-              if (_this.approve0Loading) {
-                _this.approve0Loading = false
-                _this.$message(tokenName + ' approved!')
+            if (receipt.status) {
+              _this.$store.dispatch('setApproveStatus', {
+                'token': tokenName, 'status': true
+              })
+              if (index === 0) {
+                _this.pairsList.get(_this.selectedPairIndex).token0Approved = true
+                if (_this.approve0Loading) {
+                  _this.approve0Loading = false
+                  _this.$message(tokenName + ' approved!')
+                }
+              } else {
+                _this.pairsList.get(_this.selectedPairIndex).token1Approved = true
+                if (_this.approve1Loading) {
+                  _this.approve1Loading = false
+                  _this.$message(tokenName + ' approved!')
+                }
               }
+              if (_this.pairsList.get(_this.selectedPairIndex).token0Approved && _this.pairsList.get(_this.selectedPairIndex).token1Approved) {
+                _this.btnDepositDisabled = false
+              }
+              console.log('token' + index + ' receipt')
             } else {
-              _this.token1Approved = true
-              if (_this.approve1Loading) {
-                _this.approve1Loading = false
-                _this.$message(tokenName + ' approved!')
-              }
+              _this.$message(tokenName, ' Approve failed!')
             }
-            if (_this.token0Approved && _this.token1Approved) {
-              _this.btnDepositDisabled = false
-            }
-            console.log('token' + index + ' receipt')
           })
           .on('error', function (error) {
             if (index === 0) {
-              _this.token0Approved = false
+              _this.pairsList.get(_this.selectedPairIndex).token0Approved = false
             } else {
-              _this.token1Approved = false
+              _this.pairsList.get(_this.selectedPairIndex).token1Approved = false
             }
             if (index === 0) { _this.approve0Loading = false } else { _this.approve1Loading = false }
             _this.$message.error('token' + index + ' error' + error)
@@ -997,18 +978,26 @@ export default {
           })
       }
     },
+    showPairsInfoWithLog () {
+      console.log('log_vaultAddress=', this.pairsList.get(this.selectedPairIndex).vaultAddress)
+      console.log('log_token0_decimals=', this.pairsList.get(this.selectedPairIndex).token0.decimals)
+      console.log('log_token1_decimals=', this.pairsList.get(this.selectedPairIndex).token1.decimals)
+      console.log('this.newLiqudityToken0=', this.newLiqudityToken0)
+      console.log('this.newLiqudityToken1=', this.newLiqudityToken1)
+    },
     deposit () {
       var _this = this
-      console.log('t0=', BigInt(this.newLiqudityToken0 * Math.pow(10, this.token0Decimal)))
-      console.log('t1=', BigInt(this.newLiqudityToken0 * Math.pow(10, this.token1Decimal)))
-      // return
-      if (this.$parent.keeperContract != null) {
-        console.log('account address is ' + ethereum.selectedAddress)
+      var keeperContract = this.contractInstance(contractABI, this.pairsList.get(this.selectedPairIndex).vaultAddress)
+      var token0Decimal = this.pairsList.get(this.selectedPairIndex).token0.decimals
+      var token1Decimal = this.pairsList.get(this.selectedPairIndex).token1.decimals
+      this.showPairsInfoWithLog()
+      if (keeperContract != null) {
         this.depositLoading = true
-        this.$parent.keeperContract.methods
+        keeperContract.methods
           .deposit(
-            BigInt(this.newLiqudityToken0 * Math.pow(10, this.token0Decimal)),
-            BigInt(this.newLiqudityToken1 * Math.pow(10, this.token1Decimal))
+            BigInt(this.newLiqudityToken0 * Math.pow(10, token0Decimal)),
+            BigInt(this.newLiqudityToken1 * Math.pow(10, token1Decimal)),
+            true
           )
           .send({
             from: ethereum.selectedAddress,
@@ -1034,7 +1023,7 @@ export default {
                 _this.newLiqudityToken1 = null
                 _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
                 _this.depositedEtherscanDisable = false
-                _this.$message('Successfully deposit!')
+                _this.$message('Deposit submitted!')
                 _this.updatePageData()
               } else { _this.$message('Deposit failed!') }
               // _this.getVaultInfo()
@@ -1051,10 +1040,10 @@ export default {
     },
     withdraw () {
       var _this = this
-      if (this.$parent.keeperContract != null) {
-        console.log('account address is ' + ethereum.selectedAddress)
+      var keeperContract = this.contractInstance(contractABI, this.pairsList.get(this.selectedPairIndex).vaultAddress)
+      if (keeperContract != null) {
         this.withdrawLoading = true
-        this.$parent.keeperContract.methods
+        keeperContract.methods
           .withdraw(
             BigInt(this.sharePercent)
           )
@@ -1081,7 +1070,7 @@ export default {
                 _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
                 _this.withdrawedEtherscanDisable = false
                 _this.getShares(_this.sharePercent)
-                _this.$message('Successfully withdraw!')
+                _this.$message('Withdraw submitted!')
                 _this.updatePageData()
               } else { _this.$message('Withdraw failed!') }
               // _this.withdrawDialogVisible = false
@@ -1101,6 +1090,8 @@ export default {
         this.$message('Please connect wallet!')
         return
       }
+      this.newLiqudityToken0 = null
+      this.newLiqudityToken1 = null
       this.getVaultInfo()
       this.newPositionDialogTitle = this.dialogStep1Title
       this.newPositionDialogVisible = true
@@ -1118,8 +1109,7 @@ export default {
       this.withdrawDialogVisible = true
     },
     selectedPairChanage (val) {
-      console.log('select value=', val)
-      console.log('selectedPair=', this.selectedPair)
+      this.selectedPairIndex = val
     },
     closeNewPositionDialog () {
       this.newPositionDialogVisible = false
@@ -1141,24 +1131,22 @@ export default {
       this.getTokenApproveStatus()
     },
     getTokenApproveStatus () {
-      this.$store.dispatch('getApproveStatus', { 'token': this.token0Name }).then(res => {
-        console.log(this.token0Name + 'Approved status is:' + JSON.stringify(res))
+      this.$store.dispatch('getApproveStatus', { 'token': this.pairsList.get(this.selectedPairIndex).token0.name }).then(res => {
         if (res === 'true') {
-          this.token0Approved = true
+          this.pairsList.get(this.selectedPairIndex).token0Approved = true
           console.log('this.btnToken0ApproveDisabled = true ')
         } else {
-          this.token0Approved = false
+          this.pairsList.get(this.selectedPairIndex).token0Approved = false
           console.log('this.btnToken0ApproveDisabled = false ')
         }
         this.enableDepositFeature()
       })
-      this.$store.dispatch('getApproveStatus', { 'token': this.token1Name }).then(res => {
-        console.log(this.token1Name + 'Approved status is:' + JSON.stringify(res))
+      this.$store.dispatch('getApproveStatus', { 'token': this.pairsList.get(this.selectedPairIndex).token1.name }).then(res => {
         if (res === 'true') {
-          this.token1Approved = true
+          this.pairsList.get(this.selectedPairIndex).token1Approved = true
           console.log('this.btnToken1ApproveDisabled = true ')
         } else {
-          this.token1Approved = false
+          this.pairsList.get(this.selectedPairIndex).token1Approved = false
           console.log('this.btnToken1ApproveDisabled = false ')
         }
         this.enableDepositFeature()
@@ -1188,10 +1176,12 @@ export default {
       this.dialogResultDisplay = ''
     },
     async getBalanceInVault () {
-      this.token0BalanceInVault = await this.token0Contract.methods.balanceOf(this.$parent.vaultAddress).call()
-      console.log('token0BalanceInVault=', this.token0BalanceInVault)
-      this.token1BalanceInVault = await this.token1Contract.methods.balanceOf(this.$parent.vaultAddress).call()
-      console.log('token0BalanceInVault=', this.token0BalanceInVault)
+      var token0Contract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(this.selectedPairIndex).token0.tokenAddress)
+      var token1Contract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(this.selectedPairIndex).token1.tokenAddress)
+      this.pairsList.get(this.selectedPairIndex).token0BalanceInVault = await token0Contract.methods.balanceOf(this.pairsList.get(this.selectedPairIndex).vaultAddress).call()
+      this.pairsList.get(this.selectedPairIndex).token1BalanceInVault = await token1Contract.methods.balanceOf(this.pairsList.get(this.selectedPairIndex).vaultAddress).call()
+      console.log('token0BalanceInVault=', this.pairsList.get(this.selectedPairIndex).token0BalanceInVault)
+      console.log('token0BalanceInVault=', this.pairsList.get(this.selectedPairIndex).token1BalanceInVault)
     },
     handleCommand (command) {
       // this.$message('click on item ' + command)
@@ -1203,25 +1193,159 @@ export default {
     async loadMyData () {
       if (this.isConnected) {
         this.myValueLockLoading = true
-        // ---------- Get Shares -------------------
-        this.myShare = await this.$parent.keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
-        this.totalShares = await this.$parent.keeperContract.methods.totalSupply().call()
-        console.log('this.shares=', this.myShare, ';this.totalShares=', this.totalShares)
-        if (this.totalShares * this.tvlTotal0 === 0) {
-          this.myValueToken0Locked = 0
-        } else {
-          this.myValueToken0Locked = this.myShare / this.totalShares * this.tvlTotal0
+        var myShare, totalShares, tvlTotal0, tvlTotal1
+        var ufee0, lfee0, ufee1, lfee1
+        var fees
+        var keeperContract
+        this.fees0Total = 0
+        this.fees1Total = 0
+        this.userFee0Total = 0
+        this.userFee1Total = 0
+        this.netAPYTotal = 0
+        for (var i = 0; i < this.pairsList.size(); i++) {
+          keeperContract = this.contractInstance(contractABI, this.pairsList.get(i).vaultAddress)
+          // ---------- Get Shares -------------------
+          myShare = await keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+          totalShares = await keeperContract.methods.totalSupply().call()
+          // fees = await keeperContract.methods.Fees().call()
+          // if (fees != null) {
+          //   console.log('fees=', JSON.stringify(fees))
+          //   this.fees0Total += Number(assetholder.fees0) / Math.pow(10, Number(this.pairsList.get(i).token0.decimals))
+          //   this.fees1Total += Number(assetholder.fees1) / Math.pow(10, Number(this.pairsList.get(i).token1.decimals))
+          // }
+          // console.log('assetholder=', assetholder)
+          tvlTotal0 = this.pairsList.get(i).tvlTotal0
+          tvlTotal1 = this.pairsList.get(i).tvlTotal1
+          console.log('this.shares=', myShare, ';this.totalShares=', totalShares)
+          if (totalShares * tvlTotal0 === 0) {
+            this.pairsList.get(i).myValueToken0Locked = 0
+          } else {
+            this.pairsList.get(i).myValueToken0Locked = myShare * tvlTotal0 / totalShares
+          }
+          if (totalShares * tvlTotal1 === 0) {
+            this.pairsList.get(i).myValueToken1Locked = 0
+          } else {
+            this.pairsList.get(i).myValueToken1Locked = myShare * tvlTotal1 / totalShares
+          }
+          this.pairsList.get(i).myShare = myShare
+          this.pairsList.get(i).totalShares = totalShares
+          fees = await keeperContract.methods.Fees().call()
+          if (fees != null) {
+            console.log('fees=', JSON.stringify(fees))
+            if (Number(totalShares) !== 0) {
+              this.userFee0Total += (Number(fees.U3Fees0) + Number(fees.LcFees0)) * myShare / totalShares / Math.pow(10, Number(this.pairsList.get(i).token0.decimals))
+              this.userFee1Total += (Number(fees.U3Fees1) + Number(fees.LcFees1)) * myShare / totalShares / Math.pow(10, Number(this.pairsList.get(i).token1.decimals))
+            }
+          }
+          // ufee0 = await keeperContract.methods.uFees0().call()
+          // lfee0 = await keeperContract.methods.lFees0().call()
+          // ufee1 = await keeperContract.methods.uFees1().call()
+          // lfee1 = await keeperContract.methods.lFees1().call()
+          // this.userFee0Total += (Number(ufee0) + Number(lfee0)) * myShare / totalShares / Math.pow(10, Number(this.pairsList.get(i).token0.decimals))
+          // this.userFee1Total += (Number(ufee1) + Number(lfee1)) * myShare / totalShares / Math.pow(10, Number(this.pairsList.get(i).token1.decimals))
+          var Assets = await keeperContract.methods.Assetholder(ethereum.selectedAddress).call()
+          console.log('Assets=', JSON.stringify(Assets))
+          if (Assets !== null) {
+            // calc oraclePriceTwap
+            var oraclePriceTwap
+            var poolAddress = await keeperContract.methods.poolAddress().call()
+            var twapDuration = 2
+            var twap = await keeperContract.methods.getTwap(poolAddress, twapDuration).call()
+            console.log('twap=', twap)
+            if (twap !== null) {
+              oraclePriceTwap = await keeperContract.methods.getQuoteAtTick(Number(twap), BigInt(Math.pow(10, 18)), this.pairsList.get(i).token0.tokenAddress, this.pairsList.get(i).token1.tokenAddress).call()
+              console.log('oraclePriceTwap=', oraclePriceTwap)
+            }
+            // cacl myTVL
+            var Total0, Total1
+            var token0LendingContract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(i).token0LendingAddress)
+            var token1LendingContract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(i).token1LendingAddress)
+            var token0Contract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(i).token0.tokenAddress)
+            var token1Contract = this.contractInstance(ViaLendTokenABI, this.pairsList.get(i).token1.tokenAddress)
+
+            var uniliqs = await keeperContract.methods.getPositionAmounts(BigInt(this.pairsList.get(i).cLow), BigInt(this.pairsList.get(i).cHigh)).call()
+            console.log('balance in uniswap:', uniliqs, 'getVaultInfo_cLow=', this.pairsList.get(i).cLow, 'getVaultInfo_cHigh=', this.pairsList.get(i).cHigh)
+            // -->Get Lending Amounts begin
+            var exchangeRate0 = await token0LendingContract.methods.exchangeRateStored().call()
+            var exchangeRate1 = await token1LendingContract.methods.exchangeRateStored().call()
+            var CAmount0 = await token0LendingContract.methods.balanceOf(this.pairsList.get(i).vaultAddress).call()
+            var CAmount1 = await token1LendingContract.methods.balanceOf(this.pairsList.get(i).vaultAddress).call()
+            var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
+            var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
+            // console.log('underlying0=', underlying0, 'underlying1=', underlying1)
+            // -->Get Lending Amounts end
+            // var lendingAmounts = await keeperContract.methods.getLendingAmounts().call()
+            // var cLending = await this.$parent.keeperContract.methods.getCAmounts().call()
+            var balance0 = await token0Contract.methods.balanceOf(this.pairsList.get(i).vaultAddress).call()
+            var balance1 = await token1Contract.methods.balanceOf(this.pairsList.get(i).vaultAddress).call()
+            // console.log('token0BalanceInVault=', pair.token0BalanceInVault, ';token1BalanceInVault=', pair.token1BalanceInVault)
+            // var t0Decimal = await token0Contract.methods.decimals().call()
+            // var t1Decimal = await token1Contract.methods.decimals().call()
+            Total0 = Number(balance0) + Number(uniliqs.amount0) + Number(underlying0)
+            Total1 = Number(balance1) + Number(uniliqs.amount1) + Number(underlying1)
+            var mytvl0, mytvl1
+            if (Number(totalShares) === 0) {
+              mytvl0 = 0
+              mytvl1 = 0
+            } else {
+              mytvl0 = Total0 * Number(myShare) / Number(totalShares)
+              mytvl1 = Total1 * Number(myShare) / Number(totalShares)
+            }
+
+            // calc APY
+            var oneyearINsec = 365 * 24 * 60 * 60
+            var block = await web3.eth.getBlock(Assets.block)
+            console.log('block timestamp=', block.timestamp)
+            var timestamp = block.timestamp
+            var headerNumber = await web3.eth.getBlockNumber()
+            var headerBlock = await web3.eth.getBlock(headerNumber)
+            // console.log('header=', JSON.stringify(headerBlock))
+            var htimestamp = headerBlock.timestamp
+            console.log('htimestamp=', htimestamp, ';timestamp=', timestamp)
+            var timediff = Number(htimestamp) - Number(timestamp)
+            var deposit0 = Assets.deposit0
+            var deposit1 = Assets.deposit1
+            var fd0 = Number(deposit0)
+            var fd1, fm1
+            if (oraclePriceTwap === 0) {
+              fd1 = 0
+              fm1 = 0
+            } else {
+              fd1 = Number(deposit1) * Math.pow(10, Number(this.pairsList.get(i).token0.decimals)) / oraclePriceTwap
+              fm1 = Number(mytvl1) * Math.pow(10, Number(this.pairsList.get(i).token0.decimals)) / oraclePriceTwap
+            }
+            var fm0 = Number(mytvl0)
+            var fdd = fd0 + fd1
+            var fmm = fm0 + fm1
+            console.log('fm0=', fm0, 'fm1=', fm1)
+            console.log('decimal=', this.pairsList.get(i).token0.decimals)
+            console.log('fmm=', fmm, 'fdd=', fdd, 'timediff=', timediff, 'oneyearInsec=', oneyearINsec)
+            if (fdd === 0 || timediff === 0) {
+              this.pairsList.get(i).currentAPR = 0
+            } else {
+              this.pairsList.get(i).currentAPR = (fmm - fdd) / Number(timediff) * oneyearINsec / fdd
+            }
+            this.netAPYTotal += Number(this.pairsList.get(i).currentAPR)
+            console.log('netAPYTotal=', this.netAPYTotal)
+          }
         }
-        if (this.totalShares * this.tvlTotal1 === 0) {
-          this.myValueToken1Locked = 0
-        } else {
-          this.myValueToken1Locked = this.myShare / this.totalShares * this.tvlTotal1
-        }
+        if (this.pairsList.size() > 0) this.netAPYTotal = Number(this.netAPYTotal) / Number(this.pairsList.size())
+        // userfee0 = (ufees0+lfees0) * user share/ totalsupply
+        // userfee1 = (ufees1+lfees1) * user share/ totalsupply
+        // console.log('netAPYTotal=', this.netAPYTotal)
+        console.log('fee0Total=', this.fees0Total, ';fee1Total=', this.fees1Total)
+        console.log('userFee0Total=', this.userFee0Total, ';userFee1Total=', this.userFee1Total)
         this.myValueLockLoading = false
       } else {
         this.myValueToken0Locked = 0
         this.myValueToken1Locked = 0
       }
+    },
+    getOraclePriceTwap () {
+
+    },
+    getAPY () {
+
     },
     showTreaty () {
       this.treatyDialogVisible = true
@@ -1519,7 +1643,7 @@ export default {
   width: calc(100% + 1px);
   left: 0px;
   background: #ffffff;
-  margin-top: -100px;
+  margin-top: -60px;
   z-index: 1;
   padding: 50px 66px 0 83px;
   border: 2px solid #000000;
