@@ -20,7 +20,7 @@ func SetProtocolFee(rate *big.Int) {
 
 	fmt.Println("setProtocolFee rate=", rate, " tx sent: ", tx.Hash().Hex())
 
-	config.TxConfirm(tx.Hash())
+	TxConfirm(tx.Hash())
 
 }
 func SetUniswapPortionRatio(ratio uint8) {
@@ -36,6 +36,6 @@ func SetUniswapPortionRatio(ratio uint8) {
 	fmt.Println("setuniportionp tx: ", tx.Hash().Hex())
 
 	//config.Readstring("tx sent.....  wait for pending..next .. ")
-	config.TxConfirm(tx.Hash())
+	TxConfirm(tx.Hash())
 
 }

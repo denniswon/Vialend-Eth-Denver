@@ -1,12 +1,21 @@
 #v1.2P
 
+-- 2021 / 10 / 30 
+
+(weth/usdc 0.3% )   vault	0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b 
+
+(weth/dai 0.05% )	vault	"0x522f6c4C073A86787F5D8F676795290973498929"  
+
+
+
+
 -2021/10/22 
 
-
-		"0x72Af1F62A49b7c79db5336257A701c110D52B48a", //vault 
+		0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b  //vault
 		"0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool 0.3%
 
-		0x8c2CFFE9e0BFa86Fea2753C1ffb756da32c6e8bB	// vault (newVault 发布)
+
+		0x8c2CFFE9e0BFa86Fea2753C1ffb756da32c6e8bB	// vault (by template 发布)
 		0xe979387E6dAD7D4a92F9aC88e42C6e6461DB8b64  // (pool 1% )
 
 

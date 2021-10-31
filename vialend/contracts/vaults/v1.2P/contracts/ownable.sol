@@ -30,21 +30,21 @@ contract Ownable is ReentrancyGuard {
 	uint256 internal lFees1;
 
 	struct FeeStruct {
-		uint256 U3Fees0;
-		uint256 U3Fees1;
-		uint256 LcFees0;
-		uint256 LcFees1;
-	    uint256 AccruedProtocolFees0;
-	    uint256 AccruedProtocolFees1;
+		uint256 U3Fees0;				// uni v3 fees 0
+		uint256 U3Fees1;				// uni v3 fees 1
+		uint256 LcFees0;				// compound fees0
+		uint256 LcFees1;				// compound fees1
+	    uint256 AccruedProtocolFees0;		// for view
+	    uint256 AccruedProtocolFees1;		// for view
 	}
 
      // Asset of each user.
 	struct Assets  {
     	uint256 deposit0;   	// user's accumulative deposits for token0
 		uint256 deposit1; 	// user's accumulative deposits for token1
-		uint256 current0;		// log current value of token0
-		uint256 current1;		// log current value of token1
-		uint256 block; 		// the block number that added an account
+		uint256 current0;		// log current locked value of token0
+		uint256 current1;		// log current locked value of token1
+		uint256 block; 		//  last block number that a user made deposit
     }
     
     address[] public accounts;
@@ -135,7 +135,7 @@ contract Ownable is ReentrancyGuard {
     }
 
     function setProtocolFee(uint256 _protocolFee) external onlyGovernance {
-        require(_protocolFee < 1e6, "protocolFee");
+        require(_protocolFee <= 20, "protocolFee");
         protocolFee = _protocolFee;
     }
     

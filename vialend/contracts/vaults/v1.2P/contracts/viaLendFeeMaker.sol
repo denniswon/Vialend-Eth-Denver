@@ -568,32 +568,8 @@ contract ViaLendFeeMaker is
         if (amount1Delta > 0) token1.safeTransfer(msg.sender, uint256(amount1Delta));
     }
     
-     /// @notice Used to collect accumulated protocol fees.
-    function collectProtocol(
-        uint256 amount0,
-        uint256 amount1,
-        address to
-    ) external onlyGovernance {
-    	
-    	require (Fees.AccruedProtocolFees0 >= amount0 && Fees.AccruedProtocolFees1 >= amount1,"CP");
-
-		if (amount0 > 0) {
-	        Fees.AccruedProtocolFees0 = Fees.AccruedProtocolFees0.sub(amount0);
-	        token0.safeTransfer(to, amount0);
-		}
-							
-        if (amount1 > 0) {
-        	Fees.AccruedProtocolFees1 = Fees.AccruedProtocolFees1.sub(amount1);
-        	token1.safeTransfer(to, amount1);
-        }
-    }
-    
-	///calculate the minimum amount for token0 and token1 to deposit
-	/// todo
-	// function amountMin(uint256 amount0, uint256 amount1) internal pure returns (bool){
-	// 	return true; 
-		
-	// }
+ 
+	
     /// @notice return Balance of available token0.
      
     function getBalance0() internal view returns (uint256) {
@@ -619,7 +595,9 @@ contract ViaLendFeeMaker is
     }
 
 */
-     
+ 
+
+    
 	// remove all positions and send fund to each user
 	// send any left over to governance
     function emergencyBurn() external onlyGovernance {

@@ -59,7 +59,7 @@ func DeployVault() {
 
 	config.NonceGen()
 
-	pool := GetPoolFromToken()
+	pool := FindPool()
 	// ttoken := common.HexToAddress(config.Network.BonusToken)
 	protocolFee := big.NewInt(10000)
 
@@ -154,7 +154,7 @@ func DeployVialendFeemaker(acc int, _protocolfee *big.Int, _uniPortion int, team
 
 	config.NonceGen()
 
-	pool := GetPoolFromToken() //tokens based on network selection
+	pool := FindPool() //tokens based on network selection
 
 	protocolFee := _protocolfee
 

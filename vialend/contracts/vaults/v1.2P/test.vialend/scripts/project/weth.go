@@ -40,8 +40,10 @@ func Test_weth_deposit(WETH string, accId int, amt int64) {
 		log.Fatal("weth deposit err ", err)
 	}
 
-	config.ChangeAccount(config.Account)
 	fmt.Println("weth deposit 1 eth tx: ", tx.Hash().Hex())
+	fmt.Println("wrapped eth amount:", amt, " to: ", config.FromAddress)
+
+	config.ChangeAccount(config.Account)
 
 }
 
@@ -66,9 +68,10 @@ func Test_weth_withdraw(WETH string, accId int, amt int64) {
 		log.Fatal("weth withdraw err ", err)
 	}
 
-	config.ChangeAccount(config.Account)
-
 	fmt.Println("weth withdraw 1 eth tx: ", tx.Hash().Hex())
+	fmt.Println("unwrapped weth amount:", amt, " to: ", config.FromAddress)
+
+	config.ChangeAccount(config.Account)
 
 }
 

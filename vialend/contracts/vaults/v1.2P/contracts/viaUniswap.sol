@@ -62,8 +62,7 @@ contract ViaUniswap is
    
         pool.mint(address(this), newLow, newHigh, liquidity, "");
 
-        // // uint256 newBalance0 = getBalance0();
-        // // uint256 newBalance1 = getBalance1();
+      
 
         // emit RebalanceLog(liquidity, newBalance0, newBalance1);
 
@@ -179,13 +178,14 @@ contract ViaUniswap is
         returns (uint256 amount0, uint256 amount1)
     {
         (uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) =
-            _position(tickLower, tickUpper);
+                _position(tickLower, tickUpper);
+        
         (amount0, amount1) = _amountsForLiquidity(tickLower,tickUpper, liquidity);
 
         // Subtract protocol fees
-        uint256 oneMinusFee = uint256(1e6).sub(protocolFee);
-        amount0 = amount0.add(uint256(tokensOwed0).mul(oneMinusFee).div(1e6));
-        amount1 = amount1.add(uint256(tokensOwed1).mul(oneMinusFee).div(1e6));
+        uint256 oneMinusFee = uint256(100).sub(protocolFee);
+        amount0 = amount0.add(uint256(tokensOwed0).mul(oneMinusFee).div(100));
+        amount1 = amount1.add(uint256(tokensOwed1).mul(oneMinusFee).div(100));
     }
 
 
