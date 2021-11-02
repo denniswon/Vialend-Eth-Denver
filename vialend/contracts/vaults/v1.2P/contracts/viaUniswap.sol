@@ -236,22 +236,21 @@ contract ViaUniswap is
     }
 
 
-   /// @dev Fetches time-weighted average price in ticks from Uniswap pool.
     function getTwap(address pool, uint32 period ) public view returns (int24 tick) {
         
-        // require(period != 0, 'xBP');   
-        
-        uint32 _twapDuration = period;
+        require(period != 0, 'xBP');   
 
         uint32[] memory secondsAgo = new uint32[](2);
-        secondsAgo[0] = _twapDuration;
+        secondsAgo[0] = period;
         secondsAgo[1] = 0;
 
         (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondsAgo);
         int56 tickDelta = tickCumulatives[1] - tickCumulatives[0];
-        tick = int24(tickDelta / _twapDuration);
-        if (tickDelta < 0 && (tickDelta % _twapDuration != 0)) tick--;
+        tick = int24(tickDelta / period);
+        if (tickDelta < 0 && (tickDelta % period != 0)) tick--;
     }
+    
+ 
 
    function getQuoteAtTick(
         int24 tick,

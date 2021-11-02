@@ -76,13 +76,13 @@ func CreatePool(do int) common.Address {
 
 }
 
-func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool) {
+func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	myPrintln("----------------------------------------------")
 	myPrintln(".......................swap2. ..................")
 	myPrintln("----------------------------------------------")
 
-	poolAddress := common.HexToAddress(config.Network.Pool)
+	poolAddress := common.HexToAddress(_pool)
 	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(config.Network.Callee), config.Client)
 
 	if err != nil {
@@ -269,8 +269,11 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 
 	config.Network.Pool = poolAddress.String()
 
-	fmt.Println("token A address:", tokenA)
-	fmt.Println("token B address:", tokenB)
+	_, _, token0symbol, _, _ := GetTokenInstance(token0)
+	_, _, token1symbol, _, _ := GetTokenInstance(token1)
+
+	fmt.Println("token0 - ", token0symbol, "  ", tokenA)
+	fmt.Println("token1 - ", token1symbol, "  ", tokenB)
 	fmt.Println("fee tier:", fee)
 	fmt.Println("pool address calc:", poolAddress)
 

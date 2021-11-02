@@ -1,8 +1,6 @@
 package include
 
 import (
-	"../config"
-
 	_ "bufio"
 	"fmt"
 	"io/ioutil"
@@ -47,7 +45,7 @@ func doRebal(rng int64) {
 
 }
 
-func Rebal(interval int) {
+func Rebal(max int, interval int) {
 
 	i := 0
 	oldrange := int64(0)
@@ -68,7 +66,7 @@ func Rebal(interval int) {
 			}
 
 			// in testing mode, in case something went wrong
-			if i > 1000 { // 30 s per check, 1000 checks for 8 hours
+			if i > max { // 30 s per check, 1000 checks for 8 hours
 				os.Exit(3)
 			}
 
@@ -79,26 +77,6 @@ func Rebal(interval int) {
 
 	}
 
-}
-
-// generate fees by swap in the uniswap pool
-func GenFees(t int, acc int, amount int64, sleepSeconds time.Duration) {
-
-	accountId := acc
-
-	zeroForOne := false
-
-	amountX1e18 := config.X1E18(amount)
-
-	for i := 0; i < t; i++ {
-
-		// call swap2 function in pool.go
-		Swap2(accountId, amountX1e18, zeroForOne)
-		Swap2(accountId, amountX1e18, !zeroForOne)
-
-		time.Sleep(sleepSeconds * time.Second)
-
-	}
 }
 
 func check(msg string, e error) {

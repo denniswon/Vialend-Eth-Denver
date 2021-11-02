@@ -196,17 +196,22 @@ contract ViaLendFeeMaker is
 				
 				if (share > 0) {
 					
+					// get new amount based on new balance of each user's share
 					uint256 myamount0 = total0.mul(share).div(tt);
 					uint256 myamount1 = total1.mul(share).div(tt);
 			        
+					
+					// calc new shares with new balance of tokens for each user
 					(uint256 nshare, , )  = _calcShares(myamount0,myamount1); //myamount0.add(myamount1.mul(1e18).div(P) ) ;
 					
 					// could be smaller, so use != 
 					if (nshare != share) {
 					
-						// burn old mint new share
+
+						// burn old share
 						_burn(accounts[i], share);
 						
+						// mint new share
 						_mint(accounts[i], nshare) ;
 		
 						// update user assets with new amounts
@@ -233,7 +238,7 @@ contract ViaLendFeeMaker is
 
 		removePositions();		// get all assets back to vault
 
-		if (_totalSupply > 0 ) collectProtocolFees();
+		if (_totalSupply > 0 ) collectFees();
 
 		
 		return(true);  // fees are allocated
@@ -242,7 +247,7 @@ contract ViaLendFeeMaker is
     
     
     //calculate net fees and protocol fees 
-	function collectProtocolFees() internal 	{
+	function collectFees() internal 	{
 		
 		uint256 _protocolFee = protocolFee;
 		
@@ -253,7 +258,7 @@ contract ViaLendFeeMaker is
 		emit CollectFees(address(this),uFees0,uFees1,lFees0,lFees1);
 
 
-		//log fees
+		//update total fees
 		Fees.U3Fees0 =  Fees.U3Fees0.add(uFees0); 
 		Fees.U3Fees1 =  Fees.U3Fees1.add(uFees1); 
 		Fees.LcFees0 =  Fees.LcFees0.add(lFees0); 
@@ -336,7 +341,7 @@ contract ViaLendFeeMaker is
 		// burn user's share
         _burn(to, shares);
         
-        // update overall fees record
+        // update total fees record
         Fees.U3Fees0 = Fees.U3Fees0.sub(Fees.U3Fees0.mul(shares).div(totalSupply) ) ;
         Fees.U3Fees1 = Fees.U3Fees1.sub(Fees.U3Fees1.mul(shares).div(totalSupply) ) ;
         Fees.LcFees0 = Fees.LcFees0.sub(Fees.LcFees0.mul(shares).div(totalSupply) ) ;

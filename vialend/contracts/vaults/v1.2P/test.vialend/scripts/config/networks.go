@@ -66,8 +66,8 @@ const (
 	TMA
 )
 
-var Networkid = 4 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
-var Account = 0
+var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
+var Account = 1
 var ProviderSortId = 0
 var Auto = true //auto check pending status
 

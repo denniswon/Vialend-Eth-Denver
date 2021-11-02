@@ -653,7 +653,7 @@ func CheckFees(xPrice *big.Int) {
 
 		if storedAccount.String() != "0x0000000000000000000000000000000000000000" {
 
-			myPrintln("*My address:", storedAccount)
+			fmt.Println("\n*My address:", storedAccount)
 
 			myAddress := common.HexToAddress(storedAccount.String())
 
@@ -671,7 +671,8 @@ func CheckFees(xPrice *big.Int) {
 				myFees1 := new(big.Int).Mul(totalFees1, myshare)
 				myFees1.Div(myFees1, totalshare)
 
-				myPrintln("my Fees0, my Fees1: {", myFees0, myFees1, "}")
+				fmt.Println("my Fees0: {", myFees0, "}")
+				fmt.Println("my Fees1: {", myFees1, "}")
 
 				ListAccounts, _ := vaultInstance.Assetholder(&bind.CallOpts{}, storedAccount)
 				myPrintln("*Assetsholder: ", ListAccounts)
@@ -706,6 +707,8 @@ func CheckFees(xPrice *big.Int) {
 
 				myPrintln("timediff from now: {", timediff, htimestamp, timestamp, "}")
 
+				fmt.Println("Period (Days):", timediff/60/60/24, "{sec:}", timediff)
+
 				oneyearINsec := big.NewInt(365 * 24 * 60 * 60)
 				myPrintln("oneyearINsec ", oneyearINsec)
 
@@ -723,8 +726,8 @@ func CheckFees(xPrice *big.Int) {
 				mytvl1 := new(big.Int).Mul(totals.Total1, myshare)
 				mytvl1 = new(big.Int).Div(mytvl1, totalshare)
 
-				myPrintln("deposit0,deposit1 {", deposit0, deposit1, "}")
-				myPrintln("mytvl0, mytvl1 {", mytvl0, mytvl1, "}")
+				fmt.Println("deposit0,deposit1 {", deposit0, deposit1, "}")
+				fmt.Println("mytvl0, mytvl1 {", mytvl0, mytvl1, "}")
 
 				fd0 := config.BigIntToFloat64(deposit0)
 
@@ -744,7 +747,7 @@ func CheckFees(xPrice *big.Int) {
 
 				APY := (fmm - fdd) / float64(timediff) * config.BigIntToFloat64(oneyearINsec) / fdd
 
-				myPrintln("APY:", APY)
+				fmt.Println("APY:", APY)
 
 				// timediff, myshare, totalshare, tvl0, tvl1, deposit0, deposit1, usPrice0, usPrice1
 				// mytvl0 = tvl0 * myshare/totalshare
@@ -1074,7 +1077,7 @@ func VaultInfo(do int) {
 
 	myPrintln("cLow, tick, cHigh  :", qTickLower, tick, qTickUpper)
 
-	myPrintln("** in range? ", tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0)
+	fmt.Println("** in range? ", tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0)
 
 	liquidity, err := vaultInstance.GetSSLiquidity(&bind.CallOpts{}, qTickLower, qTickUpper)
 
@@ -1114,7 +1117,7 @@ func VaultInfo(do int) {
 		quoteToken := common.HexToAddress(config.Network.TokenB)
 
 		oraclePriceTwap, _ = vaultInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
-		myPrintln("oraclePriceTwap:", oraclePriceTwap)
+		fmt.Println("oraclePriceTwap:", oraclePriceTwap)
 	}
 
 	//	sqrtPriceX96 := slot0.SqrtPriceX96
