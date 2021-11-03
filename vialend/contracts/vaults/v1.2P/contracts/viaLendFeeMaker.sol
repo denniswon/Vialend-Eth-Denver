@@ -251,20 +251,20 @@ contract ViaLendFeeMaker is
 		
 		uint256 _protocolFee = protocolFee;
 		
-		// add up all earned fees
+		// add up all earned fees from univ3 and lending pool
 		( uint256 fees0, uint256 fees1) = ( uFees0.add(lFees0),  uFees1.add(lFees1) ) ;
 
 		// log current collected fees		
 		emit CollectFees(address(this),uFees0,uFees1,lFees0,lFees1);
 
 
-		//update total fees
+		//update fees record
 		Fees.U3Fees0 =  Fees.U3Fees0.add(uFees0); 
 		Fees.U3Fees1 =  Fees.U3Fees1.add(uFees1); 
 		Fees.LcFees0 =  Fees.LcFees0.add(lFees0); 
 		Fees.LcFees1 =  Fees.LcFees1.add(lFees1); 
 
-		// clear temp fees variables
+		// clear temp variables
 		( uFees0,uFees1, lFees0, lFees1) = (0,0,0,0);
 		
 		uint256 feesToProtocol0;

@@ -92,7 +92,7 @@ func PoolInfo2(do bool) {
 	fmt.Println("slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
 	fmt.Println("slot0.Tick:", slot0.Tick)
 
-	price := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+	_, price := getPrice(slot0.SqrtPriceX96, slot0.Tick)
 	fmt.Println("getPrice ", price)
 
 	sqrtPf := new(big.Float)
@@ -155,7 +155,7 @@ func Equation(do bool, doSet bool) {
 		}
 		_ = tx
 
-		config.Readstring("press any key to continue")
+		Readstring("press any key to continue")
 	} /*
 		p1, p2, p3, p4, p5, p6, _ := testerInstance.GetPosition(&bind.CallOpts{})
 		if err != nil {
@@ -171,7 +171,7 @@ func Equation(do bool, doSet bool) {
 	}
 	_ = tx
 
-	config.Readstring("press any key to continue")
+	Readstring("press any key to continue")
 
 	//	p1, p2, p3, p4, p5,amount0,amount1 _ := testerInstance.CallPosition(&bind.CallOpts{}, poolAddress, LPaddress, tickLower, tickUpper)
 	p1, p2, p3, p4, p5, p6, amount0, amount1, _ := testerInstance.GetPosition(&bind.CallOpts{})

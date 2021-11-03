@@ -30,7 +30,7 @@ func Test_weth_deposit(WETH string, accId int, amt int64) {
 	instance := GetWethInstance(common.HexToAddress(WETH))
 
 	//weth deposit
-	ethAmount := config.X1E18(amt)
+	ethAmount := X1E18(amt)
 
 	config.Auth.Value = ethAmount
 
@@ -60,7 +60,7 @@ func Test_weth_withdraw(WETH string, accId int, amt int64) {
 	instance := GetWethInstance(common.HexToAddress(WETH))
 
 	//weth deposit
-	ethAmount := config.X1E18(amt)
+	ethAmount := X1E18(amt)
 
 	tx, err := instance.Withdraw(config.Auth, ethAmount)
 

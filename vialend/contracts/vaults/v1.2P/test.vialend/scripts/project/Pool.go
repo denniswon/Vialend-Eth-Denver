@@ -53,7 +53,7 @@ func CreatePool(do int) common.Address {
 		log.Fatal("createPool ", err)
 	}
 
-	config.Readstring("createpool done, wait for pending ... next getPool... ")
+	Readstring("createpool done, wait for pending ... next getPool... ")
 
 	//get the transaction hash
 	_ = tx // reserve
@@ -70,7 +70,7 @@ func CreatePool(do int) common.Address {
 	config.AddSettingString("pool address:", poolAddress.String())
 	config.AddSettingString("pool fee tier:", fee.String())
 
-	config.Readstring("createpool done, wait for pending ... next... ")
+	Readstring("createpool done, wait for pending ... next... ")
 
 	return poolAddress
 
@@ -101,8 +101,8 @@ func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	TokenB, _ := poolInstance.Token1(&bind.CallOpts{})
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
 
-	var maxToken0 = config.PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = config.PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
 	config.ChangeAccount(accountId)
 
@@ -153,6 +153,8 @@ func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 		TxConfirm(tx.Hash())
 	}
 
+	PrintPrice()
+
 	config.ChangeAccount(config.Account)
 }
 func InitialPool(do int) {
@@ -200,7 +202,7 @@ func InitialPool(do int) {
 
 	sqrtPriceX96 := getSqrtPriceX96(price)
 
-	bigIntSqrtPX96 := config.Float64ToBigInt(sqrtPriceX96)
+	bigIntSqrtPX96 := Float64ToBigInt(sqrtPriceX96)
 
 	fmt.Println("bigInt . sqrtPriceX96:", bigIntSqrtPX96)
 
@@ -214,13 +216,13 @@ func InitialPool(do int) {
 	}
 	fmt.Println("initial tx sent:", tx.Hash().Hex())
 
-	config.Readstring("initial pool done, waiting for pending... next ... ")
+	Readstring("initial pool done, waiting for pending... next ... ")
 	/*
 		tx, err = poolInstance.IncreaseObservationCardinalityNext(config.Auth, 100)
 
 		fmt.Println("IncreaseObservationCardinalityNext sent:", tx.Hash().Hex())
 
-		config.Readstring(" waiting for pending... next ... ")
+		Readstring(" waiting for pending... next ... ")
 	*/
 	PoolInfo()
 
@@ -316,7 +318,7 @@ func PoolInfo() {
 	fmt.Println("slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
 	fmt.Println("slot0.Tick:", slot0.Tick)
 
-	price := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+	_, price := getPrice(slot0.SqrtPriceX96, slot0.Tick)
 	fmt.Println("price ", price)
 
 	sqrtPf := new(big.Float)
@@ -381,7 +383,7 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 		log.Fatal("token1 approve callee err ", err)
 	}
 
-	config.Readstring("Approves sent.....  wait for pending..next .. ")
+	Readstring("Approves sent.....  wait for pending..next .. ")
 
 	balance0, _ := token0Instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
 	balance1, _ := token1Instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
@@ -400,7 +402,7 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 
 	var liquidityAmt *big.Int
 
-	liquidityAmt = config.X1E18(liquidity)
+	liquidityAmt = X1E18(liquidity)
 
 	fmt.Println("liquidityAmt:", liquidityAmt)
 

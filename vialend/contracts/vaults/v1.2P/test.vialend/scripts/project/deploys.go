@@ -5,19 +5,19 @@ import (
 	"log"
 	"math/big"
 
-	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 	mocktoken "../../../../../Tokens/erc20/deploy/ERC20fixedSupply"
 	weth "../../../../../Tokens/erc20/deploy/WETH9"
 
 	vault "../../../deploy/FeeMaker"
 	//	vault "../../../deploy/vialendFeeMaker"
+	factory "../../../deploy/UniswapV3Factory"
 	vialend "../../../deploy/vialendFeeMaker"
 
+	callee "../../../deploy/TestUniswapV3Callee"
 	"../config"
 	"github.com/ethereum/go-ethereum/common"
 	/*
 
-		mintcallee "../../uniswap/v3/deploy/TestUniswapV3Callee"
 		factory "../../uniswap/v3/deploy/UniswapV3Factory"
 		pool "../../uniswap/v3/deploy/UniswapV3Pool"
 		token "../../uniswap/v3/deploy/token"
@@ -39,7 +39,7 @@ func DeployFactory() *factory.Api {
 
 	_, _ = instance, tx
 
-	config.Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
+	Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 
 	fmt.Println("factory address:", address.Hex())
 
@@ -90,7 +90,7 @@ func DeployVault() {
 
 	fmt.Println("vault address:", address.Hex())
 
-	config.Readstring("Vault deploy done, wait for pending ... next... ")
+	Readstring("Vault deploy done, wait for pending ... next... ")
 
 	_, _ = instance, tx
 
@@ -115,7 +115,7 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 	fmt.Println("token address:", address.Hex())
 	config.AddSettingString(symbol+" token address:", address.Hex())
 
-	config.Readstring("token deploy done, wait for pending ... next... ")
+	Readstring("token deploy done, wait for pending ... next... ")
 
 	return address.Hex()
 }
@@ -123,7 +123,7 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 func DeployWrappedEther() *weth.Api {
 
 	fmt.Println("----------------------------------------------")
-	fmt.Println(".......................Deploy Uniswap Factory. ..................")
+	fmt.Println(".......................Deploy WETH . ..................")
 	fmt.Println("----------------------------------------------")
 
 	config.NonceGen()
@@ -138,7 +138,7 @@ func DeployWrappedEther() *weth.Api {
 
 	fmt.Println("WETH9 address:", address.Hex())
 
-	config.Readstring("WETH deployed, wait for pending ... next... ")
+	Readstring("WETH deployed, wait for pending ... next... ")
 
 	return instance
 }
@@ -201,7 +201,7 @@ func DeployVialendFeemaker(acc int, _protocolfee *big.Int, _uniPortion int, team
 
 	_, _ = instance, tx
 
-	config.Readstring("Vault deploy done, wait for pending ... next... ")
+	Readstring("Vault deploy done, wait for pending ... next... ")
 
 }
 
@@ -274,8 +274,30 @@ func VaultGen(
 
 	fmt.Println("vault address:", address.Hex())
 
-	config.Readstring("Vault deploy done, wait for pending ... next... ")
+	Readstring("Vault deploy done, wait for pending ... next... ")
 
 	_, _ = instance, tx
+
+}
+
+func DeployCallee() {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy Test Callee . ..................")
+	fmt.Println("----------------------------------------------")
+
+	config.NonceGen()
+	address, tx, instance, err := callee.DeployApi(config.Auth, config.Client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config.Network.Callee = address.Hex()
+
+	_, _ = instance, tx
+
+	fmt.Println("callee address:", address.Hex())
+
+	Readstring("Callee deploy done, wait for pending ... next... ")
 
 }

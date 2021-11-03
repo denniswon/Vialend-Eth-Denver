@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
-import './interfaces/IERC20Minimal.sol';
+import './@uniswap/v3-core/contracts/interfaces/IERC20Minimal.sol';
 
-import './libraries/SafeCast.sol';
-import './libraries/TickMath.sol';
+import './@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+import './@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import './@uniswap/lib/contracts/libraries/FullMath.sol';
 
-import './interfaces/callback/IUniswapV3MintCallback.sol';
-import './interfaces/callback/IUniswapV3SwapCallback.sol';
-import './interfaces/callback/IUniswapV3FlashCallback.sol';
+import './@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
+import './@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+import './@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol';
 
-import './interfaces/IUniswapV3Pool.sol';
+import './@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 contract TestUniswapV3Callee is IUniswapV3MintCallback, IUniswapV3SwapCallback, IUniswapV3FlashCallback {
     using SafeCast for uint256;
@@ -155,5 +156,48 @@ contract TestUniswapV3Callee is IUniswapV3MintCallback, IUniswapV3SwapCallback, 
             );
     }
 
+
+
+
+
+	function getTwap(address pool, uint32 period ) public view returns (int24 tick) {
+        
+        require(period != 0, 'xBP');   
+
+        uint32[] memory secondsAgo = new uint32[](2);
+        secondsAgo[0] = period;
+        secondsAgo[1] = 0;
+
+        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondsAgo);
+        int56 tickDelta = tickCumulatives[1] - tickCumulatives[0];
+        tick = int24(tickDelta / period);
+        if (tickDelta < 0 && (tickDelta % period != 0)) tick--;
+    }
+    
+ 
+
+   function getQuoteAtTick(
+        int24 tick,
+        uint128 baseAmount,
+        address baseToken,
+        address quoteToken
+    ) public pure returns (uint256 quoteAmount) {
+    	
+        uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+
+        // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by itself
+        if (sqrtRatioX96 <= type(uint128).max) {
+            uint256 ratioX192 = uint256(sqrtRatioX96) * sqrtRatioX96;
+            quoteAmount = baseToken < quoteToken
+                ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
+                : FullMath.mulDiv(1 << 192, baseAmount, ratioX192);
+        } else {
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+            quoteAmount = baseToken < quoteToken
+                ? FullMath.mulDiv(ratioX128, baseAmount, 1 << 128)
+                : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
+        }
+    }
+    
 
 }

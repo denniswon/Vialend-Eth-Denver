@@ -30,6 +30,9 @@ var tickUpper = new(big.Int)
 var qTickLower = new(big.Int) // for query only
 var qTickUpper = new(big.Int) // for query only
 
+var prevFees0 = new(big.Int)
+var prevFees1 = new(big.Int)
+
 func Deposit(do int, param [3]int64, doRebalance bool) {
 
 	if do <= 0 {
@@ -75,8 +78,8 @@ func Deposit(do int, param [3]int64, doRebalance bool) {
 	allowA, _ := tokenAInstance.Allowance(&bind.CallOpts{}, config.FromAddress, common.HexToAddress(config.Network.Vault))
 	allowB, _ := tokenBInstance.Allowance(&bind.CallOpts{}, config.FromAddress, common.HexToAddress(config.Network.Vault))
 
-	var maxToken0 = config.PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = config.PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
 	if allowA.Cmp(big.NewInt(0)) <= 0 {
 
@@ -127,7 +130,7 @@ func Deposit(do int, param [3]int64, doRebalance bool) {
 	myPrintln("deposit tx: %s", tx.Hash().Hex())
 
 	//	time.Sleep(config.Network.PendingTime * time.Second)
-	//config.Readstring("deposit sent...wait for pending..next .. ")
+	//Readstring("deposit sent...wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
 }
@@ -195,7 +198,7 @@ func Withdraw(do int, param [2]int64) {
 	//get the transaction hash
 	myPrintln("withdraw tx: ", tx.Hash().Hex())
 
-	//	config.Readstring("withdraw sent.... wait for pending..next .. ")
+	//	Readstring("withdraw sent.... wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
 }
@@ -217,12 +220,12 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 	myPrintln("total locked token0: ", Totals.Total0)
 	myPrintln("total locked token1: ", Totals.Total1)
 
-	pf := getPrice(sqrtPriceX96, tick)
+	_, pf := getPrice(sqrtPriceX96, tick)
 
 	min := pf * (1 - float64(rangeRatio)/100)
 	max := pf * (1 + float64(rangeRatio)/100)
-	x := config.BigIntToFloat64(Totals.Total0) / math.Pow10(int(config.Token[0].Decimals))
-	y := config.BigIntToFloat64(Totals.Total1) / math.Pow10(int(config.Token[1].Decimals))
+	x := BigIntToFloat64(Totals.Total0) / math.Pow10(int(config.Token[0].Decimals))
+	y := BigIntToFloat64(Totals.Total1) / math.Pow10(int(config.Token[1].Decimals))
 
 	xDecimals, yDecimals := config.Token[0].Decimals, config.Token[1].Decimals
 
@@ -243,8 +246,8 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 	//os.Exit(3)
 	// myPrintln(pf, min, max, x, y)
 	// myPrintln(priceFromsqrtP)
-	// myPrintln(config.BigIntToFloat64(Total0))
-	// myPrintln(config.BigIntToFloat64(Total1))
+	// myPrintln(BigIntToFloat64(Total0))
+	// myPrintln(BigIntToFloat64(Total1))
 
 	//amt0, amt1, swapAmount, zeroForOne := getBestAmounts(pf, min, max, x, y)
 	return getBestAmounts(pf, min, max, x, y)
@@ -277,7 +280,7 @@ func EmergencyBurn() {
 
 	myPrintln("emergency tx: ", tx.Hash().Hex())
 
-	//config.Readstring("emergency sent sent.....  wait for pending..next .. white hacker to withdraw ")
+	//Readstring("emergency sent sent.....  wait for pending..next .. white hacker to withdraw ")
 	TxConfirm(tx.Hash())
 
 }
@@ -285,11 +288,7 @@ func EmergencyBurn() {
 /// param0: fullRangeSize,
 /// param1: tickspacing,
 /// param2: accId
-func Strategy1(do int, param [3]int64) {
-
-	if do <= 0 {
-		return
-	}
+func Strategy1(param [3]int64) {
 
 	myPrintln("----------------------------------------------")
 	myPrintln(".........Strategy1 .........  ")
@@ -356,7 +355,7 @@ func Strategy1(do int, param [3]int64) {
 	///require governance. redo auth
 	config.ChangeAccount(config.Account)
 
-	//config.Readstring("Rebalance by Strategy1 sent....... ")
+	//Readstring("Rebalance by Strategy1 sent....... ")
 
 }
 
@@ -450,7 +449,7 @@ func Rebalance(do int, param [3]int64) {
 	// tx, err := vaultInstance.Strategy0(config.Auth,
 	// 	tickLower,
 	// 	tickUpper,
-	// 	config.Float64ToBigInt(swapAmount),
+	// 	Float64ToBigInt(swapAmount),
 	// 	zeroForOne)
 
 	// if err != nil {
@@ -463,7 +462,7 @@ func Rebalance(do int, param [3]int64) {
 	// //get the transaction hash
 	// myPrintln("rebal tx: ", tx.Hash().Hex())
 
-	// config.Readstring("Rebalance sent.....  wait for pending..next .. ")
+	// Readstring("Rebalance sent.....  wait for pending..next .. ")
 
 	// totalfee0, _ := vaultInstance.AccruedProtocolFees0(&bind.CallOpts{})
 	// totalfee1, _ := vaultInstance.AccruedProtocolFees1(&bind.CallOpts{})
@@ -544,7 +543,7 @@ func Swap(do int, rangeRatio int64, account int64) {
 	//get the transaction hash
 	//myPrintln("swap tx: ", tx.Hash().Hex())
 
-	//config.Readstring("swap tx sent.....  wait for pending..next .. ")
+	//Readstring("swap tx sent.....  wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
 	// Total0, err := vaultInstance.GetBalance0(&bind.CallOpts{})
@@ -632,8 +631,13 @@ func CheckFees(xPrice *big.Int) {
 
 	totalFees0 := new(big.Int).Add(Fees.U3Fees0, Fees.LcFees0)
 	totalFees1 := new(big.Int).Add(Fees.U3Fees1, Fees.LcFees1)
+	fmt.Println("totalFees0, totalFees1, prev0, prev1, diff0, diff1: {",
+		totalFees0, totalFees1, "}",
+		"{", prevFees0, prevFees1, "}",
+		"{", new(big.Int).Sub(totalFees0, prevFees0), new(big.Int).Sub(totalFees1, prevFees1), "}")
 
-	myPrintln("totalFees0, totalFees1: {", totalFees0, totalFees1, "}")
+	prevFees0 = totalFees0
+	prevFees1 = totalFees1
 
 	// accumulative protocol fees
 	myPrintln("accruedProtocolFees0, accruedProtocolFees1 : {", Fees.AccruedProtocolFees0, Fees.AccruedProtocolFees1, "}")
@@ -659,6 +663,10 @@ func CheckFees(xPrice *big.Int) {
 
 			myshare, totalshare := CalcShares(myAddress)
 
+			if myshare.Cmp(big.NewInt(0)) == 0 {
+				continue
+			}
+
 			Assets, _ := vaultInstance.Assetholder(&bind.CallOpts{}, storedAccount)
 			myPrintln("*Assetsholder: ", Assets)
 
@@ -673,6 +681,9 @@ func CheckFees(xPrice *big.Int) {
 
 				fmt.Println("my Fees0: {", myFees0, "}")
 				fmt.Println("my Fees1: {", myFees1, "}")
+
+				myFeesInToken1 := new(big.Int).Mul(myFees0, xPrice)
+				myFeesInToken1 = myFeesInToken1.Add(myFeesInToken1, myFees1)
 
 				ListAccounts, _ := vaultInstance.Assetholder(&bind.CallOpts{}, storedAccount)
 				myPrintln("*Assetsholder: ", ListAccounts)
@@ -729,13 +740,13 @@ func CheckFees(xPrice *big.Int) {
 				fmt.Println("deposit0,deposit1 {", deposit0, deposit1, "}")
 				fmt.Println("mytvl0, mytvl1 {", mytvl0, mytvl1, "}")
 
-				fd0 := config.BigIntToFloat64(deposit0)
+				fd0 := BigIntToFloat64(deposit0)
 
-				fd1 := config.BigIntToFloat64(deposit1) * 1e18 / config.BigIntToFloat64(xPrice)
+				fd1 := BigIntToFloat64(deposit1) * 1e18 / BigIntToFloat64(xPrice)
 
-				fm0 := config.BigIntToFloat64(mytvl0)
+				fm0 := BigIntToFloat64(mytvl0)
 
-				fm1 := config.BigIntToFloat64(mytvl1) * 1e18 / config.BigIntToFloat64(xPrice)
+				fm1 := BigIntToFloat64(mytvl1) * 1e18 / BigIntToFloat64(xPrice)
 
 				myPrintln("fm0:", fm0)
 				myPrintln("fm1:", fm1)
@@ -745,9 +756,15 @@ func CheckFees(xPrice *big.Int) {
 
 				myPrintln("fdd, fmm:", fdd, fmm)
 
-				APY := (fmm - fdd) / float64(timediff) * config.BigIntToFloat64(oneyearINsec) / fdd
+				APY := (fmm - fdd) / float64(timediff) * BigIntToFloat64(oneyearINsec) / fdd
 
 				fmt.Println("APY:", APY)
+
+				myDepositInToken1 := new(big.Int).Mul(deposit0, xPrice)
+				myDepositInToken1 = myDepositInToken1.Add(myDepositInToken1, deposit1)
+
+				fAPY := BigIntToFloat64(myFeesInToken1) / float64(timediff) * BigIntToFloat64(oneyearINsec) / BigIntToFloat64(myDepositInToken1) * 100
+				fmt.Println("APY by fees/Deposit ", fAPY, "%")
 
 				// timediff, myshare, totalshare, tvl0, tvl1, deposit0, deposit1, usPrice0, usPrice1
 				// mytvl0 = tvl0 * myshare/totalshare
@@ -775,7 +792,7 @@ func CheckFees(xPrice *big.Int) {
 ///3.  (sqrtPricex96^2 * 1e(decimal0)/1e(decimal1) / 2^(96*2)
 // 4. javascript: JSBI.BigInt(sqrtPriceX96 *sqrtPriceX96* (1e(decimals_token_0))/(1e(decimals_token_1))/JSBI.BigInt(2) ** (JSBI.BigInt(192));
 ///5 solc: uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e(decimalsDiff)) >> (96 * 2);
-func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) float64 {
+func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 
 	/*
 		sqrpricePow2 := new(big.Int).Mul(SqrtPriceX96, SqrtPriceX96)
@@ -809,12 +826,14 @@ func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) float64 {
 	powTick := math.Pow(1.0001, tick24)
 	Price := powTick * float64(math.Pow10(int(diff)))
 
+	PriceBigInt := Float64ToBigInt(Price * math.Pow10(int(config.Token[1].Decimals)))
+
 	//myPrintln("decimals diff:", diff)
 	//myPrintln("pow10diff:", float64(math.Pow10(int(diff))))
 	//myPrintln("powTick:", powTick)
 	//myPrintln("Price in:", Price) // true price: e.g. 0.991213   / 3890.99932
 	//os.Exit(3)
-	return Price
+	return PriceBigInt, Price
 }
 
 func Alloc(accId int) {
@@ -838,7 +857,7 @@ func Alloc(accId int) {
 
 	config.ChangeAccount(config.Account)
 
-	//config.Readstring("alloc sent...wait for pending..next .. ")
+	//Readstring("alloc sent...wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
 }
@@ -932,7 +951,7 @@ func ApproveToken(tokenAddress common.Address, maxAmount *big.Int, toAddress str
 	myPrintln("approve token tx: ", tx.Hash().Hex())
 
 	//TxConfirm(tx.Hash())
-	//config.Readstring("Approve sent... wait for pending..next .. ")
+	//Readstring("Approve sent... wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
 }
@@ -958,8 +977,8 @@ func Approve(account int) {
 	myPrintln("tokenA: ", TokenA)
 	myPrintln("tokenB: ", TokenB)
 
-	var maxToken0 = config.PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = config.PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
 	ApproveToken(TokenA, maxToken0, config.Network.Vault)
 	ApproveToken(TokenB, maxToken1, config.Network.Vault)
@@ -1031,20 +1050,21 @@ func CalcShares(myAddress common.Address) (mybal *big.Int, totalbal *big.Int) {
 	}
 
 	mybal, _ = vaultTokenInstance.BalanceOf(&bind.CallOpts{}, myAddress)
-	myPrintln("myShares in vault ", mybal)
+
+	if mybal.Cmp(big.NewInt(0)) > 0 {
+		myPrintln("myShares in vault ", mybal)
+
+	}
 
 	totalbal, _ = vaultTokenInstance.TotalSupply(&bind.CallOpts{})
-
-	myPrintln("totalSupply in vault ", totalbal)
-
+	if totalbal.Cmp(big.NewInt(0)) > 0 {
+		myPrintln("totalSupply in vault ", totalbal)
+	}
 	return mybal, totalbal
 }
 
-func VaultInfo(do int) {
+func VaultInfo() {
 
-	if do <= 0 {
-		return
-	}
 	myPrintln("----------------------------------------------")
 	myPrintln(".........Vault Info.........  ")
 	myPrintln("----------------------------------------------")
@@ -1116,8 +1136,21 @@ func VaultInfo(do int) {
 		baseToken := common.HexToAddress(config.Network.TokenA)
 		quoteToken := common.HexToAddress(config.Network.TokenB)
 
+		//calleeInstance := GetCalleeInstance()
+		// oraclePriceTwap, _ = calleeInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
+
 		oraclePriceTwap, _ = vaultInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
+
 		fmt.Println("oraclePriceTwap:", oraclePriceTwap)
+	}
+
+	SpotPricebigInt, pricefloat64 := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+	_ = pricefloat64
+	fmt.Println("Spot price big:", SpotPricebigInt)
+	fmt.Println("Spot price :", pricefloat64)
+
+	if twap == nil {
+		oraclePriceTwap = SpotPricebigInt
 	}
 
 	//	sqrtPriceX96 := slot0.SqrtPriceX96
@@ -1255,4 +1288,14 @@ func TxConfirm(tx common.Hash) {
 
 	myPrintln("Receipt -> BlockNumber -> :", tr.BlockNumber)
 
+}
+
+func PrintPrice() {
+
+	poolInstance := GetPoolInstance()
+	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	_, pf := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+
+	fmt.Println("Price now:", pf)
 }

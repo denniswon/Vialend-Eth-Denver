@@ -17,7 +17,7 @@ func main() {
 
 	movePrice()
 
-	//GenFees(10, 5, 1, 5) // swap times, swap account, amount , sleepSeconds
+	//GenFees(14, 5, 2, 5) // swap times, swap account, amount , sleepSeconds
 
 	//project.Rebal(20) //interval seconds
 
@@ -54,7 +54,7 @@ func movePrice() {
 
 	accountId := 5 // accountid 5 = 0x4F211267896C4D3f2388025263AC6BD67B0f2C54
 
-	amountX1e18 := config.X1E18(1) // 1 weth
+	amountX1e18 := project.X1E18(1) // 1 weth
 
 	//0x04B1560f4F58612a24cF13531F4706c817E8A5Fe   //weth/usdc
 	//0x1738f9aAB1d370a6d0fd56a18f113DbD9e1DCd4e  // weth/dai
@@ -63,12 +63,13 @@ func movePrice() {
 	// eth price go down
 	// zeroForOne := true
 	// project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
-	// project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
+	//	project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
 
 	// eth price go up
 	zeroForOne := false
 	project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
-	project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
+
+	// project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
 
 }
 
@@ -79,17 +80,21 @@ func GenFees(t int, acc int, amount int64, sleepSeconds time.Duration) {
 
 	zeroForOne := false
 
-	amountX1e18 := config.X1E18(amount)
+	amountX1e18 := project.X1E18(amount)
 
 	//0x04B1560f4F58612a24cF13531F4706c817E8A5Fe   //weth/usdc
 	//0x1738f9aAB1d370a6d0fd56a18f113DbD9e1DCd4e  // weth/dai
-	_pool := "0x04B1560f4F58612a24cF13531F4706c817E8A5Fe"
+	//	_pool := "0x04B1560f4F58612a24cF13531F4706c817E8A5Fe"
+	_pool := config.Network.Pool // check networkid
 
 	for i := 0; i < t; i++ {
 
 		// call swap2 function in pool.go
 		project.Swap2(accountId, amountX1e18, zeroForOne, _pool)
+		project.PrintPrice()
+
 		project.Swap2(accountId, amountX1e18, !zeroForOne, _pool)
+		project.PrintPrice()
 
 		time.Sleep(sleepSeconds * time.Second)
 

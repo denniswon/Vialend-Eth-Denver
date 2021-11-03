@@ -41,7 +41,7 @@ func ReadSignal() int64 {
 func doRebal(rng int64) {
 
 	fmt.Println("Rebalance Triggered , new range:", rng)
-	Strategy1(1, [3]int64{rng, 60, 1})
+	Strategy1([3]int64{rng, 60, 1})
 
 }
 

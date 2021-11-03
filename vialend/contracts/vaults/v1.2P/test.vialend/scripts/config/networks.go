@@ -1,16 +1,11 @@
 package config
 
 import (
-	"bufio"
 	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"log"
-	"math"
 	"math/big"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -66,10 +61,9 @@ const (
 	TMA
 )
 
-var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
+var Networkid = 4 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
 var Account = 1
 var ProviderSortId = 0
-var Auto = true //auto check pending status
 
 var Token [2]TokenStruct
 
@@ -94,7 +88,7 @@ var Networks = [...]Init{
 
 	{ // 0 mainnet
 		[]string{""},
-		"",           //factory
+		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"",           //callee
 		[]string{""}, //privatekey
 		"",           //tokenA tusdc
@@ -161,6 +155,7 @@ var Networks = [...]Init{
 			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
+		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
 		"0xE97f1488F053251032ef358dE5b4188cD960D413", //callee
 		[]string{"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7", //0,  admin 	0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
 			"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f",  //1,  admin 1  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
@@ -205,6 +200,7 @@ var Networks = [...]Init{
 			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
+		//"0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
 		"0xE97f1488F053251032ef358dE5b4188cD960D413", //callee
 
 		[]string{
@@ -222,7 +218,7 @@ var Networks = [...]Init{
 
 		"", //new owner, test user 1
 		30, //time pending interval
-		"0x1738f9aAB1d370a6d0fd56a18f113DbD9e1DCd4e", //pool  (weth,usdc, 10000)
+		"0x1738f9aAB1d370a6d0fd56a18f113DbD9e1DCd4e", //pool  (weth,dai , 500)
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router  not used
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token  not used
 		"0x522f6c4C073A86787F5D8F676795290973498929", // vault
@@ -275,52 +271,6 @@ func ChangeAccount(account int) {
 	Auth = GetSignature(Networkid, account)
 	//fmt.Println("fromAddress changed: ", FromAddress)
 
-}
-
-func X1E18(x int64) *big.Int {
-
-	e18, _ := new(big.Int).SetString("1000000000000000000", 10)
-	bigx := big.NewInt(x)
-
-	return bigx.Mul(bigx, e18)
-}
-
-func PowX(x int64, d int) *big.Int {
-
-	dd := strconv.Itoa(d)
-	s := fmt.Sprintf("1%0"+dd+"d", 0)
-	ex, _ := new(big.Int).SetString(s, 10)
-
-	bigx := big.NewInt(x)
-
-	return bigx.Mul(bigx, ex)
-
-}
-
-func FloorFloat64ToBigInt(f64 float64) *big.Int {
-
-	if f64 >= math.MaxInt64 || f64 <= math.MinInt64 {
-		log.Fatal("f64 is out of int64 range.", err)
-	}
-
-	return big.NewInt(int64(math.Floor(f64)))
-}
-func RoundFloat64ToBigInt(f64 float64) *big.Int {
-
-	if f64 >= math.MaxInt64 || f64 <= math.MinInt64 {
-		log.Fatal("f64 is out of int64 range.", err)
-	}
-
-	return big.NewInt(int64(math.Round(f64)))
-}
-
-func Pricef(priceInWei *big.Int, decimal int) *big.Float {
-	fbalance := new(big.Float)
-	fbalance.SetString(priceInWei.String())
-	value := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(decimal)))
-
-	//	fmt.Println(value) // 25.729324269165216041
-	return value
 }
 
 func TokenTransfer(AccountId int, amount *big.Int, _tokenAddress string, _toAddress string) {
@@ -395,67 +345,10 @@ func GetAddress(accId int) common.Address {
 	return crypto.PubkeyToAddress(*publicKeyECDSA)
 }
 
-func Float64ToBigInt(val float64) *big.Int {
-
-	//price = int(sqrt(price) * (1 << 96))
-	newNum := big.NewRat(1, 1)
-	newNum.SetFloat64(val)
-	bigf := newNum.FloatString(0)
-
-	//fmt.Println("val, bigf:", val,  bigf)
-	//os.Exit(3)
-
-	bigI, ok := new(big.Int).SetString(bigf, 10)
-	if !ok {
-		log.Fatal("float64 to bigInt err ", val, bigI)
-	}
-
-	return bigI
-
-}
-
-func BigFloatToBigInt(bigval *big.Float) *big.Int {
-
-	result := new(big.Int)
-	bigval.Int(result)
-
-	return result
-}
-
-func BigIntToFloat64(bigN *big.Int) float64 {
-
-	bigF, _ := new(big.Float).SetString(bigN.String())
-
-	f, _ := bigF.Float64()
-
-	return float64(f)
-}
-
 func AddSettingString(name string, value string) {
 
 	InfoString = append(InfoString, Info{name, value})
 
-}
-
-func Readstring(msg string) string {
-
-	fmt.Println(msg)
-
-	if Auto {
-		time.Sleep(Network.PendingTime * time.Second)
-		return ""
-	} else {
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			fmt.Print("-> ")
-			text, _ := reader.ReadString('\n')
-			// convert CRLF to LF
-			text = strings.TrimSuffix(strings.TrimSpace(text), " \n")
-
-			return text
-
-		}
-	}
 }
 
 func GetSignature(nid int, accId int) *bind.TransactOpts {
