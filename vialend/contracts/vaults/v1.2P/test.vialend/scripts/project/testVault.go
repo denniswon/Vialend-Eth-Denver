@@ -288,10 +288,10 @@ func EmergencyBurn() {
 /// param0: fullRangeSize,
 /// param1: tickspacing,
 /// param2: accId
-func Strategy1(param [3]int64) {
+func Strategy1(fullRrange int64, acc int64) {
 
 	myPrintln("----------------------------------------------")
-	myPrintln(".........Strategy1 .........  ")
+	fmt.Println(".........Strategy1 .........  ")
 	myPrintln("----------------------------------------------")
 
 	myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
@@ -312,18 +312,24 @@ func Strategy1(param [3]int64) {
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
 	tick := slot0.Tick
 
-	hrange := new(big.Int).Div(big.NewInt(param[0]), big.NewInt(2))
+	hrange := new(big.Int).Div(big.NewInt(fullRrange), big.NewInt(2))
 	tickLower = new(big.Int).Sub(tick, hrange)
 	tickUpper = new(big.Int).Add(tick, hrange)
 
-	tickSpacing := param[1]
+	tickSpacing := config.Network.FeeTier / 50
+	myPrintln("tickspacing:", tickSpacing)
+
+	if tickSpacing < 10 {
+		log.Fatal("wrong tickSpacing = ", tickSpacing)
+	}
+	//tickSpacing := param[1]
 	tickLower.Div(tickLower, big.NewInt(tickSpacing)).Mul(tickLower, big.NewInt(tickSpacing))
 	tickUpper.Div(tickUpper, big.NewInt(tickSpacing)).Mul(tickUpper, big.NewInt(tickSpacing))
 
 	///require governance. redo auth
-	config.ChangeAccount(int(param[2]))
+	config.ChangeAccount(int(acc))
 
-	myPrintln("range size:", param[0])
+	myPrintln("range size:", fullRrange)
 	myPrintln("ticklower, TICK,  tickupper in...", tickLower, tick, tickUpper)
 	myPrintln("in range? ", tick.Cmp(tickLower) > 0 && tick.Cmp(tickUpper) < 0)
 
@@ -377,12 +383,9 @@ func LendingInfo() {
 
 func checkETHBalance() *big.Int {
 
-	Instance := GetVaultInstance()
-
-	bal, err := Instance.GetETHBalance(&bind.CallOpts{})
-
+	bal, err := config.Client.BalanceAt(context.Background(), common.HexToAddress(config.Network.Vault), nil)
 	if err != nil {
-		log.Fatal("ethbalance err ", err)
+		log.Fatal("eth balance err ", err)
 	}
 
 	myPrintln("eth balance: ", bal)
@@ -794,20 +797,6 @@ func CheckFees(xPrice *big.Int) {
 ///5 solc: uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e(decimalsDiff)) >> (96 * 2);
 func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 
-	/*
-		sqrpricePow2 := new(big.Int).Mul(SqrtPriceX96, SqrtPriceX96)
-
-		diff := config.Token[0].Decimals - config.Token[1].Decimals
-		eDecimals := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(diff)), nil)
-		oPrice := new(big.Int).Mul(sqrpricePow2, eDecimals)
-
-		myPrintln(eDecimals, oPrice)
-		//Price := new(big.Int).Rsh(oPrice, 96*2)
-		rsh192 := new(big.Int).Exp(big.NewInt(2), big.NewInt(192), nil)
-		Price := new(big.Int).Div(oPrice, rsh192)
-	*/
-
-	// price = pow(1.0001,tick) * (1e(18-6) )
 	var diff uint8
 	if config.Token[0].Decimals > config.Token[1].Decimals {
 		diff = config.Token[0].Decimals - config.Token[1].Decimals
@@ -815,10 +804,10 @@ func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 		diff = config.Token[1].Decimals - config.Token[0].Decimals
 	}
 
-	// myPrintln("decimals0:", config.Token[0].Decimals)
-	// myPrintln("decimals1:", config.Token[1].Decimals)
-	// myPrintln("decimals diff:", diff)
-	// myPrintln("decimals pow10diff:", math.Pow10(int(diff)))
+	myPrintln("decimals0:", config.Token[0].Decimals)
+	myPrintln("decimals1:", config.Token[1].Decimals)
+	myPrintln("decimals diff:", diff)
+	myPrintln("decimals pow10diff:", math.Pow10(int(diff)))
 
 	tick24 := float64(tick.Int64())
 	//myPrintln("tick24 ", tick24)
@@ -903,15 +892,15 @@ func GetTVL() *struct {
 
 func GetLendingAmounts() (*big.Int, *big.Int, *big.Int, *big.Int) {
 
-	cInstance0 := GetCTokenInstance(config.Network.LendingContracts.CETH)
-	cInstance1 := GetCTokenInstance(config.Network.LendingContracts.CUSDC)
+	cInstance0 := GetCTokenInstance(config.Network.CTOKEN0)
+	cInstance1 := GetCTokenInstance(config.Network.CTOKEN1)
 
 	//implement gettvl
 	exchangeRate0, _ := cInstance0.ExchangeRateStored(&bind.CallOpts{})
 	exchangeRate1, _ := cInstance1.ExchangeRateStored(&bind.CallOpts{})
 
-	CAmount0 := checkCTokenBalance("CETH", config.Network.LendingContracts.CETH)
-	CAmount1 := checkCTokenBalance("CUSDC", config.Network.LendingContracts.CUSDC)
+	CAmount0 := checkCTokenBalance("CToken0", config.Network.CTOKEN0)
+	CAmount1 := checkCTokenBalance("CToken1", config.Network.CTOKEN1)
 
 	pow1018 := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	//	pow106 := new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil)
@@ -1080,7 +1069,13 @@ func VaultInfo() {
 	}
 
 	///----------- 当前vault 里的 totalSupply
+	_CToken0, _ := vaultInstance.CToken0(&bind.CallOpts{})
+	_CToken1, _ := vaultInstance.CToken1(&bind.CallOpts{})
+	myPrintln("Ctoken0 address:", _CToken0)
+	myPrintln("Ctoken1 address:", _CToken1)
+
 	totalSupply, err := vaultInstance.TotalSupply(&bind.CallOpts{})
+
 	myPrintln("totalSupply (total shares in vault) :", totalSupply)
 	if err != nil {
 		log.Fatal("totalsupply ", err)
@@ -1127,7 +1122,8 @@ func VaultInfo() {
 
 	var twapDuration = uint32(2)
 	twap, _ := vaultInstance.GetTwap(&bind.CallOpts{}, poolAddress, twapDuration)
-	myPrintln("twap:", twap)
+
+	myPrintln("twap:", twap, ",slot.tick:", slot0.Tick)
 
 	var oraclePriceTwap *big.Int
 	if twap != nil {

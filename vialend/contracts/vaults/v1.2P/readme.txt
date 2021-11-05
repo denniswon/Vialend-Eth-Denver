@@ -1,11 +1,21 @@
 #v1.2P
 
+-2021/11/04 
+	--  CToken0 and CToken1 address public
+	--  new paramter {quoteAmount = 1e18 } required to deploy vault    check DeployVialendFeemaker() 
+	
+	-- new vaults for pairs:
+	
+	vault weth/usdc:  0x4aaE0bc3052aD3AB125Ae654f0f2C55Dbd9D6e17
+	vault weth/dai:  0x35938d9b221238BBcE1F9b5196FFeE0f87E22D26
+
+
+
 -- 2021 / 10 / 30 
 
 (weth/usdc 0.3% )   vault	0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b 
 
 (weth/dai 0.05% )	vault	"0x522f6c4C073A86787F5D8F676795290973498929"  
-
 
 
 

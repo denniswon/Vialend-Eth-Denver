@@ -143,12 +143,14 @@ func DeployWrappedEther() *weth.Api {
 	return instance
 }
 
-func DeployVialendFeemaker(acc int, _protocolfee *big.Int, _uniPortion int, team string) {
+func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPortion int, team string) {
 
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Deploy VialendFeemaker ...................")
 	fmt.Println("----------------------------------------------")
 
+	config.Networkid = networkid
+	config.Network = config.Networks[networkid]
 	///require governance. always use account 0 as the deployer
 	config.Auth = config.GetSignature(config.Networkid, acc)
 
@@ -164,6 +166,9 @@ func DeployVialendFeemaker(acc int, _protocolfee *big.Int, _uniPortion int, team
 	}
 	var maxTwapDeviation = big.NewInt(20000)
 	var twapDuration = uint32(2)
+
+	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
+
 	var _weth = common.HexToAddress(config.Network.LendingContracts.WETH)
 	var _cEth = common.HexToAddress(config.Network.LendingContracts.CETH)
 	var _cToken0 = common.HexToAddress(config.Network.CTOKEN0)
@@ -183,11 +188,9 @@ func DeployVialendFeemaker(acc int, _protocolfee *big.Int, _uniPortion int, team
 		maxTotalSupply,
 		maxTwapDeviation,
 		twapDuration,
+		quoteAmount,
 		uniPortionRate,
 		common.HexToAddress(team))
-
-	///set auth back to Account
-	config.Auth = config.GetSignature(config.Networkid, config.Account)
 
 	if err != nil {
 		log.Fatal("deploy vault ", err)
@@ -212,6 +215,7 @@ func VaultGen(
 	token1 string,
 	feetier int64,
 	_protocolfee *big.Int,
+	quoteAmount *big.Int,
 	_uniPortion int,
 	team string,
 	strategy config.Indi) {
@@ -255,6 +259,7 @@ func VaultGen(
 		maxTotalSupply,
 		maxTwapDeviation,
 		twapDuration,
+		quoteAmount,
 		uniPortionRate,
 		common.HexToAddress(team))
 

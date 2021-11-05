@@ -16,11 +16,10 @@ import "./ownable.sol";
 	
     using SafeMath for uint256;
     
-
-	IcErc20 internal  CToken0; 
- 	IcErc20 internal  CToken1; 
- 	IcEther internal  CEther; 
-  	IWETH9 internal WETH;
+	IcErc20 public  CToken0; 
+ 	IcErc20 public  CToken1; 
+ 	IcEther public  CEther; 
+  	IWETH9 public   WETH;
 	
 	uint256 public curComp0;	// current amount of token0 in Compound pool
 	uint256 public curComp1;	// current amount of token1 in Compound pool
@@ -250,5 +249,4 @@ so the contract holds the cTokens and does all the accounting for the users
 	}
 
 	
-
 }

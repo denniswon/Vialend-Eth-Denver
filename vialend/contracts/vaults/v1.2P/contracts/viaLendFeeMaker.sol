@@ -57,16 +57,11 @@ contract ViaLendFeeMaker is
 	
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-	
-
   
 	IERC20 public immutable token0;
-    IERC20 public immutable token1;
+    IERC20 public immutable token1;	
     
-    uint256 prev0;
-    uint256 prev1;
-
-	uint256 private Price;
+	uint256 private Price;		//uniswap v3 oracle price twap based
 	
     
     constructor(
@@ -79,6 +74,7 @@ contract ViaLendFeeMaker is
         uint256 _maxTotalSupply,
         int24 _maxTwapDeviation,
         uint32 _twapDuration,
+        uint128 _quoteAmount,
 		uint8 _uniPortion,
 		address _team
         
@@ -86,8 +82,7 @@ contract ViaLendFeeMaker is
 
         governance = msg.sender;
         team = _team;  
-        // temporary team and governance are the same
-
+       
 		pool = IUniswapV3Pool(_pool);	
 		
         token0 = IERC20(IUniswapV3Pool(_pool).token0());
@@ -99,6 +94,8 @@ contract ViaLendFeeMaker is
         CToken0 = IcErc20(_cToken0);
         CToken1 = IcErc20(_cToken1);
         CEther = IcEther(_cEth);
+        
+        
         
         require(_weth != address(0), "WETH");
 	
@@ -115,6 +112,8 @@ contract ViaLendFeeMaker is
         maxTwapDeviation = _maxTwapDeviation;
 
         twapDuration = _twapDuration;
+        
+        quoteAmount = _quoteAmount;
         
         uniPortion =  _uniPortion ;
 
@@ -148,14 +147,14 @@ contract ViaLendFeeMaker is
        // _poke(cLow, cHigh);		// Poke v3 positions so to get uniswap v3 fees up to date. do not need if position removed
 
 		//uint256 P = getUniswapPrice();
-		Price = getQuoteAtTick(getTwap(address(pool),twapDuration), uint128(1e18),address(token0), address(token1));		
+		Price = getQuoteAtTick(getTwap(address(pool),twapDuration), uint128(quoteAmount),address(token0), address(token1));		
 
         (uint256 shares, uint256 amount0, uint256 amount1) = _calcShares(amountToken0, amountToken1);
 		
 
 		_alloc();				// dividen fees if any for prev users
 		
-		updateExists();	
+		updateShares();	
 
         // transfer tokens from sender
         if (amount0 > 0) token0.safeTransferFrom(msg.sender, address(this), amount0);
@@ -177,8 +176,8 @@ contract ViaLendFeeMaker is
     }     
     
 	
-    //update Others share with current price
-    function updateExists() internal {
+    //update current users' share with current price
+    function updateShares() internal {
 	
 			uint256 tt = totalSupply();
 
@@ -303,10 +302,6 @@ contract ViaLendFeeMaker is
  
         
 	}
-
-
-
-    
     
    
     function withdraw(
@@ -421,38 +416,6 @@ contract ViaLendFeeMaker is
     }
 	
 	
- /*// COMMENT OUT BECAUSE CODE SIZE EXCEEDS DEPLOYER LIMIT. MOVE TO FRONTEND
-
-    function getTVL() public view returns (uint256 total0, uint256 total1) {
-         
-        (uint256 uniliq0, uint256 uniliq1) =  getPositionAmounts(cLow, cHigh);
-        (uint256 lending0, uint256 lending1) =  getLendingAmounts();
-
-		// balance remaining + liquidity + lending supply
-        total0 = getBalance0().add(uniliq0).add(lending0);
-        total1 = getBalance1().add(uniliq1).add(lending1);
-
-    }
-
- 
-    function getLendingAmounts() public view returns(uint256 , uint256 ){
-
-    	(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
-		
-		
-        //uint8 decimals0 = EIP20Interface(CToken0.underlying()).decimals();
-        
-        //uint8 decimals1 = EIP20Interface(CToken1.underlying()).decimals();
-            
-		//require(token0.decimals() ==       underlyingDecimals = EIP20Interface(cErc20.underlying()).decimals();
-       //oneCTokenInUnderlying  = exchangeRateCurrent / (1 * 10 ** (18 + underlyingDecimals - cTokenDecimals))
-        uint256 amount0 = cAmount0.mul(CToken0.exchangeRateStored().div(10 ** (18 + 18 - 8))  );
-        uint256 amount1 = cAmount1.mul(CToken1.exchangeRateStored().div(10 ** (18 + 6 - 8) ) );
-
-		return(amount0,amount1);
-    }
-    
-*/    
 	function removePositions() internal {
 		
 
@@ -665,8 +628,6 @@ contract ViaLendFeeMaker is
     }	
 */
 
-	
-    	
 	/// fallback function has been split into receive() and fallback(). It is a new change of the compiler.
 	fallback() external payable {}
 	receive() external payable {}

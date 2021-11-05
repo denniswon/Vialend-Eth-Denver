@@ -13,9 +13,14 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 */
 contract Ownable is ReentrancyGuard {
 
+
+    uint128 public quoteAmount = 1e18;	// for uniswap v3 oracle  if token0 is weth 1e18, if first token0 is usdc 1e6
+
+
     address public governance;
     address public team;
     address public pendingGovernance;
+
     uint256 public protocolFee;
 
     IUniswapV3Pool internal  pool;
@@ -54,16 +59,15 @@ contract Ownable is ReentrancyGuard {
     
     FeeStruct public Fees;
 
-	
-    //Asset storage c = Assetholder[accounts[i]]
-  	//Asset({capital0:amountToken0, capital1:0,fees0:0,fees1:0});
     
     uint256 public maxTotalSupply;
-    uint32 public twapDuration;
-	int24 public maxTwapDeviation;    
+    
+    uint32 internal twapDuration;
+    
+    
+	int24 internal maxTwapDeviation;    
     
 	uint8 public uniPortion ;
-
 
 	
 	event MyLog(string, uint256);
@@ -83,11 +87,6 @@ contract Ownable is ReentrancyGuard {
 		}
 
     }
-
-	// commen out because code size exceeds 24576bytes    
-    // function list() external view onlyGovernance returns (address[]  memory ) {
-    //     return accounts;
-    // }
 
 
 	///@notice set new maxTotalSupply
@@ -117,7 +116,6 @@ contract Ownable is ReentrancyGuard {
         _;
     }
     
-    
 
     function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyGovernance {
          require(_maxTwapDeviation > 0, "maxTwapDeviation");
@@ -139,19 +137,6 @@ contract Ownable is ReentrancyGuard {
         protocolFee = _protocolFee;
     }
     
-	function getETHBalance() public view returns (uint256) {
-         return address(this).balance;
-    }
-
-	// /// return capital amount
-	function getStoredAssets(address who) public view returns( uint256 , uint256, uint256, uint256 ) {
-	   	return (
-			Assetholder[who].deposit0,
-			Assetholder[who].deposit1 , 
-			Assetholder[who].current0 , 
-			Assetholder[who].current1 );
-	}
-
 
 
 }
