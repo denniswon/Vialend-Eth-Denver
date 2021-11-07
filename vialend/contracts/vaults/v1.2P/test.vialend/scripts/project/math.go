@@ -64,7 +64,9 @@ func X1E18(x int64) *big.Int {
 func PowX(x int64, d int) *big.Int {
 
 	dd := strconv.Itoa(d)
+
 	s := fmt.Sprintf("1%0"+dd+"d", 0)
+
 	ex, _ := new(big.Int).SetString(s, 10)
 
 	bigx := big.NewInt(x)

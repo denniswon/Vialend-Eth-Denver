@@ -76,10 +76,10 @@ func CreatePool(do int) common.Address {
 
 }
 
-func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
+func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	myPrintln("----------------------------------------------")
-	myPrintln(".......................swap2. ..................")
+	myPrintln(".......................swap0. ..................")
 	myPrintln("----------------------------------------------")
 
 	poolAddress := common.HexToAddress(_pool)
@@ -105,6 +105,7 @@ func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
 	config.ChangeAccount(accountId)
+	myPrintln("from address:", config.FromAddress)
 
 	ApproveToken(TokenA, maxToken0, config.Network.Callee)
 	ApproveToken(TokenB, maxToken1, config.Network.Callee)
@@ -118,11 +119,13 @@ func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	sqrtP0for1 := new(big.Int).Add(MIN_SQRT_RATIO, big.NewInt(1))
 	sqrtP1for0 := new(big.Int).Sub(MAX_SQRT_RATIO, big.NewInt(1))
 
+	amountIn := swapAmount.Mul(swapAmount, PowX(int64(1), int(config.Token[0].Decimals)))
+
 	if zeroForOne {
 
 		tx, err := calleeInstance.SwapExact0For1(config.Auth,
 			poolAddress,
-			swapAmount,
+			amountIn,
 			recipient,
 			sqrtP0for1)
 
@@ -139,7 +142,7 @@ func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 		tx, err := calleeInstance.Swap1ForExact0(config.Auth,
 			poolAddress,
-			swapAmount,
+			amountIn,
 			recipient,
 			sqrtP1for0)
 
@@ -157,6 +160,93 @@ func Swap2(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	config.ChangeAccount(config.Account)
 }
+
+func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
+
+	myPrintln("----------------------------------------------")
+	myPrintln(".......................swap1. ..................")
+	myPrintln("----------------------------------------------")
+
+	poolAddress := common.HexToAddress(_pool)
+	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(config.Network.Callee), config.Client)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	myPrintln("pool address:", poolAddress)
+	myPrintln("callee address:", config.Network.Callee)
+
+	poolInstance, err := pool.NewApi(poolAddress, config.Client)
+	if err != nil {
+		log.Fatal("poolInstance err:", err)
+	}
+
+	TokenA, _ := poolInstance.Token0(&bind.CallOpts{})
+	TokenB, _ := poolInstance.Token1(&bind.CallOpts{})
+	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+
+	config.ChangeAccount(accountId)
+	myPrintln("from address:", config.FromAddress)
+
+	ApproveToken(TokenA, maxToken0, config.Network.Callee)
+	ApproveToken(TokenB, maxToken1, config.Network.Callee)
+
+	recipient := config.FromAddress
+
+	config.NonceGen()
+
+	MIN_SQRT_RATIO := big.NewInt(4295128739)
+	MAX_SQRT_RATIO, _ := new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
+
+	sqrtP0for1 := new(big.Int).Add(MIN_SQRT_RATIO, big.NewInt(1))
+	sqrtP1for0 := new(big.Int).Sub(MAX_SQRT_RATIO, big.NewInt(1))
+
+	amountIn := swapAmount.Mul(swapAmount, PowX(int64(1), int(config.Token[1].Decimals)))
+
+	if zeroForOne {
+
+		tx, err := calleeInstance.Swap0ForExact1(config.Auth,
+			poolAddress,
+			amountIn,
+			recipient,
+			sqrtP0for1)
+
+		fmt.Println(">> swap0ForExact1 ", swapAmount)
+		myPrintln("zeroForOne =", zeroForOne, swapAmount, sqrtP0for1, slot0.SqrtPriceX96, slot0.Tick)
+
+		if err != nil {
+			panic(err)
+		}
+
+		TxConfirm(tx.Hash())
+
+	} else {
+
+		tx, err := calleeInstance.SwapExact1For0(config.Auth,
+			poolAddress,
+			amountIn,
+			recipient,
+			sqrtP1for0)
+
+		fmt.Println(">> swapExact1For0 ", swapAmount)
+		myPrintln("zeroForOne =", zeroForOne, swapAmount, sqrtP1for0, slot0.SqrtPriceX96, slot0.Tick)
+
+		if err != nil {
+			panic(err)
+		}
+
+		TxConfirm(tx.Hash())
+	}
+
+	PrintPrice()
+
+	config.ChangeAccount(config.Account)
+}
+
 func InitialPool(do int) {
 
 	if do <= 0 {

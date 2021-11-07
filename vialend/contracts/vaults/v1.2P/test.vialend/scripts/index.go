@@ -55,6 +55,12 @@ func main() {
 	// DeployAll()
 	// return
 
+	// project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 1})
+	//project.Withdraw(1, [2]int64{100, 3})
+
+	// project.VaultInfo()
+	// return
 	// // // newVault()
 
 	// project.GetCapital(1)
@@ -76,24 +82,28 @@ func main() {
 	//project.SetProtocolFee(big.NewInt(10))
 	//project.SetUniswapPortionRatio(50)
 	//	project.Withdraw(1, [2]int64{100, 4}) // team withdraw
-	//project.Deposit(1, [3]int64{1, 1, 0}, false)
-	//project.Deposit(1, [3]int64{2, 2, 1}, false)
+	//project.Deposit(1, [3]int64{1, 1000, 1}, false)
+	//	project.Deposit(1, [3]int64{2, 1000, 0}, false)
 	//project.EmergencyBurn()
 
-	//project.Strategy1(500, 1)
+	// project.Strategy1(1000, 1)
+	// project.Strategy1(100, 1)
 	// project.AccountInfo()
-	//project.Withdraw(1, [2]int64{100, 0})
-	project.VaultInfo()
-	// // //project.Alloc(1)
-	return
+	// project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 1})
+	// project.Withdraw(1, [2]int64{100, 3})
+	//project.Alloc(1)
+	//project.RemoveCTokens()
+	// project.VaultInfo()
+	// return
 
 	// // // project.Strategy1( [3]int64{400, 60, 0})
 
 	// project.AccountInfo()
-	project.Strategy1(200, 1)
-	project.Withdraw(1, [2]int64{100, 0})
-	project.Withdraw(1, [2]int64{100, 1})
-	project.Withdraw(1, [2]int64{100, 3})
+	project.Strategy1(500, 1)
+	// project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 1})
+	//project.Withdraw(1, [2]int64{100, 3})
 	project.VaultInfo()
 	return
 
@@ -167,7 +177,7 @@ func DeployAll() {
 
 	//networkid, account, protocolfee, uniportion, team address to get fee cut
 	project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-	project.DeployVialendFeemaker(4, 1, big.NewInt(10), 30, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+	//	project.DeployVialendFeemaker(4, 1, big.NewInt(10), 30, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 
 }
 

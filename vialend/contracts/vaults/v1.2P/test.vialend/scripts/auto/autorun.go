@@ -18,7 +18,7 @@ func main() {
 	// project.MovePrice(project.Sell)
 	// project.MovePrice(project.Buy)
 
-	project.GenFees(14, 5) // swap times
+	project.GenFees(4, 5) // swap times
 
 	//project.Rebal(20) //interval seconds
 

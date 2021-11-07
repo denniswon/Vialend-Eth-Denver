@@ -347,7 +347,8 @@ func Strategy1(fullRrange int64, acc int64) {
 			//log.Fatal("strateg1 tx err ", err)
 			time.Sleep(2 * time.Second)
 		} else {
-			myPrintln("strategy1 tx: ", tx.Hash().Hex())
+			//myPrintln("strategy1 tx: ", tx.Hash().Hex())
+			fmt.Println("strategy1 tx: ", tx.Hash().Hex())
 			TxConfirm(tx.Hash())
 			break
 		}
@@ -360,6 +361,8 @@ func Strategy1(fullRrange int64, acc int64) {
 
 	///require governance. redo auth
 	config.ChangeAccount(config.Account)
+
+	fmt.Println()
 
 	//Readstring("Rebalance by Strategy1 sent....... ")
 
@@ -407,6 +410,26 @@ func checkCTokenBalance(tokenName string, cTokenAddress string) *big.Int {
 	myPrintln(tokenName, " balance: ", bal)
 
 	return (bal)
+
+}
+
+func RemoveCTokens() {
+
+	myPrintln("----------------------------------------------")
+	myPrintln(".........Remove Ctoken back to vault.........  ")
+	myPrintln("----------------------------------------------")
+
+	vaultInstance := GetVaultInstance()
+
+	clending0, clending1 := vaultInstance.GetCAmounts(&bind.CallOpts{})
+	myPrintln("C Amounts in lending: ", clending0, clending1)
+
+	tx, err := vaultInstance.RemoveCTokens(config.Auth)
+	if err != nil {
+		log.Fatal("removectokens ,", err)
+	}
+
+	myPrintln("removeCtokens tx: ", tx.Hash().Hex())
 
 }
 
@@ -1161,12 +1184,12 @@ func VaultInfo() {
 
 func Init() {
 
-	myPrintln("tokenA:", common.HexToAddress(config.Network.TokenA))
-	myPrintln("tokenB:", common.HexToAddress(config.Network.TokenB))
-	myPrintln("A<B:", config.Network.TokenA < config.Network.TokenB)
-
 	_, config.Token[0].Name, config.Token[0].Symbol, config.Token[0].Decimals, config.Token[0].MaxTotalSupply = GetTokenInstance(config.Network.TokenA)
 	_, config.Token[1].Name, config.Token[1].Symbol, config.Token[1].Decimals, config.Token[1].MaxTotalSupply = GetTokenInstance(config.Network.TokenB)
+
+	myPrintln(config.Token[0].Symbol, ":", common.HexToAddress(config.Network.TokenA))
+	myPrintln(config.Token[1].Symbol, ":", common.HexToAddress(config.Network.TokenB))
+	//	myPrintln("A<B:", config.Network.TokenA < config.Network.TokenB)
 
 }
 
