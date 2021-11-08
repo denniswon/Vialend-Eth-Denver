@@ -35,21 +35,23 @@ type LendingStruct struct {
 	CUSDC string
 }
 type Init struct {
-	ProviderUrl      []string
-	Factory          string
-	Callee           string
-	PrivateKey       []string
-	TokenA           string
-	TokenB           string
-	CTOKEN0          string
-	CTOKEN1          string
-	NewOwner         string
-	PendingTime      time.Duration
-	Pool             string
-	SwapRouter       string
-	BonusToken       string
-	Vault            string
-	FeeTier          int64
+	ProviderUrl []string
+	Factory     string
+	Callee      string
+	PrivateKey  []string
+	TokenA      string
+	TokenB      string
+	CTOKEN0     string
+	CTOKEN1     string
+	NewOwner    string
+	PendingTime time.Duration
+	Pool        string
+	SwapRouter  string
+	BonusToken  string
+	Vault       string
+	FeeTier     int64
+	VaultBridge string
+
 	LendingContracts LendingStruct
 }
 
@@ -63,6 +65,7 @@ const (
 
 var Networkid = 4 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
 var Account = 1
+
 var ProviderSortId = 0
 
 var Token [2]TokenStruct
@@ -102,6 +105,8 @@ var Networks = [...]Init{
 		"",           // bonus token
 		"",           //vault address
 		3000,
+		"", // VaultBridge
+
 		LendingStruct{
 			WBTC:  "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
 			CWBTC: "0xC11b1268C1A384e55C48c2391d8d480264A3A7F4",
@@ -128,6 +133,8 @@ var Networks = [...]Init{
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
 		"0xcB0b392e747C101Ed949247730eC3aa6A75E4D3B", //vault address
 		3000, // fee
+		"",   // VaultBridge
+
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 	},
 
@@ -148,6 +155,7 @@ var Networks = [...]Init{
 		"0xD0d1E195c613Cb6eea9308daB69661CAF9760eF9", // bonus token
 		"0x2723f0d5F2E60D1BF686B835e630C55453307eEA", //vault address
 		3000, // fee
+		"",   // VaultBridge
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 	},
 	{ ///3  goerli admin test 1
@@ -187,6 +195,8 @@ var Networks = [...]Init{
 		//"0x1F29d545D863f70a9AD8e9e69E324f7998476804", // "0x52A1C1067ab22486971Fab15c5b5bbdeDCb99E8D", //vault address
 
 		3000, // fee
+		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
+
 		LendingStruct{
 			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
 			CETH:  "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
@@ -229,6 +239,8 @@ var Networks = [...]Init{
 		"0xf231F818a111FE5d2EFf006451689eCBbf5ef159", // vault
 
 		500, // fee
+		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
+
 		LendingStruct{
 			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
 			CETH:  "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
@@ -258,6 +270,8 @@ var Networks = [...]Init{
 		"",   // tto  token
 		"",   //vault address
 		3000, // fee
+		"",   // VaultBridge
+
 		LendingStruct{
 			WETH:  "0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a",
 			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C",

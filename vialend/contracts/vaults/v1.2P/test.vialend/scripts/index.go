@@ -53,7 +53,8 @@ func main() {
 	project.Quiet = false
 
 	// DeployAll()
-	// return
+	DeployVaultBridge()
+	return
 
 	// project.Withdraw(1, [2]int64{100, 0})
 	// project.Withdraw(1, [2]int64{100, 1})
@@ -178,6 +179,19 @@ func DeployAll() {
 	//networkid, account, protocolfee, uniportion, team address to get fee cut
 	project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 	//	project.DeployVialendFeemaker(4, 1, big.NewInt(10), 30, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+
+}
+
+func DeployVaultBridge() {
+
+	// vault bridge on goreli 0x033F3C5eAd18496BA462783fe9396CFE751a2342
+	//project.DeployVaultBridge()
+	// return
+	// project.SetVaultAddress("0x31C048503Bf4e15720025fb27D774DDc1829D925", 0)
+	// project.SetVaultAddress("0xf231F818a111FE5d2EFf006451689eCBbf5ef159", 1)
+
+	project.GetVaultAddress(0)
+	project.GetVaultAddress(1)
 
 }
 

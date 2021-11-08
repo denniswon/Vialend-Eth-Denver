@@ -1,4 +1,18 @@
 #v1.2P
+-2021/11/07
+
+	contract source /vialend/contracts/vaults/v1.2P/contracts/vaultBridge/vaultBridge.sol
+	
+	contract address 0x033F3C5eAd18496BA462783fe9396CFE751a2342
+	abi: /vialend/contracts/vaults/v1.2P/contracts/vaultBridge/vaultBridge.abi
+	
+	public method: getGetVaultAddress(int index)
+		@index  
+			0: weth/usdc
+			1: weth/dai
+		return: address	
+	
+	
 
 -2021/11/04 
 	--  CToken0 and CToken1 address public

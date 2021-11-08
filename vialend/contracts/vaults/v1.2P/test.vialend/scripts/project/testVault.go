@@ -16,8 +16,10 @@ import (
 	cErc20 "../../../deploy/cErc20"
 
 	//vault "../../../deploy/FeeMaker"
+	bridge "../../../contracts/vaultBridge"
 	callee "../../../deploy/TestUniswapV3Callee"
 	vault "../../../deploy/vialendFeeMaker"
+
 	"../config"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -1317,4 +1319,40 @@ func PrintPrice() {
 	_, pf := getPrice(slot0.SqrtPriceX96, slot0.Tick)
 
 	fmt.Println("Price now:", pf)
+}
+
+func SetVaultAddress(_address string, ind int64) {
+
+	instance, err := bridge.NewApi(common.HexToAddress(config.Network.VaultBridge), config.Client)
+
+	if err != nil {
+		log.Fatal("vaultbridgeInstance err:", err)
+	}
+
+	tx, err := instance.SetAddress(config.Auth, common.HexToAddress(_address), big.NewInt(ind))
+
+	if err != nil {
+		log.Fatal("setVaultBridge err: ", err)
+	}
+
+	TxConfirm(tx.Hash())
+
+}
+
+func GetVaultAddress(ind int64) {
+
+	instance, err := bridge.NewApi(common.HexToAddress(config.Network.VaultBridge), config.Client)
+
+	if err != nil {
+		log.Fatal("vaultBridgeInstance err:", err)
+	}
+
+	vaultAddress, err := instance.GetAddress(&bind.CallOpts{}, big.NewInt(ind))
+
+	if err != nil {
+		log.Fatal("getVaultBridge err: ", err)
+	}
+
+	fmt.Println("vaultAddress:", vaultAddress)
+
 }

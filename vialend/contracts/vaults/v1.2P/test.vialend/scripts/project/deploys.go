@@ -10,6 +10,7 @@ import (
 
 	vault "../../../deploy/FeeMaker"
 	//	vault "../../../deploy/vialendFeeMaker"
+	bridge "../../../contracts/vaultBridge"
 	factory "../../../deploy/UniswapV3Factory"
 	vialend "../../../deploy/vialendFeeMaker"
 
@@ -304,5 +305,27 @@ func DeployCallee() {
 	fmt.Println("callee address:", address.Hex())
 
 	Readstring("Callee deploy done, wait for pending ... next... ")
+
+}
+
+func DeployVaultBridge() {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy VaultBridge . ..................")
+	fmt.Println("----------------------------------------------")
+
+	config.NonceGen()
+
+	address, tx, instance, err := bridge.DeployApi(config.Auth, config.Client)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config.Network.VaultBridge = address.Hex()
+
+	_, _ = instance, tx
+
+	fmt.Println("vaultbridge address:", address.Hex())
 
 }
