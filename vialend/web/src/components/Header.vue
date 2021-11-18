@@ -1,7 +1,7 @@
 <template>
   <!-- Header -->
   <header class="header">
-    <div class="container">
+    <div :class="containerClass">
       <div class="row">
         <div class="col">
           <div class="
@@ -41,14 +41,26 @@
       ml-auto
     ">
 
-              <div class="adminButton">
+              <div class="adminButton"
+                   v-show="isAdmin">
                 <router-link to='/admin'>
                   Admin
                 </router-link>
               </div>&nbsp;&nbsp;
-              <div :class="[walletButtonClass,isConnected ? connectClass:disConnectClass]">
+              <div v-if="$store.state.isConnected"
+                   :class="[walletButtonClass,connectClass]">
                 <a href="#"
-                   @click="setWalletStatus">{{ StatusButtonText }}</a>
+                   @click="disconnectWallet">{{ $store.state.currentAccount }}</a>
+              </div>
+              <div v-else-if="validNetwork"
+                   :class="[walletButtonClass,disConnectClass]">
+                <a href="#"
+                   @click="connectWallet">Wrong network</a>
+              </div>
+              <div v-else
+                   :class="[walletButtonClass,disConnectClass]">
+                <a href="#"
+                   @click="connectWallet">Connect Wallet</a>
               </div>
             </div>
             <div class="hamburger ml-auto">
@@ -63,21 +75,38 @@
 </template>
 
 <script>
+import VaultAdminABI from '../ABI/VaultAdmin.json'
+
 export default {
   data () {
     return {
+      isAdmin: false,
+      validNetwork: false,
       isConnected: this.$store.state.isConnected,
       walletButtonClass: 'walletButton',
       connectClass: 'wallet_connected',
       disConnectClass: 'wallet_disconnected',
-      StatusButtonText: 'Connect Wallet',
+      containerClass: 'container',
       centerDialogVisible: false
     }
   },
-  created: function () {
-    this.getChainId()
-    if (this.$store.state.StatusButtonText !== '') {
-      this.StatusButtonText = this.$store.state.StatusButtonText
+  created: async function () {
+    if (await this.checkChain()) {
+      if (ethereum.selectedAddress !== null && ethereum.selectedAddress !== undefined) {
+        console.log('currentAccount is connected.')
+        this.$store.state.currentAccount = ethereum.selectedAddress
+        this.$store.state.isConnected = true
+        this.isConnected = true
+        this.checkValidAdmin()
+      } else {
+        this.$store.state.currentAccount = ''
+        this.$store.state.isConnected = false
+        this.isConnected = false
+      }
+    } else {
+      this.$store.state.currentAccount = ''
+      this.$store.state.isConnected = false
+      this.isConnected = false
     }
   },
   mounted () {
@@ -87,103 +116,115 @@ export default {
   watch: {
     isConnected (newStatus, oldStatus) {
       console.log('newStatus=', newStatus, ';oldStatus=', oldStatus)
-      // this.$parent.isConnected = newStatus
       this.$store.state.isConnected = newStatus
       console.log('this.$store.state.isConnected header watch=', this.$store.state.isConnected)
     }
   },
   methods: {
+    contractInstance (abi, address) {
+      return new web3.eth.Contract(abi, address)
+    },
+    async checkValidAdmin () {
+      if (ethereum.selectedAddress !== null && ethereum.selectedAddress !== undefined) {
+        var vaultAdminContract = await this.contractInstance(VaultAdminABI, '0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879')
+        this.isAdmin = await vaultAdminContract.methods.authAdmin(ethereum.selectedAddress).call()
+        console.log('isAdmin=', this.isAdmin)
+        this.$store.state.isAdmin = this.isAdmin
+        localStorage.setItem('isAdmin', this.isAdmin)
+        // var vaultAdminList = await vaultAdminContract.methods.getAdmin().call()
+        // console.log('admin list=', vaultAdminList)
+      }
+    },
     fn () {
       window.ethereum.autoRefreshOnNetworkChange = false
-      window.ethereum.on('accountsChanged', () => {
+      window.ethereum.on('accountsChanged', async () => {
         console.log('accountsChanged')
-        this.connectWallet()
-      })
-      window.ethereum.on('networkChanged', () => {
-        console.log('networkChanged')
-        this.getChainId()
-        this.networkChanged()
-      })
-    },
-    getChainId () {
-      var _this = this
-      web3.eth.getChainId().then(function (val) {
-        _this.$store.state.chainId = val
-        console.log('ChainId:', val)
-      })
-    },
-    checkChain () {
-      if (this.$store.state.chainId === 5) { return true } else { return false }
-    },
-    networkChanged () {
-      this.StatusButtonText = 'Connect Wallet'
-      this.$store.state.StatusButtonText = 'Connect Wallet'
-      this.isConnected = false
-    },
-    lanuchApp () {
-      this.centerDialogVisible = false
-      this.$router.push({ path: '/dashboard' })
-    },
-    // connect wallet or disconnect wallet
-    setWalletStatus () {
-      if (this.isConnected) {
-        console.log('call disconnect')
-        this.isConnected = false
-        // ethereum.on('disconnect', error => { console.log(error) })
-        this.StatusButtonText = 'Connect Wallet'
-        this.$store.state.StatusButtonText = 'Connect Wallet'
-      } else {
-        if (ethereum.isConnected() && this.currentAccount != null) {
-          this.isConnected = true
-          console.log('this.currentAccount=' + this.currentAccount)
-          this.StatusButtonText = this.currentAccount
-          this.$store.state.StatusButtonText = this.currentAccount
-          this.$store.state.currentAccount = this.currentAccount
-        } else {
-          this.connectWallet()
+        if (await this.checkChain()) {
+          this.changeAccount()
+          this.checkValidAdmin()
         }
-      }
-      if (!this.checkChain()) {
+      })
+      window.ethereum.on('networkChanged', async () => {
+        console.log('networkChanged')
+        if (await this.checkChain()) {
+          this.changeAccount()
+          this.checkValidAdmin()
+        }
+      })
+      window.ethereum.on('disconnect', () => {
+        console.log('metamask disconnect')
+        this.$store.state.currentAccount = ''
+        this.$store.state.isConnected = false
         this.isConnected = false
-        this.StatusButtonText = 'Wrong network'
-        this.$store.state.StatusButtonText = 'Wrong network'
-        this.$message({
-          message: 'Please select Goerli Test Network.',
-          type: 'warning'
-        })
+      })
+    },
+    async checkChain () {
+      this.$store.state.chainId = await web3.eth.getChainId()
+      console.log('check chain id=', this.$store.state.chainId)
+      if (this.$store.state.availableChainId.includes(this.$store.state.chainId)) {
+        this.$store.state.isConnected = true
+        this.$store.state.validNetwork = true
+        return true
+      } else {
+        this.isAdmin = false
+        this.$store.state.isConnected = false
+        this.$store.state.validNetwork = false
+        return false
       }
     },
     connectWallet () {
-      if (!this.checkChain()) {
-        this.StatusButtonText = 'Wrong network'
-        this.$store.state.StatusButtonText = 'Wrong network'
-        return
+      if (ethereum.selectedAddress !== null && ethereum.selectedAddress !== undefined) {
+        if (!this.$store.state.validNetwork) {
+          this.$message({
+            message: 'Please select Goerli Test Network.',
+            type: 'warning'
+          })
+        } else {
+          this.$store.state.currentAccount = ethereum.selectedAddress
+          this.$store.state.isConnected = true
+          this.$store.state.validNetwork = true
+        }
+      } else {
+        console.log('call connectWallet')
+        ethereum
+          .request({ method: 'eth_requestAccounts' })
+          .then(this.requestAccountsCallBack)
+          .catch((err) => {
+            // Some unexpected error.
+            // For backwards compatibility reasons, if no accounts are available,
+            // eth_accounts will return an empty array.
+            console.error(err)
+          })
       }
-      console.log('call connectWallet')
-      ethereum
-        .request({ method: 'eth_requestAccounts' })
-        .then(this.handleAccountsChanged)
-        .catch((err) => {
-          // Some unexpected error.
-          // For backwards compatibility reasons, if no accounts are available,
-          // eth_accounts will return an empty array.
-          console.error(err)
-        })
     },
-    handleAccountsChanged (accounts) {
+    requestAccountsCallBack (accounts) {
       if (accounts.length === 0) {
         // MetaMask is locked or the user has not connected any accounts
         console.log('Please connect to MetaMask.')
-      } else if (accounts[0] !== this.currentAccount) {
-        this.currentAccount = accounts[0]
-        // Do any other work!
-        this.isConnected = true
-        this.StatusButtonText = this.currentAccount
-        this.$store.state.StatusButtonText = this.currentAccount
-        this.$store.state.currentAccount = this.currentAccount
-        console.log('account status:' + ethereum.isConnected())
-        // this.$refs.supplyliq.checkConnectionStatus()
+      } else if (accounts[0] !== this.$store.state.currentAccount) {
+        this.$store.state.currentAccount = accounts[0]
+        this.$store.state.isConnected = true
+        // console.log('account status:' + ethereum.isConnected())
+      } else {
+        this.$store.state.isConnected = true
+        console.log('accounts[0]:' + accounts[0])
       }
+    },
+    changeAccount () {
+      if (ethereum.selectedAddress !== null && ethereum.selectedAddress !== undefined) {
+        this.$store.state.isConnected = true
+        this.$store.state.currentAccount = ethereum.selectedAddress
+      } else {
+        this.$store.state.currentAccount = ''
+        this.$store.state.isConnected = false
+        this.isConnected = false
+        this.isAdmin = false
+      }
+    },
+    disconnectWallet () {
+      this.$store.state.isConnected = false
+      this.$store.state.currentAccount = ''
+      console.log('Disconnect wallet!')
     }
   }
 }

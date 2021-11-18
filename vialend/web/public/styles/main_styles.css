@@ -329,7 +329,7 @@ section {
 }
 .logo {
   position: absolute;
-  left: -63px;
+  left: 0px;
   top: 55%;
   -webkit-transform: translateY(-50%);
   -moz-transform: translateY(-50%);
