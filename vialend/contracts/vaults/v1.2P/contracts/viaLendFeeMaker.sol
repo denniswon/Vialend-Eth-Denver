@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 /*
-personal deposit cap
+todo: personal deposit cap
 
 Contract code size exceeds 24576 bytes 
 (a limit introduced in Spurious Dragon). 
@@ -18,20 +18,19 @@ deposit
 */
 pragma solidity >=0.5.0;
 
-import "@openzeppelin/contracts/math/Math.sol";
+//import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+//import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+//import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+//import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 
 
-//import "libraries/libVialendCompound.sol";
 import "libraries/lib.sol";
 
 import "interfaces/IFeeMakerEvents.sol";
@@ -128,7 +127,7 @@ contract ViaLendFeeMaker is
     function deposit(
         uint256 amountToken0,		// deposit amount of token0
         uint256 amountToken1,		// deposit amount of token1
-        bool doRebalence			// whether do rebalance or not
+        bool doRebalance			// whether do rebalance or not
     )
         external
         nonReentrant
@@ -146,7 +145,7 @@ contract ViaLendFeeMaker is
   		
        // _poke(cLow, cHigh);		// Poke v3 positions so to get uniswap v3 fees up to date. do not need if position removed
 
-		//uint256 P = getUniswapPrice();
+		//uint256 P = getSpotPrice();
 		Price = getQuoteAtTick(getTwap(address(pool),twapDuration), uint128(quoteAmount),address(token0), address(token1));		
 
         (uint256 shares, uint256 amount0, uint256 amount1) = _calcShares(amountToken0, amountToken1);
@@ -169,7 +168,7 @@ contract ViaLendFeeMaker is
 		Assetholder[to].current0 += amount0;
 		Assetholder[to].current1 += amount1;
 
-		if (doRebalence )  rebalance(0,0);		// rebalance
+		if (doRebalance )  rebalance(0,0, totalSupply());		// rebalance
 
         emit Deposit(msg.sender, to, shares, amount0, amount1);
 
@@ -191,9 +190,9 @@ contract ViaLendFeeMaker is
 
 			for (uint i=0; i< cnt; i++) {	
 				
-				uint256 share = balanceOf(accounts[i]);
+				uint256 share = balanceOf(accounts[i]);  //user's share
 				
-				if (share > 0) {
+				if (share > 0 ) {
 					
 					// get new amount based on new balance of each user's share
 					uint256 myamount0 = total0.mul(share).div(tt);
@@ -292,7 +291,7 @@ contract ViaLendFeeMaker is
             	(uint256 teamshare, , ) = _calcShares(feesToProtocol0, feesToProtocol1);
 
 				_mint(team, teamshare );  // mint fees to team
-				_push(team);   // push team to accounts 
+				_push(team);   // push team to accounts for the first time.
 				
             	//token0.safeTransfer(team, feesToProtocol0);
 				//token1.safeTransfer(team, feesToProtocol1);
@@ -305,30 +304,24 @@ contract ViaLendFeeMaker is
     
    
     function withdraw(
-        uint256 percent
+        uint8 percent
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
         
-        
-
 		address to = msg.sender;
+		
+		require ( percent <= 100, "pc");
 		
         require(to != address(0) && to != address(this), "toW");
         
-        require(percent > 0 && percent <= 100, "Pcnt");
-        
-		_alloc();  //remove positions and dividen fees
-
-        // calc percent shares to withdraw
-        uint256 shares = balanceOf(to).mul(percent).div(100);   	
-        //uint256 shares = balanceOf(to);
-
 		// get total shares
         uint256 totalSupply = totalSupply();
 
-        require(totalSupply > 0, "ts0");
+        // calc percent shares to withdraw
+        uint256 shares = balanceOf(to).mul(percent).div(100);   	
 
 		require(shares <= totalSupply , "sh1");
-
+   
+		_alloc();  //remove positions and dividen fees
 		
         amount0 = getBalance0().mul(shares).div(totalSupply);
         amount1 = getBalance1().mul(shares).div(totalSupply);
@@ -336,7 +329,7 @@ contract ViaLendFeeMaker is
 		// burn user's share
         _burn(to, shares);
         
-        // update total fees record
+        // deduct withdrawal fees from the total fees. for frontend view and calc only
         Fees.U3Fees0 = Fees.U3Fees0.sub(Fees.U3Fees0.mul(shares).div(totalSupply) ) ;
         Fees.U3Fees1 = Fees.U3Fees1.sub(Fees.U3Fees1.mul(shares).div(totalSupply) ) ;
         Fees.LcFees0 = Fees.LcFees0.sub(Fees.LcFees0.mul(shares).div(totalSupply) ) ;
@@ -345,52 +338,60 @@ contract ViaLendFeeMaker is
         // if amount > 0 , do transfer and update user Assets record. 
         if (amount0 > 0) {
         	token0.safeTransfer(to, amount0);
+			
+			// update assetsholder record
 			Assetholder[to].current0 -= (Assetholder[to].current0 > amount0 ) ? amount0 : Assetholder[to].current0;	
 		}
         if (amount1 > 0) {
         	token1.safeTransfer(to, amount1);
+			
+			// update assetsholder record
 			Assetholder[to].current1 -= (Assetholder[to].current1 > amount1 ) ? amount1 : Assetholder[to].current1;
 		}
 		
 		// clean up assets record if user's share is 0
 		if ( balanceOf(to) == 0 ) {
+
+			_delme(to);		
+
 			Assetholder[to].deposit0 = 0;
 			Assetholder[to].deposit1 = 0;
 			Assetholder[to].current0 = 0;
 			Assetholder[to].current1 = 0;
 		}
-			
+		
+		rebalance(0,0, totalSupply)	;
+		
 		//log
         emit Withdraw(msg.sender, shares, amount0, amount1);
     }
     
-    // commented because currently using remove all
-	// function _burnLendingShare (uint256 shares, uint256 totalShares) internal returns(uint256,uint256) {
-
- //      	(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
-		
-		
-
-	// 	uint256 myCamount0 = cAmount0.mul(shares).div(totalShares);
-	// 	uint256 myCamount1 = cAmount1.mul(shares).div(totalShares);
-
-	// 	removeLending(address(token0), address(token1),myCamount0,myCamount1);
-
-	// 	uint32 decimal0 = 18; // to do
-	// 	uint32 decimal1 = 6;  // to do 
-	// 	//oneCTokenInUnderlying = exchangeRateCurrent / (1 * 10 ^ (18 + underlyingDecimals - cTokenDecimals))
-
-	// 	//#debug #review
- //        uint256 myamount0 = myCamount0.mul(CToken0.exchangeRateCurrent()).div(10**decimal0) ;
- //        uint256 myamount1 = myCamount1.mul(CToken1.exchangeRateCurrent()).div(10** (18 + decimal1 - 8) ) ;
-
-		
-	// 	emit MyLog2("_burnLendingShare ", myamount0,myamount1);
-		
-	// 	return (myamount0,myamount1);
-	// }
+   
+	// remove the address from accounts array
+	// Move the last element to the deleted spot.
+	// Remove the last element.
+	function _delme(address _addr ) internal {
 
 
+		//require( accId[_addr] > 0, "invalid address");
+		if ( !_exist( _addr ) ) return;
+
+
+		uint index = accId[_addr]-1;
+
+        accounts[index] = accounts[accounts.length - 1];	// move last itme to the delete one.
+        
+        accId[accounts[index]] = index + 1;		// update accId
+
+        accounts.pop();  // delete last item in account array
+        
+		delete accId[_addr]; // delete the address mapping 
+	
+	}
+
+
+
+	// calculate user's share
     function _calcShares(uint256 amountIn0, uint256 amountIn1)
         internal
         view
@@ -435,12 +436,13 @@ contract ViaLendFeeMaker is
         int24 newHigh
 		) external nonReentrant onlyGovernance  {
 		
+		uint256 _totalSupply = totalSupply();
 		
-		require(totalSupply() > 0,"t0");
+		require(_totalSupply > 0,"t0");
         
         _alloc();
         
-        rebalance(newLow,newHigh);
+        rebalance(newLow,newHigh,_totalSupply);
         		
 	}
 	
@@ -448,11 +450,15 @@ contract ViaLendFeeMaker is
 	// when newLow and newHigh is 0, calc new range with current cLow and cHigh
 	function rebalance(
 			int24 newLow,
-			int24 newHigh
+			int24 newHigh,
+			uint256 total
 			) internal  {
 	
       	(	,int24 tick, , , , , ) 	= pool.slot0();
     
+    	
+		if ( total <= 0 ) return;
+    	
     	if (newLow==0 && newHigh==0) {
 			
 			if (cHigh == 0 && cLow ==0) return;  // cannot do rebalance if cLow and cHigh is 0
@@ -466,10 +472,6 @@ contract ViaLendFeeMaker is
 
   		lib._validRange(newLow, newHigh, tick, tickSpacing);  // passed 1200 , 2100, 18382
         
-        // Check price is not too close to min/max allowed by Uniswap. Price
-        // shouldn't be this extreme unless something was wrong with the pool.
-
-        //int24 range = newHigh - newLow ;
             
         // int24 twap = getTwap();
         // int24 deviation = tick > twap ? tick - twap : twap - tick;
@@ -479,29 +481,32 @@ contract ViaLendFeeMaker is
 
 
         //#review todo   calc best ratio to 50:50 in uni v3
-        uint256 uniPortion0 =  getBalance0().mul(uniPortion).div(100);
-        uint256 uniPortion1 = getBalance1().mul(uniPortion).div(100);
-
-		//add rest portion to uniswap
-		_mintUniV3(
-	        newLow,
-	        newHigh,
-			uniPortion0,
-			uniPortion1
-			);
-
-
-		// get remainting assets to lending
-        uint256 unUsedbalance0 = getBalance0();
-        uint256 unUsedbalance1 = getBalance1();
         
-        bool result = _mintCompound(address(token0), address(token1), unUsedbalance0,  unUsedbalance1);
-        
-        require(result, "MCp");
+        if ( uniPortion > 0 ) {
+        	
+	        uint256 uniPortion0 =  getBalance0().mul(uniPortion).div(100);
+	        uint256 uniPortion1 = getBalance1().mul(uniPortion).div(100);
+	
+			//add rest portion to uniswap
+			_mintUniV3(
+		        newLow,
+		        newHigh,
+				uniPortion0,
+				uniPortion1
+				);
+	
+		}
 
+        if ( uniPortion < 100 ) {   // when uniPortion==100 means no assets go to lending pool
+			// get remainting assets to lending
+	        uint256 unUsedbalance0 = getBalance0();
+	        uint256 unUsedbalance1 = getBalance1();
+	        
+	        bool result = _mintCompound(address(token0), address(token1), unUsedbalance0,  unUsedbalance1);
+	        
+	        require(result, "MCp");
+		}
 
-        // lastRebalance = block.timestamp;
-        // lastTick = tick;
 
 	}
 
@@ -572,11 +577,11 @@ contract ViaLendFeeMaker is
 			
 		removePositions();	// remove all positions from uniswap and lending pool
 		
-		removeCTokens(); // in case assets stuck in compound
+		// check if there is stuck cTokens		
+		(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
+		bool checkCtoken = ( cAmount0>0 || cAmount1 >0) ;
 
-
-		//should remove the code below after testing
-
+		//loop user's account array to withdraw 
 		uint cnt = accounts.length;		// get array size 
 		
 		uint256 total0 = token0.balanceOf(address(this));
@@ -587,6 +592,10 @@ contract ViaLendFeeMaker is
 		for (uint i=0; i< cnt; i++) {	
 			
 			uint256 share = balanceOf(accounts[i]);
+			
+			if ( checkCtoken ) {	// withdraw cToken first if there is any locked
+				unmintCtoken(accounts[i],share, tt, cAmount0, cAmount1 );   // withdraw stuck ctokens
+			}
 			
 			_burn(accounts[i], share);
 
@@ -605,7 +614,8 @@ contract ViaLendFeeMaker is
 			
 			
         }
-        
+
+
 
 		//send rest tokens to governance
 		if ( token0.balanceOf(address(this)) > 0 ) 
@@ -614,11 +624,21 @@ contract ViaLendFeeMaker is
 		if ( token1.balanceOf(address(this)) > 0 ) 
 			token1.safeTransfer(governance, token1.balanceOf(address(this))) ;
 
-		
-
     }
 
-/*    due to size
+
+	// send ctoken to user
+	function unmintCtoken(address to, uint256 share, uint256 tt, uint256 cAmount0, uint256 cAmount1) internal {
+			
+		uint256 amount0 = cAmount0.mul( share ).div(tt);  // calc ctoken0 amount belong to user by share
+		uint256 amount1 = cAmount1.mul( share ).div(tt);  // calc ctoken1 amount belong to user by share
+
+        if (amount0 > 0) withdrawCTokens(to, address(CToken0), amount0);  // if >0, send ctoken0 to user
+        if (amount1 > 0) withdrawCTokens(to, address(CToken1), amount1); // if >0, send ctoken1 to user
+		
+	}
+
+		
  	function sweep(
         IERC20 token,
         uint256 amount
@@ -626,7 +646,6 @@ contract ViaLendFeeMaker is
         require(token != token0 && token != token1, "token");
         token.safeTransfer(msg.sender, amount);
     }	
-*/
 
 	/// fallback function has been split into receive() and fallback(). It is a new change of the compiler.
 	fallback() external payable {}

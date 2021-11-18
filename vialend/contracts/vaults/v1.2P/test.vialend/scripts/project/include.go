@@ -39,3 +39,16 @@ func Readstring(msg string) string {
 		}
 	}
 }
+
+func Pause(msg string) string {
+
+	fmt.Println(msg)
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("-> ")
+		text, _ := reader.ReadString('\n')
+		// convert CRLF to LF
+		text = strings.TrimSuffix(strings.TrimSpace(text), " \n")
+		return text
+	}
+}

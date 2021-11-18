@@ -1,0 +1,64 @@
+create pool: (createpool.go)
+
+1. set token0 address
+2. set token1 address
+3. turn on doCreatePool
+4. select network nid 
+
+
+factory:  
+	0x2820BAd125c568C556a86d80A9484fa268A944c2 (ganache local)
+	0xc7853A9E7b602Aafe36b8fb95E4b67a2001FD9C5  ( goerli )
+	
+tokens 
+	tUSDC  0x7c868e541b972c9400a8773e18d429C2E306e05D  (local tUSDC 18 decimals)
+	tUSDC  0x3b88D0E8B11eb7C5fbC63F1Af1B2795DB1724C59  (local tUSDC 6 decimals)
+	tWETH  0xeDFBec53F1DA0995ea493ebB0A8Ff630Bb2f1e23  (local tWETH)
+
+
+
+rinkeby
+how to troubleshooting "execution reverted" that failed deployment? I'm stuck there when I try to deploy the UniswapV3Pool.sol without any clue. 
+
+factory (in remix): 
+	(rinkeby) 0x3cBD13a472fd6A82102D12474ee6F4a081B5b968
+	(Goerli)  0xc871Ec1dB0359F912f06Cb08499A3702A6447E01
+pool deployer
+	(Goerli)	0x64faB7017185749F58dCbe7894034A6d2dcbdC24
+
+pool (failed , reverted)
+
+factory(by solc in wsl2): 0x9819d3c0d8169d8df9e69e4f54d0036f7fc20967
+pool (failed execution  reverted):  0xe634a404096508fCB1F77d3a826Ef00c684bed6e
+poolDeployer:  0x1D04161abB19aE4cC74C34a60273B65ee294e8aa
+
+wsl2 solc 0.7.6 
+solc --optimize --abi UniswapV3Factory.sol -o ../build
+solc --optimize --bin UniswapV3Factory.sol -o ../build
+
+in /contracts/ folder run:
+
+
+//not work
+abigen --abi=../build/UniswapV3Factory_flat.abi --bin=../build/UniswapV3Factory_flat.bin --pkg=api --out=../deploy/uniswapv3Factory_flat/uniswapV3Factory_flat.go
+
+
+solc --overwrite --optimize --abi uniswapV3Factory.sol -o ../build/uniswapV3Factory
+solc --overwrite --optimize --bin uniswapV3Factory.sol -o ../build/uniswapV3Factory
+abigen --abi=../build/uniswapV3Factory/UniswapV3Factory.abi --bin=../build/uniswapV3Factory/UniswapV3Factory.bin --pkg=api --out=../deploy/uniswapv3Factory/uniswapV3Factory.go
+abigen --abi=./build/uniswapV3Factory/UniswapV3Factory.abi --bin=./build/uniswapV3Factory/UniswapV3Factory.bin --pkg=api --out=./deploy/uniswapv3Factory/uniswapV3Factory.go
+
+
+solc --optimize --abi UniswapV3PoolDeployer.sol -o ../build/UniswapV3PoolDeployer
+solc --optimize --bin UniswapV3PoolDeployer.sol -o ../build/UniswapV3PoolDeployer
+
+
+abigen --abi=../build/UniswapV3Pool/UniswapV3Pool.abi --bin=../build/UniswapV3Pool/UniswapV3Pool.bin --pkg=api --out=../deploy/UniswapV3Pool/UniswapV3Pool.go
+
+abigen --abi=../build/UniswapV3PoolDeployer/UniswapV3PoolDeployer.abi --bin=../build/UniswapV3PoolDeployer/UniswapV3PoolDeployer.bin --pkg=api --out=../deploy/UniswapV3PoolDeployer/UniswapV3PoolDeployer.go
+
+
+
+
+
+

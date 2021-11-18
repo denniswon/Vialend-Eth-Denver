@@ -39,7 +39,7 @@ func main() {
 
 	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
 
-	project.Init()
+	project.Init(-1, -1)
 
 	project.Quiet = false
 
@@ -86,6 +86,14 @@ func main() {
 			log.Fatal("missing amount")
 		}
 
+		if len(os.Args) > 3 && len(os.Args[3]) > 0 {
+			acc, err := strconv.Atoi(strings.TrimSpace(os.Args[3]))
+			if err != nil {
+				log.Fatal("acc argument err ", err)
+			}
+			accoundid = int(acc)
+
+		}
 		project.MovePrice(accoundid, amount, op, tn)
 
 	} else {

@@ -46,22 +46,48 @@ var sw = new(Switcher)
 
 func main() {
 
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
+	project.Init(-1, -1)
 
-	project.Init()
+	//	project.Init(0, 0)
+	//balance := project.EthBalance(config.Network.LendingContracts.CETH)
+	//balance := project.EthBalanceArb("0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5")
+	// fmt.Println(balance)
 
 	project.Quiet = false
 
-	// DeployAll()
-	DeployVaultBridge()
-	return
+	//networkid, account, protocolfee, uniportion, team address to get fee cut
+	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 
-	// project.Withdraw(1, [2]int64{100, 0})
+	//DeployVaultBridge()
+	//project.DeployArb()
+
+	// project.SetVaultAddress("0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", 0)
+	// return
+
+	//project.FindPool()
+	// v := "0xb102Cd93329d7017Ae83C6E488f00EaB4844CbF2"
+	// t := "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF"
+	// v := "0xb102Cd93329d7017Ae83C6E488f00EaB4844CbF2"
+	// t := "0xfa5df5372c03d4968d128d624e3afeb61031a777"
+	// a := big.NewInt(1e18)
+	// project.Sweep(v, t, a)
+
+	// project.EmergencyBurn()
+	// return
+
+	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 100, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+	//project.Deposit(1, [3]int64{1, 10, 1}, false)
+	project.Strategy1(100, 1)
+	//project.VaultInfo()
+	//project.Withdraw(1, [2]int64{100, 1})
 	// project.Withdraw(1, [2]int64{100, 1})
 	//project.Withdraw(1, [2]int64{100, 3})
 
-	// project.VaultInfo()
-	// return
+	//project.EmergencyBurn()
+	// project.Withdraw(1, [2]int64{100, 3})
+	//project.VaultInfo2("0x4aaE0bc3052aD3AB125Ae654f0f2C55Dbd9D6e17")
+	project.VaultInfo()
+	return
 	// // // newVault()
 
 	// project.GetCapital(1)
@@ -83,30 +109,32 @@ func main() {
 	//project.SetProtocolFee(big.NewInt(10))
 	//project.SetUniswapPortionRatio(50)
 	//	project.Withdraw(1, [2]int64{100, 4}) // team withdraw
-	//project.Deposit(1, [3]int64{1, 1000, 1}, false)
+	//project.Deposit(1, [3]int64{1, 10, 1}, false)
 	//	project.Deposit(1, [3]int64{2, 1000, 0}, false)
 	//project.EmergencyBurn()
 
-	// project.Strategy1(1000, 1)
+	project.Strategy1(1000, 1)
 	// project.Strategy1(100, 1)
-	// project.AccountInfo()
+	//project.AccountInfo()
 	// project.Withdraw(1, [2]int64{100, 0})
-	// project.Withdraw(1, [2]int64{100, 1})
-	// project.Withdraw(1, [2]int64{100, 3})
-	//project.Alloc(1)
+	//project.Withdraw(1, [2]int64{100, 1})
+	//project.Withdraw(1, [2]int64{100, 3})
+	project.Alloc(1)
 	//project.RemoveCTokens()
-	// project.VaultInfo()
-	// return
+	project.VaultInfo()
+	return
 
 	// // // project.Strategy1( [3]int64{400, 60, 0})
 
 	// project.AccountInfo()
-	project.Strategy1(500, 1)
+	//project.Strategy1(500, 1)
 	// project.Withdraw(1, [2]int64{100, 0})
 	// project.Withdraw(1, [2]int64{100, 1})
-	//project.Withdraw(1, [2]int64{100, 3})
-	project.VaultInfo()
-	return
+	// project.Withdraw(1, [2]int64{100, 3})
+	//project.VaultInfo()
+
+	// redeemMyCtoken()
+	// return
 
 	//project.Withdraw(1, [2]int64{100, 0})
 	//project.Withdraw(1, [2]int64{100, 1})
@@ -172,26 +200,22 @@ func newVault() {
 
 }
 
-func DeployAll() {
-
-	//project.DeployCallee()
-
-	//networkid, account, protocolfee, uniportion, team address to get fee cut
-	project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-	//	project.DeployVialendFeemaker(4, 1, big.NewInt(10), 30, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-
-}
-
 func DeployVaultBridge() {
 
 	// vault bridge on goreli 0x033F3C5eAd18496BA462783fe9396CFE751a2342
-	//project.DeployVaultBridge()
+	// vault admin on goreli  0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879
+
+	//	project.DeployVaultBridge()
+
+	//project.DeployVaultAdmin()
+	// project.AuthAdmin(config.Network.VaultAdmin, "0xfd8a5AE495Df1CA34F90572cb99A33B27173eDe1")
 	// return
-	// project.SetVaultAddress("0x31C048503Bf4e15720025fb27D774DDc1829D925", 0)
+
+	project.SetVaultAddress("0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", 0)
 	// project.SetVaultAddress("0xf231F818a111FE5d2EFf006451689eCBbf5ef159", 1)
 
-	project.GetVaultAddress(0)
-	project.GetVaultAddress(1)
+	// project.GetVaultAddress(0)
+	// project.GetVaultAddress(1)
 
 }
 
@@ -297,32 +321,6 @@ func test_vault() {
 	}
 
 	project.Deposit(sw.Deposit, sw.DepositParam, false) /// deposit token0 amount * 1e18, token1 amount * 1e6
-
-	if sw.Swap == 1 {
-
-		project.Swap(sw.Swap, sw.RebalanceParam[0], sw.RebalanceParam[2])
-
-	} else if sw.Swap == 2 {
-
-		for i := 0; i < 5; i++ {
-			fmt.Println("swap y for x:", i)
-
-			project.Deposit(1, [3]int64{2, 1000, 3}, false)
-
-			project.Swap(sw.Swap, sw.RebalanceParam[0], sw.RebalanceParam[2])
-
-		}
-
-		for i := 0; i < 5; i++ {
-			fmt.Println("swap x for y:", i)
-
-			project.Deposit(1, [3]int64{1, 5000, 3}, false)
-
-			project.Swap(sw.Swap, sw.RebalanceParam[0], sw.RebalanceParam[2])
-
-		}
-
-	}
 
 	project.Rebalance(sw.Rebalance, sw.RebalanceParam) /// make sure Account = 0
 

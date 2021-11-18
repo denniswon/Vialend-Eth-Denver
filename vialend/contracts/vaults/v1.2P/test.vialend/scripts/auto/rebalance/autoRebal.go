@@ -11,7 +11,7 @@ import (
 func main() {
 
 	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
-	project.Init()
+	project.Init(-1, -1)
 
 	project.Quiet = true
 

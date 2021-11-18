@@ -22,6 +22,7 @@ contract Ownable is ReentrancyGuard {
     address public pendingGovernance;
 
     uint256 public protocolFee;
+    
 
     IUniswapV3Pool internal  pool;
     int24 internal  tickSpacing;
@@ -54,6 +55,7 @@ contract Ownable is ReentrancyGuard {
     
     address[] public accounts;
     
+    mapping(address => uint )  public accId; 	// index of address in the accounts array
     
     mapping(address => Assets)  public Assetholder;
     
@@ -77,18 +79,35 @@ contract Ownable is ReentrancyGuard {
 
 
 	/// maintain a user address array
-    function _push(address _address ) internal {
+    function _push(address _addr ) internal {
     	
-		if (Assetholder[_address].block == 0 ) {
-        	accounts.push(_address);
-			Assetholder[_address].block = block.number;	
-		} else {
-			Assetholder[_address].block = block.number;	// update block number
+		if (! _exist( _addr)  ) {
+			
+			accounts.push(_addr);
+		 	
+			accId[_addr] = accounts.length;
+			
+			Assetholder[_addr].block = block.number;
 		}
+		
+		// if (Assetholder[_address].block == 0 ) {
+        	
+		// 	accounts.push(_address);
+			
+		// 	accId[_address] = accounts.length-1;
+			
+		// 	Assetholder[_address].block = block.number;	
+			
+		// } else {
+		// 	Assetholder[_address].block = block.number;	// update block number
+		// }
 
     }
 
-
+	function _exist(address _addr ) internal view returns (bool){
+		return ( accId[_addr] > 0 );
+	}
+	
 	///@notice set new maxTotalSupply
 	function setMaxTotalSupply(uint256 newMax) external nonReentrant onlyGovernance {
 			maxTotalSupply = newMax;
