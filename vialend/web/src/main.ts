@@ -11,6 +11,8 @@ import VueAxios from 'vue-axios'
 Vue.config.productionTip = false
 Vue.use(ElementUI, VueAxios, axios)
 Vue.prototype.Web3 = Web3
+Vue.prototype.$axios = axios
+Vue.prototype.HOME = '/api'
 
 new Vue({
   router,

@@ -6,7 +6,7 @@ function Pairs () {
 	this.id = 0
 	this.token0 = new Token()
 	this.token1 = new Token()
-	this.feeTier = '0.3%'
+	this.feeTier = ''
 	this.currentAPR = ''
 	this.capacity = ''
 	this.tvl = 0.00
@@ -17,8 +17,8 @@ function Pairs () {
 	this.token1Approved = false
 
 	this.vaultLending = 0
-	this.tvlTotal0 = 0.00
-	this.tvlTotal1 = 0.00
+	this.tvlTotal0 = 0
+	this.tvlTotal1 = 0
 	this.tvlTotal0USD = 0
 	this.tvlTotal1USD = 0
 	this.lendingRatio = 0
@@ -65,8 +65,8 @@ Pairs.prototype.Empty = function () {
 	this.ofCapUsed = 0.00
 	this.vaultRange = ''
 	this.vaultLending = 0
-	this.tvlTotal0 = 0.00
-	this.tvlTotal1 = 0.00
+	this.tvlTotal0 = 0
+	this.tvlTotal1 = 0
 	this.tvlTotal0USD = 0
 	this.tvlTotal1USD = 0
 	this.lendingRatio = 0

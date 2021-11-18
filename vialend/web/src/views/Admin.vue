@@ -1,41 +1,42 @@
 <template>
   <el-container>
     <el-header height="103px">
-      <Header />
+      <Header ref="headerComponents" />
     </el-header>
     <el-container>
-      <el-aside background-color="#545c64"
+      <el-aside background-color="#304156"
                 width="200px">
-        <el-menu default-active="2"
+        <el-menu default-active="10"
                  class="el-menu-vertical-demo"
                  @open="handleOpen"
                  @close="handleClose"
-                 background-color="#545c64"
+                 background-color="#304156"
                  text-color="#fff">
-          <el-menu-item index="2">
+          <el-menu-item index="10"
+                        @click="showContainer('template')">
             <i class="el-icon-menu"></i>
             <span slot="title">Template</span>
           </el-menu-item>
-          <el-submenu index="1">
+          <el-submenu index="20">
             <template slot="title">
               <i class="el-icon-s-help"></i>
               <span>Pairs</span>
             </template>
             <el-menu-item-group v-if="pairsList.size() > 0">
               <!-- :class="[menuItemClass,(selectedPairIndex === pair.index?' active':'')]" -->
-              <el-menu-item :index="pair.index"
-                            v-for="pair in pairsList._getData()"
+              <el-menu-item v-for="pair in pairsList._getData()"
                             :key="pair.id"
-                            class="menu_text">
-
+                            :index="(21 + pair.index).toString()"
+                            class="menu_text"
+                            @click="changeSelectedPair(Number(pair.index))">
                 <span>{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</span>
-
               </el-menu-item>
             </el-menu-item-group>
           </el-submenu>
-          <el-menu-item index="4">
+          <el-menu-item index="16">
             <i class="el-icon-setting"></i>
-            <span slot="title">Settings</span>
+            <span slot="title"
+                  @click="showContainer('setting')">Settings</span>
           </el-menu-item>
         </el-menu>
         <!-- <div class="list-group"
@@ -59,127 +60,422 @@
         </div> -->
       </el-aside>
       <el-main>
-        <!-- https://www.jianshu.com/p/b323b167d89e -->
-        <div class="breadcrumb">
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item>
-              <b>Current Pair:</b>
-              <span style="color:#000000"
-                    v-if="pairsList.size() > 0">
-                {{pairsList.get(selectedPairIndex).token0.symbol}} /
-                {{pairsList.get(selectedPairIndex).token1.symbol}}
-              </span>
-            </el-breadcrumb-item>
-          </el-breadcrumb>
-        </div>
+        <!--Template Container-->
+        <div id="template_container"
+             :style="'display:' + (featureContainer === 'template' ? '' : 'none') "
+             v-loading="templatePageLoading">
+          <div style="float:right;padding:10px;">
+            <el-button type="primary"
+                       @click="showNewPairDialog">New Pair</el-button>
+          </div>
+          <el-divider class="clear"></el-divider>
+          <div style="float:right;padding:0px;margin:10px;">
+            <el-dropdown @command="handleCommand"
+                         ref="messageDrop">
+              <el-button>
+                {{filterCommand}}<i class="el-icon-arrow-down el-icon--right"></i>
+              </el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="All">All</el-dropdown-item>
+                <el-dropdown-item command="Active">Active</el-dropdown-item>
+                <el-dropdown-item command="Pending">Pending</el-dropdown-item>
+                <el-dropdown-item command="Closed">Closed</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </div>
+          <div class="clear"></div>
+          <div style="padding:10px;"
+               v-if="pairsList.size() > 0">
+            <el-col :span="6"
+                    :offset="1"
+                    v-for="pair in pairsList._getData()"
+                    :key="pair.id">
+              <el-card class="box-card"
+                       v-loading="templatePairsLoading">
+                <div class="text item">
+                  <h3>{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</h3>
+                </div>
+                <div class="text item">
+                  Fee Tier<br><span style="color:#409eff"><input class="btn btn-default btn-sm"
+                           type="button"
+                           :value="Number(pair.feeTier / 10000) + '%'"></span>
+                </div>
+                <div class="text item">
+                  Current APR<br><span style="color:#409eff">{{Number(pair.currentAPR).toFixed(2)}}%</span>
+                </div>
+                <div class="text item">
+                  TVL<br><span style="color:#409eff">{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
+                    ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}}</span>
+                </div>
+                <div class="text item">
+                  Assets ratio<br><span style="color:#409eff">{{Number(pair.lendingRatio).toFixed(2)}}% Compound<br>
+                    {{Number(pair.uniswapRatio).toFixed(2)}}% Uniswap V3</span>
+                </div>
+              </el-card>
+            </el-col>
+          </div>
+          <el-dialog title="New Pair"
+                     :visible.sync="newPairDialogVisible"
+                     :append-to-body="true"
+                     width="600px"
+                     :close-on-click-modal="false"
+                     center>
+            <el-form ref="newPairform"
+                     :model="newPairform"
+                     label-width="150px">
 
-        <el-tabs type="border-card">
-          <el-tab-pane>
-            <span slot="label"><i class="el-icon-date"></i> Rebalance</span>
-            <div style="width:80%"
-                 v-loading="loadingTokensInfoStatus">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Token balance</th>
-                    <th>Wallet</th>
-                    <th>Vault</th>
-                    <th>Uni-V3</th>
-                    <th>Compound</th>
-                    <!-- <th>fees</th> -->
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th>{{token0Symbol}}</th>
-                    <td>{{Number(token0BalanceInWallet).toFixed(2) + ' / $' + token0BalanceUSDInWallet.toFixed(2)}}</td>
-                    <td>{{Number(token0BalanceInVault).toFixed(2) + ' / $' + token0BalanceUSDInVault.toFixed(2)}}</td>
-                    <td>{{Number(token0BalanceInPool).toFixed(2) + ' / $' + token0BalanceUSDInPool.toFixed(2)}}</td>
-                    <td>{{Number(token0BalanceInLending).toFixed(2) + ' / $' + token0BalanceUSDInLending.toFixed(2)}}</td>
-                    <!-- <td>{{accruedProtocolFees0}}</td> -->
-                  </tr>
-                  <tr>
-                    <th>{{token1Symbol}}</th>
-                    <td>{{Number(token1BalanceInWallet).toFixed(2) + ' / $' + token1BalanceUSDInWallet.toFixed(2)}}</td>
-                    <td>{{Number(token1BalanceInVault).toFixed(2) + ' / $' + token1BalanceUSDInVault.toFixed(2)}}</td>
-                    <td>{{Number(token1BalanceInPool).toFixed(2) + ' / $' + token1BalanceUSDInPool.toFixed(2)}}</td>
-                    <td>{{Number(token1BalanceInLending).toFixed(2) + ' / $' + token1BalanceUSDInLending.toFixed(2)}}</td>
-                    <!-- <td>{{accruedProtocolFees1}}</td> -->
-                  </tr>
-                  <tr>
-                    <th>USD</th>
-                    <td>${{(Number(token0BalanceUSDInWallet) + Number(token1BalanceUSDInWallet)).toFixed(2)}}</td>
-                    <td>${{(Number(token0BalanceUSDInVault) + Number(token1BalanceUSDInVault)).toFixed(2)}}</td>
-                    <td>${{(Number(token0BalanceUSDInPool) + Number(token1BalanceUSDInPool)).toFixed(2)}}</td>
-                    <td>${{(Number(token0BalanceUSDInLending) + Number(token1BalanceUSDInLending)).toFixed(2)}}</td>
-                    <!-- <td>{{accruedProtocolFees1}}</td> -->
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <hr>
-            Min Tick:{{tickLower}}<br>
-            Max Tick:{{tickUpper}}<br>
-            Current Tick:{{currentTick}}<br>
-            <span style="color:#ff0000;margin-right:10px;">Current Price:{{currentPrice}}</span>
-            <el-button size="mini"
-                       :style="{display:rangeStatusDisplay}">
-              <span :class="[dotStyle,rangeStatusStyle]"></span>
-              <span class="status">{{rangeStatus}}</span>
-            </el-button><br>
-            <div class="block"
-                 style="width:80%;margin-top:20px;">
-              <!-- <el-slider v-model="tickRange"
+              <el-form-item label="Token0">
+                <el-select v-model="newPairform.token0name"
+                           placeholder="Please select token0">
+                  <el-option label="WETH"
+                             value="weth"></el-option>
+                  <el-option label="USDC"
+                             value="usdc"></el-option>
+                  <el-option label="BTC"
+                             value="btc"></el-option>
+                  <el-option label="BNB"
+                             value="bnb"></el-option>
+                  <el-option label="SOL"
+                             value="sol"></el-option>
+                  <el-option label="USDT"
+                             value="usdt"></el-option>
+                  <el-option label="ADA"
+                             value="ada"></el-option>
+                  <el-option label="XRP"
+                             value="xrp"></el-option>
+                  <el-option label="DOT"
+                             value="dot"></el-option>
+                  <el-option label="UNI"
+                             value="uni"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="Token1">
+                <el-select v-model="newPairform.token1name"
+                           placeholder="Please select token1">
+                  <el-option label="WETH"
+                             value="weth"></el-option>
+                  <el-option label="USDC"
+                             value="usdc"></el-option>
+                  <el-option label="BTC"
+                             value="btc"></el-option>
+                  <el-option label="BNB"
+                             value="bnb"></el-option>
+                  <el-option label="SOL"
+                             value="sol"></el-option>
+                  <el-option label="USDT"
+                             value="usdt"></el-option>
+                  <el-option label="ADA"
+                             value="ada"></el-option>
+                  <el-option label="XRP"
+                             value="xrp"></el-option>
+                  <el-option label="DOT"
+                             value="dot"></el-option>
+                  <el-option label="UNI"
+                             value="uni"></el-option>
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="Fee Tier">
+                <el-select v-model="newPairform.feetier"
+                           placeholder="Please select fee tier">
+                  <el-option label="0.05%"
+                             value="0.05"></el-option>
+                  <el-option label="0.3%"
+                             value="0.3"></el-option>
+                  <el-option label="1%"
+                             value="1"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="UniswapV3 Portion">
+                <el-select v-model="newPairform.unisV3Portion"
+                           placeholder="Please select Uniswap V3 Portion">
+                  <el-option label="0%"
+                             value="0"></el-option>
+                  <el-option label="20%"
+                             value="20"></el-option>
+                  <el-option label="50%"
+                             value="50"></el-option>
+                  <el-option label="80%"
+                             value="80"></el-option>
+                  <el-option label="100%"
+                             value="100"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="Indicator">
+                <el-select v-model="newPairform.rebalanceStrategy"
+                           placeholder="Please select Indicator">
+                  <el-option label="Bollinger"
+                             value="Bollinger"></el-option>
+                  <el-option label="Envelope"
+                             value="Envelope"></el-option>
+                  <el-option label="TMA range"
+                             value="TMA range"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="Period">
+                <el-select v-model="newPairform.period"
+                           placeholder="Please select Period">
+                  <el-option label="W1"
+                             value="W1"></el-option>
+                  <el-option label="D1"
+                             value="D1"></el-option>
+                  <el-option label="H4"
+                             value="H4"></el-option>
+                  <el-option label="H1"
+                             value="H1"></el-option>
+                  <el-option label="H15"
+                             value="H15"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="Max Supply">
+                <el-input v-model="newPairform.maxSupply"
+                          style="width:200px;"></el-input>
+              </el-form-item>
+
+              <el-form-item label="Vault Address">
+                <div style="float:left;">
+                  <el-input v-model="newPairform.vauAddr"
+                            style="width:360px;"></el-input>&nbsp;&nbsp;
+                  <a :href="'https://goerli.etherscan.io/address/' + newPairform.vauAddr"
+                     target="_blank"><img src="images/todetail.png"
+                         width="20" /></a>
+                </div>
+              </el-form-item>
+
+              <div style="display:none">
+                <el-form-item label="NetworkId">
+                  <el-input v-model="newPairform.networkid"></el-input>
+                </el-form-item>
+                <el-form-item label="Acc">
+                  <el-input v-model="newPairform.acc"></el-input>
+                </el-form-item>
+                <el-form-item label="ProtocolFee">
+                  <el-input v-model="newPairform.protocolfee"></el-input>
+                </el-form-item>
+                <el-form-item label="UniPortion">
+                  <el-input v-model="newPairform.uniPortion"></el-input>
+                </el-form-item>
+                <el-form-item label="Team">
+                  <el-input v-model="newPairform.team"></el-input>
+                </el-form-item>
+              </div>
+              <el-form-item>
+                <el-button type="primary"
+                           @click="createNewPair"
+                           :loading="deployLoading">Deploy</el-button>
+                <el-button @click="newPairDialogVisible = false">Close</el-button>
+              </el-form-item>
+            </el-form>
+          </el-dialog>
+        </div>
+        <!--Setting Container-->
+        <div id="setting_container"
+             :style="'display:' + (featureContainer === 'setting' ? '' : 'none')"
+             v-loading="loadTickerLoading">
+          <div class="token_exchange_form">
+            <div style="margin-bottom:20px;">Currency Converter</div>
+            <el-form :inline="true"
+                     class="demo-form-inline">
+              <el-form-item>
+                <el-input v-model="currTokenVal"
+                          placeholder="1"></el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-select v-model="currTokenId"
+                           placeholder="Please select"
+                           @change="exchangeTokenChange">
+                  <el-option v-for="item in tokensList"
+                             :key="item.nameid"
+                             :label="item.symbol"
+                             :value="item.symbol">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              =
+              <el-form-item>
+                <el-input v-model="usdTokenVal"></el-input>
+              </el-form-item>USD
+            </el-form>
+          </div>
+        </div>
+        <!--Pairs Container-->
+        <div id="pairs_container"
+             :style="'display:' + (featureContainer === 'pairs' ? '' : 'none') "
+             v-loading="pairsInfoLoading">
+          <!-- <div class="breadcrumb">
+            <el-breadcrumb separator="/">
+              <el-breadcrumb-item>
+                <b>Current Pair:</b>
+                <span style="color:#000000"
+                      v-if="pairsList.size() > 0">
+                  {{pairsList.get(selectedPairIndex).token0.symbol}} /
+                  {{pairsList.get(selectedPairIndex).token1.symbol}}
+                </span>
+              </el-breadcrumb-item>
+            </el-breadcrumb>
+          </div> -->
+
+          <el-tabs type="border-card">
+            <el-tab-pane>
+              <span slot="label"><i class="el-icon-date"></i> Rebalance</span>
+              <div style="width:80%"
+                   v-loading="loadingTokensInfoStatus">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Token balance</th>
+                      <th>Wallet</th>
+                      <th>Vault</th>
+                      <th>Uni-V3</th>
+                      <th>Compound</th>
+                      <!-- <th>fees</th> -->
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th>{{token0Symbol}}</th>
+                      <td>{{Number(token0BalanceInWallet).toFixed(2) + ' / $' + token0BalanceUSDInWallet.toFixed(2)}}</td>
+                      <td>{{Number(token0BalanceInVault).toFixed(2) + ' / $' + token0BalanceUSDInVault.toFixed(2)}}</td>
+                      <td>{{Number(token0BalanceInPool).toFixed(2) + ' / $' + token0BalanceUSDInPool.toFixed(2)}}</td>
+                      <td>{{Number(token0BalanceInLending).toFixed(2) + ' / $' + token0BalanceUSDInLending.toFixed(2)}}</td>
+                      <!-- <td>{{accruedProtocolFees0}}</td> -->
+                    </tr>
+                    <tr>
+                      <th>{{token1Symbol}}</th>
+                      <td>{{Number(token1BalanceInWallet).toFixed(2) + ' / $' + token1BalanceUSDInWallet.toFixed(2)}}</td>
+                      <td>{{Number(token1BalanceInVault).toFixed(2) + ' / $' + token1BalanceUSDInVault.toFixed(2)}}</td>
+                      <td>{{Number(token1BalanceInPool).toFixed(2) + ' / $' + token1BalanceUSDInPool.toFixed(2)}}</td>
+                      <td>{{Number(token1BalanceInLending).toFixed(2) + ' / $' + token1BalanceUSDInLending.toFixed(2)}}</td>
+                      <!-- <td>{{accruedProtocolFees1}}</td> -->
+                    </tr>
+                    <tr>
+                      <th>USD</th>
+                      <td>${{(Number(token0BalanceUSDInWallet) + Number(token1BalanceUSDInWallet)).toFixed(2)}}</td>
+                      <td>${{(Number(token0BalanceUSDInVault) + Number(token1BalanceUSDInVault)).toFixed(2)}}</td>
+                      <td>${{(Number(token0BalanceUSDInPool) + Number(token1BalanceUSDInPool)).toFixed(2)}}</td>
+                      <td>${{(Number(token0BalanceUSDInLending) + Number(token1BalanceUSDInLending)).toFixed(2)}}</td>
+                      <!-- <td>{{accruedProtocolFees1}}</td> -->
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <hr>
+              Min Tick:{{tickLower}}<br>
+              Max Tick:{{tickUpper}}<br>
+              Current Tick:{{currentTick}}<br>
+              <span style="color:#ff0000;margin-right:10px;">Current Price:{{currentPrice}}</span>
+              <el-button size="mini"
+                         :style="{display:rangeStatusDisplay}">
+                <span :class="[dotStyle,rangeStatusStyle]"></span>
+                <span class="status">{{rangeStatus}}</span>
+              </el-button><br>
+              <div class="block"
+                   style="width:80%;margin-top:20px;">
+                <!-- <el-slider v-model="tickRange"
                      range
                      :marks="getMarks">
           </el-slider> -->
-              <input type="text"
-                     class="js-range-slider"
-                     name="my_range"
-                     value="" />
-            </div>
+                <input type="text"
+                       class="js-range-slider"
+                       name="my_range"
+                       value="" />
+              </div>
 
-            <hr>
-            <div class="range_title">Set Price Range</div>
-            <el-form :inline="true"
-                     :model="rangeForm"
-                     class="demo-form-inline">
-              <el-form-item label="Min Price">
-                <el-input-number v-model="rangeForm.minPrice"
-                                 @change="minPriceChange"
-                                 :precision="1"
-                                 :step="0.1"></el-input-number><br>
-                {{token1Symbol}} per {{token0Symbol}}
-              </el-form-item>
-              <el-form-item label="Max Price">
-                <el-input-number v-model="rangeForm.maxPrice"
-                                 @change="maxPriceChange"
-                                 :precision="1"
-                                 :step="0.1"></el-input-number><br>
-                {{token1Symbol}} per {{token0Symbol}}
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary"
-                           :loading="rebalanceLoading"
-                           @click="doRebalance">Rebalance</el-button>
-                <!-- <el-button type="primary"
+              <hr>
+              <div class="range_title">Set Price Range</div>
+              <el-form :inline="true"
+                       :model="rangeForm"
+                       class="demo-form-inline">
+                <el-form-item label="Min Price">
+                  <el-input-number v-model="rangeForm.minPrice"
+                                   @change="minPriceChange"
+                                   :precision="1"
+                                   :step="0.1"></el-input-number><br>
+                  {{token1Symbol}} per {{token0Symbol}}
+                </el-form-item>
+                <el-form-item label="Max Price">
+                  <el-input-number v-model="rangeForm.maxPrice"
+                                   @change="maxPriceChange"
+                                   :precision="1"
+                                   :step="0.1"></el-input-number><br>
+                  {{token1Symbol}} per {{token0Symbol}}
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary"
+                             :loading="rebalanceLoading"
+                             @click="doRebalance">Rebalance</el-button>
+                  <!-- <el-button type="primary"
                        @click="getY">getY</el-button> -->
-                &nbsp;&nbsp;
-                <a :href="goToEtherscan"
-                   target="_blank"
-                   :class="['btn','btn-primary',viewOnEtherscanDisable?'disabled':'']"
-                   role="button">View on etherscan</a>
-              </el-form-item>
-            </el-form>
-            {{errorRebalance}}
-          </el-tab-pane>
-          <el-tab-pane>
-            <span slot="label"><i class="el-icon-date"></i> Security</span>
-            remove all liquidity from uniswap
-          </el-tab-pane>
-          <el-tab-pane>
-            <span slot="label"><i class="el-icon-date"></i> Settings</span>
-            <!-- <div class="token_exchange_form">
+                  &nbsp;&nbsp;
+                  <a :href="goToEtherscan"
+                     target="_blank"
+                     :class="['btn','btn-primary',doRebalanceEtherscanDisable?'disabled':'']"
+                     role="button">View on etherscan</a>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary"
+                             :loading="removePositionsLoading"
+                             @click="doRemovePositions">RemovePositions</el-button>
+                  <!-- <el-button type="primary"
+                       @click="getY">getY</el-button> -->
+                  &nbsp;&nbsp;
+                  <a :href="goToEtherscan"
+                     target="_blank"
+                     :class="['btn','btn-primary',removePositionsEtherscanDisable?'disabled':'']"
+                     role="button">View on etherscan</a>
+                </el-form-item>
+              </el-form>
+              {{errorRebalance}}
+            </el-tab-pane>
+            <el-tab-pane>
+              <span slot="label"><i class="el-icon-date"></i> Security</span>
+              <el-form :inline="true"
+                       class="demo-form-inline">
+                <table class="table table-bordered table-hover">
+                  <tr>
+                    <td>
+                      <el-form-item>Pool Address:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        {{poolAddress}}&nbsp;&nbsp;<a :href="'https://goerli.etherscan.io/address/' + poolAddress"
+                           target="_blank"><img src="images/todetail.png"
+                               width="20" /></a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <el-form-item>Vault Address:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        {{vaultAddress}}&nbsp;&nbsp;<a :href="'https://goerli.etherscan.io/address/' + vaultAddress"
+                           target="_blank"><img src="images/todetail.png"
+                               width="20" /></a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">
+                      <el-form-item>
+                        <el-button type="warning"
+                                   :loading="emergencyLoading"
+                                   @click="EmergencyBurn">EmergencyBurn</el-button>
+                        &nbsp;&nbsp;
+                        <a :href="goToEtherscan"
+                           target="_blank"
+                           :class="['btn','btn-primary',emergencyEtherscanDisable?'disabled':'']"
+                           role="button">View on etherscan</a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                </table>
+              </el-form>
+            </el-tab-pane>
+            <el-tab-pane>
+              <span slot="label"><i class="el-icon-date"></i> Settings</span>
+              <!-- <div class="token_exchange_form">
               <div style="margin-bottom:20px;">Currency Converter</div>
               <el-form :inline="true"
                        class="demo-form-inline">
@@ -205,145 +501,136 @@
               </el-form>
             </div>
             <hr> -->
-            <el-form :inline="true"
-                     class="demo-form-inline">
-              <table class="table table-bordered table-hover">
-                <tr>
-                  <td>
-                    <el-form-item>UniPortionRatio:</el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-input v-model="uniPortionRatio"
-                                style="width:500px;"></el-input>
-                    </el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-button type="primary"
-                                 :loading="uniPortionRatioLoading"
-                                 @click="SetUniPortionRatio">SetUniPortionRatio</el-button>
-                      &nbsp;&nbsp;
-                      <a :href="goToEtherscan"
-                         target="_blank"
-                         :class="['btn','btn-primary',uniPortionRatioEtherscanDisable?'disabled':'']"
-                         role="button">View on etherscan</a>
-                    </el-form-item>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <el-form-item>MaxTotalSupply:</el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-input v-model="maxTotalSupply"
-                                style="width:500px;"></el-input>
-                    </el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-button type="primary"
-                                 :loading="maxTotalSupplyLoading"
-                                 @click="SetMaxTotalSupply">SetMaxTotalSupply</el-button>
-                      &nbsp;&nbsp;
-                      <a :href="goToEtherscan"
-                         target="_blank"
-                         :class="['btn','btn-primary',maxTotalSupplyEtherscanDisable?'disabled':'']"
-                         role="button">View on etherscan</a>
-                    </el-form-item>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <el-form-item>ProtocolFee:</el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-input v-model="protocolFee"
-                                style="width:500px;"></el-input>
-                    </el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-button type="primary"
-                                 :loading="protocolFeeLoading"
-                                 @click="SetProtocolFee">SetProtocolFee</el-button>
-                      &nbsp;&nbsp;
-                      <a :href="goToEtherscan"
-                         target="_blank"
-                         :class="['btn','btn-primary',protocolFeeEtherscanDisable?'disabled':'']"
-                         role="button">View on etherscan</a>
-                    </el-form-item>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <el-form-item>Governance:</el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-input v-model="governanceAddress"
-                                style="width:500px;"></el-input>
-                    </el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-button type="primary"
-                                 :loading="governanceLoading"
-                                 @click="SetGovernance">SetGovernance</el-button>
-                      <el-button type="primary"
-                                 :loading="acceptGovernanceLoading"
-                                 @click="acceptGovernance">AccecptGovernance</el-button>
-                      &nbsp;&nbsp;
-                      <a :href="goToEtherscan"
-                         target="_blank"
-                         :class="['btn','btn-primary',governanceEtherscanDisable?'disabled':'']"
-                         role="button">View on etherscan</a>
-                    </el-form-item>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <el-form-item>Team:</el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-input v-model="teamAddress"
-                                style="width:500px;"></el-input>
-                    </el-form-item>
-                  </td>
-                  <td>
-                    <el-form-item>
-                      <el-button type="primary"
-                                 :loading="teamLoading"
-                                 @click="SetTeam">SetTeam</el-button>
-                      &nbsp;&nbsp;
-                      <a :href="goToEtherscan"
-                         target="_blank"
-                         :class="['btn','btn-primary',teamEtherscanDisable?'disabled':'']"
-                         role="button">View on etherscan</a>
-                    </el-form-item>
-                  </td>
-                </tr>
-                <tr>
-                  <td colspan="3">
-                    <el-form-item>
-                      <el-button type="warning"
-                                 :loading="emergencyLoading"
-                                 @click="EmergencyBurn">EmergencyBurn</el-button>
-                      &nbsp;&nbsp;
-                      <a :href="goToEtherscan"
-                         target="_blank"
-                         :class="['btn','btn-primary',emergencyEtherscanDisable?'disabled':'']"
-                         role="button">View on etherscan</a>
-                    </el-form-item>
-                  </td>
-                </tr>
-              </table>
-            </el-form>
-          </el-tab-pane>
-        </el-tabs>
+              <el-form :inline="true"
+                       class="demo-form-inline">
+                <table class="table table-bordered table-hover">
+                  <tr>
+                    <td>
+                      <el-form-item>UniPortionRatio:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-input v-model="uniPortionRatio"
+                                  style="width:500px;"></el-input>
+                      </el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-button type="primary"
+                                   :loading="uniPortionRatioLoading"
+                                   @click="SetUniPortionRatio">SetUniPortionRatio</el-button>
+                        &nbsp;&nbsp;
+                        <a :href="goToEtherscan"
+                           target="_blank"
+                           :class="['btn','btn-primary',uniPortionRatioEtherscanDisable?'disabled':'']"
+                           role="button">View on etherscan</a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <el-form-item>MaxTotalSupply:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-input v-model="maxTotalSupply"
+                                  style="width:500px;"></el-input>
+                      </el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-button type="primary"
+                                   :loading="maxTotalSupplyLoading"
+                                   @click="SetMaxTotalSupply">SetMaxTotalSupply</el-button>
+                        &nbsp;&nbsp;
+                        <a :href="goToEtherscan"
+                           target="_blank"
+                           :class="['btn','btn-primary',maxTotalSupplyEtherscanDisable?'disabled':'']"
+                           role="button">View on etherscan</a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <el-form-item>ProtocolFee:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-input v-model="protocolFee"
+                                  style="width:500px;"></el-input>
+                      </el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-button type="primary"
+                                   :loading="protocolFeeLoading"
+                                   @click="SetProtocolFee">SetProtocolFee</el-button>
+                        &nbsp;&nbsp;
+                        <a :href="goToEtherscan"
+                           target="_blank"
+                           :class="['btn','btn-primary',protocolFeeEtherscanDisable?'disabled':'']"
+                           role="button">View on etherscan</a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <el-form-item>Governance:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-input v-model="governanceAddress"
+                                  style="width:500px;"></el-input>&nbsp;&nbsp;<a :href="'https://goerli.etherscan.io/address/' + governanceAddress"
+                           target="_blank"><img src="images/todetail.png"
+                               width="20" /></a>
+                      </el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-button type="primary"
+                                   :loading="governanceLoading"
+                                   @click="SetGovernance">SetGovernance</el-button>
+                        <el-button type="primary"
+                                   :loading="acceptGovernanceLoading"
+                                   @click="acceptGovernance">AccecptGovernance</el-button>
+                        &nbsp;&nbsp;
+                        <a :href="goToEtherscan"
+                           target="_blank"
+                           :class="['btn','btn-primary',governanceEtherscanDisable?'disabled':'']"
+                           role="button">View on etherscan</a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <el-form-item>Team:</el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-input v-model="teamAddress"
+                                  style="width:500px;"></el-input>&nbsp;&nbsp;<a :href="'https://goerli.etherscan.io/address/' + teamAddress"
+                           target="_blank"><img src="images/todetail.png"
+                               width="20" /></a>
+                      </el-form-item>
+                    </td>
+                    <td>
+                      <el-form-item>
+                        <el-button type="primary"
+                                   :loading="teamLoading"
+                                   @click="SetTeam">SetTeam</el-button>
+                        &nbsp;&nbsp;
+                        <a :href="goToEtherscan"
+                           target="_blank"
+                           :class="['btn','btn-primary',teamEtherscanDisable?'disabled':'']"
+                           role="button">View on etherscan</a>
+                      </el-form-item>
+                    </td>
+                  </tr>
+                </table>
+              </el-form>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
       </el-main>
     </el-container>
   </el-container>
@@ -355,10 +642,11 @@ import Header from '@/components/Header.vue'
 import contractABI from '../ABI/ViaLendFeeMakerABI.json'
 import uniswapV3PoolABI from '../ABI/UniswapV3PoolABI.json'
 import ViaLendTokenABI from '../ABI/tokenABI.json'
-import axios from 'axios'
+import VaultBridgeABI from '../ABI/VaultBridge.json'
 import Token from '../model/Token'
 import Pairs from '../model/Pairs'
 import ArrayList from '../common/ArrayList'
+import axios from 'axios'
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
@@ -373,11 +661,14 @@ export default {
   components: { Header },
   data () {
     return {
+      featureContainer: 'template',
+      exchangeTimer: '',
       pairsList: new ArrayList(),
       selectedPairIndex: 0,
       isConnected: this.$store.state.isConnected,
       keeperContract: null,
       poolAddress: '',
+      vaultAddress: '',
       tickLower: 0,
       tickUpper: 0,
       currentTick: 0,
@@ -390,9 +681,25 @@ export default {
         minPrice: 0.0,
         maxPrice: 0.0
       },
+      newPairform: {
+        networkid: 3,
+        acc: 0,
+        protocolfee: 10,
+        uniPortion: 30,
+        team: '0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440',
+        token0name: '',
+        token1name: '',
+        feetier: null,
+        unisV3Portion: '',
+        rebalanceStrategy: '',
+        maxSupply: '',
+        vauAddr: '',
+        period: ''
+      },
       errorRebalance: '',
       // Control's load state
       rebalanceLoading: false,
+      removePositionsLoading: false,
       emergencyLoading: false,
       protocolFeeLoading: false,
       teamLoading: false,
@@ -400,15 +707,20 @@ export default {
       maxTotalSupplyLoading: false,
       governanceLoading: false,
       acceptGovernanceLoading: false,
-
+      deployLoading: false,
+      loadTickerLoading: false,
+      templatePageLoading: false,
+      templatePairsLoading: false,
+      pairsInfoLoading: false,
       // Control's enable state
+      doRebalanceEtherscanDisable: true,
+      removePositionsEtherscanDisable: true,
       emergencyEtherscanDisable: true,
       protocolFeeEtherscanDisable: true,
       uniPortionRatioEtherscanDisable: true,
       maxTotalSupplyEtherscanDisable: true,
       governanceEtherscanDisable: true,
       teamEtherscanDisable: true,
-
       loadingTokensInfoStatus: false,
       token0Contract: null,
       token1Contract: null,
@@ -459,25 +771,78 @@ export default {
       transactionHash: '',
       goToEtherscan: '',
       accruedProtocolFees0: 0,
-      accruedProtocolFees1: 0
+      accruedProtocolFees1: 0,
+      priceRangeSlider: null,
+      newPairDialogVisible: false,
+      filterCommand: 'All',
+      bridgeAddress: '0x033F3C5eAd18496BA462783fe9396CFE751a2342',
+      pairsLoadComplete: false
     }
   },
   created: async function () {
-    if (await this.$parent.currentChainIsAvailable() === false) {
-      for (var i = 0; i < this.pairsList.size(); i++) {
-        this.pairsList.get(i).Empty()
-        // console.log('pair feeTier=', this.pairsList.get(i).feeTier)
+    if (ethereum.selectedAddress !== null && ethereum.selectedAddress !== undefined) {
+      if (!this.$store.state.isAdmin) {
+        if (localStorage.getItem('isAdmin') == null || localStorage.getItem('isAdmin') === undefined) {
+          console.log('localStorage isAdmin is null')
+          self.location.replace('/dashboard')
+        } else if (!localStorage.getItem('isAdmin')) {
+          console.log('localStorage isAdmin is false')
+          self.location.replace('/dashboard')
+        }
       }
-      console.log('Chain is unavailable,clear pairsList:', this.pairsList.size())
-      // to be used
-      this.myValueToken0Locked = 0.00
-      this.myValueToken1Locked = 0.00
-      this.myValueToken0USDLocked = 0
-      this.myValueToken1USDLocked = 0
-    } else {
-      await this.loadPairsInfo()
-      this.initData()
+    } else if (localStorage.getItem('isAdmin') == null || localStorage.getItem('isAdmin') === undefined) {
+      console.log('localStorage isAdmin is null')
+      self.location.replace('/dashboard')
+      // return
+    } else if (!localStorage.getItem('isAdmin')) {
+      console.log('localStorage isAdmin is false')
+      self.location.replace('/dashboard')
     }
+    this.templatePageLoading = true
+
+    console.log('validNetwork=', this.$store.state.validNetwork, ';pairsList size=', this.pairsList.size())
+    console.log('parent pairsList size=', this.$parent.pairsList.size())
+    if (this.$store.state.validNetwork) {
+      if (this.$parent.pairsList.size() === 0) {
+        this.$parent.loadPairsInfo()
+      } else {
+        this.pairsList = this.$parent.pairsList
+        this.loadTemplateData()
+      }
+    }
+    // if (!this.$store.state.validNetwork) {
+    //   for (var i = 0; i < this.pairsList.size(); i++) {
+    //     this.pairsList.get(i).Empty()
+    //     // console.log('pair feeTier=', this.pairsList.get(i).feeTier)
+    //   }
+    //   console.log('Chain is unavailable,clear pairsList:', this.pairsList.size())
+    //   // to be used
+    //   this.myValueToken0Locked = 0.00
+    //   this.myValueToken1Locked = 0.00
+    //   this.myValueToken0USDLocked = 0
+    //   this.myValueToken1USDLocked = 0
+    //   this.token0BalanceInWallet = 0.00
+    //   this.token1BalanceInWallet = 0.00
+    //   this.token0BalanceUSDInWallet = 0.00
+    //   this.token1BalanceUSDInWallet = 0.00
+    //   this.token0BalanceInVault = 0.00
+    //   this.token1BalanceInVault = 0.00
+    //   this.token0BalanceUSDInVault = 0.00
+    //   this.token1BalanceUSDInVault = 0.00
+    //   this.token0BalanceInPool = 0.00
+    //   this.token1BalanceInPool = 0.00
+    //   this.token0BalanceUSDInPool = 0.00
+    //   this.token1BalanceUSDInPool = 0.00
+    //   this.token0BalanceInLending = 0.00
+    //   this.token1BalanceInLending = 0.00
+    //   this.token0BalanceUSDInLending = 0.00
+    //   this.token1BalanceUSDInLending = 0.00
+    // } else {
+    //   console.log('pairsList size=', this.$parent.pairsList.size())
+    //   // await this.loadPairsInfo()
+    //   // this.loadTemplateData()
+    //   // this.initData()
+    // }
 
     // this.getTokensBalanceInWallet()
     // //
@@ -488,8 +853,11 @@ export default {
     //   this.token1BalanceInPool = result.amount1 / Number(Math.pow(10, this.token1Decimal))
     //   this.token1BalanceUSDInPool = Number(this.token1BalanceInPool) * Number(this.$store.state.token1RateOfUSD)
     // }
+    this.templatePageLoading = false
   },
   mounted () {
+    this.$refs.headerComponents.containerClass = 'container-fluid'
+    this.exchangeTimer = setInterval(this.exchangeTokensIntoUSD, 1000)
   },
   computed: {
     newMinPrice () {
@@ -504,37 +872,73 @@ export default {
         marks[this.currentPercent] = this.currentTick
       }
       return marks
+    },
+    pairsListSize () {
+      return this.$parent.pairsList.size()
     }
   },
+  beforeDestroy () {
+    clearInterval(this.exchangeTimer)
+  },
   watch: {
+    pairsListSize (size) {
+      if (size > 0) {
+        console.log('currentPairsList size=', size, ';validNetwork=', this.$store.state.validNetwork)
+        if (this.$parent.pairsLoadComplete) {
+          this.pairsList = this.$parent.pairsList
+          this.pairsLoadComplete = true
+        }
+      }
+    },
+    pairsLoadComplete: function (newVal, oldVal) {
+      console.log('pairs base info load complete：', newVal, ';old status:', oldVal)
+      if (this.$store.state.isConnected && this.$store.state.validNetwork && !this.myPairsListLoading) {
+        this.loadTemplateData()
+      }
+    },
     newMinPrice (price) {
       console.log('new min price=', price)
-      if (!isNaN(price)) { this.tickLower = this.priceToTick(price) } else { this.tickLower = 0 }
+      if (!isNaN(price)) { this.tickLower = this.priceToTick(price, this.token0Decimal, this.token1Decimal) } else { this.tickLower = 0 }
       this.drawTickRangeChart()
     },
     newMaxPrice (price) {
       console.log('new max price=', price)
-      this.tickUpper = this.priceToTick(price)
-      if (!isNaN(price)) { this.tickUpper = this.priceToTick(price) } else { this.tickUpper = 0 }
+      this.tickUpper = this.priceToTick(price, this.token0Decimal, this.token1Decimal)
+      if (!isNaN(price)) { this.tickUpper = this.priceToTick(price, this.token0Decimal, this.token1Decimal) } else { this.tickUpper = 0 }
       this.drawTickRangeChart()
     },
     '$store.state.isConnected': function (newVal, oldVal) {
       console.log('connection status,new:', newVal, 'old:', oldVal)
       this.isConnected = this.$store.state.isConnected
-      if (this.isConnected) {
-        console.log('wallet connected')
-        this.getTokensBalanceInWallet()
-      } else {
-        this.token0BalanceInWallet = 0.00
-        this.token1BalanceInWallet = 0.00
-        this.token0BalanceUSDInWallet = 0.00
-        this.token1BalanceUSDInWallet = 0.00
-      }
+      // if (this.isConnected) {
+      //   console.log('wallet connected')
+      //   this.getTokensBalanceInWallet()
+      // } else {
+      //   this.token0BalanceInWallet = 0.00
+      //   this.token1BalanceInWallet = 0.00
+      //   this.token0BalanceUSDInWallet = 0.00
+      //   this.token1BalanceUSDInWallet = 0.00
+      // }
     },
     '$store.state.currentAccount': function (newVal, oldVal) {
-      console.log('currentAccount changed,new:', newVal, 'old:', oldVal)
-      console.log('Connected status', this.isConnected, 'ethereum.selectedAddress=', ethereum.selectedAddress)
-      this.loadTokensBalance()
+      // if (!this.$store.state.isAdmin) {
+      //   self.location.replace('/dashboard')
+      //   return
+      // }
+      console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
+      if (newVal !== '' && this.$store.state.validNetwork) {
+        console.log('Account changed,pairlist size:', this.pairsList.size())
+        if (this.pairsList.size() === 0 && !this.$parent.pairsInfoLoading) {
+          this.$parent.loadPairsInfo()
+        } else {
+          this.pairsListComplete = false
+          if (this.featureContainer === 'template') {
+            this.loadTemplateData()
+          } else if (this.featureContainer === 'pairs') {
+            this.loadTokensBalance()
+          }
+        }
+      }
     },
     '$store.state.chainId': function () {
       console.log('chain changed')
@@ -553,124 +957,179 @@ export default {
     }
   },
   methods: {
+    contractInstance (abi, address) {
+      return new web3.eth.Contract(abi, address)
+    },
+    showContainer (id) {
+      if (id === 'template') {
+        this.featureContainer = 'template'
+        this.loadTemplateData()
+      } else if (id === 'pairs') {
+        this.featureContainer = 'pairs'
+      } else if (id === 'setting') {
+        this.featureContainer = 'setting'
+        this.loadSettingData()
+      }
+    },
+    showNewPairDialog () {
+      this.newPairDialogVisible = true
+    },
+    async createNewPair () {
+      var _this = this
+      this.deployLoading = true
+      // var url = 'http://localhost:8081/deploy?networkid=' + this.newPairform.networkid + '&acc=' + this.newPairform.acc + '&protocolfee=' + this.newPairform.protocolfee + '&uniPortion=' + this.newPairform.uniPortion + '&team=' + this.newPairform.team
+      var url = 'http://118.126.117.7:8081/deploy?networkid=' + this.newPairform.networkid + '&acc=' + this.newPairform.acc + '&protocolfee=' + this.newPairform.protocolfee + '&uniPortion=' + this.newPairform.uniPortion + '&team=' + this.newPairform.team
+      console.log('url=', url)
+      axios.get(url).then(function (response) {
+        if (response !== undefined && response !== null) {
+          console.log('response=', response.data)
+          if (response.data !== undefined && response.data !== null) {
+            //   this.$store.state.tokenExchangeTable[i].price_usd = response.data[0].price_usd
+            _this.newPairform.vauAddr = response.data['vault address']
+          }
+        }
+        _this.deployLoading = false
+      })
+    },
+    handleCommand (command) {
+      // this.$message('click on item ' + command)
+      this.filterCommand = command
+      this.$refs.messageDrop.hide()
+    },
     handleOpen (key, keyPath) {
       console.log(key, keyPath)
     },
     handleClose (key, keyPath) {
       console.log(key, keyPath)
     },
-    contractInstance (abi, address) {
-      return new web3.eth.Contract(abi, address)
+    async loadTemplateData () {
+      this.templatePairsLoading = true
+      for (var i = 0; i < this.pairsList.size(); i++) {
+        await this.getPairPublicInfo(this.pairsList.get(i))
+      }
+      this.templatePairsLoading = false
+    },
+    async loadSettingData () {
+      this.loadTickerLoading = true
+      var response = await axios.get('https://api.coinlore.net/api/tickers/')
+      if (response !== undefined && response !== null) {
+        console.log('response=', response.data.data)
+        if (response.data.data.length > 0) {
+          this.tokensList = response.data.data
+          this.priceUSD = this.tokensList[0].price_usd
+          this.usdTokenVal = this.priceUSD
+          console.log('this.tokensList=', this.tokensList)
+        }
+      }
+      this.loadTickerLoading = false
+    },
+    getTokenRateOfUSD (symbol) {
+      // console.log('symbol=', symbol)
+      if (this.$store.getters.getPriceUSDBySymbol(symbol) !== undefined) {
+        // console.log('eth exchange table of ETH:', this.$store.getters.getPriceUSDBySymbol(symbol).price_usd)
+        return this.$store.getters.getPriceUSDBySymbol(symbol).price_usd
+      } else {
+        return -1
+      }
+    },
+    exchangeTokensIntoUSD () {
+      if (this.$store.state.tokenExchangeRateLoaded && this.pairsList.get(this.selectedPairIndex) !== undefined) {
+        var token0RateOfUSD, token1RateOfUSD
+        // console.log('this.pairsList.get(th)=', this.pairsList.get(this.selectedPairIndex))
+        token0RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(this.selectedPairIndex).token0.symbol)
+        token1RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(this.selectedPairIndex).token1.symbol)
+        // console.log('token0 RateOfUSD=', token0RateOfUSD)
+        // console.log('token1 RateOfUSD=', token1RateOfUSD)
+        this.token0BalanceUSDInWallet = Number(this.token0BalanceInWallet) * Number(token0RateOfUSD)
+        this.token1BalanceUSDInWallet = Number(this.token1BalanceInWallet) * Number(token1RateOfUSD)
+        this.token0BalanceUSDInVault = Number(this.token0BalanceInVault) * Number(token0RateOfUSD)
+        this.token1BalanceUSDInVault = Number(this.token1BalanceInVault) * Number(token1RateOfUSD)
+        this.token0BalanceUSDInPool = Number(this.token0BalanceInPool) * Number(token0RateOfUSD)
+        this.token1BalanceUSDInPool = Number(this.token1BalanceInPool) * Number(token1RateOfUSD)
+        this.token0BalanceUSDInLending = Number(this.token0BalanceInLending) * Number(token0RateOfUSD)
+        this.token1BalanceUSDInLending = Number(this.token1BalanceInLending) * Number(token1RateOfUSD)
+
+        for (var i = 0; i < this.pairsList.size(); i++) {
+          token0RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token0.symbol)
+          token1RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token1.symbol)
+          // console.log('token0 RateOfUSD=', token0RateOfUSD)
+          // console.log('token1 RateOfUSD=', token1RateOfUSD)
+          if (this.pairsList.get(i).tvlTotal0 >= 0) this.pairsList.get(i).tvlTotal0USD = Number(this.pairsList.get(i).tvlTotal0) * Number(token0RateOfUSD)
+          if (this.pairsList.get(i).tvlTotal1 >= 0) this.pairsList.get(i).tvlTotal1USD = Number(this.pairsList.get(i).tvlTotal1) * Number(token1RateOfUSD)
+          this.pairsList.get(i).tvl = this.pairsList.get(i).tvlTotal0USD + this.pairsList.get(i).tvlTotal1USD
+          if (this.pairsList.get(i).myValueToken0Locked >= 0) {
+            this.pairsList.get(i).myValueToken0USDLocked = Number(this.pairsList.get(i).myValueToken0Locked) * Number(token0RateOfUSD)
+          }
+          if (this.pairsList.get(i).myValueToken1Locked >= 0) {
+            this.pairsList.get(i).myValueToken1USDLocked = Number(this.pairsList.get(i).myValueToken1Locked) * Number(token1RateOfUSD)
+          }
+        }
+      }
+      // console.log('tokenExchangeRateLoaded:', this.$store.state.tokenExchangeRateLoaded)
     },
     changeSelectedPair (index) {
-      this.selectedPairIndex = index
-      this.initData()
+      this.featureContainer = 'pairs'
       console.log('current pair index=', index)
-    },
-    async loadPairsInfo () {
-      // this.initDataLoading = true
-      this.pairsList.clear()
-      var pair1 = new Pairs()
-      pair1.index = 0
-      pair1.id = 1
-      pair1.vaultAddress = '0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b'
-      this.vaultAddress = pair1.vaultAddress
-      this.token0LendingAddress = '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
-      this.token1LendingAddress = '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
-      pair1 = await this.getPairBasicInfo(pair1)
-      this.poolAddress = pair1.poolAddress
-      this.token0Address = pair1.token0.tokenAddress
-      this.token1Address = pair1.token1.tokenAddress
-      this.token0Name = pair1.token0.name
-      this.token0Symbol = pair1.token0.symbol
-      this.token0Decimal = pair1.token0.decimals
-      this.token1Name = pair1.token1.name
-      this.token1Symbol = pair1.token1.symbol
-      this.token1Decimal = pair1.token1.decimals
-      this.tickLower = pair1.cLow
-      this.tickUpper = pair1.cHigh
-      this.pairsList.add(pair1)
-      var pair2 = new Pairs()
-      pair2.index = 1
-      pair2.id = 2
-      pair2.vaultAddress = '0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b'
-      pair2.token0LendingAddress = '0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF'
-      pair2.token1LendingAddress = '0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0'
-      pair2 = await this.getPairBasicInfo(pair2)
-      this.pairsList.add(pair2)
-      console.log('pair1 token0 name is', pair1.token0.iconLink)
-      console.log('pair1 token1 name is', pair1.token1.iconLink)
-      console.log('pairsList.length=', this.pairsList.size())
-      // if (this.$store.state.isConnected) {
-      //   this.loadMyData()
-      // }
-      // this.initDataLoading = false
-    },
-    async getPairBasicInfo (pair) {
-      var token0 = new Token()
-      var token1 = new Token()
-      this.keeperContract = this.contractInstance(contractABI, pair.vaultAddress)
-      pair.poolAddress = await this.keeperContract.methods.poolAddress().call()
-      token0.tokenAddress = await this.keeperContract.methods.token0().call()
-      token1.tokenAddress = await this.keeperContract.methods.token1().call()
-      // load contract instance
-      var token0Contract = this.contractInstance(ViaLendTokenABI, token0.tokenAddress)
-      var token1Contract = this.contractInstance(ViaLendTokenABI, token1.tokenAddress)
-      token0.iconLink = 'images/weth.png'
-      token0.name = await token0Contract.methods.name().call()
-      token0.symbol = await token0Contract.methods.symbol().call()
-      token0.decimals = await token0Contract.methods.decimals().call()
-      token1.iconLink = 'images/usdc.png'
-      token1.name = await token1Contract.methods.name().call()
-      token1.symbol = await token1Contract.methods.symbol().call()
-      token1.decimals = await token1Contract.methods.decimals().call()
-      pair.cLow = await this.keeperContract.methods.cLow().call()
-      pair.cHigh = await this.keeperContract.methods.cHigh().call()
-      console.log('clow===========', pair.cLow)
-      pair.token0 = token0
-      pair.token1 = token1
-      return pair
-    },
-    async initData () {
-      if (await this.$parent.currentChainIsAvailable() === false) {
-        console.log('reset tokens balance.')
-        this.token0BalanceInWallet = 0.00
-        this.token1BalanceInWallet = 0.00
-        this.token0BalanceUSDInWallet = 0.00
-        this.token1BalanceUSDInWallet = 0.00
-        this.token0BalanceInVault = 0.00
-        this.token1BalanceInVault = 0.00
-        this.token0BalanceUSDInVault = 0.00
-        this.token1BalanceUSDInVault = 0.00
-        this.token0BalanceInPool = 0.00
-        this.token1BalanceInPool = 0.00
-        this.token0BalanceUSDInPool = 0.00
-        this.token1BalanceUSDInPool = 0.00
-        this.token0BalanceInLending = 0.00
-        this.token1BalanceInLending = 0.00
-        this.token0BalanceUSDInLending = 0.00
-        this.token1BalanceUSDInLending = 0.00
-        return
+      this.selectedPairIndex = index
+      // // this.loadingTokensInfoStatus = true
+      if (this.pairsList.size() > index) {
+        this.vaultAddress = this.pairsList.get(index).vaultAddress
+        this.keeperContract = this.contractInstance(contractABI, this.pairsList.get(index).vaultAddress)
+        this.poolAddress = this.pairsList.get(index).poolAddress
+        this.token0Address = this.pairsList.get(index).token0.tokenAddress
+        this.token1Address = this.pairsList.get(index).token1.tokenAddress
+        this.token0Name = this.pairsList.get(index).token0.name
+        this.token0Symbol = this.pairsList.get(index).token0.symbol
+        this.token0Decimal = this.pairsList.get(index).token0.decimals
+        this.token1Name = this.pairsList.get(index).token1.name
+        this.token1Symbol = this.pairsList.get(index).token1.symbol
+        this.token1Decimal = this.pairsList.get(index).token1.decimals
+        if (Number(this.pairsList.get(index).cLow) > 0 && Number(this.pairsList.get(index).cHigh) > 0) {
+          this.tickLower = this.pairsList.get(index).cLow
+          this.tickUpper = this.pairsList.get(index).cHigh
+        } else {
+          this.tickLower = 0
+          this.tickUpper = 0
+        }
+        this.token0LendingAddress = this.pairsList.get(index).token0.token0LendingAddress
+        this.token1LendingAddress = this.pairsList.get(index).token1.token1LendingAddress
+        this.loadPairsData()
       }
-      // var lendingAmounts = await this.$parent.keeperContract.methods.getLendingAmounts().call()
-      await this.getSlot0()
+    },
+    async loadPairsData () {
+      this.pairsInfoLoading = true
       this.loadTokensBalance()
-      this.loadPriceRange()
-      this.getSettingData()
-      // this.loadFees()
+      this.getPairsSettingData()
+      this.pairsInfoLoading = false
     },
     async loadTokensBalance () {
       var cLow, cHigh
       this.loadingTokensInfoStatus = true
-      this.token0LendingContract = this.contractInstance(ViaLendTokenABI, this.token0LendingAddress)
-      this.token1LendingContract = this.contractInstance(ViaLendTokenABI, this.token1LendingAddress)
+      this.token0LendingContract = await this.contractInstance(ViaLendTokenABI, this.token0LendingAddress)
+      this.token1LendingContract = await this.contractInstance(ViaLendTokenABI, this.token1LendingAddress)
+      console.log('token0LendingAddress=', this.token0LendingAddress, 'token1LendingAddress=', this.token1LendingAddress)
+      // ----------------------Get Slot0 Information-------------------------
+      var poolAddress = await this.keeperContract.methods.poolAddress().call()
+      var keeperUniswapV3Contract = this.contractInstance(uniswapV3PoolABI, poolAddress)
+      var slot0 = await keeperUniswapV3Contract.methods.slot0().call()
+      if (slot0 !== null && slot0 !== undefined) {
+        this.currentTick = slot0['tick']
+        this.currentPrice = this.tickToPrice(this.currentTick, this.token0Decimal, this.token1Decimal)
+        if (this.tickLower === 0 || this.tickUpper === 0) {
+          this.tickLower = parseInt(this.currentTick) - 500
+          this.tickUpper = parseInt(this.currentTick) + 500
+          console.log('slot0_tickLower0=', this.tickLower, 'slot0_tickUpper0=', this.tickUpper)
+        } else {
+          console.log('slot0_tickLower1=', this.tickLower, ';slot0_tickUpper1=', this.tickUpper)
+        }
+      }
       // ----------------------Tokens balance ------------------------------
       // Token0 balance in wallet and vault
-      // console.log('ethereum.selectedAddress=', ethereum.selectedAddress)
       this.getTokensBalanceInWallet()
       // Token0 and token1 balance in pool
       cLow = await this.keeperContract.methods.cLow().call()
       cHigh = await this.keeperContract.methods.cHigh().call()
+
       console.log('cLow=', cLow, 'cHigh=', cHigh)
       var result = await this.keeperContract.methods.getPositionAmounts(Number(cLow), Number(cHigh)).call()
       console.log('result=', JSON.stringify(result))
@@ -694,31 +1153,67 @@ export default {
         this.token0BalanceInLending = underlying0 / Number(Math.pow(10, this.token0Decimal))
         this.token0BalanceUSDInLending = Number(this.token0BalanceInLending) * Number(this.$store.state.token0RateOfUSD)
         this.token1BalanceInLending = underlying1 / Number(Math.pow(10, this.token1Decimal))
+        console.log('underlying1=', underlying1, 'token1BalanceInLending=', this.token1BalanceInLending)
         this.token1BalanceUSDInLending = Number(this.token1BalanceInLending) * Number(this.$store.state.token1RateOfUSD)
       }
+      // Load price range
+      if (Number(this.tickLower) === 0 && Number(this.tickUpper) === 0) {
+        var clow = await this.keeperContract.methods.cLow().call()
+        var chigh = await this.keeperContract.methods.cHigh().call()
+        if (Number(clow) > 0 && Number(chigh) > 0) {
+          this.tickLower = clow
+          this.tickUpper = chigh
+        }
+      }
+      console.log('tickLower_price=', this.tickLower)
+      console.log('tickUpper_price=', this.tickUpper)
+      this.rangeForm.minPrice = this.tickToPrice(this.tickLower, this.token0Decimal, this.token1Decimal)
+      this.rangeForm.maxPrice = this.tickToPrice(this.tickUpper, this.token0Decimal, this.token1Decimal)
+      console.log('maxPrice=', this.rangeForm.maxPrice)
+      var _this = this
+      $('.js-range-slider').ionRangeSlider({
+        skin: 'big',
+        type: 'double',
+        grid: true,
+        prefix: '$',
+        step: 0.1,
+        onChange: function (data) {
+          console.log('from=', data.from)
+          _this.rangeForm.minPrice = data.from
+          _this.rangeForm.maxPrice = data.to
+        }
+      })
+      this.priceRangeSlider = $('.js-range-slider').data('ionRangeSlider')
+      this.priceRangeSlider.update({
+        min: (parseFloat(this.rangeForm.minPrice) - 230).toFixed(1),
+        max: (parseFloat(this.rangeForm.maxPrice) + 230).toFixed(1),
+        from: this.rangeForm.minPrice,
+        to: this.rangeForm.maxPrice
+      })
       this.loadingTokensInfoStatus = false
     },
     async getTokensBalanceInWallet () {
       console.log('load TokensBalanceInWallet')
+      console.log('token0addr=', this.token0Address, 'token1addr=', this.token1Address)
+      console.log('token0Decimal=', this.token0Decimal)
+      var token0Contract = await this.contractInstance(ViaLendTokenABI, this.token0Address)
+      var token1Contract = await this.contractInstance(ViaLendTokenABI, this.token1Address)
       if (this.isConnected) {
-        console.log('token0addr=', this.token0Address, 'token1addr=', this.token1Address)
-        console.log('token0Decimal=', this.token0Decimal)
-        var token0Contract = this.contractInstance(ViaLendTokenABI, this.token0Address)
-        var token1Contract = this.contractInstance(ViaLendTokenABI, this.token1Address)
         var token0BalanceWeiInWallet = await token0Contract.methods.balanceOf(ethereum.selectedAddress).call()
         this.token0BalanceInWallet = (Number(token0BalanceWeiInWallet) / Number(Math.pow(10, this.token0Decimal))).toFixed(2)
         this.token0BalanceUSDInWallet = Number(this.token0BalanceInWallet) * Number(this.$store.state.token0RateOfUSD)
-        var token0BalanceWeiInVault = await this.keeperContract.methods.balanceOf(this.token0Address).call()
-        this.token0BalanceInVault = (Number(token0BalanceWeiInVault) / Number(Math.pow(10, this.token0Decimal))).toFixed(2)
-        this.token0BalanceUSDInVault = Number(this.token0BalanceInVault) * Number(this.$store.state.token0RateOfUSD)
         // Token1 balance in wallet and vault
         var token1BalanceWeiInWallet = await token1Contract.methods.balanceOf(ethereum.selectedAddress).call()
         this.token1BalanceInWallet = (Number(token1BalanceWeiInWallet) / Number(Math.pow(10, this.token1Decimal))).toFixed(2)
         this.token1BalanceUSDInWallet = Number(this.token1BalanceInWallet) * Number(this.$store.state.token1RateOfUSD)
-        var token1BalanceWeiInVault = await this.keeperContract.methods.balanceOf(this.token1Address).call()
-        this.token1BalanceInVault = (Number(token1BalanceWeiInVault) / Number(Math.pow(10, this.token1Decimal))).toFixed(2)
-        this.token1BalanceUSDInVault = Number(this.token1BalanceInVault) * Number(this.$store.state.token1RateOfUSD)
       }
+      var token0BalanceWeiInVault = await token0Contract.methods.balanceOf(this.vaultAddress).call()
+      this.token0BalanceInVault = (Number(token0BalanceWeiInVault) / Number(Math.pow(10, this.token0Decimal))).toFixed(2)
+      this.token0BalanceUSDInVault = Number(this.token0BalanceInVault) * Number(this.$store.state.token0RateOfUSD)
+      console.log('token0BalanceWeiInVault=', this.token0BalanceWeiInVault)
+      var token1BalanceWeiInVault = await token1Contract.methods.balanceOf(this.vaultAddress).call()
+      this.token1BalanceInVault = (Number(token1BalanceWeiInVault) / Number(Math.pow(10, this.token1Decimal))).toFixed(2)
+      this.token1BalanceUSDInVault = Number(this.token1BalanceInVault) * Number(this.$store.state.token1RateOfUSD)
     },
     async loadFees () {
       var accumulateUniswapFees0 = await this.keeperContract.methods.AccumulateUniswapFees0().call()
@@ -729,34 +1224,6 @@ export default {
       console.log('accumulateUniswapFees1=', accumulateUniswapFees1)
       console.log('accruedProtocolFees0=', this.accruedProtocolFees0)
       console.log('accruedProtocolFees1=', this.accruedProtocolFees1)
-    },
-    async loadPriceRange () {
-      if (Number(this.tickLower) === 0 && Number(this.tickUpper) === 0) {
-        this.tickLower = await this.keeperContract.methods.cLow().call()
-        this.tickUpper = await this.keeperContract.methods.cHigh().call()
-      }
-      console.log('tickLower_price=', this.tickLower)
-      console.log('tickUpper_price=', this.tickUpper)
-      this.rangeForm.minPrice = this.tickToPrice(this.tickLower)
-      this.rangeForm.maxPrice = this.tickToPrice(this.tickUpper)
-      console.log('maxPrice=', this.rangeForm.maxPrice)
-      var _this = this
-      $('.js-range-slider').ionRangeSlider({
-        skin: 'big',
-        type: 'double',
-        grid: true,
-        min: (parseFloat(this.rangeForm.minPrice) - 230).toFixed(1),
-        max: (parseFloat(this.rangeForm.maxPrice) + 230).toFixed(1),
-        from: this.rangeForm.minPrice,
-        to: this.rangeForm.maxPrice,
-        prefix: '$',
-        step: 0.1,
-        onChange: function (data) {
-          console.log('from=', data.from)
-          _this.rangeForm.minPrice = data.from
-          _this.rangeForm.maxPrice = data.to
-        }
-      })
     },
     minPriceChange (val) {
       // console.log('min price:', val)
@@ -783,33 +1250,6 @@ export default {
           this.rangeStatus = 'In range'
         }
         this.rangeStatusDisplay = ''
-      }
-    },
-    async getSlot0 () {
-      var poolAddress = await this.keeperContract.methods.poolAddress().call()
-      var keeperUniswapV3Contract = this.contractInstance(uniswapV3PoolABI, poolAddress)
-      if (keeperUniswapV3Contract !== null) {
-        var _this = this
-        keeperUniswapV3Contract.methods
-          .slot0()
-          .call()
-          .then(slot => {
-            if (slot !== undefined && slot !== null && slot !== '') {
-              console.log('slot0=' + JSON.stringify(slot))
-              // this.tickLower = Math.round(parseInt(this.rangeForm.tickLower) / 60) * 60
-              // this.tickUpper = Math.round(parseInt(this.rangeForm.tickUpper) / 60) * 60
-              _this.currentTick = slot['tick']
-              _this.currentPrice = this.tickToPrice(_this.currentTick)
-              console.log('currentTick0=', _this.currentTick)
-              if (_this.tickLower === 0 || _this.tickUpper === 0) {
-                // _this.tickLower = parseInt(_this.currentTick) - 1000
-                // _this.tickUpper = parseInt(_this.currentTick) + 1000
-                console.log('slot0_tickLower0=', _this.tickLower, 'slot0_tickUpper0=', _this.tickUpper)
-              } else {
-                console.log('slot0_tickLower1=', _this.tickLower, ';slot0_tickUpper1=', _this.tickUpper)
-              }
-            }
-          })
       }
     },
     async SetUniPortionRatio () {
@@ -1133,7 +1573,7 @@ export default {
             }
             if (receipt.status) {
               _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
-              _this.emergencyEtherscanDisable = false
+              _this.doRebalanceEtherscanDisable = false
               _this.$message('Rebalance submitted!')
               _this.loadTokensBalance()
             } else { _this.$message('Rebalance failed!') }
@@ -1144,11 +1584,48 @@ export default {
           })
       }
     },
-    priceToTick (price) {
-      return parseInt(Math.log(price / 1000000000000) / Math.log(1.0001))
+    doRemovePositions () {
+      if (!this.isConnected) {
+        this.$message('Please connect wallet!')
+        return
+      }
+      var _this = this
+      this.removePositionsLoading = true
+      if (this.keeperContract != null) {
+        this.keeperContract.methods
+          .alloc()
+          .send({
+            from: ethereum.selectedAddress,
+            // gasPrice: '1000000000',
+            // gas: 900000,
+            value: 0
+          })
+          .on('confirmation', function (confirmationNumber, receipt) {
+          })
+          .on('receipt', function (receipt) {
+            if (_this.removePositionsLoading) {
+              _this.removePositionsLoading = false
+            }
+            if (receipt.status) {
+              _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
+              _this.removePositionsEtherscanDisable = false
+              _this.$message('RemovePositions submitted!')
+              _this.loadTokensBalance()
+            } else { _this.$message('RemovePositions failed!') }
+          })
+          .on('error', function (error) {
+            _this.removePositionsLoading = false
+            _this.$message.error(error)
+          })
+      }
     },
-    tickToPrice (tick) {
-      return (Math.pow(1.0001, tick) * Math.pow(10, 12)).toFixed(1)
+    priceToTick (price, decimal0, decimal1) {
+      return parseInt(Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001))
+    },
+    tickToPrice (tick, decimal0, decimal1) {
+      console.log('decimal0=', decimal0, 'decimal1=', decimal1)
+      console.log('Math.pow(1.0001, tick)=', Math.pow(1.0001, tick), 'decimal=', decimal0 - decimal1)
+      return (Math.pow(1.0001, tick) * Math.pow(10, (decimal0 - decimal1))).toFixed(1)
     },
     onSubmit () {
       console.log('submit!')
@@ -1191,13 +1668,161 @@ export default {
       console.log('D=', D)
       console.log('p_a=', D * p, ',(', D * 100, ' of P),p_b=', C * p, ',(', C * 100, ' of P')
     },
-    async getSettingData () {
+    async getPairsSettingData () {
       this.maxTotalSupply = await this.keeperContract.methods.maxTotalSupply().call()
       this.governanceAddress = await this.keeperContract.methods.governance().call()
       this.teamAddress = await this.keeperContract.methods.team().call()
       this.uniPortionRatio = await this.keeperContract.methods.uniPortion().call()
       console.log('uniPortionRatio=', this.uniPortionRatio)
       this.protocolFee = await this.keeperContract.methods.protocolFee().call()
+    },
+    async getPairPublicInfo (pair) {
+      this.tvlDataLoading = true
+      this.assetsRatioLoading = true
+      console.log('pair.vaultAddress=', pair.vaultAddress)
+      console.log('pair.token0LendingAddress=', pair.token0.token0LendingAddress)
+      console.log('pair.token1LendingAddress=', pair.token1.token1LendingAddress)
+      console.log('pair.token0.tokenAddress=', pair.token0.tokenAddress)
+      console.log('pair.token1.tokenAddress=', pair.token1.tokenAddress)
+      var keeperContract = await this.contractInstance(contractABI, pair.vaultAddress)
+      var token0LendingContract = await this.contractInstance(ViaLendTokenABI, pair.token0.token0LendingAddress)
+      var token1LendingContract = await this.contractInstance(ViaLendTokenABI, pair.token1.token1LendingAddress)
+      var token0Contract = await this.contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
+      var token1Contract = await this.contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
+      // ---------- Get TVL Begin-----------------
+      var uniliqs = await keeperContract.methods.getPositionAmounts(BigInt(pair.cLow), BigInt(pair.cHigh)).call()
+      console.log('balance in uniswap:', uniliqs, 'getVaultInfo_cLow=', pair.cLow, 'getVaultInfo_cHigh=', pair.cHigh)
+      // -->Get Lending Amounts begin
+      var exchangeRate0 = await token0LendingContract.methods.exchangeRateStored().call()
+      var exchangeRate1 = await token1LendingContract.methods.exchangeRateStored().call()
+      var CAmount0 = await token0LendingContract.methods.balanceOf(pair.vaultAddress).call()
+      var CAmount1 = await token1LendingContract.methods.balanceOf(pair.vaultAddress).call()
+      var underlying0 = CAmount0 * exchangeRate0 / Math.pow(10, 18)
+      var underlying1 = CAmount1 * exchangeRate1 / Math.pow(10, 18)
+      console.log('underlying0=', underlying0, 'underlying1=', underlying1)
+      // -->Get Lending Amounts end
+      pair.vaultLending = Number(underlying0) + Number(underlying1) // Not yet converted to USD
+      pair.token0BalanceInVault = await token0Contract.methods.balanceOf(pair.vaultAddress).call()
+      pair.token1BalanceInVault = await token1Contract.methods.balanceOf(pair.vaultAddress).call()
+      console.log('token0BalanceInVault=', pair.token0BalanceInVault, ';token1BalanceInVault=', pair.token1BalanceInVault)
+      var t0Decimal = await token0Contract.methods.decimals().call()
+      var t1Decimal = await token1Contract.methods.decimals().call()
+      pair.tvlTotal0 = (Number(pair.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)) / Number(Math.pow(10, t0Decimal))
+      pair.tvlTotal1 = (Number(pair.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)) / Number(Math.pow(10, t1Decimal))
+      // pair.tvl = pair.tvlTotal0 * 3768.67 + pair.tvlTotal1 * 0.998117
+      console.log('tvlTotal0=', pair.tvlTotal0, 'tvlTotal1=', pair.tvlTotal1)
+      // console.log('TVL=', this.tvl, ';token0RateOfUSD=', this.pairsList[0].smartVaults[0].rateOfUSD, ';token1RateOfUSD=', this.pairsList[0].smartVaults[1].rateOfUSD)
+      // ---------- Get TVL End--------------------------
+      // ---------- Get Assets ratio Begin --------------
+      var result = await keeperContract.methods.getPositionAmounts(BigInt(pair.cLow), BigInt(pair.cHigh)).call()
+      var token0BalanceInPool, token1BalanceInPool, token0BalanceInLending, token1BalanceInLending
+      if (result !== undefined && result !== null) {
+        token0BalanceInPool = result.amount0
+        token1BalanceInPool = result.amount1
+      }
+      if (!isNaN(underlying0) && !isNaN(underlying1)) {
+        token0BalanceInLending = underlying0
+        token1BalanceInLending = underlying1
+      }
+      var totalUniswap = Number(token0BalanceInPool) * 300 + Number(token1BalanceInPool)
+      var totalLending = Number(token0BalanceInLending) * 300 + Number(token1BalanceInLending)
+      var totalUsdc = totalUniswap + totalLending
+      if (totalUsdc === 0) {
+        pair.uniswapRatio = 0
+        pair.lendingRatio = 0
+      } else {
+        pair.uniswapRatio = totalUniswap / totalUsdc * 100
+        pair.lendingRatio = totalLending / totalUsdc * 100
+      }
+      if ((Number(token0BalanceInPool) + Number(token0BalanceInLending)) === 0) {
+        pair.uniToken0Rate = 0
+      } else {
+        pair.uniToken0Rate = Number(token0BalanceInPool) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
+      }
+      if ((Number(token1BalanceInPool) + Number(token1BalanceInLending)) === 0) {
+        pair.uniToken1Rate = 0
+      } else {
+        pair.uniToken1Rate = Number(token1BalanceInPool) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
+      }
+      if ((Number(token0BalanceInPool) + Number(token0BalanceInLending)) === 0) {
+        pair.lendingToken0Rate = 0
+      } else {
+        pair.lendingToken0Rate = Number(token0BalanceInLending) / (Number(token0BalanceInPool) + Number(token0BalanceInLending))
+      }
+      if ((Number(token1BalanceInPool) + Number(token1BalanceInLending)) === 0) {
+        pair.lendingToken1Rate = 0
+      } else {
+        pair.lendingToken1Rate = Number(token1BalanceInLending) / (Number(token1BalanceInPool) + Number(token1BalanceInLending))
+      }
+      console.log('totalUniswap=', pair.totalUniswap, 'totalLending=', pair.totalLending, 'total_usdc=', pair.totalUsdc, 'uniswapRatio=', pair.uniswapRatio, 'lendingRatio=', pair.lendingRatio)
+      // ---------- Get Assets ratio End --------------
+      console.log('ethereum.selectedAddress=', ethereum.selectedAddress)
+      if (ethereum.selectedAddress !== null && ethereum.selectedAddress !== undefined) {
+        var myShare, totalShares, tvlTotal0, tvlTotal1
+        myShare = await keeperContract.methods.balanceOf(ethereum.selectedAddress).call()
+        totalShares = await keeperContract.methods.totalSupply().call()
+        var Assets = await keeperContract.methods.Assetholder(ethereum.selectedAddress).call()
+        if (Assets !== null) {
+          // calc APR
+          var oraclePriceTwap
+          var poolAddress = await keeperContract.methods.poolAddress().call()
+          var twapDuration = 2
+          // this.sleep(3000)
+          var keeperUniswapV3Contract = this.contractInstance(uniswapV3PoolABI, poolAddress)
+          var slot0 = await keeperUniswapV3Contract.methods.slot0().call()
+          if (slot0 !== null && slot0 !== undefined) {
+            var twap = slot0['tick']
+            oraclePriceTwap = await keeperContract.methods.getQuoteAtTick(Number(twap), BigInt(Math.pow(10, 18)), pair.token0.tokenAddress, pair.token1.tokenAddress).call()
+            console.log('twap=', twap, ';oraclePriceTwap=', oraclePriceTwap)
+          }
+          var Total0, Total1
+
+          Total0 = Number(pair.token0BalanceInVault) + Number(uniliqs.amount0) + Number(underlying0)
+          Total1 = Number(pair.token1BalanceInVault) + Number(uniliqs.amount1) + Number(underlying1)
+          var mytvl0, mytvl1
+          if (Number(totalShares) === 0) {
+            mytvl0 = 0
+            mytvl1 = 0
+          } else {
+            mytvl0 = Total0 * Number(myShare) / Number(totalShares)
+            mytvl1 = Total1 * Number(myShare) / Number(totalShares)
+          }
+
+          var oneyearINsec = 365 * 24 * 60 * 60
+          var block = await web3.eth.getBlock(Assets.block)
+          console.log('block timestamp=', block.timestamp)
+          var timestamp = block.timestamp
+          var headerNumber = await web3.eth.getBlockNumber()
+          var headerBlock = await web3.eth.getBlock(headerNumber)
+          // console.log('header=', JSON.stringify(headerBlock))
+          var htimestamp = headerBlock.timestamp
+          console.log('htimestamp=', htimestamp, ';timestamp=', timestamp)
+          var timediff = Number(htimestamp) - Number(timestamp)
+          var deposit0 = Assets.deposit0
+          var deposit1 = Assets.deposit1
+          var fd0 = Number(deposit0)
+          var fd1, fm1
+          if (oraclePriceTwap === 0) {
+            fd1 = 0
+            fm1 = 0
+          } else {
+            fd1 = Number(deposit1) * Math.pow(10, Number(pair.token0.decimals)) / oraclePriceTwap
+            fm1 = Number(mytvl1) * Math.pow(10, Number(pair.token0.decimals)) / oraclePriceTwap
+          }
+          var fm0 = Number(mytvl0)
+          var fdd = fd0 + fd1
+          var fmm = fm0 + fm1
+          console.log('fm0=', fm0, 'fm1=', fm1)
+          console.log('decimal=', pair.token0.decimals)
+          console.log('fmm=', fmm, 'fdd=', fdd, 'timediff=', timediff, 'oneyearInsec=', oneyearINsec)
+          if (fdd === 0 || timediff === 0) {
+            pair.currentAPR = 0
+          } else {
+            pair.currentAPR = (fmm - fdd) / Number(timediff) * oneyearINsec / fdd
+          }
+        }
+      }
+      return pair
     }
 
   }
@@ -1211,8 +1836,11 @@ export default {
 .el-main {
   padding: 0px !important;
 }
+.el-menu {
+  border-right: 0px !important;
+}
 .el-aside {
-  background-color: #545c64 !important;
+  background-color: #304156 !important;
 }
 .breadcrumb {
   padding: 20px;
@@ -1263,5 +1891,42 @@ export default {
 }
 .menu_text a {
   color: #fff;
+}
+.text {
+  font-size: 14px;
+}
+
+.item {
+  margin-bottom: 18px;
+}
+
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: '';
+}
+.clearfix:after {
+  clear: both;
+}
+
+.box-card {
+  width: 280px;
+  margin: 10px;
+}
+.el-form-item__label {
+  line-height: 20px !important;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+#app,
+.box {
+  height: 100%;
+}
+.el-container {
+  height: 100%;
 }
 </style>
