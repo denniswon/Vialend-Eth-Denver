@@ -19,7 +19,7 @@ import (
 	vialend "../../../deploy/vialendFeeMaker"
 
 	callee "../../../deploy/TestUniswapV3Callee"
-	"../config"
+
 	"github.com/ethereum/go-ethereum/common"
 	/*
 
@@ -34,13 +34,13 @@ func DeployFactory() *factory.Api {
 	fmt.Println(".......................Deploy Uniswap Factory. ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
-	address, tx, instance, err := factory.DeployApi(config.Auth, config.Client)
+	NonceGen()
+	address, tx, instance, err := factory.DeployApi(Auth, Client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	config.Network.Factory = address.Hex()
+	Network.Factory = address.Hex()
 
 	_, _ = instance, tx
 
@@ -48,7 +48,7 @@ func DeployFactory() *factory.Api {
 
 	fmt.Println("factory address:", address.Hex())
 
-	config.AddSettingString("factory address:", address.Hex())
+	AddSettingString("factory address:", address.Hex())
 
 	return instance
 }
@@ -60,12 +60,12 @@ func DeployVault() {
 	fmt.Println("----------------------------------------------")
 
 	///require governance. always use account 0 as the deployer
-	config.Auth = config.GetSignature(config.Networkid, 0)
+	Auth = GetSignature(Networkid, 0)
 
-	config.NonceGen()
+	NonceGen()
 
 	pool := FindPool()
-	// ttoken := common.HexToAddress(config.Network.BonusToken)
+	// ttoken := common.HexToAddress(Network.BonusToken)
 	protocolFee := big.NewInt(10000)
 
 	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
@@ -75,7 +75,7 @@ func DeployVault() {
 	var maxTwapDeviation = big.NewInt(20)
 	var twapDuration = uint32(2)
 
-	address, tx, instance, err := vault.DeployApi(config.Auth, config.Client,
+	address, tx, instance, err := vault.DeployApi(Auth, Client,
 		pool,
 		protocolFee,
 		maxTotalSupply,
@@ -87,11 +87,11 @@ func DeployVault() {
 	}
 
 	///set auth back to Account
-	config.Auth = config.GetSignature(config.Networkid, config.Account)
+	Auth = GetSignature(Networkid, Account)
 
 	//refresh vault address in networks.go
-	config.Network.Vault = address.Hex()
-	config.AddSettingString("vault address:", address.Hex())
+	Network.Vault = address.Hex()
+	AddSettingString("vault address:", address.Hex())
 
 	fmt.Println("vault address:", address.Hex())
 
@@ -107,9 +107,9 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 	fmt.Println(".......................Deploy Token. ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
+	NonceGen()
 
-	address, tx, instance, err := mocktoken.DeployApi(config.Auth, config.Client, name, symbol, decimals, totalSupply)
+	address, tx, instance, err := mocktoken.DeployApi(Auth, Client, name, symbol, decimals, totalSupply)
 
 	if err != nil {
 		log.Fatal(err)
@@ -118,7 +118,7 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 	_, _ = instance, tx
 
 	fmt.Println("token address:", address.Hex())
-	config.AddSettingString(symbol+" token address:", address.Hex())
+	AddSettingString(symbol+" token address:", address.Hex())
 
 	Readstring("token deploy done, wait for pending ... next... ")
 
@@ -131,13 +131,13 @@ func DeployWrappedEther() *weth.Api {
 	fmt.Println(".......................Deploy WETH . ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
-	address, tx, instance, err := weth.DeployApi(config.Auth, config.Client)
+	NonceGen()
+	address, tx, instance, err := weth.DeployApi(Auth, Client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	config.Network.LendingContracts.WETH = address.Hex()
+	Network.LendingContracts.WETH = address.Hex()
 
 	_, _ = instance, tx
 
@@ -154,12 +154,12 @@ func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPo
 	fmt.Println(".......................Deploy VialendFeemaker ...................")
 	fmt.Println("----------------------------------------------")
 
-	config.Networkid = networkid
-	config.Network = config.Networks[networkid]
+	Networkid = networkid
+	Network = Networks[networkid]
 	///require governance. always use account 0 as the deployer
-	config.Auth = config.GetSignature(config.Networkid, acc)
+	Auth = GetSignature(Networkid, acc)
 
-	config.NonceGen()
+	NonceGen()
 
 	pool := FindPool() //tokens based on network selection
 
@@ -174,16 +174,16 @@ func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPo
 
 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
 
-	var _weth = common.HexToAddress(config.Network.LendingContracts.WETH)
-	var _cEth = common.HexToAddress(config.Network.LendingContracts.CETH)
-	var _cToken0 = common.HexToAddress(config.Network.CTOKEN0)
-	var _cToken1 = common.HexToAddress(config.Network.CTOKEN1)
+	var _weth = common.HexToAddress(Network.LendingContracts.WETH)
+	var _cEth = common.HexToAddress(Network.LendingContracts.CETH)
+	var _cToken0 = common.HexToAddress(Network.CTOKEN0)
+	var _cToken1 = common.HexToAddress(Network.CTOKEN1)
 
 	var uniPortionRate = uint8(_uniPortion)
 
 	fmt.Println(".......................Deploy vault ...................")
 
-	address, tx, instance, err := vialend.DeployApi(config.Auth, config.Client,
+	address, tx, instance, err := vialend.DeployApi(Auth, Client,
 		pool,
 		_weth,
 		_cToken0,
@@ -202,8 +202,8 @@ func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPo
 	}
 
 	//refresh vault address in networks.go
-	config.Network.Vault = address.Hex()
-	config.AddSettingString("vault address:", address.Hex())
+	Network.Vault = address.Hex()
+	AddSettingString("vault address:", address.Hex())
 
 	fmt.Println("vault address:", address.Hex())
 
@@ -223,19 +223,19 @@ func VaultGen(
 	quoteAmount *big.Int,
 	_uniPortion int,
 	team string,
-	strategy config.Indi) {
+	strategy Indi) {
 
 	fmt.Println("----------------------------------------------")
 	fmt.Println(".......................Vault Gen ...................")
 	fmt.Println("----------------------------------------------")
 
-	temp := config.Networkid
-	config.Networkid = networkId
+	temp := Networkid
+	Networkid = networkId
 
 	///require governance. always use account 0 as the deployer
-	config.Auth = config.GetSignature(config.Networkid, acc)
+	Auth = GetSignature(Networkid, acc)
 
-	config.NonceGen()
+	NonceGen()
 
 	pool := GetPool(token0, token1, feetier) //tokens based on network selection
 
@@ -247,14 +247,14 @@ func VaultGen(
 	}
 	var maxTwapDeviation = big.NewInt(20000)
 	var twapDuration = uint32(2)
-	var _weth = common.HexToAddress(config.Network.LendingContracts.WETH)
-	var _cEth = common.HexToAddress(config.Network.LendingContracts.CETH)
-	var _cToken0 = common.HexToAddress(config.Network.CTOKEN0)
-	var _cToken1 = common.HexToAddress(config.Network.CTOKEN1)
+	var _weth = common.HexToAddress(Network.LendingContracts.WETH)
+	var _cEth = common.HexToAddress(Network.LendingContracts.CETH)
+	var _cToken0 = common.HexToAddress(Network.CTOKEN0)
+	var _cToken1 = common.HexToAddress(Network.CTOKEN1)
 
 	var uniPortionRate = uint8(_uniPortion)
 
-	address, tx, instance, err := vialend.DeployApi(config.Auth, config.Client,
+	address, tx, instance, err := vialend.DeployApi(Auth, Client,
 		pool,
 		_weth,
 		_cToken0,
@@ -270,8 +270,8 @@ func VaultGen(
 
 	///set auth back to Account
 
-	config.Networkid = temp
-	config.Auth = config.GetSignature(config.Networkid, config.Account)
+	Networkid = temp
+	Auth = GetSignature(Networkid, Account)
 
 	if err != nil {
 		log.Fatal("deploy vault ", err)
@@ -279,8 +279,8 @@ func VaultGen(
 
 	//refresh vault address in networks.go
 
-	config.Network.Vault = address.Hex()
-	config.AddSettingString("vault address:", address.Hex())
+	Network.Vault = address.Hex()
+	AddSettingString("vault address:", address.Hex())
 
 	fmt.Println("vault address:", address.Hex())
 
@@ -296,13 +296,13 @@ func DeployCallee() {
 	fmt.Println(".......................Deploy Test Callee . ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
-	address, tx, instance, err := callee.DeployApi(config.Auth, config.Client)
+	NonceGen()
+	address, tx, instance, err := callee.DeployApi(Auth, Client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	config.Network.Callee = address.Hex()
+	Network.Callee = address.Hex()
 
 	_, _ = instance, tx
 
@@ -318,15 +318,15 @@ func DeployVaultBridge() {
 	fmt.Println(".......................Deploy VaultBridge . ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
+	NonceGen()
 
-	address, tx, instance, err := bridge.DeployApi(config.Auth, config.Client)
+	address, tx, instance, err := bridge.DeployApi(Auth, Client)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	config.Network.VaultBridge = address.Hex()
+	Network.VaultBridge = address.Hex()
 
 	_, _ = instance, tx
 
@@ -340,18 +340,18 @@ func DeployVaultAdmin() {
 	fmt.Println(".......................Deploy VaultAdmin . ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
+	NonceGen()
 	/*
 			local address test in remix
 		   ["0xfd8a5AE495Df1CA34F90572cb99A33B27173eDe1","0xeBb29c07455113c30810Addc123D0D7Cd8637aea","0xcCebCE6AF95bfD69EEE193390CCF027e8d47d9e2"]
 
 	*/
 	admins := []common.Address{
-		config.PrivateToPublic(config.Network.PrivateKey[0]),
-		config.PrivateToPublic(config.Network.PrivateKey[1]),
-		config.PrivateToPublic(config.Network.PrivateKey[2]),
+		PrivateToPublic(Network.PrivateKey[0]),
+		PrivateToPublic(Network.PrivateKey[1]),
+		PrivateToPublic(Network.PrivateKey[2]),
 	}
-	address, tx, instance, err := admin.DeployApi(config.Auth, config.Client, admins)
+	address, tx, instance, err := admin.DeployApi(Auth, Client, admins)
 
 	if err != nil {
 		log.Fatal(err)
@@ -371,9 +371,9 @@ func DeployArb() {
 	fmt.Println(".......................Deploy arb . ..................")
 	fmt.Println("----------------------------------------------")
 
-	config.NonceGen()
+	NonceGen()
 
-	address, tx, instance, err := arb.DeployApi(config.Auth, config.Client)
+	address, tx, instance, err := arb.DeployApi(Auth, Client)
 
 	if err != nil {
 		log.Fatal(err)

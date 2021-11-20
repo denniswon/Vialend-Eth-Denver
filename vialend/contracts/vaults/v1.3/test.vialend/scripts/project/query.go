@@ -9,7 +9,6 @@ import (
 
 	pool "../../../../../../../uniswap/v3/deploy/UniswapV3Pool"
 	tester "../../../deploy/tester"
-	"../config"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,10 +20,10 @@ func CheckPrice(do bool, interval time.Duration) {
 		return
 	}
 
-	var network = config.Networks[config.Networkid]
+	var network = Networks[Networkid]
 
 	poolAddress := common.HexToAddress(network.Pool)
-	poolInstance, err := pool.NewApi(poolAddress, config.Client)
+	poolInstance, err := pool.NewApi(poolAddress, Client)
 	if err != nil {
 		log.Fatal("pool.NewApi ", err)
 	}
@@ -81,7 +80,7 @@ func PoolInfo2(do bool) {
 	poolAddress := common.HexToAddress("0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2")
 	fmt.Println("pool address:", poolAddress)
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
+	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
 
 	if err != nil {
 		log.Fatal(err)
@@ -121,13 +120,13 @@ func Equation(do bool, doSet bool) {
 		return
 	}
 
-	//var network = config.Networks[config.Networkid]
+	//var network = Networks[Networkid]
 
 	poolAddress := common.HexToAddress("0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c")
 	testerAddress := common.HexToAddress("0xa9c7752485080511344A90212C84c868628DB7A3")
 	LPaddress := common.HexToAddress("0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
 
-	poolInstance, err := pool.NewApi(poolAddress, config.Client)
+	poolInstance, err := pool.NewApi(poolAddress, Client)
 	if err != nil {
 		log.Fatal("pool.NewApi ", err)
 	}
@@ -139,7 +138,7 @@ func Equation(do bool, doSet bool) {
 
 	fmt.Println("slot0=", slot0)
 
-	testerInstance, err := tester.NewApi(testerAddress, config.Client)
+	testerInstance, err := tester.NewApi(testerAddress, Client)
 	if err != nil {
 		log.Fatal("isntance err: ", err)
 	}
@@ -148,8 +147,8 @@ func Equation(do bool, doSet bool) {
 	tickUpper := big.NewInt(27060)
 
 	if doSet {
-		config.NonceGen()
-		tx, err := testerInstance.SetPosition(config.Auth, poolAddress, LPaddress, tickLower, tickUpper)
+		NonceGen()
+		tx, err := testerInstance.SetPosition(Auth, poolAddress, LPaddress, tickLower, tickUpper)
 		if err != nil {
 			log.Fatal("setposition err:", err)
 		}
@@ -164,8 +163,8 @@ func Equation(do bool, doSet bool) {
 		fmt.Println(p1, p2, p3, p4, p5, p6)
 	*/
 
-	config.NonceGen()
-	tx, err := testerInstance.CallPosition(config.Auth, poolAddress, LPaddress, tickLower, tickUpper)
+	NonceGen()
+	tx, err := testerInstance.CallPosition(Auth, poolAddress, LPaddress, tickLower, tickUpper)
 	if err != nil {
 		log.Fatal("call trans err:", err)
 	}

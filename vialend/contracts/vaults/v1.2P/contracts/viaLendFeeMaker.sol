@@ -18,23 +18,14 @@ deposit
 */
 pragma solidity >=0.5.0;
 
-//import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-//import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-//import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-//import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-
-
-
 import "libraries/lib.sol";
-
 import "interfaces/IFeeMakerEvents.sol";
-
 import "./ownable.sol";
 import "./viaCompound.sol";
 import "./viaUniswap.sol";
@@ -302,7 +293,7 @@ contract ViaLendFeeMaker is
         
 	}
     
-   
+   // percent is the percentage of range is 0 - 100 
     function withdraw(
         uint8 percent
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {

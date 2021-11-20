@@ -84,8 +84,10 @@ contract ViaUniswap is
 	        uFees0 = collect0.sub(burned0);
 	       	uFees1 = collect1.sub(burned1);
        }
-
-
+    
+    	(liquidity, , , , ) = _position(cLow, cHigh);	// should be 0 otherwise, there is problem
+		
+		emit MyLog("uni liquidity = If this is not 0, there was an error", liquidity);
 	}
 	
 

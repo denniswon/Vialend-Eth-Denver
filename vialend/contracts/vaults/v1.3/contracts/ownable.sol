@@ -23,8 +23,6 @@ contract Ownable is ReentrancyGuard {
 
     uint256 public protocolFee;
     
-    bool public valveUniV3;
-    bool public valveComp;
 
     IUniswapV3Pool internal  pool;
     int24 internal  tickSpacing;
@@ -158,9 +156,6 @@ contract Ownable is ReentrancyGuard {
         protocolFee = _protocolFee;
     }
     
-	function valves(bool univ3, bool comp) external onlyGovernance {
-		valveUniV3 = univ3;
-		valveComp = comp;
-	}
+
 
 }

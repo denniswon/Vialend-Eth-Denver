@@ -1,4 +1,4 @@
-package config
+package include
 
 import (
 	"context"
@@ -36,7 +36,7 @@ type LendingStruct struct {
 	USDT  string
 	CUSDT string
 }
-type Init struct {
+type Params struct {
 	ProviderUrl []string
 	Factory     string
 	Callee      string
@@ -66,8 +66,8 @@ const (
 	TMA
 )
 
-var Networkid = 4 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
-var Account = 0
+var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
+var Account = 1
 
 var ProviderSortId = 0
 
@@ -92,7 +92,7 @@ type Info struct {
 
 var InfoString []Info
 
-var Networks = [...]Init{
+var Networks = [...]Params{
 
 	{ // 0 mainnet
 		[]string{"https://mainnet.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
@@ -200,7 +200,8 @@ var Networks = [...]Init{
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token
 
-		"0x23C6746C7c2A93623ecA2e5dC8bC6465Bc26a686", // vault
+		"0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", //vault   can delete account
+		//"0x23C6746C7c2A93623ecA2e5dC8bC6465Bc26a686", // vault
 		//"0xA383011e531091FDB6caeEA3e3ed8ED0d8EdE371", //vault through bridge current web
 		//"0x31C048503Bf4e15720025fb27D774DDc1829D925", // vault, 4.x eth locked in compound. 90% uniportion + swap out range maybe the cause
 		//"0x4aaE0bc3052aD3AB125Ae654f0f2C55Dbd9D6e17", // vault , ctoken address, quoteAmount, on web  ,  cEth stuck
@@ -469,4 +470,26 @@ func PrivateToPublic(_privateKey string) common.Address {
 		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
 	}
 	return crypto.PubkeyToAddress(*publicKeyECDSA)
+}
+
+func Init(nid int, acc int) {
+
+	if nid == -1 {
+		nid = Networkid
+		acc = Account
+	}
+
+	Client = GetClient(nid, 0)
+
+	Auth = GetSignature(nid, acc)
+
+	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl[ProviderSortId])
+
+	_, Token[0].Name, Token[0].Symbol, Token[0].Decimals, Token[0].MaxTotalSupply = GetTokenInstance(Network.TokenA)
+	_, Token[1].Name, Token[1].Symbol, Token[1].Decimals, Token[1].MaxTotalSupply = GetTokenInstance(Network.TokenB)
+
+	myPrintln(Token[0].Symbol, ":", common.HexToAddress(Network.TokenA))
+	myPrintln(Token[1].Symbol, ":", common.HexToAddress(Network.TokenB))
+	//	myPrintln("A<B:", Network.TokenA < Network.TokenB)
+
 }

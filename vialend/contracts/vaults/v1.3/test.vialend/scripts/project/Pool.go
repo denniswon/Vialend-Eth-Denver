@@ -10,7 +10,6 @@ import (
 	pool "../../../../../../../uniswap/v3/deploy/UniswapV3Pool"
 
 	token "../../../../../Tokens/erc20/deploy/Token"
-	"../config"
 
 	swapCallee "../../../deploy/TestUniswapV3Callee"
 
@@ -32,18 +31,18 @@ func CreatePool(do int) common.Address {
 	fmt.Println(".......................Create Pool. ..................")
 	fmt.Println("----------------------------------------------")
 
-	factoryAddress := common.HexToAddress(config.Network.Factory)
+	factoryAddress := common.HexToAddress(Network.Factory)
 
-	instance, err := factory.NewApi(factoryAddress, config.Client)
+	instance, err := factory.NewApi(factoryAddress, Client)
 	if err != nil {
 		log.Fatal("factory.NewApi ", err)
 	}
 
-	tokenA := common.HexToAddress(config.Network.TokenA)
-	tokenB := common.HexToAddress(config.Network.TokenB)
-	fee := big.NewInt(config.Network.FeeTier)
-	config.NonceGen()
-	tx, err := instance.CreatePool(config.Auth,
+	tokenA := common.HexToAddress(Network.TokenA)
+	tokenB := common.HexToAddress(Network.TokenB)
+	fee := big.NewInt(Network.FeeTier)
+	NonceGen()
+	tx, err := instance.CreatePool(Auth,
 		tokenA,
 		tokenB,
 		fee,
@@ -64,11 +63,11 @@ func CreatePool(do int) common.Address {
 		log.Fatal("getpool ", err)
 	}
 
-	config.Network.Pool = poolAddress.String()
+	Network.Pool = poolAddress.String()
 	fmt.Println("poolAddress:", poolAddress)
 
-	config.AddSettingString("pool address:", poolAddress.String())
-	config.AddSettingString("pool fee tier:", fee.String())
+	AddSettingString("pool address:", poolAddress.String())
+	AddSettingString("pool fee tier:", fee.String())
 
 	Readstring("createpool done, wait for pending ... next... ")
 
@@ -83,16 +82,16 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	myPrintln("----------------------------------------------")
 
 	poolAddress := common.HexToAddress(_pool)
-	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(config.Network.Callee), config.Client)
+	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(Network.Callee), Client)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	myPrintln("pool address:", poolAddress)
-	myPrintln("callee address:", config.Network.Callee)
+	myPrintln("callee address:", Network.Callee)
 
-	poolInstance, err := pool.NewApi(poolAddress, config.Client)
+	poolInstance, err := pool.NewApi(poolAddress, Client)
 	if err != nil {
 		log.Fatal("poolInstance err:", err)
 	}
@@ -101,29 +100,29 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	TokenB, _ := poolInstance.Token1(&bind.CallOpts{})
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
 
-	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
-	config.ChangeAccount(accountId)
-	myPrintln("from address:", config.FromAddress)
+	ChangeAccount(accountId)
+	myPrintln("from address:", FromAddress)
 
-	ApproveToken(TokenA, maxToken0, config.Network.Callee)
-	ApproveToken(TokenB, maxToken1, config.Network.Callee)
+	ApproveToken(TokenA, maxToken0, Network.Callee)
+	ApproveToken(TokenB, maxToken1, Network.Callee)
 
-	recipient := config.FromAddress
+	recipient := FromAddress
 
-	config.NonceGen()
+	NonceGen()
 
 	MIN_SQRT_RATIO := big.NewInt(4295128739)
 	MAX_SQRT_RATIO, _ := new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
 	sqrtP0for1 := new(big.Int).Add(MIN_SQRT_RATIO, big.NewInt(1))
 	sqrtP1for0 := new(big.Int).Sub(MAX_SQRT_RATIO, big.NewInt(1))
 
-	amountIn := swapAmount.Mul(swapAmount, PowX(int64(1), int(config.Token[0].Decimals)))
+	amountIn := swapAmount.Mul(swapAmount, PowX(int64(1), int(Token[0].Decimals)))
 
 	if zeroForOne {
 
-		tx, err := calleeInstance.SwapExact0For1(config.Auth,
+		tx, err := calleeInstance.SwapExact0For1(Auth,
 			poolAddress,
 			amountIn,
 			recipient,
@@ -140,7 +139,7 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	} else {
 
-		tx, err := calleeInstance.Swap1ForExact0(config.Auth,
+		tx, err := calleeInstance.Swap1ForExact0(Auth,
 			poolAddress,
 			amountIn,
 			recipient,
@@ -158,7 +157,7 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	PrintPrice()
 
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 }
 
 func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
@@ -168,16 +167,16 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	myPrintln("----------------------------------------------")
 
 	poolAddress := common.HexToAddress(_pool)
-	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(config.Network.Callee), config.Client)
+	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(Network.Callee), Client)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	myPrintln("pool address:", poolAddress)
-	myPrintln("callee address:", config.Network.Callee)
+	myPrintln("callee address:", Network.Callee)
 
-	poolInstance, err := pool.NewApi(poolAddress, config.Client)
+	poolInstance, err := pool.NewApi(poolAddress, Client)
 	if err != nil {
 		log.Fatal("poolInstance err:", err)
 	}
@@ -186,18 +185,18 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	TokenB, _ := poolInstance.Token1(&bind.CallOpts{})
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
 
-	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
-	config.ChangeAccount(accountId)
-	myPrintln("from address:", config.FromAddress)
+	ChangeAccount(accountId)
+	myPrintln("from address:", FromAddress)
 
-	ApproveToken(TokenA, maxToken0, config.Network.Callee)
-	ApproveToken(TokenB, maxToken1, config.Network.Callee)
+	ApproveToken(TokenA, maxToken0, Network.Callee)
+	ApproveToken(TokenB, maxToken1, Network.Callee)
 
-	recipient := config.FromAddress
+	recipient := FromAddress
 
-	config.NonceGen()
+	NonceGen()
 
 	MIN_SQRT_RATIO := big.NewInt(4295128739)
 	MAX_SQRT_RATIO, _ := new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
@@ -205,11 +204,11 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	sqrtP0for1 := new(big.Int).Add(MIN_SQRT_RATIO, big.NewInt(1))
 	sqrtP1for0 := new(big.Int).Sub(MAX_SQRT_RATIO, big.NewInt(1))
 
-	amountIn := swapAmount.Mul(swapAmount, PowX(int64(1), int(config.Token[1].Decimals)))
+	amountIn := swapAmount.Mul(swapAmount, PowX(int64(1), int(Token[1].Decimals)))
 
 	if zeroForOne {
 
-		tx, err := calleeInstance.Swap0ForExact1(config.Auth,
+		tx, err := calleeInstance.Swap0ForExact1(Auth,
 			poolAddress,
 			amountIn,
 			recipient,
@@ -226,7 +225,7 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	} else {
 
-		tx, err := calleeInstance.SwapExact1For0(config.Auth,
+		tx, err := calleeInstance.SwapExact1For0(Auth,
 			poolAddress,
 			amountIn,
 			recipient,
@@ -244,7 +243,7 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 
 	PrintPrice()
 
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 }
 
 func InitialPool(do int) {
@@ -259,9 +258,9 @@ func InitialPool(do int) {
 
 	//	poolAddress, err := newInstance.GetPool(&bind.CallOpts{}, Network.TokenA, Network.TokenB, fee)
 
-	fmt.Println("pool address:", common.HexToAddress(config.Network.Pool))
+	fmt.Println("pool address:", common.HexToAddress(Network.Pool))
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
+	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
 
 	if err != nil {
 		log.Fatal(err)
@@ -280,12 +279,12 @@ func InitialPool(do int) {
 
 	var price float64
 
-	if token0 == common.HexToAddress(config.Network.TokenA) {
+	if token0 == common.HexToAddress(Network.TokenA) {
 		price = 3000.0
-	} else if token0 == common.HexToAddress(config.Network.TokenB) {
+	} else if token0 == common.HexToAddress(Network.TokenB) {
 		price = (1.0 / 3000.0) //  1 eth = 2000usdc
 	} else {
-		log.Fatal("wrong token address ", token0, config.Network.TokenA, config.Network.TokenB)
+		log.Fatal("wrong token address ", token0, Network.TokenA, Network.TokenB)
 	}
 
 	fmt.Println("price:", price)
@@ -298,9 +297,9 @@ func InitialPool(do int) {
 
 	//os.Exit(3)
 
-	config.NonceGen()
+	NonceGen()
 
-	tx, err := poolInstance.Initialize(config.Auth, bigIntSqrtPX96)
+	tx, err := poolInstance.Initialize(Auth, bigIntSqrtPX96)
 	if err != nil {
 		log.Fatal("initialize err:", err)
 	}
@@ -308,7 +307,7 @@ func InitialPool(do int) {
 
 	Readstring("initial pool done, waiting for pending... next ... ")
 	/*
-		tx, err = poolInstance.IncreaseObservationCardinalityNext(config.Auth, 100)
+		tx, err = poolInstance.IncreaseObservationCardinalityNext(Auth, 100)
 
 		fmt.Println("IncreaseObservationCardinalityNext sent:", tx.Hash().Hex())
 
@@ -325,9 +324,9 @@ func FindPool() common.Address {
 	fmt.Println(".......................get Pool by presetting tokens and fee tier ..................")
 	fmt.Println("----------------------------------------------")
 
-	tokenA := config.Network.TokenA
-	tokenB := config.Network.TokenB
-	fee := config.Network.FeeTier
+	tokenA := Network.TokenA
+	tokenB := Network.TokenB
+	fee := Network.FeeTier
 
 	poolAddress := GetPool(tokenA, tokenB, fee)
 
@@ -342,9 +341,9 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 	fmt.Println(".......................Get Pool ..................")
 	fmt.Println("----------------------------------------------")
 
-	factoryAddress := common.HexToAddress(config.Network.Factory)
+	factoryAddress := common.HexToAddress(Network.Factory)
 
-	factoryInstance, err := factory.NewApi(factoryAddress, config.Client)
+	factoryInstance, err := factory.NewApi(factoryAddress, Client)
 
 	if err != nil {
 		log.Fatal("factory.NewApi ", err)
@@ -359,7 +358,7 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 		log.Fatal("getpool ", err)
 	}
 
-	config.Network.Pool = poolAddress.String()
+	Network.Pool = poolAddress.String()
 
 	_, _, token0symbol, _, _ := GetTokenInstance(token0)
 	_, _, token1symbol, _, _ := GetTokenInstance(token1)
@@ -381,9 +380,9 @@ func PoolInfo() {
 	fmt.Println(".............. Pool Info ....... ")
 	fmt.Println("----------------------------------------------")
 
-	fmt.Println("pool address:", common.HexToAddress(config.Network.Pool))
+	fmt.Println("pool address:", common.HexToAddress(Network.Pool))
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
+	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
 
 	if err != nil {
 		log.Fatal(err)
@@ -424,11 +423,11 @@ func PoolInfo() {
 	fmt.Println("Price in decimals: ", price)
 
 	liquidity, _ := poolInstance.Liquidity(&bind.CallOpts{})
-	//fmt.Println("liquidity in pool:", config.Pricef(liquidity, int(1e18)))
+	//fmt.Println("liquidity in pool:", Pricef(liquidity, int(1e18)))
 	fmt.Println("liquidity in pool:", liquidity)
 
-	liquidity0, symbol0 := TokenInfo(common.HexToAddress(config.Network.TokenA), common.HexToAddress(config.Network.Pool))
-	liquidity1, symbol1 := TokenInfo(common.HexToAddress(config.Network.TokenB), common.HexToAddress(config.Network.Pool))
+	liquidity0, symbol0 := TokenInfo(common.HexToAddress(Network.TokenA), common.HexToAddress(Network.Pool))
+	liquidity1, symbol1 := TokenInfo(common.HexToAddress(Network.TokenB), common.HexToAddress(Network.Pool))
 
 	fmt.Println(symbol0, " in pool:", liquidity0)
 	fmt.Println(symbol1, " in pool:", liquidity1)
@@ -446,37 +445,37 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 	min_tick := max_tick * -1
 	_ = min_tick
 
-	config.Auth = config.GetSignature(config.Networkid, 0)
+	Auth = GetSignature(Networkid, 0)
 
-	token0Instance, err := token.NewApi(common.HexToAddress(config.Network.TokenA), config.Client)
+	token0Instance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
 	if err != nil {
 		log.Fatal("token0Instance,", err)
 	}
 	var maxToken0, _ = new(big.Int).SetString("900000000000000000000000000000", 10)
 
-	config.NonceGen()
-	_, err = token0Instance.Approve(config.Auth, common.HexToAddress(config.Network.Callee), maxToken0)
+	NonceGen()
+	_, err = token0Instance.Approve(Auth, common.HexToAddress(Network.Callee), maxToken0)
 
 	if err != nil {
 		log.Fatal("token0 approve callee err, ", err)
 	}
 
-	token1Instance, err := token.NewApi(common.HexToAddress(config.Network.TokenB), config.Client)
+	token1Instance, err := token.NewApi(common.HexToAddress(Network.TokenB), Client)
 	if err != nil {
 		log.Fatal("token1Instance,", err)
 	}
 	var maxToken1, _ = new(big.Int).SetString("900000000000000000000000000000", 10)
 
-	config.NonceGen()
-	_, err = token1Instance.Approve(config.Auth, common.HexToAddress(config.Network.Callee), maxToken1)
+	NonceGen()
+	_, err = token1Instance.Approve(Auth, common.HexToAddress(Network.Callee), maxToken1)
 	if err != nil {
 		log.Fatal("token1 approve callee err ", err)
 	}
 
 	Readstring("Approves sent.....  wait for pending..next .. ")
 
-	balance0, _ := token0Instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
-	balance1, _ := token1Instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
+	balance0, _ := token0Instance.BalanceOf(&bind.CallOpts{}, FromAddress)
+	balance1, _ := token1Instance.BalanceOf(&bind.CallOpts{}, FromAddress)
 
 	fmt.Println("balance0: ", balance0)
 	fmt.Println("balance1: ", balance1)
@@ -486,7 +485,7 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 
 	fmt.Println("max_tick, min_tick:", max_tick, min_tick)
 
-	config.NonceGen()
+	NonceGen()
 
 	//uint128 amount
 
@@ -496,9 +495,9 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 
 	fmt.Println("liquidityAmt:", liquidityAmt)
 
-	_, err = calleeInstance.Mint(config.Auth,
-		common.HexToAddress(config.Network.Pool),
-		config.FromAddress,
+	_, err = calleeInstance.Mint(Auth,
+		common.HexToAddress(Network.Pool),
+		FromAddress,
 		big.NewInt(min_tick),
 		big.NewInt(max_tick),
 		liquidityAmt,
@@ -509,14 +508,14 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 	}
 
 	///require governance. redo auth
-	config.Auth = config.GetSignature(config.Networkid, config.Account)
+	Auth = GetSignature(Networkid, Account)
 
 	PoolInfo()
 }
 
 func TokenInfo(tokenAddress common.Address, owner common.Address) (*big.Int, string) {
 
-	tokenInstance, err := token.NewApi(tokenAddress, config.Client)
+	tokenInstance, err := token.NewApi(tokenAddress, Client)
 
 	if err != nil {
 		log.Fatal("tokenInfo NewApi err ", err)

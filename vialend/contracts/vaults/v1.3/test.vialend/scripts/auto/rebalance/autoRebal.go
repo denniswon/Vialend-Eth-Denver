@@ -4,14 +4,13 @@ import (
 	"fmt"
 	_ "time"
 
-	"../../config"
 	project "../../project"
 )
 
 func main() {
 
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
-	project.Init()
+	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl[ProviderSortId])
+	project.Init(-1, -1)
 
 	project.Quiet = true
 

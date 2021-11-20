@@ -37,7 +37,7 @@ func ReadSignal() int64 {
 	// parse string to int64
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("parse error:", err)
 		return -1
 	}
 
@@ -91,7 +91,7 @@ func ReadTick() int {
 		_tick, err := strconv.Atoi(tickArray[0])
 
 		if err != nil {
-			panic(err)
+			log.Fatal("strconv.atoi err:", err)
 		}
 
 		fmt.Println("new tick:", _tick)
@@ -113,7 +113,7 @@ func TickReport(_tick *big.Int) {
 
 	d0, err := ioutil.ReadFile("../file/tick")
 	if err != nil {
-		panic(err)
+		log.Fatal("Readfile err:", err)
 	}
 
 	s := strings.TrimSpace(string(d0))
@@ -124,7 +124,7 @@ func TickReport(_tick *big.Int) {
 
 	err = os.WriteFile("../file/tick", buf, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal("writefile err:", err)
 	}
 
 }

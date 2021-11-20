@@ -10,21 +10,20 @@ import (
 	vialend "../../../deploy/vialendcomp"
 	project "../project"
 
-	"../config"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var DAI = config.Network.LendingContracts.DAI
-var cDAI = config.Network.LendingContracts.CDAI
-var cETH = config.Network.LendingContracts.CETH
+var DAI = Network.LendingContracts.DAI
+var cDAI = Network.LendingContracts.CDAI
+var cETH = Network.LendingContracts.CETH
 
 var vialendContract = "0x1A39EB1e350053C85e478A1AA770079bBe561f02"
 var to = "0x14792757D21e54453179376c849662dE341797F2"
 
 func main() {
 
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
+	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl[ProviderSortId])
 
 	//wrapEth()
 	//unWrapEth()
@@ -33,7 +32,7 @@ func main() {
 
 	//checkBalance(cDAI, vialendContract)
 
-	//mintDai(config.X1E18(100))
+	//mintDai(X1E18(100))
 	// -- send DAI 100 * 1e18
 	// -- receive cDai 4,709.19708954  =>  470919708954
 
@@ -55,7 +54,7 @@ func main() {
 	//--receive Dai 100.000047814991476604
 	//--sent cDai   4,709.19937342
 
-	//mintEth(config.X1E18(1))
+	//mintEth(X1E18(1))
 
 	//amount = checkBalance("DAI",DAI, vialendContract)
 	//withDrawERC20(DAI, amount)
@@ -76,10 +75,10 @@ func main() {
 func wrapEth() {
 
 	instance := GetVialendInstance()
-	ethAmount := (config.X1E18(1))
+	ethAmount := (X1E18(1))
 
-	config.Auth.Value = ethAmount
-	tx, err := instance.Wrap(config.Auth)
+	Auth.Value = ethAmount
+	tx, err := instance.Wrap(Auth)
 
 	if err != nil {
 		log.Fatal("unwrap instance err ", err)
@@ -91,9 +90,9 @@ func wrapEth() {
 
 func unWrapEth() {
 	instance := GetVialendInstance()
-	ethAmount := (config.X1E18(1))
+	ethAmount := (X1E18(1))
 
-	tx, err := instance.Unwrap(config.Auth, ethAmount)
+	tx, err := instance.Unwrap(Auth, ethAmount)
 
 	if err != nil {
 		log.Fatal("unwrap instance err ", err)
@@ -107,8 +106,8 @@ func mintEth(_numEthToSupply *big.Int) {
 
 	instance := GetVialendInstance()
 
-	config.Auth.Value = _numEthToSupply
-	tx, err := instance.SupplyEthToCompound(config.Auth,
+	Auth.Value = _numEthToSupply
+	tx, err := instance.SupplyEthToCompound(Auth,
 		common.HexToAddress(cETH))
 
 	if err != nil {
@@ -126,7 +125,7 @@ func mintDai(_numTokensToSupply *big.Int) {
 	_erc20Contract := common.HexToAddress(DAI)
 	_cErc20Contract := common.HexToAddress(cDAI)
 
-	tx, err := instance.SupplyErc20ToCompound(config.Auth,
+	tx, err := instance.SupplyErc20ToCompound(Auth,
 		_erc20Contract,
 		_cErc20Contract,
 		_numTokensToSupply,
@@ -146,7 +145,7 @@ func redeemDai(amount *big.Int, redeemType bool) {
 
 	_cErc20Contract := common.HexToAddress(cDAI)
 
-	tx, err := instance.RedeemCErc20Tokens(config.Auth,
+	tx, err := instance.RedeemCErc20Tokens(Auth,
 		amount,
 		redeemType,
 		_cErc20Contract)
@@ -166,7 +165,7 @@ func redeemEth(amount *big.Int, redeemType bool) {
 
 	_cEtherContract := common.HexToAddress(cETH)
 
-	tx, err := instance.RedeemCEth(config.Auth,
+	tx, err := instance.RedeemCEth(Auth,
 		amount,
 		redeemType,
 		_cEtherContract)
@@ -183,7 +182,7 @@ func redeemEth(amount *big.Int, redeemType bool) {
 func withDrawERC20(erc20 string, amount *big.Int) {
 	instance := GetVialendInstance()
 
-	tx, err := instance.WithdrawERC20(config.Auth,
+	tx, err := instance.WithdrawERC20(Auth,
 		amount,
 		common.HexToAddress(erc20),
 		common.HexToAddress(to))
@@ -201,7 +200,7 @@ func withDrawETH(amount *big.Int) {
 	instance := GetVialendInstance()
 
 	// withdraw eth to contract creator
-	tx, err := instance.WithdrawEth(config.Auth, amount)
+	tx, err := instance.WithdrawEth(Auth, amount)
 
 	if err != nil {
 		log.Fatal(" err ", err)
@@ -232,7 +231,7 @@ func checkBalance(tokenName string, cTokenAddress string, tokenHolder string) *b
 
 	cInstance := GetCTokenInstance(cTokenAddress)
 
-	//	bal, err := cDaiInstance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
+	//	bal, err := cDaiInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
 	bal, err := cInstance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(tokenHolder))
 
 	if err != nil {
@@ -252,7 +251,7 @@ func checkEvent(block0 int64, block1 int64) {
 
 func GetVialendInstance() *vialend.Api {
 
-	instance, err := vialend.NewApi(common.HexToAddress(vialendContract), config.Client)
+	instance, err := vialend.NewApi(common.HexToAddress(vialendContract), Client)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}
@@ -262,7 +261,7 @@ func GetVialendInstance() *vialend.Api {
 
 func GetCTokenInstance(Address string) *ctoken.Api {
 
-	instance, err := ctoken.NewApi(common.HexToAddress(Address), config.Client)
+	instance, err := ctoken.NewApi(common.HexToAddress(Address), Client)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}

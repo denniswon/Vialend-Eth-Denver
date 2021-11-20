@@ -14,7 +14,6 @@ import (
 
 	"strconv"
 
-	"../config"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -37,7 +36,7 @@ func ReadSignal() int64 {
 	// parse string to int64
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("parse error:", err)
 		return -1
 	}
 
@@ -91,7 +90,7 @@ func ReadTick() int {
 		_tick, err := strconv.Atoi(tickArray[0])
 
 		if err != nil {
-			panic(err)
+			log.Fatal("strconv.atoi err:", err)
 		}
 
 		fmt.Println("new tick:", _tick)
@@ -113,7 +112,7 @@ func TickReport(_tick *big.Int) {
 
 	d0, err := ioutil.ReadFile("../file/tick")
 	if err != nil {
-		panic(err)
+		log.Fatal("Readfile err:", err)
 	}
 
 	s := strings.TrimSpace(string(d0))
@@ -124,7 +123,7 @@ func TickReport(_tick *big.Int) {
 
 	err = os.WriteFile("../file/tick", buf, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal("writefile err:", err)
 	}
 
 }
@@ -132,7 +131,7 @@ func TickReport(_tick *big.Int) {
 func doRebal(rng int64) {
 
 	//	fmt.Println("Rebalance Triggered , new range:", rng)
-	Strategy1(rng, int64(config.Account))
+	Strategy1(rng, int64(Account))
 
 }
 
@@ -238,7 +237,7 @@ zeroforone = false,
 */
 func MovePrice(accountId int, amount int64, op int, times int) {
 
-	_pool := config.Network.Pool // check networkid
+	_pool := Network.Pool // check networkid
 
 	var zeroForOne bool
 
@@ -263,7 +262,7 @@ func MovePrice(accountId int, amount int64, op int, times int) {
 
 // generate fees by swap in the uniswap pool
 func GenFees(t int, sleepSeconds time.Duration) {
-	accountid := config.Account
+	accountid := Account
 	amount := int64(1)
 
 	// -1  0forexact1
@@ -292,14 +291,14 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 
 	var lasttick = big.NewInt(0)
 
-	//temp := config.Networkid
-	config.Networkid = nid
-	config.Network = config.Networks[nid]
+	//temp := Networkid
+	Networkid = nid
+	Network = Networks[nid]
 
 	///require governance. always use account 0 as the deployer
-	config.Auth = config.GetSignature(config.Networkid, acc)
+	Auth = GetSignature(Networkid, acc)
 
-	fmt.Println(">>> Monitorying range ", config.Network.Vault, ">>>>>>> ")
+	fmt.Println(">>> Monitorying range ", Network.Vault, ">>>>>>> ")
 
 	i := 0
 	for {

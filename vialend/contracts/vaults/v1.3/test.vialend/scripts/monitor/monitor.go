@@ -8,19 +8,19 @@ import (
 	"strings"
 	_ "time"
 
-	"../config"
 	project "../project"
 )
 
 func main() {
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
-	project.Init()
+	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl[ProviderSortId])
+	project.Init(-1, -1)
 
 	project.Quiet = true
 
 	iteration := -1 //-1 infinite
 
-	nid := config.Networkid
+	nid := Networkid
+	acc := 1
 
 	if len(os.Args) > 1 {
 		if len(os.Args[1]) > 0 {
@@ -37,7 +37,9 @@ func main() {
 		log.Fatal("Wrong networkid ", nid)
 	}
 
-	project.MonitorVault(nid, 1, iteration, 600)
+	rng := 600 // check real range
+
+	project.MonitorVault(nid, acc, iteration, rng)
 
 	//project.MonitorVault(4, 1, iteration, 1000)
 	//project.MonitorVault(4, 1, iteration, 1000)

@@ -6,12 +6,10 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"../config"
 )
 
 var Quiet = false
-var Auto = false //auto check pending status
+var Auto = true //auto check pending status
 
 func myPrintln(a ...interface{}) {
 	if !Quiet {
@@ -24,7 +22,7 @@ func Readstring(msg string) string {
 	fmt.Println(msg)
 
 	if Auto {
-		time.Sleep(config.Network.PendingTime * time.Second)
+		time.Sleep(Network.PendingTime * time.Second)
 		return ""
 	} else {
 		reader := bufio.NewReader(os.Stdin)

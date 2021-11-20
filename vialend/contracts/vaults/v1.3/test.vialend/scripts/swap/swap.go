@@ -8,7 +8,6 @@ import (
 	"strings"
 	_ "time"
 
-	"../config"
 	project "../project"
 )
 
@@ -37,9 +36,9 @@ const (
 */
 func main() {
 
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
+	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl[ProviderSortId])
 
-	project.Init()
+	project.Init(-1, -1)
 
 	project.Quiet = false
 

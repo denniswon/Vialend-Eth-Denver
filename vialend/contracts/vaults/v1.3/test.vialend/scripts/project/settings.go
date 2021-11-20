@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-
-	"../config"
 )
 
 func SetProtocolFee(rate *big.Int) {
 
 	vaultInstance := GetVaultInstance()
 
-	tx, err := vaultInstance.SetProtocolFee(config.Auth, rate)
+	tx, err := vaultInstance.SetProtocolFee(Auth, rate)
 
 	if err != nil {
 		log.Fatal("setprotocolfee err ", err)
@@ -27,7 +25,7 @@ func SetUniswapPortionRatio(ratio uint8) {
 
 	vaultInstance := GetVaultInstance()
 
-	tx, err := vaultInstance.SetUniPortionRatio(config.Auth, ratio)
+	tx, err := vaultInstance.SetUniPortionRatio(Auth, ratio)
 
 	if err != nil {
 		log.Fatal("vaultInstance. setuniportion err ", err)
@@ -35,7 +33,7 @@ func SetUniswapPortionRatio(ratio uint8) {
 
 	fmt.Println("setuniportionp tx: ", tx.Hash().Hex())
 
-	//config.Readstring("tx sent.....  wait for pending..next .. ")
+	//Readstring("tx sent.....  wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
 }

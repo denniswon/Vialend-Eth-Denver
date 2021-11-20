@@ -8,7 +8,6 @@ import (
 	"strings"
 	_ "time"
 
-	"../../config"
 	project "../../project"
 )
 
@@ -20,7 +19,7 @@ usage:
 */
 func main() {
 
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
+	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl[ProviderSortId])
 	project.Init()
 
 	project.Quiet = true

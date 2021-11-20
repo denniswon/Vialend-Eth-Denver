@@ -15,7 +15,6 @@ import (
 	callee "../../../deploy/TestUniswapV3Callee"
 	vault "../../../deploy/vialendFeeMaker"
 	vialend "../../../deploy/vialendcomp"
-	"../config"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -35,10 +34,10 @@ func VaultEvent(
 		FromBlock: big.NewInt(block_begin),
 		ToBlock:   big.NewInt(block_end),
 		Addresses: []common.Address{
-			common.HexToAddress(config.Network.Vault),
+			common.HexToAddress(Network.Vault),
 		},
 	}
-	logs, err := config.Client.FilterLogs(context.Background(), query)
+	logs, err := Client.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +106,7 @@ func VialendEvent(
 			common.HexToAddress(contractAddress),
 		},
 	}
-	logs, err := config.Client.FilterLogs(context.Background(), query)
+	logs, err := Client.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,10 +145,10 @@ func TestCalleeEvent(
 		FromBlock: big.NewInt(block_begin),
 		ToBlock:   big.NewInt(block_end),
 		Addresses: []common.Address{
-			common.HexToAddress(config.Network.Callee),
+			common.HexToAddress(Network.Callee),
 		},
 	}
-	logs, err := config.Client.FilterLogs(context.Background(), query)
+	logs, err := Client.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -18,23 +18,14 @@ deposit
 */
 pragma solidity >=0.5.0;
 
-//import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-//import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-//import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-//import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-
-
-
 import "libraries/lib.sol";
-
 import "interfaces/IFeeMakerEvents.sol";
-
 import "./ownable.sol";
 import "./viaCompound.sol";
 import "./viaUniswap.sol";
@@ -94,11 +85,17 @@ contract ViaLendFeeMaker is
         CToken1 = IcErc20(_cToken1);
         CEther = IcEther(_cEth);
         
+        
+        
+        require(_weth != address(0), "WETH");
+	
 	    WETH = IWETH9(_weth);
 
         protocolFee = _protocolFee;
 
 		tickSpacing = IUniswapV3Pool(_pool).tickSpacing();
+
+        require(_protocolFee < 100, "PFR");
 
         maxTotalSupply = _maxTotalSupply;
 
@@ -109,9 +106,6 @@ contract ViaLendFeeMaker is
         quoteAmount = _quoteAmount;
         
         uniPortion =  _uniPortion ;
-        
-        valveUniV3 = true;		// initially turn on
-    	valveComp = true;		// initially turn on
 
 		require(_maxTwapDeviation > 0, "MTD");
 		
@@ -299,7 +293,7 @@ contract ViaLendFeeMaker is
         
 	}
     
-   
+   // percent is the percentage of range is 0 - 100 
     function withdraw(
         uint8 percent
     ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
@@ -371,22 +365,18 @@ contract ViaLendFeeMaker is
 
 
 		//require( accId[_addr] > 0, "invalid address");
-		require(accId[_addr]>0,"ad");
+		if ( !_exist( _addr ) ) return;
+
 
 		uint index = accId[_addr]-1;
 
-		delete accounts[ index ] ;	
-		
-		uint newIndex = accounts.length-1;
+        accounts[index] = accounts[accounts.length - 1];	// move last itme to the delete one.
+        
+        accId[accounts[index]] = index + 1;		// update accId
 
-		accounts[index] = accounts[newIndex];   // move last to fill the deleted slot
-
-		accounts.pop();
-		
-		accId[accounts[index]] = newIndex+1;  // update the address Index mapping
-		
+        accounts.pop();  // delete last item in account array
+        
 		delete accId[_addr]; // delete the address mapping 
-	
 	
 	}
 
@@ -482,29 +472,32 @@ contract ViaLendFeeMaker is
 
 
         //#review todo   calc best ratio to 50:50 in uni v3
-        uint256 uniPortion0 =  getBalance0().mul(uniPortion).div(100);
-        uint256 uniPortion1 = getBalance1().mul(uniPortion).div(100);
-
-		//add rest portion to uniswap
-		_mintUniV3(
-	        newLow,
-	        newHigh,
-			uniPortion0,
-			uniPortion1
-			);
-
-
-		// get remainting assets to lending
-        uint256 unUsedbalance0 = getBalance0();
-        uint256 unUsedbalance1 = getBalance1();
         
-        bool result = _mintCompound(address(token0), address(token1), unUsedbalance0,  unUsedbalance1);
-        
-        require(result, "MCp");
+        if ( uniPortion > 0 ) {
+        	
+	        uint256 uniPortion0 =  getBalance0().mul(uniPortion).div(100);
+	        uint256 uniPortion1 = getBalance1().mul(uniPortion).div(100);
+	
+			//add rest portion to uniswap
+			_mintUniV3(
+		        newLow,
+		        newHigh,
+				uniPortion0,
+				uniPortion1
+				);
+	
+		}
 
+        if ( uniPortion < 100 ) {   // when uniPortion==100 means no assets go to lending pool
+			// get remainting assets to lending
+	        uint256 unUsedbalance0 = getBalance0();
+	        uint256 unUsedbalance1 = getBalance1();
+	        
+	        bool result = _mintCompound(address(token0), address(token1), unUsedbalance0,  unUsedbalance1);
+	        
+	        require(result, "MCp");
+		}
 
-        // lastRebalance = block.timestamp;
-        // lastTick = tick;
 
 	}
 

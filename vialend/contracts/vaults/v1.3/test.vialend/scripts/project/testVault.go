@@ -22,8 +22,6 @@ import (
 	bridge "../../../deploy/vaultBridge"
 	vault "../../../deploy/vialendFeeMaker"
 
-	"../config"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -37,6 +35,7 @@ var qTickUpper = new(big.Int) // for query only
 var prevFees0 = new(big.Int)
 var prevFees1 = new(big.Int)
 
+// param[0]: amount0, param[1]:amount1, param[2]: account
 func Deposit(do int, param [3]int64, doRebalance bool) {
 
 	if do <= 0 {
@@ -47,59 +46,59 @@ func Deposit(do int, param [3]int64, doRebalance bool) {
 	myPrintln(".........Deposit.........  ")
 	myPrintln("----------------------------------------------")
 
-	config.ChangeAccount(int(param[2]))
+	ChangeAccount(int(param[2]))
 
-	myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
-	myPrintln("TokenA:", config.Network.TokenA)
-	myPrintln("TokenB:", config.Network.TokenB)
-	myPrintln("fromAddress to deposit: ", config.FromAddress)
+	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
+	myPrintln("TokenA:", Network.TokenA)
+	myPrintln("TokenB:", Network.TokenB)
+	myPrintln("fromAddress to deposit: ", FromAddress)
 
-	instance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
 	}
 
-	tokenAInstance, err := token.NewApi(common.HexToAddress(config.Network.TokenA), config.Client)
+	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
 	if err != nil {
 		log.Fatal("tokenAInstance,", err)
 	}
 
-	bal0, err := tokenAInstance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
+	bal0, err := tokenAInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
 	myPrintln("tokenA in Wallet ", bal0)
 
 	if err != nil {
 		log.Fatal("bal0 err ", err)
 	}
 
-	tokenBInstance, err := token.NewApi(common.HexToAddress(config.Network.TokenB), config.Client)
+	tokenBInstance, err := token.NewApi(common.HexToAddress(Network.TokenB), Client)
 	if err != nil {
 		log.Fatal("tokenBInstance,", err)
 	}
 
-	bal1, err := tokenBInstance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
+	bal1, err := tokenBInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
 	myPrintln("tokenB in Wallet ", bal1)
 
-	allowA, _ := tokenAInstance.Allowance(&bind.CallOpts{}, config.FromAddress, common.HexToAddress(config.Network.Vault))
-	allowB, _ := tokenBInstance.Allowance(&bind.CallOpts{}, config.FromAddress, common.HexToAddress(config.Network.Vault))
+	allowA, _ := tokenAInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(Network.Vault))
+	allowB, _ := tokenBInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(Network.Vault))
 
-	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
 	if allowA.Cmp(big.NewInt(0)) <= 0 {
 
-		ApproveToken(common.HexToAddress(config.Network.TokenA), maxToken0, config.Network.Vault)
+		ApproveToken(common.HexToAddress(Network.TokenA), maxToken0, Network.Vault)
 	}
 
 	if allowB.Cmp(big.NewInt(0)) <= 0 {
-		ApproveToken(common.HexToAddress(config.Network.TokenB), maxToken1, config.Network.Vault)
+		ApproveToken(common.HexToAddress(Network.TokenB), maxToken1, Network.Vault)
 	}
 
 	//  amount0 * 10^decimals
 	amount0 := big.NewInt(param[0])
 	amount1 := big.NewInt(param[1])
 
-	decimals0 := big.NewInt(int64(config.Token[0].Decimals))
-	decimals1 := big.NewInt(int64(config.Token[1].Decimals))
+	decimals0 := big.NewInt(int64(Token[0].Decimals))
+	decimals1 := big.NewInt(int64(Token[1].Decimals))
 	d0 := new(big.Int).Exp(big.NewInt(10), decimals0, nil)
 	d1 := new(big.Int).Exp(big.NewInt(10), decimals1, nil)
 
@@ -117,8 +116,8 @@ func Deposit(do int, param [3]int64, doRebalance bool) {
 	myPrintln("amountToken0 to Vault:", amountToken0)
 	myPrintln("amountToken1 to Vault:", amountToken1)
 
-	config.NonceGen()
-	tx, err := instance.Deposit(config.Auth,
+	NonceGen()
+	tx, err := instance.Deposit(Auth,
 		amountToken0,
 		amountToken1,
 		doRebalance,
@@ -128,12 +127,12 @@ func Deposit(do int, param [3]int64, doRebalance bool) {
 		log.Fatal("deposit err: ", err)
 	}
 
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 
 	//get the transaction hash
 	myPrintln("deposit tx: %s", tx.Hash().Hex())
 
-	//	time.Sleep(config.Network.PendingTime * time.Second)
+	//	time.Sleep(Network.PendingTime * time.Second)
 	//Readstring("deposit sent...wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
@@ -150,23 +149,23 @@ func Withdraw(do int, param [2]int64) {
 	myPrintln("----------------------------------------------")
 
 	/// set new account Auth
-	config.ChangeAccount(int(param[1]))
+	ChangeAccount(int(param[1]))
 
-	recipient := config.FromAddress
+	recipient := FromAddress
 
 	myPrintln("Withdraw to  ", recipient)
 
-	myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
+	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
-	percent := big.NewInt(param[0])
+	percent := uint8(param[0])
 
-	instance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
 	}
 	/*
 		///get account's available shares
-		myshares, err := instance.BalanceOf(&bind.CallOpts{}, config.FromAddress)
+		myshares, err := instance.BalanceOf(&bind.CallOpts{}, FromAddress)
 		if err != nil {
 			log.Fatal("balance of myshare ", err)
 		}
@@ -189,15 +188,15 @@ func Withdraw(do int, param [2]int64) {
 			return
 		}
 	*/
-	config.NonceGen()
-	tx, err := instance.Withdraw(config.Auth, percent)
+	NonceGen()
+	tx, err := instance.Withdraw(Auth, percent)
 
 	if err != nil {
 		log.Fatal("withdraw: ", err)
 	}
 
 	/// reset account back
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 
 	//get the transaction hash
 	myPrintln("withdraw tx: ", tx.Hash().Hex())
@@ -228,10 +227,10 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 
 	min := pf * (1 - float64(rangeRatio)/100)
 	max := pf * (1 + float64(rangeRatio)/100)
-	x := BigIntToFloat64(Totals.Total0) / math.Pow10(int(config.Token[0].Decimals))
-	y := BigIntToFloat64(Totals.Total1) / math.Pow10(int(config.Token[1].Decimals))
+	x := BigIntToFloat64(Totals.Total0) / math.Pow10(int(Token[0].Decimals))
+	y := BigIntToFloat64(Totals.Total1) / math.Pow10(int(Token[1].Decimals))
 
-	xDecimals, yDecimals := config.Token[0].Decimals, config.Token[1].Decimals
+	xDecimals, yDecimals := Token[0].Decimals, Token[1].Decimals
 
 	//myPrintln("pf, min, max, rangeRatio: ", pf, min, max, rangeRatio)
 
@@ -266,7 +265,7 @@ func Sweep(vaultAddr string, tokenAddr string, amount *big.Int) {
 
 	myPrintln("vaultAddress: ", vaultAddr)
 
-	tx, err := vaultInstance.Sweep(config.Auth, common.HexToAddress(tokenAddr), amount)
+	tx, err := vaultInstance.Sweep(Auth, common.HexToAddress(tokenAddr), amount)
 
 	if err != nil {
 		log.Fatal("sweep err ", err)
@@ -282,9 +281,9 @@ func EmergencyBurn() {
 	myPrintln(".........Emergency withdraw , burn all positions and send fund back to users.........  ")
 	myPrintln("----------------------------------------------")
 
-	myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
+	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
-	vaultInstance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	vaultInstance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
 	if err != nil {
 		log.Fatal("emergency vault.NewApi ", err)
 	}
@@ -293,10 +292,10 @@ func EmergencyBurn() {
 	// tickUpper, err := vaultInstance.CHigh(&bind.CallOpts{})
 	// liquidity, err := vaultInstance.GetSSLiquidity(&bind.CallOpts{}, qTickLower, qTickUpper)
 
-	// lendingAmount0 := checkCTokenBalance("CETH", config.Network.LendingContracts.CETH)
-	// lendingAmount1 := checkCTokenBalance("CUSDC", config.Network.LendingContracts.CUSDC)
+	// lendingAmount0 := checkCTokenBalance("CETH", Network.LendingContracts.CETH)
+	// lendingAmount1 := checkCTokenBalance("CUSDC", Network.LendingContracts.CUSDC)
 
-	tx, err := vaultInstance.EmergencyBurn(config.Auth)
+	tx, err := vaultInstance.EmergencyBurn(Auth)
 
 	if err != nil {
 		log.Fatal("emergency tx err ", err)
@@ -318,9 +317,9 @@ func Strategy1(fullRrange int64, acc int64) {
 	fmt.Println(".........Strategy1 .........  ")
 	myPrintln("----------------------------------------------")
 
-	myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
+	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
-	vaultInstance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	vaultInstance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
 	}
@@ -340,7 +339,7 @@ func Strategy1(fullRrange int64, acc int64) {
 	tickLower = new(big.Int).Sub(tick, hrange)
 	tickUpper = new(big.Int).Add(tick, hrange)
 
-	tickSpacing := config.Network.FeeTier / 50
+	tickSpacing := Network.FeeTier / 50
 	myPrintln("tickspacing:", tickSpacing)
 
 	if tickSpacing < 10 {
@@ -351,7 +350,7 @@ func Strategy1(fullRrange int64, acc int64) {
 	tickUpper.Div(tickUpper, big.NewInt(tickSpacing)).Mul(tickUpper, big.NewInt(tickSpacing))
 
 	///require governance. redo auth
-	config.ChangeAccount(int(acc))
+	ChangeAccount(int(acc))
 
 	myPrintln("range size:", fullRrange)
 	myPrintln("ticklower, TICK,  tickupper in...", tickLower, tick, tickUpper)
@@ -361,9 +360,9 @@ func Strategy1(fullRrange int64, acc int64) {
 	//setRange(param)
 	i := 0
 	for {
-		config.NonceGen()
+		NonceGen()
 
-		tx, err := vaultInstance.Strategy1(config.Auth,
+		tx, err := vaultInstance.Strategy1(Auth,
 			tickLower,
 			tickUpper)
 
@@ -384,7 +383,7 @@ func Strategy1(fullRrange int64, acc int64) {
 	}
 
 	///require governance. redo auth
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 
 	fmt.Println()
 
@@ -397,8 +396,8 @@ func LendingInfo() {
 	myPrintln(".........Lending pool info .........  ")
 	myPrintln("----------------------------------------------")
 
-	checkCTokenBalance(config.Network.Vault, "CUSDC", config.Network.LendingContracts.CUSDC)
-	checkCTokenBalance(config.Network.Vault, "CETH", config.Network.LendingContracts.CETH)
+	checkCTokenBalance(Network.Vault, "CUSDC", Network.LendingContracts.CUSDC)
+	checkCTokenBalance(Network.Vault, "CETH", Network.LendingContracts.CETH)
 	checkETHBalance()
 
 	vaultInstance := GetVaultInstance()
@@ -410,7 +409,7 @@ func LendingInfo() {
 
 func checkETHBalance() *big.Int {
 
-	bal, err := config.Client.BalanceAt(context.Background(), common.HexToAddress(config.Network.Vault), nil)
+	bal, err := Client.BalanceAt(context.Background(), common.HexToAddress(Network.Vault), nil)
 	if err != nil {
 		log.Fatal("eth balance err ", err)
 	}
@@ -437,30 +436,9 @@ func checkCTokenBalance(who string, tokenName string, cTokenAddress string) *big
 
 }
 
-func RemoveCTokens() {
-
-	myPrintln("----------------------------------------------")
-	myPrintln(".........Remove Ctoken back to vault.........  ")
-	myPrintln("----------------------------------------------")
-
-	vaultInstance := GetVaultInstance()
-
-	clending0, clending1 := vaultInstance.GetCAmounts(&bind.CallOpts{})
-	myPrintln("C Amounts in lending: ", clending0, clending1)
-
-	tx, err := vaultInstance.RemoveCTokens(config.Auth)
-	if err != nil {
-		log.Fatal("removectokens ,", err)
-	}
-
-	TxConfirm(tx.Hash())
-	//	myPrintln("removeCtokens tx: ", tx.Hash().Hex())
-
-}
-
 func GetCTokenInstance(Address string) *cErc20.Api {
 
-	instance, err := cErc20.NewApi(common.HexToAddress(Address), config.Client)
+	instance, err := cErc20.NewApi(common.HexToAddress(Address), Client)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}
@@ -479,9 +457,9 @@ func Rebalance(do int, param [3]int64) {
 	// myPrintln(".........Rebalance .........  ")
 	// myPrintln("----------------------------------------------")
 
-	// myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
+	// myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
-	// vaultInstance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	// vaultInstance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
 	// if err != nil {
 	// 	log.Fatal("vault.NewApi ", err)
 	// }
@@ -490,14 +468,14 @@ func Rebalance(do int, param [3]int64) {
 	// _, _, swapAmount, zeroForOne := GetSwapInfo(param[0])
 
 	// ///require governance. redo auth
-	// config.ChangeAccount(int(param[2]))
+	// ChangeAccount(int(param[2]))
 
-	// config.NonceGen()
+	// NonceGen()
 
 	// myPrintln("ticklower tickupper in...", tickLower, tickUpper)
 	// // set ticklower and tickupper
 	// //setRange(param)
-	// tx, err := vaultInstance.Strategy0(config.Auth,
+	// tx, err := vaultInstance.Strategy0(Auth,
 	// 	tickLower,
 	// 	tickUpper,
 	// 	Float64ToBigInt(swapAmount),
@@ -508,7 +486,7 @@ func Rebalance(do int, param [3]int64) {
 	// }
 
 	// ///require governance. redo auth
-	// config.ChangeAccount(config.Account)
+	// ChangeAccount(Account)
 
 	// //get the transaction hash
 	// myPrintln("rebal tx: ", tx.Hash().Hex())
@@ -520,90 +498,6 @@ func Rebalance(do int, param [3]int64) {
 
 	// fmt.Printf("AccumulatedFee0:{%.4f}\n", totalfee0)
 	// fmt.Printf("AccumulatedFee1:{%.4f}\n", totalfee1)
-
-}
-
-/// param0 : fullRangeSize, param1: tickspacing
-func Swap(do int, rangeRatio int64, account int64) {
-
-	if do <= 0 {
-		return
-	}
-
-	myPrintln("----------------------------------------------")
-	myPrintln(".........Swap .........  ")
-	myPrintln("----------------------------------------------")
-
-	//myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
-
-	//poolInstance := GetPoolInstance()
-	vaultInstance := GetVaultInstance()
-
-	amt0, amt1, swapAmount, zeroForOne := GetSwapInfo(rangeRatio)
-	//myPrintln("amount0 , amount1 desired:", amt0, amt1)
-	_, _ = amt0, amt1
-
-	/// sqrtPriceLimitX96 currently hardcoded in the contract
-	/// zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1;
-	MIN_SQRT_RATIO := big.NewInt(4295128739)
-	MAX_SQRT_RATIO, _ := new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
-
-	sqrtPriceLimitX96 := new(big.Int).Sub(MAX_SQRT_RATIO, big.NewInt(1))
-
-	if zeroForOne {
-		sqrtPriceLimitX96 = new(big.Int).Add(MIN_SQRT_RATIO, big.NewInt(1))
-	}
-
-	///require governance. redo auth
-	config.ChangeAccount(int(account))
-
-	config.NonceGen()
-
-	TokenDecimals := config.Token[0].Decimals
-
-	if !zeroForOne {
-		TokenDecimals = config.Token[1].Decimals
-	}
-
-	// swapamount * 1e(decimals)  i.e. usdc 1e6 = 10^6
-	swapAmountIn := new(big.Int).SetInt64(int64(float64(swapAmount * math.Pow10(int(TokenDecimals)))))
-
-	//myPrintln("zeroForOne:", zeroForOne)
-	//myPrintln("swap amount: ", swapAmount)
-	//myPrintln("swap amount in:", swapAmountIn)
-	//_ = swapAmount
-
-	// cTotal0, err := vaultInstance.GetBalance0(&bind.CallOpts{})
-	// cTotal1, err := vaultInstance.GetBalance1(&bind.CallOpts{})
-	// myPrintln("current balance0 in vault: ", cTotal0)
-	// myPrintln("current balance1 in vault: ", cTotal1)
-
-	tx, err := vaultInstance.Swap(config.Auth,
-		swapAmountIn,
-		zeroForOne,
-		sqrtPriceLimitX96,
-	)
-
-	if err != nil {
-		log.Fatal("vaultInstance.swap err ", err)
-	}
-
-	///require governance. redo auth
-	config.ChangeAccount(config.Account)
-
-	//get the transaction hash
-	//myPrintln("swap tx: ", tx.Hash().Hex())
-
-	//Readstring("swap tx sent.....  wait for pending..next .. ")
-	TxConfirm(tx.Hash())
-
-	// Total0, err := vaultInstance.GetBalance0(&bind.CallOpts{})
-	// Total1, err := vaultInstance.GetBalance1(&bind.CallOpts{})
-	// myPrintln("new balance0 in vault: ", Total0)
-	// myPrintln("new balance1 in vault: ", Total1)
-
-	// myPrintln("swapped amt0: ", Total0.Sub(Total0, cTotal0))
-	// myPrintln("swapped amt1: ", Total1.Sub(Total1, cTotal1))
 
 }
 
@@ -672,7 +566,7 @@ func CheckFees(xPrice *big.Int) {
 	myPrintln(".........Check Fees .........  ")
 	myPrintln("----------------------------------------------")
 
-	myPrintln("vaultAddress: ", common.HexToAddress(config.Network.Vault))
+	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
 	vaultInstance := GetVaultInstance()
 
@@ -695,14 +589,14 @@ func CheckFees(xPrice *big.Int) {
 
 	// // check team share
 	// Team, _ := vaultInstance.Team(&bind.CallOpts{})
-	// tokenIns, _, _, _, _ := GetTokenInstance(config.Network.Vault)
+	// tokenIns, _, _, _, _ := GetTokenInstance(Network.Vault)
 	// teamShare, _ := tokenIns.BalanceOf(&bind.CallOpts{}, Team)
 	// totalShare, _ := tokenIns.TotalSupply(&bind.CallOpts{})
 	// myPrintln("Team address: ", Team)
 
 	myPrintln()
 
-	for j, _ := range config.Network.PrivateKey {
+	for j, _ := range Network.PrivateKey {
 
 		storedAccount, _ := vaultInstance.Accounts(&bind.CallOpts{}, big.NewInt(int64(j)))
 
@@ -742,7 +636,7 @@ func CheckFees(xPrice *big.Int) {
 				// calc APY  below
 				blockNumber := Assets.Block
 
-				block, err := config.Client.BlockByNumber(context.Background(), blockNumber)
+				block, err := Client.BlockByNumber(context.Background(), blockNumber)
 				if err != nil {
 					log.Fatal("block ", err)
 				}
@@ -753,12 +647,12 @@ func CheckFees(xPrice *big.Int) {
 
 				myPrintln("deposit block info:", blockNumber, block.Time()) // 1527211625
 
-				header, err := config.Client.HeaderByNumber(context.Background(), nil)
+				header, err := Client.HeaderByNumber(context.Background(), nil)
 				if err != nil {
 					log.Fatal("block header ", err)
 				}
 
-				headerblock, err := config.Client.BlockByNumber(context.Background(), header.Number)
+				headerblock, err := Client.BlockByNumber(context.Background(), header.Number)
 				if err != nil {
 					log.Fatal("block ", err)
 				}
@@ -846,14 +740,14 @@ func CheckFees(xPrice *big.Int) {
 func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 
 	var diff uint8
-	if config.Token[0].Decimals > config.Token[1].Decimals {
-		diff = config.Token[0].Decimals - config.Token[1].Decimals
+	if Token[0].Decimals > Token[1].Decimals {
+		diff = Token[0].Decimals - Token[1].Decimals
 	} else {
-		diff = config.Token[1].Decimals - config.Token[0].Decimals
+		diff = Token[1].Decimals - Token[0].Decimals
 	}
 
-	myPrintln("decimals0:", config.Token[0].Decimals)
-	myPrintln("decimals1:", config.Token[1].Decimals)
+	myPrintln("decimals0:", Token[0].Decimals)
+	myPrintln("decimals1:", Token[1].Decimals)
 	myPrintln("decimals diff:", diff)
 	myPrintln("decimals pow10diff:", math.Pow10(int(diff)))
 
@@ -863,7 +757,7 @@ func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 	powTick := math.Pow(1.0001, tick24)
 	Price := powTick * float64(math.Pow10(int(diff)))
 
-	PriceBigInt := Float64ToBigInt(Price * math.Pow10(int(config.Token[1].Decimals)))
+	PriceBigInt := Float64ToBigInt(Price * math.Pow10(int(Token[1].Decimals)))
 
 	//myPrintln("decimals diff:", diff)
 	//myPrintln("pow10diff:", float64(math.Pow10(int(diff))))
@@ -881,10 +775,10 @@ func Alloc(accId int) {
 
 	vaultInstance := GetVaultInstance()
 
-	config.ChangeAccount(accId)
-	config.NonceGen()
+	ChangeAccount(accId)
+	NonceGen()
 
-	tx, err := vaultInstance.Alloc(config.Auth)
+	tx, err := vaultInstance.Alloc(Auth)
 
 	if err != nil {
 		log.Fatal("alloc err: ", err)
@@ -892,7 +786,7 @@ func Alloc(accId int) {
 
 	myPrintln("alloc tx: %s", tx.Hash().Hex())
 
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 
 	//Readstring("alloc sent...wait for pending..next .. ")
 	TxConfirm(tx.Hash())
@@ -910,8 +804,8 @@ func GetTVL2(vaultAddr string) *struct {
 	})
 
 	vaultInstance := GetVaultInstance2(vaultAddr)
-	token0Ins, _, _, _, _ := GetTokenInstance(config.Network.TokenA)
-	token1Ins, _, _, _, _ := GetTokenInstance(config.Network.TokenB)
+	token0Ins, _, _, _, _ := GetTokenInstance(Network.TokenA)
+	token1Ins, _, _, _, _ := GetTokenInstance(Network.TokenB)
 
 	//implement gettvl
 	cHigh, _ := vaultInstance.CHigh(&bind.CallOpts{})
@@ -928,8 +822,8 @@ func GetTVL2(vaultAddr string) *struct {
 	clending0, clending1 := vaultInstance.GetCAmounts(&bind.CallOpts{})
 	myPrintln("C Amounts in lending: ", clending0, clending1)
 
-	balance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(config.Network.Vault))
-	balance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(config.Network.Vault))
+	balance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	balance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
 	myPrintln("balance in vault: ", balance0, balance1)
 
 	Totals.Total0 = balance0.Add(balance0, uniliqs.Amount0).Add(balance0, lendingAmt0)
@@ -943,20 +837,20 @@ func GetTVL() *struct {
 	Total1 *big.Int
 } {
 
-	return (GetTVL2(config.Network.Vault))
+	return (GetTVL2(Network.Vault))
 }
 
 func GetLendingAmounts(vaultAddr string) (*big.Int, *big.Int, *big.Int, *big.Int) {
 
-	cInstance0 := GetCTokenInstance(config.Network.CTOKEN0)
-	cInstance1 := GetCTokenInstance(config.Network.CTOKEN1)
+	cInstance0 := GetCTokenInstance(Network.CTOKEN0)
+	cInstance1 := GetCTokenInstance(Network.CTOKEN1)
 
 	//implement gettvl
 	exchangeRate0, _ := cInstance0.ExchangeRateStored(&bind.CallOpts{})
 	exchangeRate1, _ := cInstance1.ExchangeRateStored(&bind.CallOpts{})
 
-	CAmount0 := checkCTokenBalance(vaultAddr, "CToken0", config.Network.CTOKEN0)
-	CAmount1 := checkCTokenBalance(vaultAddr, "CToken1", config.Network.CTOKEN1)
+	CAmount0 := checkCTokenBalance(vaultAddr, "CToken0", Network.CTOKEN0)
+	CAmount1 := checkCTokenBalance(vaultAddr, "CToken1", Network.CTOKEN1)
 
 	pow1018 := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	//	pow106 := new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil)
@@ -969,25 +863,25 @@ func GetLendingAmounts(vaultAddr string) (*big.Int, *big.Int, *big.Int, *big.Int
 
 func ApproveToken(tokenAddress common.Address, maxAmount *big.Int, toAddress string) {
 
-	tokenInstance, err := token.NewApi(tokenAddress, config.Client)
+	tokenInstance, err := token.NewApi(tokenAddress, Client)
 	if err != nil {
 		log.Fatal("tokenInstance,", err)
 	}
 
 	//check allowance
-	allow, _ := tokenInstance.Allowance(&bind.CallOpts{}, config.FromAddress, common.HexToAddress(toAddress))
+	allow, _ := tokenInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(toAddress))
 
 	if allow.Cmp(big.NewInt(0)) > 0 {
 		return
 	}
 
 	myPrintln("Address to approve: ", toAddress)
-	myPrintln("fromAddress: ", config.FromAddress)
-	//myPrintln("pooladdress: ", config.Network.Pool)
+	myPrintln("fromAddress: ", FromAddress)
+	//myPrintln("pooladdress: ", Network.Pool)
 
-	config.NonceGen()
+	NonceGen()
 
-	tx, err := tokenInstance.Approve(config.Auth, common.HexToAddress(toAddress), maxAmount)
+	tx, err := tokenInstance.Approve(Auth, common.HexToAddress(toAddress), maxAmount)
 
 	if err != nil {
 		log.Fatal("tx, ", err)
@@ -1011,8 +905,8 @@ func Approve(account int) {
 	myPrintln(".........Approve.........  ")
 	myPrintln("----------------------------------------------")
 
-	config.ChangeAccount(account)
-	config.NonceGen()
+	ChangeAccount(account)
+	NonceGen()
 
 	poolInstance := GetPoolInstance()
 	TokenA, _ := poolInstance.Token0(&bind.CallOpts{})
@@ -1022,13 +916,13 @@ func Approve(account int) {
 	myPrintln("tokenA: ", TokenA)
 	myPrintln("tokenB: ", TokenB)
 
-	var maxToken0 = PowX(99999, int(config.Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	var maxToken1 = PowX(99999, int(config.Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
-	ApproveToken(TokenA, maxToken0, config.Network.Vault)
-	ApproveToken(TokenB, maxToken1, config.Network.Vault)
+	ApproveToken(TokenA, maxToken0, Network.Vault)
+	ApproveToken(TokenB, maxToken1, Network.Vault)
 
-	config.ChangeAccount(config.Account)
+	ChangeAccount(Account)
 
 }
 
@@ -1038,7 +932,7 @@ func AccountInfo() {
 	myPrintln(".........Account Info.........  ")
 	myPrintln("----------------------------------------------")
 
-	for i, _ := range config.Network.PrivateKey {
+	for i, _ := range Network.PrivateKey {
 
 		getAccountInfo(i)
 	}
@@ -1047,12 +941,12 @@ func AccountInfo() {
 
 func getAccountInfo(accId int) {
 
-	accountAddress := config.GetAddress(accId)
+	accountAddress := GetAddress(accId)
 
 	myPrintln("Account  ----", accId)
 	myPrintln("Account address ", accountAddress)
 
-	tokenAInstance, err := token.NewApi(common.HexToAddress(config.Network.TokenA), config.Client)
+	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
 	if err != nil {
 		log.Fatal("tokenAInstance,", err)
 	}
@@ -1060,7 +954,7 @@ func getAccountInfo(accId int) {
 	bal, err := tokenAInstance.BalanceOf(&bind.CallOpts{}, accountAddress)
 	myPrintln("tokenA in Wallet ", bal)
 
-	tokenBInstance, err := token.NewApi(common.HexToAddress(config.Network.TokenB), config.Client)
+	tokenBInstance, err := token.NewApi(common.HexToAddress(Network.TokenB), Client)
 	if err != nil {
 		log.Fatal("tokenBInstance,", err)
 	}
@@ -1070,7 +964,7 @@ func getAccountInfo(accId int) {
 
 	///----------- token in vault
 
-	// vaultInstance, err := vault.NewApi(vaultAddress, config.Client)
+	// vaultInstance, err := vault.NewApi(vaultAddress, Client)
 	// if err != nil {
 	// 	log.Fatal("vault.NewApi ", err)
 	// }
@@ -1089,7 +983,7 @@ func getAccountInfo(accId int) {
 func CalcShares(myAddress common.Address) (mybal *big.Int, totalbal *big.Int) {
 
 	/// vault as token
-	vaultTokenInstance, err := token.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	vaultTokenInstance, err := token.NewApi(common.HexToAddress(Network.Vault), Client)
 	if err != nil {
 		log.Fatal("vaultTokenInstance,", err)
 	}
@@ -1109,7 +1003,7 @@ func CalcShares(myAddress common.Address) (mybal *big.Int, totalbal *big.Int) {
 }
 
 func VaultInfo() {
-	VaultInfo2(config.Network.Vault)
+	VaultInfo2(Network.Vault)
 }
 
 func VaultInfo2(vaultAddr string) {
@@ -1171,8 +1065,8 @@ func VaultInfo2(vaultAddr string) {
 
 	fmt.Printf("TVL token0=%d\n", totals.Total0)
 	fmt.Printf("TVL token1=%d\n", totals.Total1)
-	// myPrintln("decimals0:", int(config.Token[0].Decimals))
-	// myPrintln("decimals1:", int(config.Token[1].Decimals))
+	// myPrintln("decimals0:", int(Token[0].Decimals))
+	// myPrintln("decimals1:", int(Token[1].Decimals))
 
 	uniPortion, _ := vaultInstance.UniPortion(&bind.CallOpts{})
 	myPrintln("uniPortionRate:", uniPortion)
@@ -1189,8 +1083,8 @@ func VaultInfo2(vaultAddr string) {
 	if twap != nil {
 		//	twap = big.NewInt(-192874)
 		baseAmount := big.NewInt(1e18)
-		baseToken := common.HexToAddress(config.Network.TokenA)
-		quoteToken := common.HexToAddress(config.Network.TokenB)
+		baseToken := common.HexToAddress(Network.TokenA)
+		quoteToken := common.HexToAddress(Network.TokenB)
 
 		//calleeInstance := GetCalleeInstance()
 		// oraclePriceTwap, _ = calleeInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
@@ -1219,31 +1113,9 @@ func VaultInfo2(vaultAddr string) {
 
 }
 
-func Init(nid int, acc int) {
-
-	if nid == -1 {
-		nid = config.Networkid
-		acc = config.Account
-	}
-
-	config.Client = config.GetClient(nid, 0)
-
-	config.Auth = config.GetSignature(nid, acc)
-
-	fmt.Println("Env: NetworkId=", config.Networkid, ",client=", config.Network.ProviderUrl[config.ProviderSortId])
-
-	_, config.Token[0].Name, config.Token[0].Symbol, config.Token[0].Decimals, config.Token[0].MaxTotalSupply = GetTokenInstance(config.Network.TokenA)
-	_, config.Token[1].Name, config.Token[1].Symbol, config.Token[1].Decimals, config.Token[1].MaxTotalSupply = GetTokenInstance(config.Network.TokenB)
-
-	myPrintln(config.Token[0].Symbol, ":", common.HexToAddress(config.Network.TokenA))
-	myPrintln(config.Token[1].Symbol, ":", common.HexToAddress(config.Network.TokenB))
-	//	myPrintln("A<B:", config.Network.TokenA < config.Network.TokenB)
-
-}
-
 func GetPoolInstance() *pool.Api {
 
-	instance, err := pool.NewApi(common.HexToAddress(config.Network.Pool), config.Client)
+	instance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
 	if err != nil {
 		log.Fatal("poolInstance err:", err)
 	}
@@ -1253,7 +1125,7 @@ func GetPoolInstance() *pool.Api {
 
 func GetVaultInstance() *vault.Api {
 
-	instance, err := vault.NewApi(common.HexToAddress(config.Network.Vault), config.Client)
+	instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
 	if err != nil {
 		log.Fatal("vaultInstance err:", err)
 	}
@@ -1262,7 +1134,7 @@ func GetVaultInstance() *vault.Api {
 
 func GetVaultInstance2(_addr string) *vault.Api {
 
-	instance, err := vault.NewApi(common.HexToAddress(_addr), config.Client)
+	instance, err := vault.NewApi(common.HexToAddress(_addr), Client)
 	if err != nil {
 		log.Fatal("vaultInstance err:", err)
 	}
@@ -1271,7 +1143,7 @@ func GetVaultInstance2(_addr string) *vault.Api {
 
 func GetCalleeInstance() *callee.Api {
 
-	instance, err := callee.NewApi(common.HexToAddress(config.Network.Callee), config.Client)
+	instance, err := callee.NewApi(common.HexToAddress(Network.Callee), Client)
 	if err != nil {
 		log.Fatal("CalleeInstance err:", err)
 	}
@@ -1280,7 +1152,7 @@ func GetCalleeInstance() *callee.Api {
 
 func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *big.Int) {
 
-	instance, err := token.NewApi(common.HexToAddress(TokenAddress), config.Client)
+	instance, err := token.NewApi(common.HexToAddress(TokenAddress), Client)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}
@@ -1349,7 +1221,7 @@ func TxConfirm(tx common.Hash) {
 
 	myPrintln("tx: ", tx.Hex())
 
-	tr, err := config.Client.TransactionReceipt(context.Background(), tx)
+	tr, err := Client.TransactionReceipt(context.Background(), tx)
 	for i := 0; i < 20; i++ {
 		if err != nil {
 			//log.Fatal(err)
@@ -1358,7 +1230,7 @@ func TxConfirm(tx common.Hash) {
 			break
 		}
 
-		tr, err = config.Client.TransactionReceipt(context.Background(), tx)
+		tr, err = Client.TransactionReceipt(context.Background(), tx)
 
 	}
 
@@ -1378,13 +1250,13 @@ func PrintPrice() {
 
 func SetVaultAddress(_address string, ind int64) {
 
-	instance, err := bridge.NewApi(common.HexToAddress(config.Network.VaultBridge), config.Client)
+	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), Client)
 
 	if err != nil {
 		log.Fatal("vaultbridgeInstance err:", err)
 	}
 
-	tx, err := instance.SetAddress(config.Auth, common.HexToAddress(_address), big.NewInt(ind))
+	tx, err := instance.SetAddress(Auth, common.HexToAddress(_address), big.NewInt(ind))
 
 	if err != nil {
 		log.Fatal("setVaultBridge err: ", err)
@@ -1396,7 +1268,7 @@ func SetVaultAddress(_address string, ind int64) {
 
 func GetVaultAddress(ind int64) {
 
-	instance, err := bridge.NewApi(common.HexToAddress(config.Network.VaultBridge), config.Client)
+	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), Client)
 
 	if err != nil {
 		log.Fatal("vaultBridgeInstance err:", err)
@@ -1414,7 +1286,7 @@ func GetVaultAddress(ind int64) {
 
 func AuthAdmin(vaultAddr string, _admin string) {
 
-	instance, err := admin.NewApi(common.HexToAddress(vaultAddr), config.Client)
+	instance, err := admin.NewApi(common.HexToAddress(vaultAddr), Client)
 
 	if err != nil {
 		log.Fatal("vaultAdmin Instance err:", err)
@@ -1434,7 +1306,7 @@ func GetArbInstance() *arb.Api {
 
 	arbAddress := "0xa9712b5e7C1537936Ba383B2632455A02D9d49B6"
 
-	instance, err := arb.NewApi(common.HexToAddress(arbAddress), config.Client)
+	instance, err := arb.NewApi(common.HexToAddress(arbAddress), Client)
 	if err != nil {
 		log.Fatal("arb Instance err -- :", err)
 	}
@@ -1459,7 +1331,7 @@ func EthBalance(_addr string) *big.Int {
 
 	account := common.HexToAddress(_addr)
 	myPrintln("address:", _addr)
-	balance, err := config.Client.BalanceAt(context.Background(), account, nil)
+	balance, err := Client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		log.Fatal("eth balance via context background() err:   ", err)
 	}
