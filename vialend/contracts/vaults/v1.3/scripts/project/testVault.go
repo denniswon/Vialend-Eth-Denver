@@ -26,11 +26,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// global variables
 var tickLower = new(big.Int)
 var tickUpper = new(big.Int)
 
-var qTickLower = new(big.Int) // for query only
-var qTickUpper = new(big.Int) // for query only
+var qTickLower = new(big.Int) // for query only, monitor
+var qTickUpper = new(big.Int) // for query only, monitor
 
 var prevFees0 = new(big.Int)
 var prevFees1 = new(big.Int)

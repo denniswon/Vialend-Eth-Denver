@@ -16,6 +16,10 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby
+var Account = 0
+var ProviderSortId = 0
+
 type TokenStruct struct {
 	Name           string
 	Symbol         string
@@ -66,11 +70,6 @@ const (
 	Bollinger
 	TMA
 )
-
-var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
-var Account = 0
-
-var ProviderSortId = 0
 
 var Token [2]TokenStruct
 
@@ -206,17 +205,6 @@ var Networks = [...]Params{
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token
 
 		"0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", //vault   can delete account
-		//"0x23C6746C7c2A93623ecA2e5dC8bC6465Bc26a686", // vault
-		//"0xA383011e531091FDB6caeEA3e3ed8ED0d8EdE371", //vault through bridge current web
-		//"0x31C048503Bf4e15720025fb27D774DDc1829D925", // vault, 4.x eth locked in compound. 90% uniportion + swap out range maybe the cause
-		//"0x4aaE0bc3052aD3AB125Ae654f0f2C55Dbd9D6e17", // vault , ctoken address, quoteAmount, on web  ,  cEth stuck
-		//"0x199ae6a06c69C954b6d3E83d3569EfADc1Ee9798", // vault , clear uffes after use
-		//"0x6F520a253EC8f4d0B745649a5C02bB7a5201d70b", // vault on web old
-		//"0x72Af1F62A49b7c79db5336257A701c110D52B48a", // vault use block in Accounts
-		//"0x30512A3BC4C607753AA5884226D0B1863E86D90c", // working vault with protocol fees to team
-		//"0xc94B4f89E2B4a2F94f862B794B399a81262eCAe1", // vault
-		//"0x1F29d545D863f70a9AD8e9e69E324f7998476804", //
-		//"0x52A1C1067ab22486971Fab15c5b5bbdeDCb99E8D", //vault address check balance
 
 		3000, // fee
 		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
@@ -264,9 +252,6 @@ var Networks = [...]Params{
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token  not used
 
 		"0xb102Cd93329d7017Ae83C6E488f00EaB4844CbF2", //vault
-		//"0xf231F818a111FE5d2EFf006451689eCBbf5ef159", // vault
-		//"0x35938d9b221238BBcE1F9b5196FFeE0f87E22D26", // vault, ctoken address, quoteAmount , on web,  cEth stuck
-		//"0x522f6c4C073A86787F5D8F676795290973498929", // vault on web old
 
 		500, // fee
 		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
@@ -283,7 +268,55 @@ var Networks = [...]Params{
 			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
 		},
 	},
-	{ ///5  rinkeby tester admin
+	{ ///5  goerli weth / usdt fee tier 0.1%
+		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
+
+		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
+		//"0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
+		"0xE97f1488F053251032ef358dE5b4188cD960D413", //callee
+
+		[]string{
+			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",  //0,  admin 	0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
+			"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f",  //1,  admin 1  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
+			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a",  //2,  admin 2  0xD8Dbe65b64428464fFa14DEAbe288b83C240e713
+			"2d9e2b4c955159dd8a22faf3cb3074f03cfc182213729224915921daabaa5d6a",  //3, team			0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440
+			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
+			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
+			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
+
+		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
+
+		"0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", //  Weth
+		"0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60", //  DAI
+		"0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF", // CETH
+		"0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb", //CDAI
+
+		"", //new owner, test user 1
+		30, //time pending interval
+		"0x1738f9aAB1d370a6d0fd56a18f113DbD9e1DCd4e", //pool  (weth,dai , 500)
+		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router  not used
+		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token  not used
+
+		"0xb102Cd93329d7017Ae83C6E488f00EaB4844CbF2", //vault
+
+		10000, // fee
+		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
+		"", //VaultAdmin
+
+		LendingStruct{
+			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
+			CETH:  "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
+			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", // REFERENCE BELOW
+			CUSDC: "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
+			CWBTC: "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
+			WBTC:  "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
+			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
+			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+		},
+	},
+
+	{ ///6  rinkeby tester admin
 		[]string{"https://rinkeby.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
 			"https://rinkeby.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
 

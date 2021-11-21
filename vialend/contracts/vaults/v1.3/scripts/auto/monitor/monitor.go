@@ -23,18 +23,28 @@ func main() {
 		if len(os.Args[1]) > 0 {
 			_nid, err := strconv.Atoi(strings.TrimSpace(os.Args[1]))
 			if err != nil {
-				log.Fatal("argument err ", err)
+				log.Fatal("argument 1 err ", err)
 			}
 			nid = _nid
 
 		}
 	}
 
-	if nid != 3 && nid != 4 {
+	if len(os.Args) > 2 {
+		_acc, err := strconv.Atoi(strings.TrimSpace(os.Args[2]))
+		if err != nil {
+			log.Fatal("argument 2 err ", err)
+		}
+
+		acc = _acc
+
+	}
+
+	if nid != 3 && nid != 4 && nid != 5 {
 		log.Fatal("Wrong networkid ", nid)
 	}
 
-	project.Init(nid, -1)
+	project.Init(nid, acc)
 
 	project.MonitorVault(nid, acc, iteration)
 

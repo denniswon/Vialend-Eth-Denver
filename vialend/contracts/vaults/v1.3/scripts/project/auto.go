@@ -342,25 +342,20 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 
 	tick := slot0.Tick
 
+	qTickLower, _ := vaultInstance.CLow(&bind.CallOpts{})
+	qTickUpper, _ := vaultInstance.CHigh(&bind.CallOpts{})
+
+	myPrintln("cLow, tick, cHigh , lasttick :", qTickLower, tick, qTickUpper, lasttick)
+	//fmt.Println("cLow, tick, cHigh , lasttick :", qTickLower, tick, qTickUpper, lasttick)
+
 	//no new tick from last
 	if tick.Cmp(lasttick) == 0 {
 		return true, tick
 	}
 
-	qTickLower, _ := vaultInstance.CLow(&bind.CallOpts{})
-	qTickUpper, _ := vaultInstance.CHigh(&bind.CallOpts{})
-
-	//	myPrintln("cLow, tick, cHigh  :", qTickLower, tick, qTickUpper)
-
 	inRange := tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0
 
-	if !inRange {
-		tickInfo(false, tick, qTickLower, qTickUpper)
-
-	} else {
-
-		tickInfo(true, tick, qTickLower, qTickUpper)
-	}
+	tickInfo(inRange, tick, qTickLower, qTickUpper)
 
 	return inRange, tick
 
@@ -371,16 +366,16 @@ func tickInfo(inRange bool, tick *big.Int, tickLow *big.Int, tickHigh *big.Int) 
 
 		if tick.Cmp(tickLow) <= 0 {
 
-			fmt.Println("** Outof range! tick < ticklow ", tick, qTickLower, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
-		}
-
-		if tick.Cmp(tickHigh) >= 0 {
-			fmt.Println("** Out of range! tick > tickUpper", tick, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
+			fmt.Println("** Outof range! tick < ticklow ", tick, tickLow, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(qTickUpper, tick), "}")
+		} else if tick.Cmp(tickHigh) >= 0 {
+			fmt.Println("** Out of range! tick > tickUpper", tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
+		} else {
+			fmt.Println("** something wrong , tick still in range? ", tickLow, tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
 		}
 
 	} else {
 		fmt.Println(">>> tick change but still In range ")
-		fmt.Println(">>> ticklower, tick,  tickupper:", qTickLower, tick, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
+		fmt.Println(">>> ticklower, tick,  tickupper:", tickLow, tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
 	}
 
 	PrintPrice()
