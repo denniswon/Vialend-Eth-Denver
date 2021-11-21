@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"time"
 
 	factory "viaroot/deploy/uniswap/v3/deploy/UniswapV3Factory"
 	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
@@ -539,5 +540,17 @@ func getBigFromFloat64(v float64) *big.Int {
 		log.Fatal("getBigFromFloat64 Err:", ok)
 	}
 	return b
+
+}
+
+func PrintPrice() {
+
+	poolInstance := GetPoolInstance()
+	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	_, pf := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+
+	tn := time.Now().Format("15:04:05")
+	fmt.Println("Price now:", pf, "  ", tn)
 
 }

@@ -355,28 +355,38 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 	inRange := tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0
 
 	if !inRange {
-		if tick.Cmp(qTickLower) <= 0 {
+		tickInfo(false, tick, qTickLower, qTickUpper)
+
+	} else {
+
+		tickInfo(true, tick, qTickLower, qTickUpper)
+	}
+
+	return inRange, tick
+
+}
+func tickInfo(inRange bool, tick *big.Int, tickLow *big.Int, tickHigh *big.Int) {
+
+	if !inRange {
+
+		if tick.Cmp(tickLow) <= 0 {
+
 			fmt.Println("** Outof range! tick < ticklow ", tick, qTickLower, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
 		}
 
-		if tick.Cmp(qTickUpper) >= 0 {
+		if tick.Cmp(tickHigh) >= 0 {
 			fmt.Println("** Out of range! tick > tickUpper", tick, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
-
 		}
 
-		// out range, new tick
-		return false, tick
-
+	} else {
+		fmt.Println(">>> tick change but still In range ")
+		fmt.Println(">>> ticklower, tick,  tickupper:", qTickLower, tick, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
 	}
 
-	fmt.Println(">>> tick change but still In range ")
-	fmt.Println(">>> tick, ticklower, tickupper:", tick, qTickLower, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
+	PrintPrice()
 	fmt.Println()
 
-	return true, tick
-
 }
-
 func SetStrategy() int64 {
 
 	// strategy scenarios:

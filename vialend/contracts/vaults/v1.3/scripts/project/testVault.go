@@ -1237,16 +1237,6 @@ func TxConfirm(tx common.Hash) {
 
 }
 
-func PrintPrice() {
-
-	poolInstance := GetPoolInstance()
-	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
-
-	_, pf := getPrice(slot0.SqrtPriceX96, slot0.Tick)
-
-	fmt.Println("Price now:", pf)
-}
-
 func SetVaultAddress(_address string, ind int64) {
 
 	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), Client)
