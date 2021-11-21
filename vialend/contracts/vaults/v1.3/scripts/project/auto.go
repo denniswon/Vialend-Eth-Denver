@@ -284,13 +284,13 @@ func GenFees(t int, sleepSeconds time.Duration) {
 }
 
 func MonitorAll() {
-	// todo
-	go MonitorVault(3, 1, -1, 600)
-	go MonitorVault(4, 1, -1, 1000)
+	// todo all vault
+	go MonitorVault(3, 1, -1)
+	go MonitorVault(4, 1, -1)
 
 }
 
-func MonitorVault(nid int, acc int, maxt int, rng int) {
+func MonitorVault(nid int, acc int, maxt int) {
 
 	var lasttick = big.NewInt(0)
 

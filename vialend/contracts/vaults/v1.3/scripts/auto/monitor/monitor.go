@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	project.Init(-1, -1)
 
 	project.Quiet = true
 
@@ -35,11 +34,8 @@ func main() {
 		log.Fatal("Wrong networkid ", nid)
 	}
 
-	rng := 600 // check real range
+	project.Init(nid, -1)
 
-	project.MonitorVault(nid, acc, iteration, rng)
-
-	//project.MonitorVault(4, 1, iteration, 1000)
-	//project.MonitorVault(4, 1, iteration, 1000)
+	project.MonitorVault(nid, acc, iteration)
 
 }

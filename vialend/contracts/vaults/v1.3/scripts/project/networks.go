@@ -484,7 +484,11 @@ func Init(nid int, acc int) {
 
 	if nid == -1 {
 		nid = Networkid
+	}
+
+	if acc == -1 {
 		acc = Account
+
 	}
 
 	Client = GetClient(nid, 0)
