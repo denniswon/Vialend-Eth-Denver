@@ -128,6 +128,7 @@ func TickReport(_tick *big.Int) {
 
 }
 
+//  pass in range , run strategy1
 func doRebal(rng int64) {
 
 	//	fmt.Println("Rebalance Triggered , new range:", rng)
@@ -135,6 +136,9 @@ func doRebal(rng int64) {
 
 }
 
+// calculate range
+// max : limited number to exit loop, -1= infinite
+// interval : check in x seconds
 func Rebal2(max int, interval int) {
 
 	i := 0
@@ -279,12 +283,13 @@ func GenFees(t int, sleepSeconds time.Duration) {
 	}
 }
 
-func Monitor() {
-
+func MonitorAll() {
+	// todo
 	go MonitorVault(3, 1, -1, 600)
 	go MonitorVault(4, 1, -1, 1000)
 
 }
+
 func MonitorVault(nid int, acc int, maxt int, rng int) {
 
 	fmt.Println(">>> Monitorying range ")
@@ -298,7 +303,7 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 	///require governance. always use account 0 as the deployer
 	Auth = GetSignature(Networkid, acc)
 
-	fmt.Println(">>> Monitorying range ", Network.Vault, ">>>>>>> ")
+	fmt.Println(">>> Monitoring tik range ", Network.Vault, ">>>>>>> ")
 
 	i := 0
 	for {
@@ -310,7 +315,13 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 
 			inRange, tick := CheckRange(lasttick)
 			if !inRange {
-				TickReport(tick)
+
+				//TickReport(tick)    // write new tick to file  <-- old way
+
+				fmt.Println("**** Rebalance triggered **** ")
+				doRebal(SetStrategy())
+				fmt.Println()
+
 			} else {
 
 				time.Sleep(2 * time.Second)
@@ -322,6 +333,7 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 	}
 
 }
+
 func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 
 	vaultInstance := GetVaultInstance()
@@ -360,7 +372,23 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 	//in range but new tick
 	fmt.Println(">>> tick change but still In range ")
 	fmt.Println(">>> tick, ticklower, tickupper:", tick, qTickLower, qTickUpper)
+	fmt.Println()
 
 	return true, tick
+
+}
+
+func SetStrategy() int64 {
+
+	// strategy scenarios:
+	// which pairs ?
+	// market bull?  rng = wider
+	// market bear?  rng = wider
+	// market flat?  rng = tight
+	// decide by which indicator?  bollinger?  tma ?  envelope ?  ma ? macd? rsi?
+	// timeframe? D1,H4, H1?
+
+	rng := int64(100)
+	return rng
 
 }
