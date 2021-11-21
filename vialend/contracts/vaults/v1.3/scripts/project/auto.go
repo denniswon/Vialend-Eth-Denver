@@ -304,7 +304,7 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 	for {
 		i = i + 1
 		if i < maxt || maxt == -1 {
-			fmt.Println(i, maxt, "Time: ", time.Now().Format("15:04:05"))
+			myPrintln(i, maxt, "Time: ", time.Now().Format("15:04:05"))
 
 			//CheckTVL()
 
@@ -358,7 +358,7 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 	}
 
 	//in range but new tick
-	fmt.Println(">>> In range ")
+	fmt.Println(">>> tick change but still In range ")
 	fmt.Println(">>> tick, ticklower, tickupper:", tick, qTickLower, qTickUpper)
 
 	return true, tick
