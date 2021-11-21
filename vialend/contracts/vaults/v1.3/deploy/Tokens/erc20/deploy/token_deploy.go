@@ -16,7 +16,7 @@ import (
 
 	//api "../deploy/token/tusdc"
 	//api "../deploy/token/tweth"
-	api "viaroot/Tokens/erc20/deploy/ERC20fixedSupply"
+	api "viaroot/deploy/Tokens/erc20/deploy/ERC20fixedSupply"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
