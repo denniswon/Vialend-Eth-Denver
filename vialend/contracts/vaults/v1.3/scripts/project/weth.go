@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	weth "viaroot/Tokens/erc20/deploy/WETH9"
+	weth "viaroot/deploy/Tokens/erc20/deploy/WETH9"
 
 	"github.com/ethereum/go-ethereum/common"
 )

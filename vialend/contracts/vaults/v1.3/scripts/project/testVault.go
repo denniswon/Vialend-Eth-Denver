@@ -11,9 +11,9 @@ import (
 	//	"time"
 
 	//	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
-	token "viaroot/Tokens/erc20/deploy/Token"
+	token "viaroot/deploy/Tokens/erc20/deploy/Token"
 	cErc20 "viaroot/deploy/cErc20"
-	pool "viaroot/uniswap/v3/deploy/UniswapV3Pool"
+	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
 
 	//vault "viaroot/deploy/FeeMaker"
 	callee "viaroot/deploy/TestUniswapV3Callee"

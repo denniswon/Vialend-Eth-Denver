@@ -8,7 +8,7 @@ import (
 	"time"
 
 	tester "viaroot/deploy/tester"
-	pool "viaroot/uniswap/v3/deploy/UniswapV3Pool"
+	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

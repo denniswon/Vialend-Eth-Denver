@@ -6,10 +6,10 @@ import (
 	"math"
 	"math/big"
 
-	factory "viaroot/uniswap/v3/deploy/UniswapV3Factory"
-	pool "viaroot/uniswap/v3/deploy/UniswapV3Pool"
+	factory "viaroot/deploy/uniswap/v3/deploy/UniswapV3Factory"
+	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
 
-	token "viaroot/Tokens/erc20/deploy/Token"
+	token "viaroot/deploy/Tokens/erc20/deploy/Token"
 
 	swapCallee "viaroot/deploy/TestUniswapV3Callee"
 

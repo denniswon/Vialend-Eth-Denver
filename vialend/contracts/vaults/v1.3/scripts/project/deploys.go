@@ -5,9 +5,9 @@ import (
 	"log"
 	"math/big"
 
-	weth "viaroot/Tokens/erc20/deploy/WETH9"
 	vault "viaroot/deploy/FeeMaker"
 	callee "viaroot/deploy/TestUniswapV3Callee"
+	weth "viaroot/deploy/Tokens/erc20/deploy/WETH9"
 	factory "viaroot/deploy/UniswapV3Factory"
 	arb "viaroot/deploy/arb"
 	_ "viaroot/deploy/cether"
@@ -15,7 +15,7 @@ import (
 	bridge "viaroot/deploy/vaultBridge"
 	vialend "viaroot/deploy/vialendFeeMaker"
 
-	mocktoken "viaroot/Tokens/erc20/deploy/ERC20fixedSupply"
+	mocktoken "viaroot/deploy/Tokens/erc20/deploy/ERC20fixedSupply"
 
 	"github.com/ethereum/go-ethereum/common"
 	/*
