@@ -387,7 +387,7 @@ func SetStrategy() int64 {
 	// decide by which indicator?  bollinger?  tma ?  envelope ?  ma ? macd? rsi?
 	// timeframe? D1,H4, H1?
 
-	rng := int64(80)
+	rng := int64(200)
 	return rng
 
 }
