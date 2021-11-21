@@ -76,7 +76,7 @@ func main() {
 
 	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 100, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 	//project.Deposit(1, [3]int64{1, 10, 1}, false)
-	//project.Strategy1(100, 1)
+	//project.Strategy1(80, 1)
 	//project.VaultInfo()
 	//project.Withdraw(1, [2]int64{100, 1})
 	// project.Withdraw(1, [2]int64{100, 1})

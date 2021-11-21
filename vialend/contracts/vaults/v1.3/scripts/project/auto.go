@@ -292,8 +292,6 @@ func MonitorAll() {
 
 func MonitorVault(nid int, acc int, maxt int, rng int) {
 
-	fmt.Println(">>> Monitorying range ")
-
 	var lasttick = big.NewInt(0)
 
 	//temp := Networkid
@@ -303,7 +301,7 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 	///require governance. always use account 0 as the deployer
 	Auth = GetSignature(Networkid, acc)
 
-	fmt.Println(">>> Monitoring tik range ", Network.Vault, ">>>>>>> ")
+	fmt.Println(">>> Monitoring tick range: {vault:", Network.Vault, "} >>>>>>> ")
 
 	i := 0
 	for {
@@ -319,7 +317,8 @@ func MonitorVault(nid int, acc int, maxt int, rng int) {
 				//TickReport(tick)    // write new tick to file  <-- old way
 
 				fmt.Println("**** Rebalance triggered **** ")
-				doRebal(SetStrategy())
+				go doRebal(SetStrategy())
+				time.Sleep(5 * time.Second)
 				fmt.Println()
 
 			} else {
@@ -357,11 +356,12 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 
 	if !inRange {
 		if tick.Cmp(qTickLower) <= 0 {
-			fmt.Println("** Outof range! tick < ticklow ", tick, qTickLower)
+			fmt.Println("** Outof range! tick < ticklow ", tick, qTickLower, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
 		}
 
 		if tick.Cmp(qTickUpper) >= 0 {
-			fmt.Println("** Out of range! tick > tickUpper", tick, qTickUpper)
+			fmt.Println("** Out of range! tick > tickUpper", tick, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
+
 		}
 
 		// out range, new tick
@@ -369,7 +369,6 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 
 	}
 
-	//in range but new tick
 	fmt.Println(">>> tick change but still In range ")
 	fmt.Println(">>> tick, ticklower, tickupper:", tick, qTickLower, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
 	fmt.Println()
@@ -388,7 +387,7 @@ func SetStrategy() int64 {
 	// decide by which indicator?  bollinger?  tma ?  envelope ?  ma ? macd? rsi?
 	// timeframe? D1,H4, H1?
 
-	rng := int64(100)
+	rng := int64(80)
 	return rng
 
 }
