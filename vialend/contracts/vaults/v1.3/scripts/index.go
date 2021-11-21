@@ -46,10 +46,6 @@ var sw = new(Switcher)
 func main() {
 
 	project.Init(-1, -1)
-	c := "asd"
-	c += "abc"
-	fmt.Println(c)
-	return
 
 	//	project.Init(0, 0)
 	//balance := project.EthBalance(Network.LendingContracts.CETH)
@@ -80,7 +76,7 @@ func main() {
 
 	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 100, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 	//project.Deposit(1, [3]int64{1, 10, 1}, false)
-	project.Strategy1(100, 1)
+	//project.Strategy1(100, 1)
 	//project.VaultInfo()
 	//project.Withdraw(1, [2]int64{100, 1})
 	// project.Withdraw(1, [2]int64{100, 1})
@@ -89,7 +85,8 @@ func main() {
 	//project.EmergencyBurn()
 	// project.Withdraw(1, [2]int64{100, 3})
 	//project.VaultInfo2("0x4aaE0bc3052aD3AB125Ae654f0f2C55Dbd9D6e17")
-	project.VaultInfo()
+	project.MyAccountInfo(0)
+	//project.VaultInfo()
 	return
 	// // // newVault()
 

@@ -132,7 +132,7 @@ func TickReport(_tick *big.Int) {
 func doRebal(rng int64) {
 
 	//	fmt.Println("Rebalance Triggered , new range:", rng)
-	Strategy1(rng, int64(Account))
+	Strategy1(rng, int64(1))
 
 }
 
@@ -371,7 +371,7 @@ func CheckRange(lasttick *big.Int) (bool, *big.Int) {
 
 	//in range but new tick
 	fmt.Println(">>> tick change but still In range ")
-	fmt.Println(">>> tick, ticklower, tickupper:", tick, qTickLower, qTickUpper)
+	fmt.Println(">>> tick, ticklower, tickupper:", tick, qTickLower, qTickUpper, " {", new(big.Int).Sub(tick, qTickLower), ",", new(big.Int).Sub(qTickUpper, tick), "}")
 	fmt.Println()
 
 	return true, tick

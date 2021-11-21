@@ -41,6 +41,7 @@ type Params struct {
 	Factory     string
 	Callee      string
 	PrivateKey  []string
+	Governance  string
 	TokenA      string
 	TokenB      string
 	CTOKEN0     string
@@ -67,7 +68,7 @@ const (
 )
 
 var Networkid = 3 /// 0: mainnet, 1: local, 2: local , 3: gorlie, 4: gorlie,  5: rinkeby
-var Account = 1
+var Account = 0
 
 var ProviderSortId = 0
 
@@ -99,10 +100,11 @@ var Networks = [...]Params{
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"", //callee
 		[]string{"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7"}, //privatekey fake
-		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",                                 // weth  tokenA
-		"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",                                 // usdc 	tokenB
-		"0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",                                 //ctokenA
-		"0x39AA39c021dfbaE8faC545936693aC917d5E7563",                                 //ctokenB
+		"", // Governance
+		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
+		"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
+		"0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5", //ctokenA
+		"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //ctokenB
 		"", //newOwner
 		60, //pendingtime
 		"0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8", // pool
@@ -132,6 +134,7 @@ var Networks = [...]Params{
 		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0", // 0xfd8a5AE495Df1CA34F90572cb99A33B27173eDe1
 			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54",  // 0xeBb29c07455113c30810Addc123D0D7Cd8637aea
 			"88ca92d92059dea4f8fb4181e97304eb8b2264c8e1e577ba4358aea4699a7c09"}, //0xcCebCE6AF95bfD69EEE193390CCF027e8d47d9e2
+		"", // Governance
 		"0x59Cd9D486a8fA9b39F715915743997daA12d138e", //tokenB usdt
 		"0x9D96eC63f96A4E985e227BF520dD742315AB77c7", //tokenA usdc
 		"", //ctoken0
@@ -155,6 +158,7 @@ var Networks = [...]Params{
 		"0x210FA31C72D9F020D16BF948e54F108D1C688f81", //callee
 		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
 			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
+		"", // Governance
 		"0xB73A78A3C493ACdbA893da9331ff39Fe4E59bFA3", //e weth1
 		"0xd8F4E5E1cE1a2961b5fB401B8c2286549607B294", //e usdc1
 		"", //ctoken0
@@ -185,6 +189,7 @@ var Networks = [...]Params{
 			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
 			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
+		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
 
 		// "0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
 		// "0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", //tokenB  eusdc
@@ -245,6 +250,8 @@ var Networks = [...]Params{
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
 			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
 
+		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
+
 		"0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", //  Weth
 		"0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60", //  DAI
 		"0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF", // CETH
@@ -289,6 +296,7 @@ var Networks = [...]Params{
 			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
 			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
 			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
+		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
 
 		"0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a", //tokenA Weth
 		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc

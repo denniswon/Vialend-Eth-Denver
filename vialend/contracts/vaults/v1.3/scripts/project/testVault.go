@@ -367,11 +367,10 @@ func Strategy1(fullRrange int64, acc int64) {
 			tickUpper)
 
 		if err != nil {
-			//log.Fatal("strateg1 tx err ", err)
+			fmt.Println("strateg1 tx err , trying one more time in 2 seconds..", err)
 			time.Sleep(2 * time.Second)
 		} else {
 			//myPrintln("strategy1 tx: ", tx.Hash().Hex())
-			fmt.Println("strategy1 tx: ", tx.Hash().Hex())
 			TxConfirm(tx.Hash())
 			break
 		}
@@ -934,12 +933,12 @@ func AccountInfo() {
 
 	for i, _ := range Network.PrivateKey {
 
-		getAccountInfo(i)
+		MyAccountInfo(i)
 	}
 
 }
 
-func getAccountInfo(accId int) {
+func MyAccountInfo(accId int) {
 
 	accountAddress := GetAddress(accId)
 
