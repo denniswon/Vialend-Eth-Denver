@@ -366,15 +366,15 @@ func tickInfo(inRange bool, tick *big.Int, tickLow *big.Int, tickHigh *big.Int) 
 
 		if tick.Cmp(tickLow) <= 0 {
 
-			fmt.Println("** Outof range! tick < ticklow ", tick, tickLow, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(qTickUpper, tick), "}")
+			fmt.Println("** Out range! poke down ", tick, tickLow, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(qTickUpper, tick), "}")
 		} else if tick.Cmp(tickHigh) >= 0 {
-			fmt.Println("** Out of range! tick > tickUpper", tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
+			fmt.Println("** Out range! poke up", tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
 		} else {
 			fmt.Println("** something wrong , tick still in range? ", tickLow, tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
 		}
 
 	} else {
-		fmt.Println(">>> tick change but still In range ")
+		fmt.Println(">>> In range ")
 		fmt.Println(">>> ticklower, tick,  tickupper:", tickLow, tick, tickHigh, " {", new(big.Int).Sub(tick, tickLow), ",", new(big.Int).Sub(tickHigh, tick), "}")
 	}
 

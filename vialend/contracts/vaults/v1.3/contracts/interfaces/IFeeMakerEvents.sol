@@ -14,7 +14,6 @@ interface IFeeMakerEvents {
 	
     event Deposit(
         address indexed sender,
-        address indexed to,
         uint256 shares,
         uint256 amount0,
         uint256 amount1

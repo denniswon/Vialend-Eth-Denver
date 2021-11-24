@@ -46,6 +46,10 @@ func main() {
 
 	project.Init(nid, acc)
 
+	// s := spinner.New(spinner.CharSets[9], 100*time.Millisecond) // Build our new spinner
+	// s.Color("red")                                              // Set the spinner color to red
+	// s.Start()                                                   // Start the spinner
+
 	project.MonitorVault(nid, acc, iteration)
 
 }

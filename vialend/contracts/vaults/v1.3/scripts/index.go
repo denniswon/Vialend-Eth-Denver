@@ -46,21 +46,38 @@ var sw = new(Switcher)
 func main() {
 
 	project.Init(-1, -1)
-
 	//	project.Init(0, 0)
+
+	// project.DeployFactory()
+	//BuildAll()
+
 	//balance := project.EthBalance(Network.LendingContracts.CETH)
 	//balance := project.EthBalanceArb("0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5")
-	// fmt.Println(balance)
 
+	project.BlockNumber()
+
+	//project.TransferEth("1b280901929b5cd52f362b544072b66bfe29a9396db485a23da7de9f485512b0", project.X1E18(1), "0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
+
+	// project.EthBalance("0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
+	// project.EthBalance("0x616075ff37f832fCd555E3aC8fa90c64A948Cca1")
+	//return
 	project.Quiet = false
+
+	//	return
 
 	//networkid, account, protocolfee, uniportion, team address to get fee cut
 	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 
 	//DeployVaultBridge()
 	//project.DeployArb()
+	// project.DeployCallee()
+	// return
 
-	// project.SetVaultAddress("0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", 0)
+	// project.SetVaultAddress("0xBC6b6e273171C428d85cDdB23D344a8400B48441", 2)
+	// return
+
+	// project.GetPool("0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05", "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60", 10000)
+
 	// return
 
 	//project.FindPool()
@@ -72,14 +89,22 @@ func main() {
 	// project.Sweep(v, t, a)
 
 	// project.EmergencyBurn()
-	// return
+	//project.VaultInfo2("0xb102Cd93329d7017Ae83C6E488f00EaB4844CbF2")
+	//return
 
-	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 100, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-	//project.Deposit(1, [3]int64{1, 10, 1}, false)
+	//nid := int(0)
+	//acc := int(0)
+
+	//project.PrintPrice()
+	//project.Wrap(project.Network.TokenA, 0, 10)
+
+	//project.DeployVialendFeemaker(-1, 1, big.NewInt(10), 100, big.NewInt(1e8), "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+	//project.DeployVialendFeemaker(-1, 1, big.NewInt(10), 100, big.NewInt(1e18), "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+	project.Deposit(1, [3]int64{1, 10, 0}, false)
 	//project.Strategy1(80, 1)
 	//project.VaultInfo()
+	//project.Withdraw(1, [2]int64{100, 0})
 	//project.Withdraw(1, [2]int64{100, 1})
-	// project.Withdraw(1, [2]int64{100, 1})
 	//project.Withdraw(1, [2]int64{100, 3})
 
 	//project.EmergencyBurn()
@@ -219,40 +244,40 @@ func DeployVaultBridge() {
 
 }
 
-func test_vault() {
+func BuildAll() {
 
 	sw.ViewOnly = false
 
 	sw.DeployFactory = 0
 	//...manual step... update the new factory addres in networks.go
 
-	sw.DeployToken = 0
-	sw.TokenParam[0] = project.TokenStruct{"e weth 2", "eWETH2", 18, big.NewInt(50000000000000)}
-	sw.TokenParam[1] = project.TokenStruct{"e usdc 2", "eUSDC2", 6, big.NewInt(500000000000000000)}
+	sw.DeployToken = 1
+	sw.TokenParam[0] = project.TokenStruct{"f weth 1", "fWETH1", 18, big.NewInt(50000000000000)}
+	sw.TokenParam[1] = project.TokenStruct{"f usdc 1", "fUSDC1", 6, big.NewInt(500000000000000000)}
 	//...manual step... update the new token addres in networks.go
 
 	sw.TransferToken = 0
 	sw.TransferParam[0] = TransferStruct{0, project.X1E18(900), project.Network.TokenA, "0xeBb29c07455113c30810Addc123D0D7Cd8637aea"}
 	sw.TransferParam[1] = TransferStruct{0, project.X1E18(900), project.Network.TokenB, "0xeBb29c07455113c30810Addc123D0D7Cd8637aea"}
 
-	sw.CreatePool = 0 // *Note: if token0+token1+fee = pool exists ERROR: createPool VM Exception while processing transaction: revert
-	sw.InitialPool = 0
+	sw.CreatePool = 1 // *Note: if token0+token1+fee = pool exists ERROR: createPool VM Exception while processing transaction: revert
+	sw.InitialPool = 1
 	//...manual step... update the new pool addres in networks.go
 
-	sw.MintPool = 0
+	sw.MintPool = 1
 	sw.MintPoolParam = [3]int64{1000, 1, 1} // currently hardcoded 1000 * 1e18 as the liquidity,
 	// .... manual step.... new vault may apply
 
-	sw.DeployVault = 0
+	sw.DeployVault = 1
 	//...manual step... update the new vault addres in networks.go
 
-	sw.Deposit = 1
+	sw.Deposit = 0
 	sw.DepositParam = [3]int64{1, 1, 1} // {amount0, amount1 , account}
 
-	sw.Strategy1 = 1
+	sw.Strategy1 = 0
 	sw.Strategy1Param = [3]int64{600, 60, 3} // {tick range, tickspacing, account}
 
-	sw.Withdraw = 1
+	sw.Withdraw = 0
 	sw.WithDrawParam = [2]int64{100, 1} // { percent, account}
 	// accountid,  amount of shares in percentage %
 

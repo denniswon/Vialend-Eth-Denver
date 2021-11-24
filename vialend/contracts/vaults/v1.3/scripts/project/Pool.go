@@ -546,11 +546,25 @@ func getBigFromFloat64(v float64) *big.Int {
 func PrintPrice() {
 
 	poolInstance := GetPoolInstance()
+	fmt.Println("1")
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+	fmt.Println("2")
 
 	_, pf := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+	fmt.Println("3")
 
 	tn := time.Now().Format("15:04:05")
 	fmt.Println("Price now:", pf, "  ", tn)
+
+}
+
+func GetPoolInstance() *pool.Api {
+
+	instance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
+	fmt.Println("3d")
+	if err != nil {
+		log.Fatal("poolInstance err:", err)
+	}
+	return instance
 
 }

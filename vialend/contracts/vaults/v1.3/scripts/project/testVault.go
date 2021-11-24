@@ -13,7 +13,6 @@ import (
 	//	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 	token "viaroot/deploy/Tokens/erc20/deploy/Token"
 	cErc20 "viaroot/deploy/cErc20"
-	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
 
 	//vault "viaroot/deploy/FeeMaker"
 	callee "viaroot/deploy/TestUniswapV3Callee"
@@ -79,20 +78,12 @@ func Deposit(do int, param [3]int64, doRebalance bool) {
 	bal1, err := tokenBInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
 	myPrintln("tokenB in Wallet ", bal1)
 
-	allowA, _ := tokenAInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(Network.Vault))
-	allowB, _ := tokenBInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(Network.Vault))
-
 	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
-	if allowA.Cmp(big.NewInt(0)) <= 0 {
+	ApproveToken(common.HexToAddress(Network.TokenA), maxToken0, Network.Vault)
 
-		ApproveToken(common.HexToAddress(Network.TokenA), maxToken0, Network.Vault)
-	}
-
-	if allowB.Cmp(big.NewInt(0)) <= 0 {
-		ApproveToken(common.HexToAddress(Network.TokenB), maxToken1, Network.Vault)
-	}
+	ApproveToken(common.HexToAddress(Network.TokenB), maxToken1, Network.Vault)
 
 	//  amount0 * 10^decimals
 	amount0 := big.NewInt(param[0])
@@ -409,10 +400,7 @@ func LendingInfo() {
 
 func checkETHBalance() *big.Int {
 
-	bal, err := Client.BalanceAt(context.Background(), common.HexToAddress(Network.Vault), nil)
-	if err != nil {
-		log.Fatal("eth balance err ", err)
-	}
+	bal := EthBalance(Network.Vault)
 
 	myPrintln("eth balance: ", bal)
 
@@ -868,28 +856,25 @@ func ApproveToken(tokenAddress common.Address, maxAmount *big.Int, toAddress str
 		log.Fatal("tokenInstance,", err)
 	}
 
+	myPrintln("vault address be approved: ", toAddress)
+	myPrintln("fromAddress: ", FromAddress)
+
 	//check allowance
 	allow, _ := tokenInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(toAddress))
 
+	myPrintln("Allowance amount:", allow)
 	if allow.Cmp(big.NewInt(0)) > 0 {
 		return
 	}
-
-	myPrintln("Address to approve: ", toAddress)
-	myPrintln("fromAddress: ", FromAddress)
-	//myPrintln("pooladdress: ", Network.Pool)
 
 	NonceGen()
 
 	tx, err := tokenInstance.Approve(Auth, common.HexToAddress(toAddress), maxAmount)
 
 	if err != nil {
-		log.Fatal("tx, ", err)
+		log.Fatal("token approve tx, ", err)
 	}
 
-	myPrintln("approve token tx: ", tx.Hash().Hex())
-
-	//TxConfirm(tx.Hash())
 	//Readstring("Approve sent... wait for pending..next .. ")
 	TxConfirm(tx.Hash())
 
@@ -945,6 +930,8 @@ func MyAccountInfo(accId int) {
 
 	myPrintln("Account  ----", accId)
 	myPrintln("Account address ", accountAddress)
+
+	myPrintln("Eth balance:", EthBalance(accountAddress.String()))
 
 	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
 	if err != nil {
@@ -1077,21 +1064,27 @@ func VaultInfo2(vaultAddr string) {
 	var twapDuration = uint32(2)
 	twap, _ := vaultInstance.GetTwap(&bind.CallOpts{}, poolAddress, twapDuration)
 
-	myPrintln("twap:", twap, ",slot.tick:", slot0.Tick)
+	myPrintln("twap:", twap)
+	myPrintln(",slot.tick:", slot0.Tick)
+	myPrintln(",slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
 
 	var oraclePriceTwap *big.Int
 	if twap != nil {
 		//	twap = big.NewInt(-192874)
-		baseAmount := big.NewInt(1e18)
+		baseAmount := big.NewInt(1e8)
 		baseToken := common.HexToAddress(Network.TokenA)
 		quoteToken := common.HexToAddress(Network.TokenB)
 
-		//calleeInstance := GetCalleeInstance()
-		// oraclePriceTwap, _ = calleeInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
+		myPrintln(" twap, baseAmount, baseToken, quoteToken", twap, baseAmount, baseToken, quoteToken)
+
+		calleeInstance := GetCalleeInstance()
+
+		twapQuatebyCallee, _ := calleeInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
 
 		oraclePriceTwap, _ = vaultInstance.GetQuoteAtTick(&bind.CallOpts{}, twap, baseAmount, baseToken, quoteToken)
 
 		fmt.Println("oraclePriceTwap:", oraclePriceTwap)
+		fmt.Println("twapQuatebyCallee:", twapQuatebyCallee)
 	}
 
 	SpotPricebigInt, pricefloat64 := getPrice(slot0.SqrtPriceX96, slot0.Tick)
@@ -1110,16 +1103,6 @@ func VaultInfo2(vaultAddr string) {
 	CheckFees(oraclePriceTwap)
 
 	///-----------
-
-}
-
-func GetPoolInstance() *pool.Api {
-
-	instance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
-	if err != nil {
-		log.Fatal("poolInstance err:", err)
-	}
-	return instance
 
 }
 
@@ -1315,15 +1298,4 @@ func EthBalanceArb(_addr string) *big.Int {
 
 	return bal
 
-}
-
-func EthBalance(_addr string) *big.Int {
-
-	account := common.HexToAddress(_addr)
-	myPrintln("address:", _addr)
-	balance, err := Client.BalanceAt(context.Background(), account, nil)
-	if err != nil {
-		log.Fatal("eth balance via context background() err:   ", err)
-	}
-	return balance
 }

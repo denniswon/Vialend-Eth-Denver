@@ -41,9 +41,9 @@ func DeployFactory() *factory.Api {
 
 	_, _ = instance, tx
 
-	Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
-
 	fmt.Println("factory address:", address.Hex())
+
+	Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 
 	AddSettingString("factory address:", address.Hex())
 
@@ -143,71 +143,6 @@ func DeployWrappedEther() *weth.Api {
 	Readstring("WETH deployed, wait for pending ... next... ")
 
 	return instance
-}
-
-func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPortion int, team string) {
-
-	fmt.Println("----------------------------------------------")
-	fmt.Println(".......................Deploy VialendFeemaker ...................")
-	fmt.Println("----------------------------------------------")
-
-	Networkid = networkid
-	Network = Networks[networkid]
-	///require governance. always use account 0 as the deployer
-	Auth = GetSignature(Networkid, acc)
-
-	NonceGen()
-
-	pool := FindPool() //tokens based on network selection
-
-	protocolFee := _protocolfee
-
-	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	if !ok {
-		log.Fatal("maxTotalSupply err ")
-	}
-	var maxTwapDeviation = big.NewInt(20000)
-	var twapDuration = uint32(2)
-
-	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-
-	var _weth = common.HexToAddress(Network.LendingContracts.WETH)
-	var _cEth = common.HexToAddress(Network.LendingContracts.CETH)
-	var _cToken0 = common.HexToAddress(Network.CTOKEN0)
-	var _cToken1 = common.HexToAddress(Network.CTOKEN1)
-
-	var uniPortionRate = uint8(_uniPortion)
-
-	fmt.Println(".......................Deploy vault ...................")
-
-	address, tx, instance, err := vialend.DeployApi(Auth, Client,
-		pool,
-		_weth,
-		_cToken0,
-		_cToken1,
-		_cEth,
-		protocolFee,
-		maxTotalSupply,
-		maxTwapDeviation,
-		twapDuration,
-		quoteAmount,
-		uniPortionRate,
-		common.HexToAddress(team))
-
-	if err != nil {
-		log.Fatal("deploy vault ", err)
-	}
-
-	//refresh vault address in networks.go
-	Network.Vault = address.Hex()
-	AddSettingString("vault address:", address.Hex())
-
-	fmt.Println("vault address:", address.Hex())
-
-	_, _ = instance, tx
-
-	Readstring("Vault deploy done, wait for pending ... next... ")
-
 }
 
 func VaultGen(
@@ -381,5 +316,73 @@ func DeployArb() {
 	fmt.Println("arb address:", address.Hex())
 
 	TxConfirm(tx.Hash())
+
+}
+
+func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPortion int, _quoteAmount *big.Int, team string) {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy VialendFeemaker ...................")
+	fmt.Println("----------------------------------------------")
+
+	if networkid != -1 {
+		Networkid = networkid
+		Network = Networks[networkid]
+	}
+
+	///require governance. always use account 0 as the deployer
+	Auth = GetSignature(Networkid, acc)
+
+	NonceGen()
+
+	pool := FindPool() //tokens based on network selection
+
+	protocolFee := _protocolfee
+
+	maxTotalSupply, ok := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	if !ok {
+		log.Fatal("maxTotalSupply err ")
+	}
+	var maxTwapDeviation = big.NewInt(20000)
+	var twapDuration = uint32(2)
+
+	var quoteAmount = _quoteAmount // big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
+
+	var _weth = common.HexToAddress(Network.LendingContracts.WETH)
+	var _cEth = common.HexToAddress(Network.LendingContracts.CETH)
+	var _cToken0 = common.HexToAddress(Network.CTOKEN0)
+	var _cToken1 = common.HexToAddress(Network.CTOKEN1)
+
+	var uniPortionRate = uint8(_uniPortion)
+
+	fmt.Println(".......................Deploy vault ...................")
+
+	address, tx, instance, err := vialend.DeployApi(Auth, Client,
+		pool,
+		_weth,
+		_cToken0,
+		_cToken1,
+		_cEth,
+		protocolFee,
+		maxTotalSupply,
+		maxTwapDeviation,
+		twapDuration,
+		quoteAmount,
+		uniPortionRate,
+		common.HexToAddress(team))
+
+	if err != nil {
+		log.Fatal("deploy vault ", err)
+	}
+
+	//refresh vault address in networks.go
+	Network.Vault = address.Hex()
+	AddSettingString("vault address:", address.Hex())
+
+	fmt.Println("vault address:", address.Hex())
+
+	_, _ = instance, tx
+
+	Readstring("Vault deployed, pending process... next... ")
 
 }

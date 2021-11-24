@@ -124,14 +124,13 @@ contract ViaLendFeeMaker is
         nonReentrant
     {
 
-        address to = msg.sender;	//  to address = msg.sender
 
 		require(amountToken0>0 || amountToken1>0,"amt0");
 
-        require(to != address(0) && to != address(this) && to !=team, "to");
+        require( msg.sender !=team, "to");
 
 	
-        _push(to);  			// push new address into accounts
+        _push( msg.sender);  			// push new address into accounts
 
   		
        // _poke(cLow, cHigh);		// Poke v3 positions so to get uniswap v3 fees up to date. do not need if position removed
@@ -150,18 +149,18 @@ contract ViaLendFeeMaker is
         if (amount0 > 0) token0.safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) token1.safeTransferFrom(msg.sender, address(this), amount1);
 
-        _mint(to, shares);
+        _mint( msg.sender, shares);
 
         require(totalSupply() <= maxTotalSupply, "CAP");
 
-	    Assetholder[to].deposit0 += amount0;		// add or increase msg.sender's asset0
-		Assetholder[to].deposit1 += amount1;		// add or increase msg.sender's asset1
-		Assetholder[to].current0 += amount0;
-		Assetholder[to].current1 += amount1;
+	    Assetholder[msg.sender].deposit0 += amount0;		// add or increase msg.sender's asset0
+		Assetholder[msg.sender].deposit1 += amount1;		// add or increase msg.sender's asset1
+		Assetholder[msg.sender].current0 += amount0;
+		Assetholder[msg.sender].current1 += amount1;
 
 		if (doRebalance )  rebalance(0,0, totalSupply());		// rebalance
 
-        emit Deposit(msg.sender, to, shares, amount0, amount1);
+        emit Deposit(msg.sender,  shares, amount0, amount1);
 
     }     
     
@@ -171,7 +170,7 @@ contract ViaLendFeeMaker is
 	
 			uint256 tt = totalSupply();
 
-			if (tt <= 0 ) return;		// return totalsupply is 0 
+			if (tt == 0 ) return;		// return totalsupply is 0 
 
 			uint cnt = accounts.length;		// get array size 
 
@@ -302,7 +301,6 @@ contract ViaLendFeeMaker is
 		
 		require ( percent <= 100, "pc");
 		
-        require(to != address(0) && to != address(this), "toW");
         
 		// get total shares
         uint256 totalSupply = totalSupply();
@@ -401,7 +399,7 @@ contract ViaLendFeeMaker is
 			require (Price > 0, "P");
 			
 			// based on previous price, only new deposit will need to fetch new price 
-			shares = amount0 + (amount1 * 1e18 ) / Price;   
+			shares = amount0 + (amount1 * quoteAmount ) / Price;   
 			
 			
 			
