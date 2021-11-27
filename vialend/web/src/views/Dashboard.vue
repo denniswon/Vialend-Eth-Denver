@@ -582,11 +582,11 @@ export default {
   },
   created: async function () {
     console.log('Dashboard created -> validNetwork:', this.$store.state.validNetwork)
-    console.log('Dashboard created -> isConnected:', this.isConnected)
+    console.log('Dashboard created -> isConnected:', this.$store.state.isConnected)
     console.log('Dashboard created -> pairsListComplete:', this.pairsListComplete)
     console.log('Dashboard created -> this.$parent.pairsList.size():', this.$parent.pairsList.size())
     console.log('Dashboard created -> this.pairsList.size():', this.pairsList.size())
-    if (this.$store.state.validNetwork && this.isConnected && this.$parent.pairsList.size() > 0) {
+    if (this.$store.state.validNetwork && this.$store.state.isConnected && this.$parent.pairsList.size() > 0) {
       this.pairsList = this.$parent.pairsList
       this.loadMyPairsList()
     }
@@ -610,7 +610,7 @@ export default {
   },
   mounted () {
     window.connectWallet = this.connectWallet
-    this.exchangeTimer = setInterval(this.exchangeTokensIntoUSD, 2000)
+    this.exchangeTimer = setInterval(this.exchangeTokensIntoUSD, 1000)
   },
   computed: {
     rateOfUSDStatus () {
@@ -618,28 +618,35 @@ export default {
     },
     pairsListSize () {
       return this.$parent.pairsList.size()
+    },
+    parentPairsListComplete () {
+      return this.$parent.pairsLoadComplete
     }
   },
   beforeDestroy () {
     clearInterval(this.exchangeTimer)
   },
   watch: {
-    pairsListSize (size) {
-      if (size > 0) {
-        console.log('currentPairsList size=', size, ';validNetwork=', this.$store.state.validNetwork)
-        console.log('this.$parent.pairsLoadComplete=', this.$parent.pairsLoadComplete)
-        if (this.$parent.pairsLoadComplete) {
+    // pairsListSize (size) {
+    //   if (size > 0) {
+    //     console.log('currentPairsList size=', size, ';validNetwork=', this.$store.state.validNetwork)
+    //     console.log('this.$parent.pairsLoadComplete=', this.$parent.pairsLoadComplete)
+    //     if (this.$parent.pairsLoadComplete) {
+    //       this.pairsList = this.$parent.pairsList
+    //       this.loadMyPairsList()
+    //       this.pairsLoadComplete = true
+    //     }
+    //   }
+    // },
+    parentPairsListComplete (newVal) {
+      console.log('pairs base info load complete：', newVal)
+      if (newVal) {
+        if (this.$store.state.isConnected && this.$store.state.validNetwork && !this.myPairsListLoading) {
+          console.log('begin loadMyPairsList')
           this.pairsList = this.$parent.pairsList
           this.loadMyPairsList()
-          this.pairsLoadComplete = true
         }
       }
-    },
-    pairsLoadComplete: function (newVal, oldVal) {
-      // console.log('pairs base info load complete：', newVal, ';old status:', oldVal)
-      // if (this.$store.state.isConnected && this.$store.state.validNetwork && !this.myPairsListLoading) {
-      //   this.loadMyPairsList()
-      // }
     },
     pairsListComplete: function (newVal, oldVal) {
       console.log('pairs pairsList complete：', newVal, 'old status:', oldVal)
@@ -650,7 +657,7 @@ export default {
     '$store.state.isConnected': async function () {
       console.log('Dashboard $store.state.isConnected:', this.$store.state.isConnected, 'this.$store.state.validNetwork=', this.$store.state.validNetwork)
       if (this.$store.state.isConnected && this.$store.state.validNetwork && this.pairsLoadComplete && !this.myPairsListLoading) {
-        this.isConnected = this.$store.state.isConnected
+        // this.isConnected = this.$store.state.isConnected
         this.pairsListComplete = false
         this.loadMyPairsList()
         console.log('isConnected changed,load loadMyPairsList')
@@ -720,7 +727,9 @@ export default {
     },
     sharePercent (val) {
       this.getShares(val)
-    }
+    },
+    deep: true,
+    immediate: true
   },
   methods: {
     clearMyData () {
@@ -747,7 +756,7 @@ export default {
     },
     connectWallet () {
       this.$parent.connectWallet()
-      console.log('wallet connection status:', this.isConnected)
+      console.log('wallet connection status:', this.$store.state.isConnected)
     },
     contractInstance (abi, address) {
       return new web3.eth.Contract(abi, address)
@@ -1096,7 +1105,7 @@ export default {
       return pair
     },
     async getVaultInfo () {
-      if (!this.isConnected) { return }
+      if (!this.$store.state.isConnected) { return }
       this.vaultInfoLoading = true
       this.myValueLockLoading = true
       var pair = this.pairsList.get(this.selectedPairIndex)
@@ -1334,7 +1343,7 @@ export default {
       }
     },
     showNewPositionDialog () {
-      if (!this.isConnected) {
+      if (!this.$store.state.isConnected) {
         this.$message('Please connect wallet!')
         return
       }
@@ -1350,7 +1359,7 @@ export default {
       this.getTokenApproveStatus()
     },
     showWithdrawDialog () {
-      if (!this.isConnected) {
+      if (!this.$store.state.isConnected) {
         this.$message('Please connect wallet!')
         return
       }

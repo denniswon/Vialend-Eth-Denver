@@ -33,10 +33,10 @@
               </el-menu-item>
             </el-menu-item-group>
           </el-submenu>
-          <el-menu-item index="16">
+          <el-menu-item index="16"
+                        @click="showContainer('setting')">
             <i class="el-icon-setting"></i>
-            <span slot="title"
-                  @click="showContainer('setting')">Settings</span>
+            <span slot="title">Settings</span>
           </el-menu-item>
         </el-menu>
         <!-- <div class="list-group"
@@ -65,11 +65,8 @@
              :style="'display:' + (featureContainer === 'template' ? '' : 'none') "
              v-loading="templatePageLoading">
           <div style="float:right;padding:10px;">
-            <el-button type="primary"
-                       @click="showNewPairDialog">New Pair</el-button>
-          </div>
-          <el-divider class="clear"></el-divider>
-          <div style="float:right;padding:0px;margin:10px;">
+            <el-button @click="showNewPairDialog"
+                       plain>New Pair</el-button>&nbsp;&nbsp;
             <el-dropdown @command="handleCommand"
                          ref="messageDrop">
               <el-button>
@@ -84,12 +81,16 @@
             </el-dropdown>
           </div>
           <div class="clear"></div>
+          <el-divider></el-divider>
           <div style="padding:10px;"
                v-if="pairsList.size() > 0">
-            <el-col :span="6"
-                    :offset="1"
+            <div class="block"
+                 v-for="pair in pairsList._getData()"
+                 :key="pair.id">
+              <!-- <el-col :span="6"
+                    :offset="2"
                     v-for="pair in pairsList._getData()"
-                    :key="pair.id">
+                    :key="pair.id"> -->
               <el-card class="box-card"
                        v-loading="templatePairsLoading">
                 <div class="text item">
@@ -105,14 +106,16 @@
                 </div>
                 <div class="text item">
                   TVL<br><span style="color:#409eff">{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
-                    ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}}</span>
+                    <!-- ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}} -->
+                    </span>
                 </div>
                 <div class="text item">
                   Assets ratio<br><span style="color:#409eff">{{Number(pair.lendingRatio).toFixed(2)}}% Compound<br>
                     {{Number(pair.uniswapRatio).toFixed(2)}}% Uniswap V3</span>
                 </div>
               </el-card>
-            </el-col>
+              <!-- </el-col> -->
+            </div>
           </div>
           <el-dialog title="New Pair"
                      :visible.sync="newPairDialogVisible"
@@ -273,29 +276,39 @@
              :style="'display:' + (featureContainer === 'setting' ? '' : 'none')"
              v-loading="loadTickerLoading">
           <div class="token_exchange_form">
-            <div style="margin-bottom:20px;">Currency Converter</div>
-            <el-form :inline="true"
-                     class="demo-form-inline">
-              <el-form-item>
-                <el-input v-model="currTokenVal"
-                          placeholder="1"></el-input>
-              </el-form-item>
-              <el-form-item>
-                <el-select v-model="currTokenId"
-                           placeholder="Please select"
-                           @change="exchangeTokenChange">
-                  <el-option v-for="item in tokensList"
-                             :key="item.nameid"
-                             :label="item.symbol"
-                             :value="item.symbol">
-                  </el-option>
-                </el-select>
-              </el-form-item>
-              =
-              <el-form-item>
-                <el-input v-model="usdTokenVal"></el-input>
-              </el-form-item>USD
-            </el-form>
+            <el-card class="box-card-currency">
+              <div slot="header"
+                   class="clearfix">
+                <span>Currency Converter</span>
+              </div>
+              <div class="text item">
+                <el-form :inline="true"
+                         class="demo-form-inline">
+                  <el-form-item>
+                    <el-input v-model="currTokenVal"
+                              placeholder="1"></el-input>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-select v-model="currTokenId"
+                               placeholder="Please select"
+                               @change="exchangeTokenChange">
+                      <el-option v-for="item in tokensList"
+                                 :key="item.nameid"
+                                 :label="item.symbol"
+                                 :value="item.symbol">
+                      </el-option>
+                    </el-select>
+                    =
+                  </el-form-item>
+                  <el-form-item>
+                    <el-input v-model="usdTokenVal"></el-input>
+                  </el-form-item>
+                  <el-form-item>
+                    USD
+                  </el-form-item>
+                </el-form>
+              </div>
+            </el-card>
           </div>
         </div>
         <!--Pairs Container-->
@@ -334,28 +347,36 @@
                   <tbody>
                     <tr>
                       <th>{{token0Symbol}}</th>
-                      <td>{{Number(token0BalanceInWallet).toFixed(2) + ' / $' + token0BalanceUSDInWallet.toFixed(2)}}</td>
-                      <td>{{Number(token0BalanceInVault).toFixed(2) + ' / $' + token0BalanceUSDInVault.toFixed(2)}}</td>
-                      <td>{{Number(token0BalanceInPool).toFixed(2) + ' / $' + token0BalanceUSDInPool.toFixed(2)}}</td>
-                      <td>{{Number(token0BalanceInLending).toFixed(2) + ' / $' + token0BalanceUSDInLending.toFixed(2)}}</td>
+                      <td>{{Number(token0BalanceInWallet).toFixed(2)}}</td>
+                      <!-- + ' / $' + token0BalanceUSDInWallet.toFixed(2) -->
+                      <td>{{Number(token0BalanceInVault).toFixed(2)}}</td>
+                      <!-- + ' / $' + token0BalanceUSDInVault.toFixed(2) -->
+                      <td>{{Number(token0BalanceInPool).toFixed(2)}}</td>
+                      <!-- + ' / $' + token0BalanceUSDInPool.toFixed(2) -->
+                      <td>{{Number(token0BalanceInLending).toFixed(2)}}</td>
+                      <!-- + ' / $' + token0BalanceUSDInLending.toFixed(2) -->
                       <!-- <td>{{accruedProtocolFees0}}</td> -->
                     </tr>
                     <tr>
                       <th>{{token1Symbol}}</th>
-                      <td>{{Number(token1BalanceInWallet).toFixed(2) + ' / $' + token1BalanceUSDInWallet.toFixed(2)}}</td>
-                      <td>{{Number(token1BalanceInVault).toFixed(2) + ' / $' + token1BalanceUSDInVault.toFixed(2)}}</td>
-                      <td>{{Number(token1BalanceInPool).toFixed(2) + ' / $' + token1BalanceUSDInPool.toFixed(2)}}</td>
-                      <td>{{Number(token1BalanceInLending).toFixed(2) + ' / $' + token1BalanceUSDInLending.toFixed(2)}}</td>
+                      <td>{{Number(token1BalanceInWallet).toFixed(2)}}</td>
+                      <!-- + ' / $' + token1BalanceUSDInWallet.toFixed(2) -->
+                      <td>{{Number(token1BalanceInVault).toFixed(2)}}</td>
+                      <!-- + ' / $' + token1BalanceUSDInVault.toFixed(2) -->
+                      <td>{{Number(token1BalanceInPool).toFixed(2)}}</td>
+                      <!-- + ' / $' + token1BalanceUSDInPool.toFixed(2) -->
+                      <td>{{Number(token1BalanceInLending).toFixed(2)}}</td>
+                      <!-- + ' / $' + token1BalanceUSDInLending.toFixed(2) -->
                       <!-- <td>{{accruedProtocolFees1}}</td> -->
                     </tr>
-                    <tr>
+                    <!-- <tr>
                       <th>USD</th>
                       <td>${{(Number(token0BalanceUSDInWallet) + Number(token1BalanceUSDInWallet)).toFixed(2)}}</td>
                       <td>${{(Number(token0BalanceUSDInVault) + Number(token1BalanceUSDInVault)).toFixed(2)}}</td>
                       <td>${{(Number(token0BalanceUSDInPool) + Number(token1BalanceUSDInPool)).toFixed(2)}}</td>
                       <td>${{(Number(token0BalanceUSDInLending) + Number(token1BalanceUSDInLending)).toFixed(2)}}</td>
-                      <!-- <td>{{accruedProtocolFees1}}</td> -->
-                    </tr>
+                       <td>{{accruedProtocolFees1}}</td>
+                    </tr> -->
                   </tbody>
                 </table>
               </div>
@@ -370,7 +391,7 @@
                 <span class="status">{{rangeStatus}}</span>
               </el-button><br>
               <div class="block"
-                   style="width:80%;margin-top:20px;">
+                   style="width:80%;margin-top:20px;margin-left:50px">
                 <!-- <el-slider v-model="tickRange"
                      range
                      :marks="getMarks">
@@ -380,26 +401,28 @@
                        name="my_range"
                        value="" />
               </div>
-
-              <hr>
+              <div class="clear"></div>
               <div class="range_title">Set Price Range</div>
               <el-form :inline="true"
                        :model="rangeForm"
                        class="demo-form-inline">
                 <el-form-item label="Min Price">
                   <el-input-number v-model="rangeForm.minPrice"
+                                   size="medium"
                                    @change="minPriceChange"
-                                   :precision="1"
-                                   :step="0.1"></el-input-number><br>
+                                   :precision="precision"
+                                   :step="step"></el-input-number><br>
                   {{token1Symbol}} per {{token0Symbol}}
                 </el-form-item>
                 <el-form-item label="Max Price">
                   <el-input-number v-model="rangeForm.maxPrice"
+                                   size="medium"
                                    @change="maxPriceChange"
-                                   :precision="1"
-                                   :step="0.1"></el-input-number><br>
+                                   :precision="precision"
+                                   :step="step"></el-input-number><br>
                   {{token1Symbol}} per {{token0Symbol}}
                 </el-form-item>
+                <br>
                 <el-form-item>
                   <el-button type="primary"
                              :loading="rebalanceLoading"
@@ -675,6 +698,8 @@ export default {
       currentPrice: 0,
       tickRange: [20, 80],
       currentPercent: 0,
+      precision: 18,
+      step: 0.000001,
       marks: {
       },
       rangeForm: {
@@ -875,36 +900,54 @@ export default {
     },
     pairsListSize () {
       return this.$parent.pairsList.size()
+    },
+    parentPairsListComplete () {
+      return this.$parent.pairsLoadComplete
     }
   },
   beforeDestroy () {
     clearInterval(this.exchangeTimer)
   },
   watch: {
-    pairsListSize (size) {
-      if (size > 0) {
-        console.log('currentPairsList size=', size, ';validNetwork=', this.$store.state.validNetwork)
-        if (this.$parent.pairsLoadComplete) {
+    // pairsListSize (size) {
+    //   if (size > 0) {
+    //     console.log('currentPairsList size=', size, ';validNetwork=', this.$store.state.validNetwork)
+    //     if (this.$parent.pairsLoadComplete) {
+    //       this.pairsList = this.$parent.pairsList
+    //       this.pairsLoadComplete = true
+    //     }
+    //   }
+    // },
+    // pairsLoadComplete: function (newVal, oldVal) {
+    //   console.log('pairs base info load complete：', newVal, ';old status:', oldVal)
+    //   if (this.$store.state.isConnected && this.$store.state.validNetwork && !this.myPairsListLoading) {
+    //     this.loadTemplateData()
+    //   }
+    // },
+    parentPairsListComplete (newVal) {
+      console.log('pairs base info load complete：', newVal)
+      if (newVal) {
+        if (this.$store.state.isConnected && this.$store.state.validNetwork && !this.myPairsListLoading) {
+          console.log('begin loadTemplateData')
           this.pairsList = this.$parent.pairsList
-          this.pairsLoadComplete = true
+          this.loadTemplateData()
         }
-      }
-    },
-    pairsLoadComplete: function (newVal, oldVal) {
-      console.log('pairs base info load complete：', newVal, ';old status:', oldVal)
-      if (this.$store.state.isConnected && this.$store.state.validNetwork && !this.myPairsListLoading) {
-        this.loadTemplateData()
       }
     },
     newMinPrice (price) {
       console.log('new min price=', price)
-      if (!isNaN(price)) { this.tickLower = this.priceToTick(price, this.token0Decimal, this.token1Decimal) } else { this.tickLower = 0 }
+      if (!isNaN(price)) {
+        console.log('tickLower->price:', price)
+        this.tickLower = this.priceToTick(price, this.token0Decimal, this.token1Decimal)
+      } else { this.tickLower = 0 }
       this.drawTickRangeChart()
     },
     newMaxPrice (price) {
       console.log('new max price=', price)
-      this.tickUpper = this.priceToTick(price, this.token0Decimal, this.token1Decimal)
-      if (!isNaN(price)) { this.tickUpper = this.priceToTick(price, this.token0Decimal, this.token1Decimal) } else { this.tickUpper = 0 }
+      if (!isNaN(price)) {
+        console.log('tickUpper->price:', price)
+        this.tickUpper = this.priceToTick(price, this.token0Decimal, this.token1Decimal)
+      } else { this.tickUpper = 0 }
       this.drawTickRangeChart()
     },
     '$store.state.isConnected': function (newVal, oldVal) {
@@ -1054,8 +1097,8 @@ export default {
           token1RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token1.symbol)
           // console.log('token0 RateOfUSD=', token0RateOfUSD)
           // console.log('token1 RateOfUSD=', token1RateOfUSD)
-          if (this.pairsList.get(i).tvlTotal0 >= 0) this.pairsList.get(i).tvlTotal0USD = Number(this.pairsList.get(i).tvlTotal0) * Number(token0RateOfUSD)
-          if (this.pairsList.get(i).tvlTotal1 >= 0) this.pairsList.get(i).tvlTotal1USD = Number(this.pairsList.get(i).tvlTotal1) * Number(token1RateOfUSD)
+          // if (this.pairsList.get(i).tvlTotal0 >= 0) this.pairsList.get(i).tvlTotal0USD = Number(this.pairsList.get(i).tvlTotal0) * Number(token0RateOfUSD)
+          // if (this.pairsList.get(i).tvlTotal1 >= 0) this.pairsList.get(i).tvlTotal1USD = Number(this.pairsList.get(i).tvlTotal1) * Number(token1RateOfUSD)
           this.pairsList.get(i).tvl = this.pairsList.get(i).tvlTotal0USD + this.pairsList.get(i).tvlTotal1USD
           if (this.pairsList.get(i).myValueToken0Locked >= 0) {
             this.pairsList.get(i).myValueToken0USDLocked = Number(this.pairsList.get(i).myValueToken0Locked) * Number(token0RateOfUSD)
@@ -1087,6 +1130,8 @@ export default {
         if (Number(this.pairsList.get(index).cLow) > 0 && Number(this.pairsList.get(index).cHigh) > 0) {
           this.tickLower = this.pairsList.get(index).cLow
           this.tickUpper = this.pairsList.get(index).cHigh
+          console.log('changeSelectedPair=>tickLower', this.tickLower)
+          console.log('changeSelectedPair=>tickUpper', this.tickUpper)
         } else {
           this.tickLower = 0
           this.tickUpper = 0
@@ -1163,20 +1208,21 @@ export default {
         if (Number(clow) > 0 && Number(chigh) > 0) {
           this.tickLower = clow
           this.tickUpper = chigh
+          console.log('loadTokensBalance=>tickLower=', this.tickLower, 'loadTokensBalance=>tickUpper=', this.tickUpper)
         }
       }
-      console.log('tickLower_price=', this.tickLower)
+      console.log('tickLower_price=', this.tickLower, ';this.token0Decimal=', this.token0Decimal, ';this.token1Decimal=', this.token1Decimal)
       console.log('tickUpper_price=', this.tickUpper)
       this.rangeForm.minPrice = this.tickToPrice(this.tickLower, this.token0Decimal, this.token1Decimal)
       this.rangeForm.maxPrice = this.tickToPrice(this.tickUpper, this.token0Decimal, this.token1Decimal)
-      console.log('maxPrice=', this.rangeForm.maxPrice)
+      console.log('rangeForm.minPrice=', this.rangeForm.minPrice, 'rangeForm.maxPrice=', this.rangeForm.maxPrice)
       var _this = this
       $('.js-range-slider').ionRangeSlider({
         skin: 'big',
         type: 'double',
         grid: true,
         prefix: '$',
-        step: 0.1,
+        step: this.step,
         onChange: function (data) {
           console.log('from=', data.from)
           _this.rangeForm.minPrice = data.from
@@ -1185,7 +1231,7 @@ export default {
       })
       this.priceRangeSlider = $('.js-range-slider').data('ionRangeSlider')
       this.priceRangeSlider.update({
-        min: (parseFloat(this.rangeForm.minPrice) - 230).toFixed(1),
+        min: (parseFloat(this.rangeForm.minPrice) - 230) < 0 ? 0 : (parseFloat(this.rangeForm.minPrice) - 230).toFixed(1),
         max: (parseFloat(this.rangeForm.maxPrice) + 230).toFixed(1),
         from: this.rangeForm.minPrice,
         to: this.rangeForm.maxPrice
@@ -1620,12 +1666,24 @@ export default {
       }
     },
     priceToTick (price, decimal0, decimal1) {
-      return parseInt(Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001))
+      console.log('price=', price, 'decimal0=', decimal0, 'decimal1=', decimal1)
+      // return parseInt(Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001))
+      return Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001)
     },
     tickToPrice (tick, decimal0, decimal1) {
       console.log('decimal0=', decimal0, 'decimal1=', decimal1)
       console.log('Math.pow(1.0001, tick)=', Math.pow(1.0001, tick), 'decimal=', decimal0 - decimal1)
-      return (Math.pow(1.0001, tick) * Math.pow(10, (decimal0 - decimal1))).toFixed(1)
+      // var price = Math.pow(1.0001, tick) * Math.pow(10, (decimal0 - decimal1))
+      // if (price.toFixed(1) > 0) {
+      //   this.precision = 1
+      //   this.step = 0.1
+      //   return price.toFixed(1)
+      // } else {
+      //   this.precision = 3
+      //   this.step = 0.001
+      //   return price.toFixed(3)
+      // }
+      return Math.pow(1.0001, tick) * Math.pow(10, (decimal0 - decimal1))
     },
     onSubmit () {
       console.log('submit!')
@@ -1846,6 +1904,12 @@ export default {
   padding: 20px;
   margin-bottom: 0px !important;
 }
+.block {
+  float: left;
+}
+.el-divider--horizontal {
+  margin: 0px !important;
+}
 .range_title {
   font-size: 20px;
   color: black;
@@ -1913,6 +1977,10 @@ export default {
   width: 280px;
   margin: 10px;
 }
+.box-card-currency {
+  width: 900px;
+  margin: 10px;
+}
 .el-form-item__label {
   line-height: 20px !important;
 }
@@ -1928,5 +1996,10 @@ body {
 }
 .el-container {
   height: 100%;
+}
+.el-input-number.is-without-controls .el-input__inner {
+  width: 200px;
+  line-height: 30px;
+  height: 28px;
 }
 </style>
