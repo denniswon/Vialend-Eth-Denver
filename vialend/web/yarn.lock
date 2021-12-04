@@ -4767,6 +4767,11 @@
   "resolved" "https://registry.nlark.com/core-js/download/core-js-2.6.12.tgz?cache=0&sync_timestamp=1629206149461&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fcore-js%2Fdownload%2Fcore-js-2.6.12.tgz"
   "version" "2.6.12"
 
+"core-js@^3.6.5":
+  "integrity" "sha512-ciYCResnLIATSsXuXnIOH4CbdfgV+H1Ltg16hJFN7/v6OxqnFr/IFGeLacaZ+fHLAm0TBbXwNK9/DNBzBUrO/g=="
+  "resolved" "https://registry.npmjs.org/core-js/-/core-js-3.19.2.tgz"
+  "version" "3.19.2"
+
 "core-util-is@~1.0.0", "core-util-is@1.0.2":
   "integrity" "sha1-tf1UIgqivFq1eqtxQMlAdUUDwac="
   "resolved" "https://registry.nlark.com/core-util-is/download/core-util-is-1.0.2.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fcore-util-is%2Fdownload%2Fcore-util-is-1.0.2.tgz"
@@ -7024,6 +7029,10 @@
   "integrity" "sha1-RXWyHivO50NKqb5mL0t7X5wrUTg="
   "resolved" "https://registry.nlark.com/flatted/download/flatted-2.0.2.tgz"
   "version" "2.0.2"
+
+"flip@github:nnattawat/flip":
+  "resolved" "git+ssh://git@github.com/nnattawat/flip.git#cbfef47f6248b42ff5b860cc2cad888d4e0c1b9a"
+  "version" "1.1.2"
 
 "flush-write-stream@^1.0.0":
   "integrity" "sha1-jdfYc6G6vCB9lOrQwuDkQnbr8ug="
@@ -15694,6 +15703,14 @@
     "espree" "^4.1.0"
     "esquery" "^1.0.1"
     "lodash" "^4.17.11"
+
+"vue-flip@^1.0.2":
+  "integrity" "sha512-AJEEzDnK0PihZZp9jpIzSa+RgGvk1lLeKPGPXVQqurY9CRIZvzsegQ9T4Oh9H8jngZ4pAEBbh7kvmrqAQL+qgQ=="
+  "resolved" "https://registry.npmjs.org/vue-flip/-/vue-flip-1.0.2.tgz"
+  "version" "1.0.2"
+  dependencies:
+    "core-js" "^3.6.5"
+    "vue" "^2.6.10"
 
 "vue-hot-reload-api@^2.3.0":
   "integrity" "sha1-UylVzB6yCKPZkLOp+acFdGV+CPI="

@@ -5,7 +5,7 @@
        element-loading-spinner="el-icon-loading"
        element-loading-background="rgba(0, 0, 0, 0.8)">
     <router-view />
-    <footer class="footer">
+    <!-- <footer class="footer">
       <div class="container">
         <div class="row">
           <div class="col">
@@ -16,7 +16,7 @@
           </div>
         </div>
       </div>
-    </footer>
+    </footer> -->
   </div>
 </template>
 

@@ -313,12 +313,12 @@
                        @click="deposit"
                        :loading="depositLoading"
                        :disabled="btnDepositDisabled"
-                       :style="{width:'45%',float: 'right',display:isConnected?'':'none'}">Next</el-button>
+                       :style="{width:'45%',float: 'right',display:$store.state.isConnected?'':'none'}">Next</el-button>
             <el-button type="
                      next"
                        style="width:100%;"
                        @click="connectWallet"
-                       :style="{display:isConnected?'none':''}">Connect Wallet</el-button>
+                       :style="{display:$store.state.isConnected?'none':''}">Connect Wallet</el-button>
           </div>
         </div>
         <!--Step3 content -->
@@ -580,6 +580,9 @@ export default {
 
     }
   },
+  beforeCreate () {
+    document.querySelector('body').setAttribute('style', 'overflow-x: hidden;overflow-y: auto;')
+  },
   created: async function () {
     console.log('Dashboard created -> validNetwork:', this.$store.state.validNetwork)
     console.log('Dashboard created -> isConnected:', this.$store.state.isConnected)
@@ -710,6 +713,8 @@ export default {
         console.log('network changed,pairlist size:', this.pairsList.size())
         if (this.pairsList.size() === 0 && !this.$parent.pairsInfoLoading) this.$parent.loadPairsInfo()
         // this.loadMyData() // 切换Network时，如何加载myload？？？
+      } else if (!this.$store.state.validNetwork) {
+        this.clearMyData()
       }
       console.log('current chainid changed,id:', this.$store.state.chainId)
       console.log('newVal=', newVal, 'oldVal=', oldVal)

@@ -65,11 +65,13 @@
              :style="'display:' + (featureContainer === 'template' ? '' : 'none') "
              v-loading="templatePageLoading">
           <div style="float:right;padding:10px;">
-            <el-button @click="showNewPairDialog"
+            <el-button type="primary"
+                       @click="showNewPairDialog"
                        plain>New Pair</el-button>&nbsp;&nbsp;
             <el-dropdown @command="handleCommand"
                          ref="messageDrop">
-              <el-button>
+              <el-button type="primary"
+                         plain>
                 {{filterCommand}}<i class="el-icon-arrow-down el-icon--right"></i>
               </el-button>
               <el-dropdown-menu slot="dropdown">
@@ -87,34 +89,70 @@
             <div class="block"
                  v-for="pair in pairsList._getData()"
                  :key="pair.id">
-              <!-- <el-col :span="6"
-                    :offset="2"
-                    v-for="pair in pairsList._getData()"
-                    :key="pair.id"> -->
-              <el-card class="box-card"
-                       v-loading="templatePairsLoading">
-                <div class="text item">
-                  <h3>{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</h3>
-                </div>
-                <div class="text item">
-                  Fee Tier<br><span style="color:#409eff"><input class="btn btn-default btn-sm"
-                           type="button"
-                           :value="Number(pair.feeTier / 10000) + '%'"></span>
-                </div>
-                <div class="text item">
-                  Current APR<br><span style="color:#409eff">{{Number(pair.currentAPR).toFixed(2)}}%</span>
-                </div>
-                <div class="text item">
-                  TVL<br><span style="color:#409eff">{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
-                    <!-- ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}} -->
-                    </span>
-                </div>
-                <div class="text item">
-                  Assets ratio<br><span style="color:#409eff">{{Number(pair.lendingRatio).toFixed(2)}}% Compound<br>
-                    {{Number(pair.uniswapRatio).toFixed(2)}}% Uniswap V3</span>
-                </div>
-              </el-card>
-              <!-- </el-col> -->
+              <vue-flip width="300px"
+                        height="500px"
+                        v-model="pair.flipped">
+                <template v-slot:front
+                          class="front">
+                  <el-card class="box-card"
+                           v-loading="templatePairsLoading"
+                           element-loading-text="Loading"
+                           element-loading-spinner="el-icon-loading"
+                           element-loading-background="rgba(0, 0, 0, 0.8)">
+                    <div slot="header"
+                         class="clearfix card-title">
+                      <span style="font-size:20px;">{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</span>
+                      <span style="float: right; padding: 3px 0;cursor: pointer;"
+                            type="text"
+                            @click="pair.flipped = !pair.flipped"><i class="el-icon-menu"></i></span>
+                    </div>
+
+                    <div class="text item">
+                      Fee Tier<br><span><input class="btn btn-default btn-sm"
+                               type="button"
+                               :value="Number(pair.feeTier / 10000) + '%'"></span>
+                    </div>
+                    <div class="text item">
+                      Current APR<br><span>{{Number(pair.currentAPR).toFixed(2)}}%</span>
+                    </div>
+                    <div class="text item">
+                      TVL<br><span>{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
+                        <!-- ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}} -->
+                      </span>
+                    </div>
+                    <div class="text item">
+                      Assets ratio<br><span>{{Number(pair.lendingRatio).toFixed(2)}}% Compound<br>
+                        {{Number(pair.uniswapRatio).toFixed(2)}}% Uniswap V3</span>
+                    </div>
+                  </el-card>
+                </template>
+                <template v-slot:back
+                          class="back">
+                  <el-card class="box-card"
+                           v-loading="templatePairsLoading">
+                    <div slot="header"
+                         class="clearfix">
+                      <span style="font-size:20px;">{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</span>
+                      <span style="float: right; padding: 3px 0"
+                            type="text"
+                            @click="pair.flipped = !pair.flipped"><i class="el-icon-s-data"></i></span>
+                    </div>
+
+                    <div class="text item">
+                      <span>Token Detail</span>
+                    </div>
+                    <div class="text item">
+                      <br><span>&nbsp;</span>
+                    </div>
+                    <div class="text item">
+                      <br><span>&nbsp;</span>
+                    </div>
+                    <div class="text item">
+                      <br><span>&nbsp;</span>
+                    </div>
+                  </el-card>
+                </template>
+              </vue-flip>
             </div>
           </div>
           <el-dialog title="New Pair"
@@ -670,6 +708,7 @@ import Token from '../model/Token'
 import Pairs from '../model/Pairs'
 import ArrayList from '../common/ArrayList'
 import axios from 'axios'
+import VueFlip from 'vue-flip'
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider)
@@ -681,7 +720,7 @@ if (typeof web3 !== 'undefined') {
 }
 
 export default {
-  components: { Header },
+  components: { Header, 'vue-flip': VueFlip },
   data () {
     return {
       featureContainer: 'template',
@@ -801,7 +840,8 @@ export default {
       newPairDialogVisible: false,
       filterCommand: 'All',
       bridgeAddress: '0x033F3C5eAd18496BA462783fe9396CFE751a2342',
-      pairsLoadComplete: false
+      pairsLoadComplete: false,
+      flipped: false
     }
   },
   created: async function () {
@@ -1975,7 +2015,23 @@ export default {
 
 .box-card {
   width: 280px;
+  height: 380px;
   margin: 10px;
+  background-color: #121218;
+  border-radius: 16px;
+}
+.box-card:hover {
+  border-style: solid;
+  border-color: #03a9f4;
+  box-shadow: 0 0 15px #03a9f4;
+}
+.el-card /deep/ .el-card__header {
+  background-color: #102130 !important;
+  color: #ffffff;
+}
+.el-card /deep/ .el-card__body {
+  background-color: #121218 !important;
+  color: #ffffff;
 }
 .box-card-currency {
   width: 900px;

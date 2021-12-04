@@ -47,12 +47,28 @@
                   Admin
                 </router-link>
               </div>&nbsp;&nbsp;
-              <div v-if="$store.state.isConnected"
+              <div v-if="$store.state.isConnected === false"
+                   :class="[walletButtonClass,disConnectClass]">
+                <a href="#"
+                   @click="connectWallet">Connect Wallet</a>
+              </div>
+              <div v-else-if="$store.state.isConnected && $store.state.validNetwork"
                    :class="[walletButtonClass,connectClass]">
                 <a href="#"
                    @click="disconnectWallet">{{ $store.state.currentAccount }}</a>
               </div>
-              <div v-else-if="validNetwork"
+              <div v-else
+                   :class="[walletButtonClass,disConnectClass]">
+                <a href="#"
+                   @click="connectWallet">Wrong network</a>
+              </div>
+
+              <!-- <div v-if="$store.state.isConnected && validNetwork"
+                   :class="[walletButtonClass,connectClass]">
+                <a href="#"
+                   @click="disconnectWallet">{{ $store.state.currentAccount }}</a>
+              </div>
+              <div v-else-if="!validNetwork"
                    :class="[walletButtonClass,disConnectClass]">
                 <a href="#"
                    @click="connectWallet">Wrong network</a>
@@ -61,7 +77,7 @@
                    :class="[walletButtonClass,disConnectClass]">
                 <a href="#"
                    @click="connectWallet">Connect Wallet</a>
-              </div>
+              </div> -->
             </div>
             <div class="hamburger ml-auto">
               <i class="fa fa-bars"
@@ -162,12 +178,12 @@ export default {
       this.$store.state.chainId = await web3.eth.getChainId()
       console.log('check chain id=', this.$store.state.chainId)
       if (this.$store.state.availableChainId.includes(this.$store.state.chainId)) {
-        this.$store.state.isConnected = true
+        // this.$store.state.isConnected = true
         this.$store.state.validNetwork = true
         return true
       } else {
         this.isAdmin = false
-        this.$store.state.isConnected = false
+        // this.$store.state.isConnected = false
         this.$store.state.validNetwork = false
         return false
       }

@@ -6,7 +6,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     name: 'Vialend',
-    availableChainId: [1, 5],
+    availableChainId: [5],
     validNetwork: false,
     isAdmin: false,
     tokenExchangeTable: [

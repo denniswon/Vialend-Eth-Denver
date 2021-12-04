@@ -54,6 +54,7 @@ function Pairs () {
 	this.myValueToken1Locked = 0.00
 	this.myValueToken0USDLocked = 0
 	this.myValueToken1USDLocked = 0
+	this.flipped = false
 }
 
 Pairs.prototype.Empty = function () {
@@ -81,5 +82,6 @@ Pairs.prototype.Empty = function () {
 	this.myValueToken1Locked = 0.00
 	this.myValueToken0USDLocked = 0
 	this.myValueToken1USDLocked = 0
+	this.flipped = false
 }
 export default Pairs
