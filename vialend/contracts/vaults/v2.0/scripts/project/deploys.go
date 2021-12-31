@@ -532,7 +532,7 @@ func DeployStratByDeployer() {
 	creatorFee := uint8(10)
 	vault := common.HexToAddress(Cfg.VAULT)
 
-	contracts := [10]common.Address{
+	contracts := [11]common.Address{
 		protocolAddr,
 		FromAddress,
 		common.HexToAddress(Network.LendingContracts.WETH),
@@ -543,6 +543,7 @@ func DeployStratByDeployer() {
 		common.HexToAddress(Network.TokenB),
 		vault,
 		FromAddress,
+		VaultFactory,
 	}
 
 	_ = vaultCap
@@ -587,7 +588,7 @@ func DeployStratByGo() {
 	creatorFee := uint8(10)
 	vault := Cfg.VAULT
 
-	contracts := [10]common.Address{
+	contracts := [11]common.Address{
 		protocolAddr,
 		FromAddress,
 		common.HexToAddress(Network.LendingContracts.WETH),
@@ -598,6 +599,7 @@ func DeployStratByGo() {
 		common.HexToAddress(Network.TokenB),
 		common.HexToAddress(vault),
 		FromAddress,
+		common.HexToAddress(Cfg.VAULT_FACTORY),
 	}
 
 	_ = vaultCap

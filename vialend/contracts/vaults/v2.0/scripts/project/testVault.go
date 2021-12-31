@@ -1309,7 +1309,7 @@ func TxConfirm(tx common.Hash) {
 
 	//	if 	Sleep(5000)
 
-	myPrintln("ContractAddress:", tr.ContractAddress)
+	//	myPrintln("ContractAddress:", tr.ContractAddress)
 
 }
 

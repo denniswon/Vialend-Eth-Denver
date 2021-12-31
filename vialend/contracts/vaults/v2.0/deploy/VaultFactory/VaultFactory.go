@@ -30,8 +30,8 @@ var (
 
 // ApiMetaData contains all meta data concerning the Api contract.
 var ApiMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_team\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_this\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"name\":\"CreatedVault\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_stat\",\"type\":\"uint256\"}],\"name\":\"changeStat\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sORv\",\"type\":\"address\"}],\"name\":\"checkActive\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[10]\",\"name\":\"contracts\",\"type\":\"address[10]\"},{\"internalType\":\"uint256\",\"name\":\"_vaultCap\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_individualCap\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"_uniPortion\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_compPortion\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_protocolFee\",\"type\":\"uint8\"},{\"internalType\":\"uint24\",\"name\":\"_feetier\",\"type\":\"uint24\"},{\"internalType\":\"uint128\",\"name\":\"_quoteAmount\",\"type\":\"uint128\"}],\"name\":\"createVault\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAdmin\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"}],\"name\":\"getStat\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTeam\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"isContract\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"pairStrategy\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"pairVault\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"}],\"name\":\"repair\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_team\",\"type\":\"address\"}],\"name\":\"setTeam\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"vaults\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
-	Bin: "0x608060405234801561001057600080fd5b50604051610b79380380610b7983398101604081905261002f91610062565b60008054336001600160a01b031991821617909155600180549091166001600160a01b0392909216919091179055610092565b60006020828403121561007457600080fd5b81516001600160a01b038116811461008b57600080fd5b9392505050565b610ad8806100a16000396000f3fe608060405234801561001057600080fd5b50600436106100cf5760003560e01c80638bce6edd1161008c578063ab04505811610066578063ab045058146101d2578063de8d8b431461020b578063e23cc6c714610234578063ed7dd44e1461024757600080fd5b80638bce6edd146101865780638c64ea4a14610197578063a87d942c146101ca57600080fd5b806306e7cf18146100d4578063095cf5c6146100e957806316279055146100fc578063395701db146101215780635eebb986146101625780636e9960c314610175575b600080fd5b6100e76100e2366004610800565b61026a565b005b6100e76100f7366004610841565b6102f1565b61010e61010a366004610841565b3b90565b6040519081526020015b60405180910390f35b61014a61012f366004610841565b6004602052600090815260409020546001600160a01b031681565b6040516001600160a01b039091168152602001610118565b6100e76101703660046108b6565b61032a565b6000546001600160a01b031661014a565b6001546001600160a01b031661014a565b6101aa6101a53660046109a3565b610626565b604080516001600160a01b03938416815292909116602083015201610118565b60055461010e565b61010e6101e03660046109bc565b6001600160a01b03918216600090815260026020908152604080832093909416825291909152205490565b61014a610219366004610841565b6003602052600090815260409020546001600160a01b031681565b6100e76102423660046109bc565b61065f565b61025a610255366004610841565b610684565b6040519015158152602001610118565b6000546001600160a01b0316331461028157600080fd5b600081116102c55760405162461bcd60e51b815260206004820152600c60248201526b1a5b9d985b1a59081cdd185d60a21b60448201526064015b60405180910390fd5b6001600160a01b0392831660009081526002602090815260408083209490951682529290925291902055565b6000546001600160a01b0316331461030857600080fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055565b6101208801516000805460c08b015160e08c0151604051632a3c85d760e01b81523060048201526001600160a01b039384166024820152918316604483015282166064820152608481018b905260a481018a905291921690632a3c85d79060c4016020604051808303816000875af11580156103aa573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103ce9190610a0b565b90506001600160a01b03811661040b5760405162461bcd60e51b8152602060048201526002602482015261076360f41b60448201526064016102bc565b60006040518061014001604052808b6000600a811061042c5761042c6109f5565b602090810291909101516001600160a01b039081168352339183019190915260408d8101518216818401526060808f01518316908401526080808f015183169084015260a0808f015183169084015260c0808f015183169084015260e0808f015183169084015285821661010080850191909152600080548416610120909501949094528e01519051631e0c270560e01b81529394509192911690631e0c2705906104e59085908c908c908c908c908c90600401610a28565b6020604051808303816000875af1158015610504573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105289190610a0b565b90506001600160a01b0381166105655760405162461bcd60e51b8152602060048201526002602482015261073360f41b60448201526064016102bc565b60405163351a456f60e21b81526001600160a01b03828116600483015284169063d46915bc90602401600060405180830381600087803b1580156105a857600080fd5b505af11580156105bc573d6000803e3d6000fd5b505050506105ca81846106f9565b604080513081523360208201526001600160a01b03838116828401528516606082015290517f341f822f1e2a166284695f5b30ad55eb8e9932e740b7eed3ac9a1871f24a19a79181900360800190a15050505050505050505050565b6005818154811061063657600080fd5b6000918252602090912060029091020180546001909101546001600160a01b0391821692501682565b6000546001600160a01b0316331461067657600080fd5b61068082826106f9565b5050565b6001600160a01b0380821660009081526002602090815260408083206003835281842054909416835292905290812054600114806106f357506001600160a01b038083166000818152600460209081526040808320549094168252600281528382209282529190915220546001145b92915050565b6001600160a01b0391821660008181526002602081815260408084209587168085529582528084208390558484526003825280842080546001600160a01b0319908116881790915586855260048352818520805482168717905581518083019092529481529081019485526005805460018101825593525191027f036b6384b5eca791c62761152d0c79bb0604c104a5fb6f4eb0703f3154bb3db0810180549286169284169290921790915591517f036b6384b5eca791c62761152d0c79bb0604c104a5fb6f4eb0703f3154bb3db19092018054929093169116179055565b6001600160a01b03811681146107ed57600080fd5b50565b80356107fb816107d8565b919050565b60008060006060848603121561081557600080fd5b8335610820816107d8565b92506020840135610830816107d8565b929592945050506040919091013590565b60006020828403121561085357600080fd5b813561085e816107d8565b9392505050565b634e487b7160e01b600052604160045260246000fd5b803560ff811681146107fb57600080fd5b803562ffffff811681146107fb57600080fd5b80356001600160801b03811681146107fb57600080fd5b600080600080600080600080610220898b0312156108d357600080fd5b89601f8a01126108e257600080fd5b60405161014080820182811067ffffffffffffffff8211171561090757610907610865565b6040528a01818c82111561091a57600080fd5b8b5b8281101561093b5761092d816107f0565b82526020918201910161091c565b509199503597505061016089013595506109586101808a0161087b565b94506109676101a08a0161087b565b93506109766101c08a0161087b565b92506109856101e08a0161088c565b91506109946102008a0161089f565b90509295985092959890939650565b6000602082840312156109b557600080fd5b5035919050565b600080604083850312156109cf57600080fd5b82356109da816107d8565b915060208301356109ea816107d8565b809150509250929050565b634e487b7160e01b600052603260045260246000fd5b600060208284031215610a1d57600080fd5b815161085e816107d8565b6101e08101818860005b600a811015610a5a5781516001600160a01b0316835260209283019290910190600101610a32565b50505060ff871661014083015260ff861661016083015260ff851661018083015262ffffff84166101a08301526001600160801b0383166101c083015297965050505050505056fea26469706673582212206bbb7619d0cf7fa131402eb38b1940a75c99948f50f8316831f7c5aaeff19c9a64736f6c634300080a0033",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_team\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_this\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"name\":\"CreatedVault\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_stat\",\"type\":\"uint256\"}],\"name\":\"changeStat\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sORv\",\"type\":\"address\"}],\"name\":\"checkActive\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[10]\",\"name\":\"contracts\",\"type\":\"address[10]\"},{\"internalType\":\"uint256\",\"name\":\"_vaultCap\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_individualCap\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"_uniPortion\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_compPortion\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"_protocolFee\",\"type\":\"uint8\"},{\"internalType\":\"uint24\",\"name\":\"_feetier\",\"type\":\"uint24\"},{\"internalType\":\"uint128\",\"name\":\"_quoteAmount\",\"type\":\"uint128\"}],\"name\":\"createVault\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAdmin\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"getPair0\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"}],\"name\":\"getStat\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTeam\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"isContract\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"a1\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"a2\",\"type\":\"address\"}],\"name\":\"onlyPair\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"pairs\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"}],\"name\":\"repair\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_team\",\"type\":\"address\"}],\"name\":\"setTeam\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"vaults\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"vault\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	Bin: "0x608060405234801561001057600080fd5b50604051610bf0380380610bf083398101604081905261002f91610062565b60008054336001600160a01b031991821617909155600180549091166001600160a01b0392909216919091179055610092565b60006020828403121561007457600080fd5b81516001600160a01b038116811461008b57600080fd5b9392505050565b610b4f806100a16000396000f3fe608060405234801561001057600080fd5b50600436106100ea5760003560e01c80638bce6edd1161008c578063ab04505811610066578063ab045058146101fa578063e23cc6c714610233578063ed7dd44e14610246578063fe33b3021461025957600080fd5b80638bce6edd146101ae5780638c64ea4a146101bf578063a87d942c146101f257600080fd5b80632aaafb6d116100c85780632aaafb6d1461013c5780635eebb9861461015f578063666358c8146101725780636e9960c31461019d57600080fd5b806306e7cf18146100ef578063095cf5c6146101045780631627905514610117575b600080fd5b6101026100fd36600461087e565b610282565b005b6101026101123660046108bf565b610309565b6101296101253660046108bf565b3b90565b6040519081526020015b60405180910390f35b61014f61014a3660046108dc565b610342565b6040519015158152602001610133565b61010261016d366004610966565b610392565b6101856101803660046108bf565b61063a565b6040516001600160a01b039091168152602001610133565b6000546001600160a01b0316610185565b6001546001600160a01b0316610185565b6101d26101cd366004610a53565b6106a8565b604080516001600160a01b03938416815292909116602083015201610133565b600454610129565b6101296102083660046108dc565b6001600160a01b03918216600090815260026020908152604080832093909416825291909152205490565b6101026102413660046108dc565b6106e1565b61014f6102543660046108bf565b610706565b6101856102673660046108bf565b6003602052600090815260409020546001600160a01b031681565b6000546001600160a01b0316331461029957600080fd5b600081116102dd5760405162461bcd60e51b815260206004820152600c60248201526b1a5b9d985b1a59081cdd185d60a21b60448201526064015b60405180910390fd5b6001600160a01b0392831660009081526002602090815260408083209490951682529290925291902055565b6000546001600160a01b0316331461032057600080fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055565b6001600160a01b0382811660009081526003602052604081205490918381169116148061038b57506001600160a01b038281166000908152600360205260409020548116908416145b9392505050565b6101208801516000805460c08b015160e08c0151604051632a3c85d760e01b81523060048201526001600160a01b039384166024820152918316604483015282166064820152608481018b905260a481018a905291921690632a3c85d79060c4016020604051808303816000875af1158015610412573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104369190610a82565b90506001600160a01b0381166104735760405162461bcd60e51b8152602060048201526002602482015261076360f41b60448201526064016102d4565b60006040518061016001604052808b6000600a811061049457610494610a6c565b602090810291909101516001600160a01b039081168352339183019190915260408d8101518216818401526060808f01518316908401526080808f015183169084015260a0808f015183169084015260c0808f015183169084015260e0808f01518316908401528582166101008085019190915260008054841661012086015230610140909501949094528e01519051630873208160e11b815293945091929116906310e64102906105549085908c908c908c908c908c90600401610a9f565b6020604051808303816000875af1158015610573573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105979190610a82565b90506001600160a01b0381166105d45760405162461bcd60e51b8152602060048201526002602482015261073360f41b60448201526064016102d4565b6105de818461077b565b604080513081523360208201526001600160a01b03838116828401528516606082015290517f341f822f1e2a166284695f5b30ad55eb8e9932e740b7eed3ac9a1871f24a19a79181900360800190a15050505050505050505050565b6001600160a01b038181166000908152600360205260408120549091166106895760405162461bcd60e51b815260206004820152600360248201526206973360ec1b60448201526064016102d4565b506001600160a01b039081166000908152600360205260409020541690565b600481815481106106b857600080fd5b6000918252602090912060029091020180546001909101546001600160a01b0391821692501682565b6000546001600160a01b031633146106f857600080fd5b610702828261077b565b5050565b6001600160a01b03808216600090815260026020908152604080832060038352818420549094168352929052908120546001148061077557506001600160a01b038083166000818152600360209081526040808320549094168252600281528382209282529190915220546001145b92915050565b6001600160a01b0391821660008181526002602081815260408084209587168085529582528084208390558484526003825280842080546001600160a01b03199081168817909155868552818520805482168717905581518083019092529481529081019485526004805460018101825593525191027f8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19b810180549286169284169290921790915591517f8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19c9092018054929093169116179055565b6001600160a01b038116811461086b57600080fd5b50565b803561087981610856565b919050565b60008060006060848603121561089357600080fd5b833561089e81610856565b925060208401356108ae81610856565b929592945050506040919091013590565b6000602082840312156108d157600080fd5b813561038b81610856565b600080604083850312156108ef57600080fd5b82356108fa81610856565b9150602083013561090a81610856565b809150509250929050565b634e487b7160e01b600052604160045260246000fd5b803560ff8116811461087957600080fd5b803562ffffff8116811461087957600080fd5b80356001600160801b038116811461087957600080fd5b600080600080600080600080610220898b03121561098357600080fd5b89601f8a011261099257600080fd5b60405161014080820182811067ffffffffffffffff821117156109b7576109b7610915565b6040528a01818c8211156109ca57600080fd5b8b5b828110156109eb576109dd8161086e565b8252602091820191016109cc565b50919950359750506101608901359550610a086101808a0161092b565b9450610a176101a08a0161092b565b9350610a266101c08a0161092b565b9250610a356101e08a0161093c565b9150610a446102008a0161094f565b90509295985092959890939650565b600060208284031215610a6557600080fd5b5035919050565b634e487b7160e01b600052603260045260246000fd5b600060208284031215610a9457600080fd5b815161038b81610856565b6102008101818860005b600b811015610ad15781516001600160a01b0316835260209283019290910190600101610aa9565b50505060ff871661016083015260ff861661018083015260ff85166101a083015262ffffff84166101c08301526001600160801b0383166101e083015297965050505050505056fea2646970667358221220433ff59508be3477ac323970a4787d94793f76c1ba4fc6546ec504ad071a5fc264736f6c634300080a0033",
 }
 
 // ApiABI is the input ABI used to generate the binding from.
@@ -294,6 +294,37 @@ func (_Api *ApiCallerSession) GetCount() (*big.Int, error) {
 	return _Api.Contract.GetCount(&_Api.CallOpts)
 }
 
+// GetPair0 is a free data retrieval call binding the contract method 0x666358c8.
+//
+// Solidity: function getPair0(address _addr) view returns(address)
+func (_Api *ApiCaller) GetPair0(opts *bind.CallOpts, _addr common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _Api.contract.Call(opts, &out, "getPair0", _addr)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetPair0 is a free data retrieval call binding the contract method 0x666358c8.
+//
+// Solidity: function getPair0(address _addr) view returns(address)
+func (_Api *ApiSession) GetPair0(_addr common.Address) (common.Address, error) {
+	return _Api.Contract.GetPair0(&_Api.CallOpts, _addr)
+}
+
+// GetPair0 is a free data retrieval call binding the contract method 0x666358c8.
+//
+// Solidity: function getPair0(address _addr) view returns(address)
+func (_Api *ApiCallerSession) GetPair0(_addr common.Address) (common.Address, error) {
+	return _Api.Contract.GetPair0(&_Api.CallOpts, _addr)
+}
+
 // GetStat is a free data retrieval call binding the contract method 0xab045058.
 //
 // Solidity: function getStat(address _strategy, address _vault) view returns(uint256)
@@ -387,12 +418,43 @@ func (_Api *ApiCallerSession) IsContract(addr common.Address) (*big.Int, error) 
 	return _Api.Contract.IsContract(&_Api.CallOpts, addr)
 }
 
-// PairStrategy is a free data retrieval call binding the contract method 0x395701db.
+// OnlyPair is a free data retrieval call binding the contract method 0x2aaafb6d.
 //
-// Solidity: function pairStrategy(address ) view returns(address)
-func (_Api *ApiCaller) PairStrategy(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+// Solidity: function onlyPair(address a1, address a2) view returns(bool)
+func (_Api *ApiCaller) OnlyPair(opts *bind.CallOpts, a1 common.Address, a2 common.Address) (bool, error) {
 	var out []interface{}
-	err := _Api.contract.Call(opts, &out, "pairStrategy", arg0)
+	err := _Api.contract.Call(opts, &out, "onlyPair", a1, a2)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// OnlyPair is a free data retrieval call binding the contract method 0x2aaafb6d.
+//
+// Solidity: function onlyPair(address a1, address a2) view returns(bool)
+func (_Api *ApiSession) OnlyPair(a1 common.Address, a2 common.Address) (bool, error) {
+	return _Api.Contract.OnlyPair(&_Api.CallOpts, a1, a2)
+}
+
+// OnlyPair is a free data retrieval call binding the contract method 0x2aaafb6d.
+//
+// Solidity: function onlyPair(address a1, address a2) view returns(bool)
+func (_Api *ApiCallerSession) OnlyPair(a1 common.Address, a2 common.Address) (bool, error) {
+	return _Api.Contract.OnlyPair(&_Api.CallOpts, a1, a2)
+}
+
+// Pairs is a free data retrieval call binding the contract method 0xfe33b302.
+//
+// Solidity: function pairs(address ) view returns(address)
+func (_Api *ApiCaller) Pairs(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _Api.contract.Call(opts, &out, "pairs", arg0)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -404,49 +466,18 @@ func (_Api *ApiCaller) PairStrategy(opts *bind.CallOpts, arg0 common.Address) (c
 
 }
 
-// PairStrategy is a free data retrieval call binding the contract method 0x395701db.
+// Pairs is a free data retrieval call binding the contract method 0xfe33b302.
 //
-// Solidity: function pairStrategy(address ) view returns(address)
-func (_Api *ApiSession) PairStrategy(arg0 common.Address) (common.Address, error) {
-	return _Api.Contract.PairStrategy(&_Api.CallOpts, arg0)
+// Solidity: function pairs(address ) view returns(address)
+func (_Api *ApiSession) Pairs(arg0 common.Address) (common.Address, error) {
+	return _Api.Contract.Pairs(&_Api.CallOpts, arg0)
 }
 
-// PairStrategy is a free data retrieval call binding the contract method 0x395701db.
+// Pairs is a free data retrieval call binding the contract method 0xfe33b302.
 //
-// Solidity: function pairStrategy(address ) view returns(address)
-func (_Api *ApiCallerSession) PairStrategy(arg0 common.Address) (common.Address, error) {
-	return _Api.Contract.PairStrategy(&_Api.CallOpts, arg0)
-}
-
-// PairVault is a free data retrieval call binding the contract method 0xde8d8b43.
-//
-// Solidity: function pairVault(address ) view returns(address)
-func (_Api *ApiCaller) PairVault(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
-	var out []interface{}
-	err := _Api.contract.Call(opts, &out, "pairVault", arg0)
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// PairVault is a free data retrieval call binding the contract method 0xde8d8b43.
-//
-// Solidity: function pairVault(address ) view returns(address)
-func (_Api *ApiSession) PairVault(arg0 common.Address) (common.Address, error) {
-	return _Api.Contract.PairVault(&_Api.CallOpts, arg0)
-}
-
-// PairVault is a free data retrieval call binding the contract method 0xde8d8b43.
-//
-// Solidity: function pairVault(address ) view returns(address)
-func (_Api *ApiCallerSession) PairVault(arg0 common.Address) (common.Address, error) {
-	return _Api.Contract.PairVault(&_Api.CallOpts, arg0)
+// Solidity: function pairs(address ) view returns(address)
+func (_Api *ApiCallerSession) Pairs(arg0 common.Address) (common.Address, error) {
+	return _Api.Contract.Pairs(&_Api.CallOpts, arg0)
 }
 
 // Vaults is a free data retrieval call binding the contract method 0x8c64ea4a.

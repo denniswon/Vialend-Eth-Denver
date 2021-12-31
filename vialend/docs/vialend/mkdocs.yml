@@ -16,5 +16,6 @@ nav:
   - SCRIPT : scripts.md
   - EVENT : events.md  
   - TEST : test.md  
+  - GAS : gas.md  
   - TERMS : terms.md  
   - NOTE : _note.md

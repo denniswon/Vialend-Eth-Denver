@@ -9,6 +9,5 @@ interface IStrategy
 	function vaultWithdraw(address to, uint256 shares, uint256 totalSupply) external returns(bool);
 	function rebalance(int24 newLow, int24 newHigh ) external returns(uint256, uint256, uint256,uint256);
 	function callFunds() external;
-	function setStat(uint _stat) external ;
 	
 }

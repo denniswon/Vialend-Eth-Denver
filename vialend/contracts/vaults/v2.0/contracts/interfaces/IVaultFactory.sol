@@ -8,9 +8,16 @@ interface IVaultFactory
     function getTeam() external view returns(address);
     function setTeam(address _team) external;
   	function changeStat(address _strategy, address _vault, uint _stat) external;
-	function getCount() external; /// get stored vaults array size
-	function getStat(address, address) external view returns(uint);
+	
+	/// get stored vaults array size
+	function getCount() external; 	
+	
+	function getStat(address _strategy, address _vault) external view returns(uint);
 	function checkActive(address sORv ) external view returns(bool); 
+	function getPair0(address _addr) external view returns(address);
+	
+	///return true if a2 and a1 is a strategy/vault pair
+	function onlyPair(address a1, address a2) external view returns(bool); 
 	
 
 }

@@ -57,19 +57,24 @@ func main() {
 	// project.DeployStratByDeployer()
 	// return
 
-	// project.DeployVaultDeployer()
-	// project.DeployStratDeployer()
-	// // return
-	// project.DeployVaultFactory()
-	// project.FactoryVault()
+	project.DeployVaultDeployer()
+	project.DeployStratDeployer()
+	// return
+	project.DeployVaultFactory()
+	project.FactoryVault()
+
+	project.ConfigWrite()
+	project.Init(-1, -1)
+
 	// return
 	s := project.Network.VaultStrat
 	v := project.Network.Vault
 	project.ChangeStat(s, v, 1)
 	project.GetStat(s, v)
 
-	// project.CheckActive("0x4e2eeDF2c8c5ea0C199bc143f8A0da2c7559bd38")
-
+	// project.CheckActive("0x2a8179A7893d00B33D2d9DBe9F0e4bBf2Cb97DE7")
+	// project.Rebalance(400, 0)
+	// return
 	// project.Repair("0x57D2Ae50F4F119f5265C642b2e291F137C1bd74c", project.Network.Vault)
 	// project.ChangeStat("0x57D2Ae50F4F119f5265C642b2e291F137C1bd74c", project.Network.Vault, 1)
 

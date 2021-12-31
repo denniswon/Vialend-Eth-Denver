@@ -283,11 +283,11 @@ func ViaStratUniCompPublicFunc(funcId int, params ...interface{}) {
 
 }
 
-func GetViaVaultAddress() {
-	_, viaStratInstance, _ := GetInstance3()
-	addr, _ := viaStratInstance.Vault(&bind.CallOpts{})
-	myPrintln(addr)
-}
+// func GetViaVaultAddress() {
+// 	_, viaStratInstance, _ := GetInstance3()
+// 	addr, _ := viaStratInstance.Vault(&bind.CallOpts{})
+// 	myPrintln(addr)
+// }
 
 func GetPriceStratCall() {
 

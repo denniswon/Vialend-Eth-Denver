@@ -2,6 +2,7 @@
 
 pragma solidity >=0.8.8 <0.9.0;
 
+import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./@openzeppelin/contracts/math/Math.sol";
 import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -17,7 +18,9 @@ import  { ICErc20, ICEth,IWETH9 }  from "./interfaces/IViaProtocols.sol";
 import "./UniCompFees.sol";
 //import "./libraries/UniCompHelper.sol"; 
 
-import "./ViaVault.sol";
+import "./interfaces/IViaVault.sol";
+import "./interfaces/IVaultFactory.sol";
+
 
 /// @author  ViaLend
 /// @title   strategy Uni + Compound
@@ -32,7 +35,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 	address public creator;
 	address public immutable factory;
 	address public immutable 	admin;
-	address payable public immutable  vault;
+//	address payable public immutable  vault;
 	address payable public immutable 	_WETH;
     address public immutable token0;         // underlying token0
     address public immutable token1;         // underlying token1
@@ -78,23 +81,24 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 			TOKEN0,
 			TOKEN1,
 			VAULT,
-			ADMIN
+			ADMIN,
+			FACTORY
 	}
 
     constructor( 
-    	address[10] memory _contracts,
+    	address[11] memory _contracts,
 		uint8  _uniPortion,
 		uint8  _compPortion, 
 		uint8  _protocolFee,
 		uint24 _feetier,
 		uint128  _quoamount ) 
 	{
-		factory = msg.sender;
+		factory = _contracts[uint(ARRY.FACTORY)]; 
 
 		protocol =  _contracts[uint(ARRY.PROTOCOL)];
 		creator = _contracts[uint(ARRY.CREATOR)];
 		admin =  _contracts[uint(ARRY.ADMIN)];
-        vault =   payable(_contracts[uint(ARRY.VAULT)]);
+//        vault =   payable(_contracts[uint(ARRY.VAULT)]);
 
         pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( _contracts[uint(ARRY.TOKEN0)],_contracts[uint(ARRY.TOKEN1)], _feetier)); 
         // token0 & token1 could be changed order by the pool 
@@ -143,8 +147,8 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     }
 
     modifier onlyVault {
-    	//require (IVaultFactory(factory).pairVault(address(this)) == msg.sender, "vault" );
-        require (msg.sender == vault, 'not vault');
+    	require(IVaultFactory(factory).onlyPair(address(this), msg.sender), "not vault");
+        //require (msg.sender == vault, 'not vault');
         _;
     }    
     
@@ -206,8 +210,8 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         if (amount1>0) redeemCErc20(token1, amount1, redeemType);
         
         //transfer to vault or hold asssets here for user to withdraw
-        IERC20(token0).safeTransfer(vault, IERC20(token0).balanceOf(address(this)) );
-        IERC20(token1).safeTransfer(vault, IERC20(token1).balanceOf(address(this)) );
+        IERC20(token0).safeTransfer(myVault(), IERC20(token0).balanceOf(address(this)) );
+        IERC20(token1).safeTransfer(myVault(), IERC20(token1).balanceOf(address(this)) );
 
 	}
 	
@@ -216,18 +220,24 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		alloc();
 		uint256 a0 =IERC20(token0).balanceOf(address(this));
 		uint256 a1 =IERC20(token1).balanceOf(address(this));
-        if(a0>0) IERC20(token0).safeTransfer(vault, a0);
-        if(a1>0) IERC20(token1).safeTransfer(vault, a1);
+        if(a0>0) IERC20(token0).safeTransfer(myVault(), a0);
+        if(a1>0) IERC20(token1).safeTransfer(myVault(), a1);
 	}
 
-	
+	function myVault() internal view returns(address){
+       return IVaultFactory(factory).getPair0(address(this));
+    }
+
 	function rebalance(
 		int24 newLow,
         int24 newHigh
-		) external onlyActive returns(uint256 u0,uint256 u1,uint256 c0,uint256 c1)	
+		) external returns(uint256 u0,uint256 u1,uint256 c0,uint256 c1)	
 	{
+		bool isActive = IVaultFactory(factory).checkActive( address(this) );
+		require(isActive==true, 'not active');
+		
 		alloc();
-		ViaVault(vault).moveFunds();
+		IViaVault(myVault()).moveFunds();
         ( u0, u1, c0, c1) =  _rebalance(newLow, newHigh); 
         emit Rebalance(address(this), u0,u1,c0,c1);
 	}
@@ -339,8 +349,8 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		bool succ = alloc();
 		require(succ, "alloc");
 		
-      	if (amount0 > 0) IERC20(token0).safeTransfer(vault, amount0);
-	    if (amount1 > 0) IERC20(token1).safeTransfer(vault, amount1);	
+      	if (amount0 > 0) IERC20(token0).safeTransfer(myVault(), amount0);
+	    if (amount1 > 0) IERC20(token1).safeTransfer(myVault(), amount1);	
 		
     	_rebalance(0,0);
 		

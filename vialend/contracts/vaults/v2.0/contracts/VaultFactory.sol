@@ -17,9 +17,9 @@ contract VaultFactory {
     address private team;  // team account which to collect fees separately, default viaAdmin
 
     mapping (address => mapping(address =>uint )) private stat;   // pending 2, active 1, abandoned 3
-    mapping (address => address) public pairVault;	//give strategy get vault
-    mapping (address => address) public pairStrategy;	//give vault get strategy
-
+    
+    mapping (address => address) public pairs;	// strategy <->  vault   
+    
     struct VaultReg {
     	address strategy;
 		address vault;
@@ -95,13 +95,11 @@ contract VaultFactory {
 		require(v != address(0),"v0");
 		
 		// msg.sender is the creator
-		address[10] memory addrs = [contracts[0],msg.sender,contracts[2],contracts[3],contracts[4],contracts[5],contracts[6],contracts[7], v, viaAdmin];
+		address[11] memory addrs = [contracts[0],msg.sender,contracts[2],contracts[3],contracts[4],contracts[5],contracts[6],contracts[7], v, viaAdmin, address(this)];
 		
 		address s = IDeployer(contracts[8]).deployStrategy(addrs,  _uniPortion,  _compPortion,   _protocolFee, _feetier, _quoteAmount);
 		
 		require(s != address(0),"s0");
-		
-		IViaVault(v).setSrategy(s);
 		
 		pair(s, v);
 
@@ -134,21 +132,33 @@ contract VaultFactory {
     }
     
     function checkActive(address sORv ) public view returns(bool) {
-   	    return ( stat[sORv][pairVault[sORv]] == 1 || 
-				stat[pairStrategy[sORv]][sORv] == 1 );
+   	    return ( stat[sORv][pairs[sORv]] == 1 || 
+				stat[pairs[sORv]][sORv] == 1 );
 
     }
 
     function pair(address _strategy, address _vault ) internal {
     	stat[_strategy][_vault] = 2;  
-		pairVault[_strategy] = _vault;
-		pairStrategy[_vault] = _strategy;
+		pairs[_strategy] = _vault;
+		pairs[_vault] = _strategy;
 		vaults.push(VaultReg(_strategy, _vault));
+		
+		//IViaVault(_vault).setSrategy(_strategy);
+
     }
 
 
     function repair(address _strategy, address _vault ) public onlyAdmin {
     		pair(_strategy, _vault);
+    }
+    
+    function getPair0(address _addr) public view returns(address) {
+    	require(pairs[_addr] != address(0), 'is0' );
+    	return(pairs[_addr]);
+    }
+    
+    function onlyPair(address a1, address a2) public view returns(bool) {
+    	return( pairs[a1] == a2 || pairs[a2] == a1 );
     }
 	  
   

@@ -1,0 +1,15 @@
+# install markdocs
+`pip install mkdocs` - install from cmd
+
+# run client in cmd
+`mkdocs serve` - [http://127.0.0.1:8000](http://127.0.0.1:8000)
+	
+# build a website 
+`mkdocs build` - a 'site' folder is created as ready for deploy
+	
+# referal
+`mkdocs`  -  [https://mkdocs-like-code.readthedocs.io/zh_CN/latest/](https://mkdocs-like-code.readthedocs.io/zh_CN/latest/)
+
+`markdown syntax`  -  [https://www.markdownguide.org/basic-syntax/](https://www.markdownguide.org/basic-syntax/)
+
+

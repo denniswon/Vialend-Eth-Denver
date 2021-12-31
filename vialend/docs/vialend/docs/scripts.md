@@ -167,14 +167,5 @@ go:
 	STRATEGY + VAULT  Transaction Fee:	0.012671544 Ether ($0.00)
 	Gas Price: 0.000000002 Ether (2 Gwei)
 
-----------------------------------------------
-.......................Deploy Strat by Go. ..................
-----------------------------------------------
-	[strat address: 0x7ffE86c23117A9809941D5f693C9fCb9aBB3a998]
-	[tx:  0x3d2cfd3af756a5095beef1b9d67f16e4a7437de2fcff1053b09543dc31ca3f1e]
-	[BlockNumber: 6116446]
-	[Status: SUCCESS]
-	[CumulativeGasUsed: 4199822]
-	[GasUsed: 4157822]
 
 ## 前端 Web

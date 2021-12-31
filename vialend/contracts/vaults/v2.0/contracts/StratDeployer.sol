@@ -9,7 +9,7 @@ contract StratDeployer {
 	event DeployedStrat(address sender, address _strat);
 	   
     function deployStrategy(
-    	address[10] memory _contracts,
+    	address[11] memory _contracts,
 		uint8  _uniPortion,
 		uint8  _compPortion, 
 		uint8  _protocolFee,
@@ -23,6 +23,7 @@ contract StratDeployer {
 					_protocolFee, 
 					_feetier,    
 					_quoteAmount
+					
 				)));
 				
 			emit DeployedStrat(msg.sender, _strat);

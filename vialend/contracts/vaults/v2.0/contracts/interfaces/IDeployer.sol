@@ -15,7 +15,7 @@ interface IDeployer
     
 
  	function deployStrategy(
-    	address[10] memory _contracts,
+    	address[11] memory _contracts,
 		uint8  _uniPortion,
 		uint8  _compPortion, 
 		uint8  _protocolFee,
