@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0;
 
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import "@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
+import "./@openzeppelin/contracts/math/Math.sol";
+import "./@openzeppelin/contracts/math/SafeMath.sol";
+import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "./@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "./@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
 
-import "libraries/lib.sol";
+import "./libraries/lib.sol";
 import "./ownable.sol";
-import "interfaces/IFeeMakerEvents.sol";
+import "./interfaces/IFeeMakerEvents.sol";
 
 contract ViaUniswap is 
 	Ownable,

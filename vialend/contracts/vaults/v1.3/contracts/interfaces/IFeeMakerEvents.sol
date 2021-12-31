@@ -37,7 +37,7 @@ interface IFeeMakerEvents {
 
   
 
-	event RebalanceLog(uint128 liquidity, uint256 newBalance0, uint256 newBalance1);
+	event Rebalance(address indexed sender, uint256 uniAmt0, uint256 uniAmt1, uint256 cmpAmt0, uint256 cmpAmt1 );
 
     event Snapshot(int24 tick, uint256 totalAmount0, uint256 totalAmount1, uint256 totalSupply);
     

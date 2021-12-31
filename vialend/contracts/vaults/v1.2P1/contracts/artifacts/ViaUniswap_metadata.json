@@ -1,0 +1,992 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "maker",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "uFees0",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "uFees1",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "lFees0",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "lFees1",
+						"type": "uint256"
+					}
+				],
+				"name": "CollectFees",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "shares",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount0",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount1",
+						"type": "uint256"
+					}
+				],
+				"name": "Deposit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "reason",
+						"type": "string"
+					}
+				],
+				"name": "ErrorLogging",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "subject",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "value",
+						"type": "address"
+					}
+				],
+				"name": "GeneralA",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "subject",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "GeneralB",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "subject",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "value",
+						"type": "string"
+					}
+				],
+				"name": "GeneralS",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "MyLog",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "MyLog2",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "MyLog4",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint128",
+						"name": "liquidity",
+						"type": "uint128"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "newBalance0",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "newBalance1",
+						"type": "uint256"
+					}
+				],
+				"name": "RebalanceLog",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "int24",
+						"name": "tick",
+						"type": "int24"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalAmount0",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalAmount1",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalSupply",
+						"type": "uint256"
+					}
+				],
+				"name": "Snapshot",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "shares",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount0",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount1",
+						"type": "uint256"
+					}
+				],
+				"name": "Withdraw",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "Assetholder",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "deposit0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "deposit1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "current0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "current1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "block",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "Fees",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "U3Fees0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "U3Fees1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "LcFees0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "LcFees1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "AccruedProtocolFees0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "AccruedProtocolFees1",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "accId",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "acceptGovernance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "accounts",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "cHigh",
+				"outputs": [
+					{
+						"internalType": "int24",
+						"name": "",
+						"type": "int24"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "cLow",
+				"outputs": [
+					{
+						"internalType": "int24",
+						"name": "",
+						"type": "int24"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "int24",
+						"name": "tickLower",
+						"type": "int24"
+					},
+					{
+						"internalType": "int24",
+						"name": "tickUpper",
+						"type": "int24"
+					}
+				],
+				"name": "getPositionAmounts",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount1",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "int24",
+						"name": "tick",
+						"type": "int24"
+					},
+					{
+						"internalType": "uint128",
+						"name": "baseAmount",
+						"type": "uint128"
+					},
+					{
+						"internalType": "address",
+						"name": "baseToken",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "quoteToken",
+						"type": "address"
+					}
+				],
+				"name": "getQuoteAtTick",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "quoteAmount",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "int24",
+						"name": "tickLower",
+						"type": "int24"
+					},
+					{
+						"internalType": "int24",
+						"name": "tickUpper",
+						"type": "int24"
+					}
+				],
+				"name": "getSSLiquidity",
+				"outputs": [
+					{
+						"internalType": "uint128",
+						"name": "liquidity",
+						"type": "uint128"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "pool",
+						"type": "address"
+					},
+					{
+						"internalType": "uint32",
+						"name": "period",
+						"type": "uint32"
+					}
+				],
+				"name": "getTwap",
+				"outputs": [
+					{
+						"internalType": "int24",
+						"name": "tick",
+						"type": "int24"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "governance",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "maxTotalSupply",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "pendingGovernance",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "poolAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "protocolFee",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "quoteAmount",
+				"outputs": [
+					{
+						"internalType": "uint128",
+						"name": "",
+						"type": "uint128"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_governance",
+						"type": "address"
+					}
+				],
+				"name": "setGovernance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "newMax",
+						"type": "uint256"
+					}
+				],
+				"name": "setMaxTotalSupply",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "int24",
+						"name": "_maxTwapDeviation",
+						"type": "int24"
+					}
+				],
+				"name": "setMaxTwapDeviation",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_protocolFee",
+						"type": "uint256"
+					}
+				],
+				"name": "setProtocolFee",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_team",
+						"type": "address"
+					}
+				],
+				"name": "setTeam",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint32",
+						"name": "_twapDuration",
+						"type": "uint32"
+					}
+				],
+				"name": "setTwapDuration",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint8",
+						"name": "ratio",
+						"type": "uint8"
+					}
+				],
+				"name": "setUniPortionRatio",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "team",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "uniPortion",
+				"outputs": [
+					{
+						"internalType": "uint8",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"getPositionAmounts(int24,int24)": {
+					"params": {
+						"tickLower": "lower line price from last rebalance, ",
+						"tickUpper": "upper line price from last rebalance"
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"acceptGovernance()": {
+					"notice": "`setGovernance()` should be called by the existing governance address prior to calling this function."
+				},
+				"getPositionAmounts(int24,int24)": {
+					"notice": "Amounts of token0 and token1 held in vault's position. Includes owed fees but excludes the proportion of fees that will be paid to the protocol. Doesn't include fees accrued since last poke."
+				},
+				"getSSLiquidity(int24,int24)": {
+					"notice": "vault liquidity in uniswap"
+				},
+				"setMaxTotalSupply(uint256)": {
+					"notice": "set new maxTotalSupply"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/vaults/v1.2P1/contracts/viaUniswap.sol": "ViaUniswap"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@uniswap/v3-core/contracts/libraries/FixedPoint96.sol": {
+			"keccak256": "0x0ba8a9b95a956a4050749c0158e928398c447c91469682ca8a7cc7e77a7fe032",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://186d3b528866065a5856f96d2aeec698efa99f8da913e9adf34f8cc296cc993d",
+				"dweb:/ipfs/QmUAiMvtAQp8c9dy57bqJYzG7hkb1uChiPaQmt264skoqP"
+			]
+		},
+		"@uniswap/v3-core/contracts/libraries/FullMath.sol": {
+			"keccak256": "0xe511530871deaef86692cea9adb6076d26d7b47fd4815ce51af52af981026057",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://bc5a6ae776be3e7dcbd23d49ffbc9d792fed0ddf4b111ebb64b9bb2133ec263e",
+				"dweb:/ipfs/QmbAUtWqvipzEARQpFpkzYKBELy3qeW5WXnZxHFU84sxG7"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@openzeppelin/contracts/math/Math.sol": {
+			"keccak256": "0x742a26f2c565ac9d8f8b220707b053e50bb22d101ea93a1cb0befee28fbb4ed1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6d7f1bc2759bc1571b9ec21a82b573cfe9aebb6434d0984cd0bb3a404960ca95",
+				"dweb:/ipfs/QmWuGdpDojohXhkF58hXz2sxZ74kvuLjtUU81w7v6hRKur"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@openzeppelin/contracts/math/SafeMath.sol": {
+			"keccak256": "0xa223ba709e6951c64e87ec92c5f513a8bdabb25e986746d8a9f57f0dc023eb3b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://58e7b8ff43ea617bc9655f9625f7a86f8a24bf3fe1d9a89956f4b34fa44bd143",
+				"dweb:/ipfs/QmSLS4f8jBpm2EmuspNXzPyTbhCFbWEZ1pHU65c9CjaoGU"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0x2e1796530ffc0f2c5711a7ba984f4410e841dea9a63d5c65af8a1fbcaef7bd88",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://dbfdd80b143dad35ff1fbc6667a3e6dc4c2ad9654cbf2df00f4dd8bd38148ede",
+				"dweb:/ipfs/QmfDeyV6G2m5sAUHb1hZpyJSLywr1hB87vG1w4mcGyUVCo"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
+			"keccak256": "0x96d266fdd8fa7d91aae8bdfb8ec5fea61eca96e6c2ab638dcc618747c69027bf",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f936644d2c82d216e0475d93cdb657736ce184a0c18d704808b6dea2845c0689",
+				"dweb:/ipfs/QmRTFK5eUytpWGbYcKwkRpbvVqLK7s7iV91npsGakmyBEk"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@openzeppelin/contracts/utils/Address.sol": {
+			"keccak256": "0xdc9e22718f246d0dde4f03317fcff7a2bd5435f49d0253f91f3c9d32a4cd0eca",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://d856ca26ee54258063dfe10b819b1d8a718abc6d3b281a5e68af9e212a15cd42",
+				"dweb:/ipfs/QmZiqNgjc6E34JQCWNFucrmwKToxXjUWsLczCY4WZhiJv7"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
+			"keccak256": "0xf758313cde6dbb8682cc06a749fce366cefc0484483e41bb45e1b960de49e871",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b884794328db517b61dd632f31b926e04d1f9b5b503d0d8a1d7e6abd7c4a3e4d",
+				"dweb:/ipfs/QmQfspVp1qwWiN5957SV5REdaqjxEkUUd3D2GuKEXFphh4"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol": {
+			"keccak256": "0xfe6113d518466cd6652c85b111e01f33eb62157f49ae5ed7d5a3947a2044adb1",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://1c42b9e6f5902ac38dd43e25750939baa7e0c1425dc75afd717c4412731065d5",
+				"dweb:/ipfs/QmWaoacnzsucTvBME2o7YgZBZMhaHv7fkj83htHMVWJKWh"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol": {
+			"keccak256": "0x9453dd0e7442188667d01d9b65de3f1e14e9511ff3e303179a15f6fc267f7634",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://982f4328f956c3e60e67501e759eb292ac487f76460c774c50e9ae4fcc92aae5",
+				"dweb:/ipfs/QmRnzEDsaqtd9PJEVcgQi7p5aV5pMSvRUoGZJAdwFUJxgZ"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol": {
+			"keccak256": "0xe603ac5b17ecdee73ba2b27efdf386c257a19c14206e87eee77e2017b742d9e5",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://8febc9bdb399a4d94bb89f5377732652e2400e4a8dee808201ade6848f9004e7",
+				"dweb:/ipfs/QmaKDqYYFU4d2W2iN77aDHptfbFmYZRrMYXHeGpJmM8C1c"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol": {
+			"keccak256": "0x8071514d0fe5d17d6fbd31c191cdfb703031c24e0ece3621d88ab10e871375cd",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://d0b571930cc7488b1d546a7e9cea7c52d8b3c4e207da657ed0e0db7343b8cd03",
+				"dweb:/ipfs/QmaGK6vVwB95QSTR1XMYvrh7ivYAYZxi3fD7v6VMA4jZ39"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol": {
+			"keccak256": "0xf6e5d2cd1139c4c276bdbc8e1d2b256e456c866a91f1b868da265c6d2685c3f7",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://b99c8c9ae8e27ee6559e5866bea82cbc9ffc8247f8d15b7422a4deb287d4d047",
+				"dweb:/ipfs/QmfL8gaqt3ffAnm6nVj5ksuNpLygXuL3xq5VBqrkwC2JJ3"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol": {
+			"keccak256": "0x759b78a2918af9e99e246dc3af084f654e48ef32bb4e4cb8a966aa3dcaece235",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://64144fb96e1c7fdba87305acadb98a198d26a3d46c097cb3a666e567f6f29735",
+				"dweb:/ipfs/QmUnWVwN9FKB9uV5Pr8YfLpWZnYM2DENnRMaadZ492JS9u"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol": {
+			"keccak256": "0x852dc1f5df7dcf7f11e7bb3eed79f0cea72ad4b25f6a9d2c35aafb48925fd49f",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://ed63907c38ff36b0e22bc9ffc53e791ea74f0d4f0e7c257fdfb5aaf8825b1f0f",
+				"dweb:/ipfs/QmSQrckghEjs6HVsA5GVgpNpZWvTXMY5eQLF7cN6deFeEg"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-core/contracts/libraries/TickMath.sol": {
+			"keccak256": "0x1f864a2bf61ba05f3173eaf2e3f94c5e1da4bec0554757527b6d1ef1fe439e4e",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://5139b586df546a9d1c46804ca400b1cb9ce87236eaf212ebd64edee6747a172a",
+				"dweb:/ipfs/QmVa2kcRw3VyuB6j1EVWXACKnkbQZgfXYXNi5voq3XkYG8"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol": {
+			"keccak256": "0xf149581d28e1c81736dfe72be73ee1301d4945340cc6282fcdd63fe3c85abf24",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://0b67f375180bb62fe6753601cd09740496dcdcec4c0a4f9eaa6e94c5e1bb6844",
+				"dweb:/ipfs/QmWYwkmqynRq7g81Nijg4eEkPgSRGnegDrbbEKkkTC1k2w"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/@uniswap/v3-periphery/contracts/libraries/PositionKey.sol": {
+			"keccak256": "0x1ef2fea641b75575e8e7621b90b23a8144fd22cb7013d82a592a72ab2af9527f",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://5832baa9cccf9763fec921077daf760f6bf90605063e4ddbf21807e09d502b5f",
+				"dweb:/ipfs/QmSdbgqjSnFCtBc6xkNCzff4f6KpBqjZ1LJJc6ZA9FboEJ"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/interfaces/IFeeMakerEvents.sol": {
+			"keccak256": "0x1a46a4af243f9c9c84a6aa6f6308d22071737a4877733fa7a71ff462d83d7ef2",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://d661a747da943b45f9183b398dbd4ccf94db05dd3b1f8729fe9a157218b5ce66",
+				"dweb:/ipfs/QmYq6i6FiyyuBuUb5EY35P31b1LF2Dz8UVZngHHWkeskPz"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/ownable.sol": {
+			"keccak256": "0x56b2e049158a9cbbde6cc5e0fc5b51e9d86a031399da268ad6842471a19fd1c6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://08ea9d4e7c53ef80e6dbc31ff81fd255f525b7412fb8b874d2a7460b0a8a4aa9",
+				"dweb:/ipfs/QmVb83x56tqaoGWEkzw3E9Y9zCgKBzSbPvWwgfkTg6mKWg"
+			]
+		},
+		"contracts/vaults/v1.2P1/contracts/viaUniswap.sol": {
+			"keccak256": "0xbcdd9640fb15b1f86ef67c0fa1488914018bc334ce36b39d3c1dc1e123f7317a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://12ed72e2bf15d2d67c8959aae580fcd09520d05100d3dfde727e9bd5d16e001a",
+				"dweb:/ipfs/QmNscgCNLTGwubTC5zPEnNoV5Bt24Y8G9z7geMwyDAEGmp"
+			]
+		}
+	},
+	"version": 1
+}

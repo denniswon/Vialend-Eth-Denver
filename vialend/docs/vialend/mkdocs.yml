@@ -1,0 +1,20 @@
+
+#theme: rtd-dropdown
+#theme: mkdocs
+#theme: simplex
+#          readthedocs, solar, spacelab, pulse, darkly, united, sandstone, cerulean, simplex, litera, materia, journal,
+#            cyborg, lux, cosmo, rtd-dropdown, minty, flatly, slate, mkdocs, yeti, superhero, lumen
+theme: readthedocs
+
+#mkdocs build
+
+site_name: VIALAND 开发文档
+
+nav:
+  - DESIGN : design.md  
+  - CONTRACT : contracts.md  
+  - SCRIPT : scripts.md
+  - EVENT : events.md  
+  - TEST : test.md  
+  - TERMS : terms.md  
+  - NOTE : _note.md

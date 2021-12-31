@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-var Networkid = 5 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby
+var Networkid = 3 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby
 var Account = 0
 var ProviderSortId = 0
 
@@ -91,27 +91,68 @@ type Info struct {
 var InfoString []Info
 
 var Networks = [...]Params{
+	// { // 0 mainnet
+	// 	//[]string{"https://mainnet.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
+	// 	[]string{"http://127.0.0.1:7545"},
+	// 	//[]string{"http://192.168.0.12:8545"},
+	// 	"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
+	// 	"0x4aF84E4bcCcFfF5dB4c23771F90C631eFb5260b3", //callee
+	// 	[]string{
+	// 		"f26887db999a7be876a49e3d103b95a6d2c871354ee15b3a51aa87f9981409a5", //local   0x51cF2C014fE76b9CD510060875910c323bB21135
+	// 		"3f1474473ad3ad26cf8b3d5df0c97fb27459c6af5a38a50387f77e29b684cbcf", //local  0x054cFa85b74A20aC47d1E72B88ed346B749F8e05
+	// 		"1bc53c5056101a41e3fdefc16ee7df3994495b3b2e3e7823d480c23379432a5e", //local  0x3539F281e4c43949374c04cdA5959302e4199Fa5 ,
+	// 	},
+	// 	"", // Governance
+	// 	"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
+	// 	"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
+	// 	"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //cusdc
+	// 	"0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5", //cweth
+	// 	"", //newOwner
+	// 	10, //pendingtime  local fork
+	// 	"0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8", // pool
+	// 	"", // swap router
+	// 	"", // bonus token
+	// 	"0xa4c851ABb88353F5271E63BD43429e659f566885", //vault address  -> ganache-cli forked main
+	// 	3000,
+	// 	"", // VaultBridge
+	// 	"", //VaultAdmin
+	// 	LendingStruct{
+	// 		WETH:  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+	// 		WBTC:  "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+	// 		CWBTC: "0xC11b1268C1A384e55C48c2391d8d480264A3A7F4",
+	// 		USDC:  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+	// 		CUSDC: "0x39AA39c021dfbaE8faC545936693aC917d5E7563",
+	// 		CETH:  "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",
+	// 		DAI:   "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+	// 		CDAI:  "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
+	// 		USDT:  "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+	// 		CUSDT: "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
+	// 	},
+	// },
 
 	{ // 0 mainnet
 		//[]string{"https://mainnet.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
-		[]string{"http://127.0.0.1:7545"},
+		//[]string{"http://192.168.0.12:8546"},         /// direct main
+
+		[]string{"http://127.0.0.1:8545"}, // fork throu geth 192.168.0.12:8546
+
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
-		"", //callee
-		[]string{"b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329", //local   0xbcE07da84313419f5BE237616A9b32e1d01df135
-			"9cde5d4dec6d929a95a99fb5a8bf5d0438410bc996ab7531278392a885b9f06f", //local  0x3DF925c165cFE562686397bb12Ba658EBbCc490a
-			"c5a5364600ae5e3c55464421ce27e3a809ed5e10c416bf66eb5f1e473aaff6e6", //local  0x3436C4dcE4F973E5b0e4f1e1D5505bFFE4c2DA84,
+		"0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b", //callee
+		[]string{"b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329", //local   0xa0df350d2637096571F7A701CBc1C5fdE30dF76A
+			"5c2313d8a6b81a83ad1df1bf12a193cbc51d5de84a000db734fd7a05aa63e5a2", //local  0xEC2DD0d0b15D494a58653427246DC076281C377a
+			"2deeef19c7418df1c35425d5b637133305ec425f063a0ea6bc1702559b1e3123", //local  0x5ACb5DB941E3Fc33E0c0BC80B90114b6CD0249B5 ,
 		},
 		"", // Governance
-		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
 		"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
-		"0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5", //ctokenA
-		"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //ctokenB
+		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
+		"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //cusdc
+		"0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5", //cweth
 		"", //newOwner
 		10, //pendingtime  local fork
 		"0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8", // pool
 		"", // swap router
 		"", // bonus token
-		"0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b", //vault address  -> ganache-cli forked main
+		"0xE8a6f04DEF6d9fa9F02982b8E1d8Eea835fB7668", //vault address  -> ganache-cli forked main
 		3000,
 		"", // VaultBridge
 		"", //VaultAdmin
@@ -178,8 +219,11 @@ var Networks = [...]Params{
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 	},
 	{ ///3  goerli admin test 1
-		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
+		[]string{
+			//"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			//"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131", ///  provider url
+			"http://localhost:8547",
+		}, //  geth client local goerli
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
@@ -207,7 +251,8 @@ var Networks = [...]Params{
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token
 
-		"0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", //vault   can delete account
+		"0x68CBa5D5A74Bce067Ed15aD9cd53cfA8164693b9",
+		//		"0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", //vault   can delete account
 
 		3000, // fee
 
@@ -256,7 +301,8 @@ var Networks = [...]Params{
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router  not used
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token  not used
 
-		"0xb102Cd93329d7017Ae83C6E488f00EaB4844CbF2", //vault
+		"0x2f6cfA7756c80450C7646e9c1078cE2D6cCCB9b1", //vault
+		//"0xc62e17fcdc58b042ae55a0eb5f6efb0af5e80ee7",
 
 		500, // fee
 		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge

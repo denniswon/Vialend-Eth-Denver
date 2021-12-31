@@ -1,0 +1,5 @@
+{
+    "solidity.compileUsingLocalVersion": "soljson-v0.8.6+commit.11564f7e.Emscripten.clang",
+    "solidity.compileUsingRemoteVersion": "https://github.com/ethereum/solc-bin/tree/gh-pages/bin",
+    "solidity.linter": "solium"
+}

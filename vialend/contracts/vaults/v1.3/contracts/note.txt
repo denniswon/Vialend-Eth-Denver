@@ -20,7 +20,7 @@ abigen --abi=../build/icErc20.abi --bin=../build/icErc20.bin --pkg=api --out=../
 abigen --abi=../../../build/cether.abi --bin=../../../build/cether.bin --pkg=api --out=../../../deploy/cether/cether.go
 
 
-solc --optimize --overwrite --abi vialendfeemaker.sol.go -o ../build
+solc --optimize --overwrite --abi vialendfeemaker.sol -o ../build
 solc --optimize --overwrite --bin vialendfeemaker.sol.go -o ../build
 
 solc --optimize --overwrite --abi unwrap.sol.go -o ../build

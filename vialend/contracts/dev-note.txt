@@ -1,3 +1,5 @@
+
+
 vault v1.2p
 	0x0d256db81eEeecA70399C9bF50c611B1FeBdF429	
 "0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool
@@ -11,9 +13,6 @@ value: v1.1
 0x933EFDc68cB4c1fe4Ef162a87E515768d6f82023 //pool	
 0x6fd886fd1e728d9386ba7fe721c856790758add9 //weth
 "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //  usdc
-
-
-
 
 network set:
 		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
@@ -36,6 +35,7 @@ network set:
  solc --optimize --overwrite --abi tester.sol -o ../build
   solc solc --optimize --overwrite --bin tester.sol -o ../build
 abigen --abi=../build/tester.abi --bin=../build/tester.bin --pkg=api --out=../deploy/tester/tester.go
+
 
 
 
@@ -353,22 +353,69 @@ istanbul
 berlin (experimental)
 
 
+>>>>>>>>>>>>>>>>>>> install Go on WSL2 / ubuntu >>>>>>>>>>>>>>>>> 
 
->>>>>>>>>>>>>>>>>>> install Go on linux >>>>>>>>>>>>>>>>>
+download go v1.17.3   from https://go.dev/doc/install
+in wsl2 
 
-$sudo apt install golang -y
+sudo apt-get remove golang-go
 
-$export PATH="$GOPATH/bin:$PATH"
+** move or copy go package to $home dir
+cd $home
+cp /mnt/c/User/xdotk/downloads/xxxx.tar.gz ./
+sudo apt autoremove
+sudo tar -xvf go1.17.3.linux-amd64.tar.gz
+sudo mv go /usr/local
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+source ~/.profile
+go version 
 
-$cd $GOPATH/src/github.com/ethereum/go-ethereum/
 
-$make  (or try make all)
+>>>>>>>>>>>>>>>>>>> install abigen on wsl2 >>>>>>>>>>>>>>>>>
 
-$make devtools
+Assuming you have Go all set up on your computer, simply run the following to install the abigen tool.
+
+go get -u github.com/ethereum/go-ethereum
+
+cd $GOPATH/src/github.com/ethereum/go-ethereum/
+
+sudo apt install protobuf-compiler
+
+make all
+make devtools
+
+env GOBIN= go install golang.org/x/tools/cmd/stringer@latest
+env GOBIN= go install github.com/kevinburke/go-bindata/go-bindata@latest
+env GOBIN= go install github.com/fjl/gencodec@latest
+env GOBIN= go install github.com/golang/protobuf/protoc-gen-go@latest
+env GOBIN= go install ./cmd/abigen
+solc is /home/eric/.local/bin/solc
+protoc is /usr/bin/protoc
+
+path of compiled abigen: 
+/home/eric/golang/src/github.com/ethereum/go-ethereum/build/bin/abigen
+
+try set the path again and run abigen -- works 
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/golang
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+source ~/.profile
+
 
 
 >>>>>>>>>>>>>>>>>>>>>> solc version select >>>>>>>>>>>>>>>>>>>
+install solc
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+#windows 
+downlowd solc package https://github.com/ethereum/solidity/releases
+
+
+#linux 
+solc-select use 0.8.10
+solc-select use 0.8.6
 solc-select use 0.7.6
 solc-select use 0.5.16
 solc-select use 0.4.18
@@ -387,6 +434,7 @@ Available versions to install:
 0.8.0
 0.8.1
 
+solc-select install 0.8.10
 solc-select install 0.5.16
 solc-select install 0.4.18
 Installing '0.5.16'...
@@ -415,3 +463,10 @@ Fatal: Contract has additional library references, please use other mode
 solution:
 change public function to internal	
 	
+
+Failed to deploy ViaVault by factory, vault address is 0
+OUT OF GAS. check gas limit and gas in GetSignature()
+
+
+
+

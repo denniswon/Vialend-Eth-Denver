@@ -50,3 +50,7 @@ func Pause(msg string) string {
 		return text
 	}
 }
+
+func Sleep(tn time.Duration) {
+	time.Sleep(tn * time.Millisecond)
+}

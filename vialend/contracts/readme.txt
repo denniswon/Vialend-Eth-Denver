@@ -1,5 +1,3 @@
-Solidity install:
+Files Structure
 
-Go packages: 
-
-github.com/shopspring/decimal
+ViaFactory

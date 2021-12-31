@@ -228,17 +228,18 @@ func DeployCallee() {
 	fmt.Println(".......................Deploy Test Callee . ..................")
 	fmt.Println("----------------------------------------------")
 
-	NonceGen()
 	address, tx, instance, err := callee.DeployApi(Auth, Client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	TxConfirm(tx.Hash())
+
 	Network.Callee = address.Hex()
 
 	_, _ = instance, tx
 
-	fmt.Println("callee address:", address.Hex())
+	myPrintln("callee address:", address)
 
 	Readstring("Callee deploy done, wait for pending ... next... ")
 

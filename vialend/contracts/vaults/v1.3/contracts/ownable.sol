@@ -2,8 +2,8 @@
 
 pragma solidity >0.5.0;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 
 /**
@@ -51,6 +51,7 @@ contract Ownable is ReentrancyGuard {
 		uint256 current0;		// log current locked value of token0
 		uint256 current1;		// log current locked value of token1
 		uint256 block; 		//  last block number that a user made deposit
+		uint8 withdrawPCT;		//  withdrawal percentage
     }
     
     address[] public accounts;
@@ -88,6 +89,7 @@ contract Ownable is ReentrancyGuard {
 			accId[_addr] = accounts.length;
 			
 			Assetholder[_addr].block = block.number;
+            Assetholder[_addr].withdrawPCT = 0;
 		}
 		
 		// if (Assetholder[_address].block == 0 ) {

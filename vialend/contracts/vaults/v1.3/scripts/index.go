@@ -46,24 +46,110 @@ var sw = new(Switcher)
 func main() {
 
 	project.Init(-1, -1)
+	project.Quiet = false
+
 	//	project.Init(0, 0)
 
-	// project.DeployFactory()
+	//project.DeployFactory()
 	//BuildAll()
 
 	//balance := project.EthBalance(Network.LendingContracts.CETH)
 	//balance := project.EthBalanceArb("0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5")
-
-	project.BlockNumber()
+	//project.BlockNumber()
 
 	//project.TransferEth("1b280901929b5cd52f362b544072b66bfe29a9396db485a23da7de9f485512b0", project.X1E18(1), "0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
+	// project.VaultInfo()
+	// return
+	// mainnet fork: weth/usdc
 
-	// project.EthBalance("0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
-	// project.EthBalance("0x616075ff37f832fCd555E3aC8fa90c64A948Cca1")
+	//project.FindPool()
+	//project.GetPool("0xc18360217d8f7ab5e7c516566761ea12ce7f9d72", "0xdac17f958d2ee523a2206206994597c13d831ec7", 3000)
 	//return
-	project.Quiet = false
+	// //project.EthBalance("0xB7A41b27af9Ed23F65E36f9d92d287327c4D997d")
+	// //return
+	// project.DeployCallee()
+	// project.DeployVialendFeemaker(-1, 0, big.NewInt(10), 50, big.NewInt(1e6), "0x5ACb5DB941E3Fc33E0c0BC80B90114b6CD0249B5")
+	// project.EthBalance("0xa0df350d2637096571F7A701CBc1C5fdE30dF76A")
+	// project.Wrap(project.Network.TokenB, 0, 30)
+	// project.EthBalance("0xa0df350d2637096571F7A701CBc1C5fdE30dF76A")
+	//return
+	// project.EthBalance("0xEC2DD0d0b15D494a58653427246DC076281C377a")
+	// project.Swap(0, 10000, 2, 1)
+	// project.ERC20Balance(project.Network.TokenA, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A")
+	// project.ERC20Balance(project.Network.TokenB, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A")
+	// return
 
-	//	return
+	// project.Deposit(1, [3]int64{4000, 10, 0}, false)
+	// project.Deposit(1, [3]int64{4000, 10, 1}, false)
+	// project.VaultInfo()
+	//project.Strategy1(800, 0)
+	//project.VaultInfo()
+
+	// project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 1})
+
+	// project.MyAccountInfo(1)
+	// project.VaultInfo()
+
+	// project.CheckFees()
+
+	//project.SetProtocolFee(big.NewInt(10))
+	//project.SetUniswapPortionRatio(50)
+
+	// project.EmergencyBurn()
+
+	// return
+
+	// goerli test data
+	project.DeployVialendFeemaker(-1, 0, big.NewInt(10), 100, big.NewInt(1e18), "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+	project.Sleep(1000)
+
+	project.Deposit(1, [3]int64{3, 3, 0}, false)
+	project.Sleep(1000)
+
+	// project.Deposit(1, [3]int64{2, 2, 1}, false)
+	// project.Sleep(1000)
+
+	// // // //	 project.Deposit(1, [3]int64{4000, 10, 1}, false)
+	// // // project.VaultInfo()
+	//project.Strategy1(800, 0)
+	//project.Alloc(0)
+	// project.Sleep(5000)
+	// project.VaultInfo()
+	// project.CheckFees()
+	// project.GetLendingAmounts(project.Network.Vault)
+	//return
+	//project.SetProtocolFee(big.NewInt(0))
+	//project.WithdrawPending(100, 0)
+	//project.Sleep(1000)
+	// project.WithdrawPending(0, 1)
+	// project.Sleep(1000)
+
+	project.Strategy1(800, 0)
+	// project.Sleep(1000)
+	// project.Withdraw(1, [2]int64{100, 1})
+
+	//project.VaultInfo()
+
+	// project.MyAccountInfo(0)
+	// project.Sleep(1000)
+
+	// project.MyAccountInfo(1)
+	// project.Sleep(1000)
+
+	//project.Withdraw(1, [2]int64{100, 0})
+	// project.Withdraw(1, [2]int64{100, 1})
+
+	// project.MyAccountInfo(0)
+	// project.Sleep(1000)
+
+	//project.Withdraw(1, [2]int64{100, 1})
+
+	//	project.MyAccountInfo(1)
+	project.VaultInfo()
+	// project.CheckFees()
+
+	return
 
 	//networkid, account, protocolfee, uniportion, team address to get fee cut
 	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
@@ -100,18 +186,20 @@ func main() {
 
 	//project.DeployVialendFeemaker(-1, 1, big.NewInt(10), 100, big.NewInt(1e8), "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 	//project.DeployVialendFeemaker(-1, 1, big.NewInt(10), 100, big.NewInt(1e18), "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-	project.Deposit(1, [3]int64{1, 10, 0}, false)
-	//project.Strategy1(80, 1)
+	//project.Deposit(1, [3]int64{1, 10, 0}, false)
+	//project.Strategy1(800, 1)
 	//project.VaultInfo()
 	//project.Withdraw(1, [2]int64{100, 0})
 	//project.Withdraw(1, [2]int64{100, 1})
 	//project.Withdraw(1, [2]int64{100, 3})
 
 	//project.EmergencyBurn()
-	// project.Withdraw(1, [2]int64{100, 3})
+	project.SetProtocolFee(big.NewInt(0))
+	//project.Withdraw(1, [2]int64{100, 3})
 	//project.VaultInfo2("0x4aaE0bc3052aD3AB125Ae654f0f2C55Dbd9D6e17")
-	project.MyAccountInfo(0)
-	//project.VaultInfo()
+	//project.MyAccountInfo(0)
+	//project.PoolInfo()
+	project.VaultInfo()
 	return
 	// // // newVault()
 
@@ -131,14 +219,12 @@ func main() {
 	// fmt.Println(project.GetTokenInstance("0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05"))
 	//return
 
-	//project.SetProtocolFee(big.NewInt(10))
-	//project.SetUniswapPortionRatio(50)
 	//	project.Withdraw(1, [2]int64{100, 4}) // team withdraw
 	//project.Deposit(1, [3]int64{1, 10, 1}, false)
 	//	project.Deposit(1, [3]int64{2, 1000, 0}, false)
 	//project.EmergencyBurn()
 
-	project.Strategy1(1000, 1)
+	//	project.Strategy1(1000, 1)
 	// project.Strategy1(100, 1)
 	//project.AccountInfo()
 	// project.Withdraw(1, [2]int64{100, 0})
@@ -349,7 +435,7 @@ func BuildAll() {
 
 	project.Rebalance(sw.Rebalance, sw.RebalanceParam) /// make sure Account = 0
 
-	project.Withdraw(sw.Withdraw, sw.WithDrawParam) /// withdraw shares, input number in percentage %
+	//	project.Withdraw(sw.Withdraw, sw.WithDrawParam) /// withdraw shares, input number in percentage %
 
 	// print all deployed addresses
 	for _, i := range project.InfoString {

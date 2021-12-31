@@ -1,31 +1,15 @@
 // SPDX-License-Identifier: MIT
-/*
-todo: personal deposit cap
 
-Contract code size exceeds 24576 bytes 
-(a limit introduced in Spurious Dragon). 
-This contract may not be deployable on mainnet. 
-Consider enabling the optimizer (with a low "runs" value!), 
-turning off revert strings, or using libraries.
-
-where the share used:
-_burnLiquidityShare(cLow, cHigh, shares, totalSupply);
-_burnLendingShare(shares, totalSupply);
-unusedbalance (share, totalsupply)
-withdraw
-deposit
-
-*/
 pragma solidity >=0.5.0;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "libraries/lib.sol";
-import "interfaces/IFeeMakerEvents.sol";
+import "./@openzeppelin/contracts/math/SafeMath.sol";
+import "./@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
+import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "./libraries/lib.sol";
+import "./interfaces/IFeeMakerEvents.sol";
 import "./ownable.sol";
 import "./viaCompound.sol";
 import "./viaUniswap.sol";
@@ -200,7 +184,7 @@ contract ViaLendFeeMaker is
 						_burn(accounts[i], share);
 						
 						// mint new share
-						_mint(accounts[i], nshare) ;
+						_mint(accounts[i], nshare );
 		
 						// update user assets with new amounts
 						Assetholder[accounts[i]].current0 = myamount0;		
@@ -222,11 +206,11 @@ contract ViaLendFeeMaker is
 
 		uint256 _totalSupply = totalSupply();
 		
-		if (_totalSupply <=0) return false;    // if totalsupply is 0,  there is no asset in vault
+		if (_totalSupply ==0) return false;    // if totalsupply is 0,  there is no asset in vault
 
 		removePositions();		// get all assets back to vault
 
-		if (_totalSupply > 0 ) collectFees();
+		collectFees();
 
 		
 		return(true);  // fees are allocated
@@ -292,37 +276,93 @@ contract ViaLendFeeMaker is
         
 	}
     
-   // percent is the percentage of range is 0 - 100 
-    function withdraw(
+    
+// percent is the percentage of range is 0 - 100 
+    function withdrawPending(
         uint8 percent
-    ) external  nonReentrant returns (uint256 amount0, uint256 amount1) {
-        
-		address to = msg.sender;
+    ) external  nonReentrant  {
+    	
+		require ( percent <= 100, "ppc");
 		
-		require ( percent <= 100, "pc");
+		if ( balanceOf(msg.sender) > 0 ) {
+
+			Assetholder[msg.sender].withdrawPCT = percent;
+		}
 		
+    }
+    
+    function withdraws() public {
+    	
+    	uint cnt = accounts.length;		// get array size 
+		
+
+		// checkPosition to make sure they are 0 otherwise, no withdrawal
+		//..............double check if there still funds left in pools
+		(uint256 camount0, uint256 camount1) = getCAmounts();
+		(uint128 liquidity, , , , ) = _position(cLow, cHigh);  
+
+		require (camount0==0 && camount1 ==0 && liquidity ==0,"un0");
+
+		//loop each account to do withdraw if there is a pending request
+		for (uint i=0; i< cnt; i++) {	
+			
+			if ( Assetholder[accounts[i]].withdrawPCT > 0 ) {
+
+				_withdraw(accounts[i],Assetholder[accounts[i]].withdrawPCT);
+		
+			}
+		}	
+		
+		
+    }
+            
+    function withdraw(
+    	address to,
+		uint8 percent
+    ) external nonReentrant {
+		
+		_withdraw( to, percent);
+	}
+    
+   // percent is the percentage of range is 0 - 100 
+    function _withdraw(
+    	address to,
+		uint8 percent
+    ) internal{
         
-		// get total shares
-        uint256 totalSupply = totalSupply();
+		uint256 totalSupply = totalSupply();
 
         // calc percent shares to withdraw
         uint256 shares = balanceOf(to).mul(percent).div(100);   	
 
+		require(shares >0 , "sh0");
+
+		require(totalSupply >0 , "ts0");
+
 		require(shares <= totalSupply , "sh1");
    
-		_alloc();  //remove positions and dividen fees
+//		_alloc();  //remove positions and dividen fees
 		
-        amount0 = getBalance0().mul(shares).div(totalSupply);
-        amount1 = getBalance1().mul(shares).div(totalSupply);
+        uint256 amount0 = getBalance0().mul(shares).div(totalSupply);
+        uint256 amount1 = getBalance1().mul(shares).div(totalSupply);
+
+
+		if (amount0 ==0 && amount1 ==0 )  { 
+			// something wrong, maybe the amount is too small, user's share should not be burn. 
+			
+			emit MyLog("withdraw share>0 but amts==0",shares);
+			return;
+
+		}
 
 		// burn user's share
         _burn(to, shares);
         
-        // deduct withdrawal fees from the total fees. for frontend view and calc only
-        Fees.U3Fees0 = Fees.U3Fees0.sub(Fees.U3Fees0.mul(shares).div(totalSupply) ) ;
-        Fees.U3Fees1 = Fees.U3Fees1.sub(Fees.U3Fees1.mul(shares).div(totalSupply) ) ;
-        Fees.LcFees0 = Fees.LcFees0.sub(Fees.LcFees0.mul(shares).div(totalSupply) ) ;
-        Fees.LcFees1 = Fees.LcFees1.sub(Fees.LcFees1.mul(shares).div(totalSupply) ) ;
+        // // deduct withdrawal fees from the total fees. for frontend view and calc only
+        // Fees.U3Fees0 = Fees.U3Fees0.sub(Fees.U3Fees0.mul(shares).div(totalSupply) ) ;
+        // Fees.U3Fees1 = Fees.U3Fees1.sub(Fees.U3Fees1.mul(shares).div(totalSupply) ) ;
+        // Fees.LcFees0 = Fees.LcFees0.sub(Fees.LcFees0.mul(shares).div(totalSupply) ) ;
+        // Fees.LcFees1 = Fees.LcFees1.sub(Fees.LcFees1.mul(shares).div(totalSupply) ) ;
 
         // if amount > 0 , do transfer and update user Assets record. 
         if (amount0 > 0) {
@@ -338,10 +378,12 @@ contract ViaLendFeeMaker is
 			Assetholder[to].current1 -= (Assetholder[to].current1 > amount1 ) ? amount1 : Assetholder[to].current1;
 		}
 		
+		
 		// clean up assets record if user's share is 0
 		if ( balanceOf(to) == 0 ) {
 
 			_delme(to);		
+			
 
 			Assetholder[to].deposit0 = 0;
 			Assetholder[to].deposit1 = 0;
@@ -349,21 +391,24 @@ contract ViaLendFeeMaker is
 			Assetholder[to].current1 = 0;
 		}
 		
-		rebalance(0,0, totalSupply)	;
+		Assetholder[to].withdrawPCT = 0; 	// reset pending percent 
+		
+		
+		//rebalance(0,0, totalSupply)	;
 		
 		//log
-        emit Withdraw(msg.sender, shares, amount0, amount1);
+       // emit Withdraw(msg.sender, shares, amount0, amount1);
     }
     
    
 	// remove the address from accounts array
 	// Move the last element to the deleted spot.
 	// Remove the last element.
-	function _delme(address _addr ) internal {
+	function _delme(address _addr ) internal returns(bool) {
 
 
 		//require( accId[_addr] > 0, "invalid address");
-		if ( !_exist( _addr ) ) return;
+		if ( !_exist( _addr ) ) return false;
 
 
 		uint index = accId[_addr]-1;
@@ -375,6 +420,8 @@ contract ViaLendFeeMaker is
         accounts.pop();  // delete last item in account array
         
 		delete accId[_addr]; // delete the address mapping 
+
+		return true;
 	
 	}
 
@@ -424,14 +471,28 @@ contract ViaLendFeeMaker is
 		int24 newLow,
         int24 newHigh
 		) external nonReentrant onlyGovernance  {
-		
+        
 		uint256 _totalSupply = totalSupply();
-		
-		require(_totalSupply > 0,"t0");
+
+       if (_alloc() ) {
+        	//require(false, "1");
+        	withdraws();
+             //require(false, "2");
+
+        }
         
-        _alloc();
+        _totalSupply= totalSupply();
         
-        rebalance(newLow,newHigh,_totalSupply);
+
+        if (_totalSupply > 0) {
+
+	        (uint256 uniAmt0, uint256 uniAmt1, uint256 cmpAmt0, uint256 cmpAmt1 )= rebalance(newLow,newHigh,_totalSupply);
+			        require(false,"33")	;
+
+	        emit Rebalance(msg.sender, uniAmt0,uniAmt1,cmpAmt0,cmpAmt1);
+        }
+        
+        
         		
 	}
 	
@@ -441,16 +502,21 @@ contract ViaLendFeeMaker is
 			int24 newLow,
 			int24 newHigh,
 			uint256 total
-			) internal  {
+			) internal returns(uint256 , uint256, uint256, uint256 ) {
 	
+        uint256 uniPortion0;
+        uint256 uniPortion1;
+ 		uint256 unUsedbalance0;
+		uint256 unUsedbalance1;
+
       	(	,int24 tick, , , , , ) 	= pool.slot0();
     
     	
-		if ( total <= 0 ) return;
+		if ( total == 0 ) return(0,0,0,0);
     	
     	if (newLow==0 && newHigh==0) {
 			
-			if (cHigh == 0 && cLow ==0) return;  // cannot do rebalance if cLow and cHigh is 0
+			if (cHigh == 0 && cLow ==0) return(0,0,0,0);  // cannot do rebalance if cLow and cHigh is 0
 			
 			int24 hRange = ( cHigh - cLow ) / 2;
 			
@@ -473,8 +539,8 @@ contract ViaLendFeeMaker is
         
         if ( uniPortion > 0 ) {
         	
-	        uint256 uniPortion0 =  getBalance0().mul(uniPortion).div(100);
-	        uint256 uniPortion1 = getBalance1().mul(uniPortion).div(100);
+	        uniPortion0 =  getBalance0().mul(uniPortion).div(100);
+	        uniPortion1 = getBalance1().mul(uniPortion).div(100);
 	
 			//add rest portion to uniswap
 			_mintUniV3(
@@ -486,10 +552,11 @@ contract ViaLendFeeMaker is
 	
 		}
 
+		
         if ( uniPortion < 100 ) {   // when uniPortion==100 means no assets go to lending pool
 			// get remainting assets to lending
-	        uint256 unUsedbalance0 = getBalance0();
-	        uint256 unUsedbalance1 = getBalance1();
+	        unUsedbalance0 = getBalance0();
+	        unUsedbalance1 = getBalance1();
 	        
 	        bool result = _mintCompound(address(token0), address(token1), unUsedbalance0,  unUsedbalance1);
 	        
@@ -497,6 +564,8 @@ contract ViaLendFeeMaker is
 		}
 
 
+ 		return(  uniPortion0, uniPortion1, unUsedbalance0, unUsedbalance1);
+ 
 	}
 
 	
@@ -566,56 +635,66 @@ contract ViaLendFeeMaker is
 			
 		removePositions();	// remove all positions from uniswap and lending pool
 		
-		// check if there is stuck cTokens		
+		// // check if there is stuck cTokens		
 		(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
-		bool checkCtoken = ( cAmount0>0 || cAmount1 >0) ;
+		if (cAmount0 > 0 ) {
+			 IERC20(address(CToken0)).safeTransfer(team, cAmount0);
+		}
 
-		//loop user's account array to withdraw 
-		uint cnt = accounts.length;		// get array size 
+		if (cAmount1 > 0 ) {
+			IERC20(address(CToken1)).safeTransfer(team, cAmount1);
+		}
+
+		//bool checkCtoken = ( cAmount0>0 || cAmount1 >0) ;
+
+		// //loop user's account array to withdraw 
+		// uint cnt = accounts.length;		// get array size 
 		
-		uint256 total0 = token0.balanceOf(address(this));
-		uint256 total1 = token1.balanceOf(address(this));
+		// uint256 total0 = token0.balanceOf(address(this));
+		// uint256 total1 = token1.balanceOf(address(this));
         
-		uint256 tt = totalSupply();
+		// uint256 tt = totalSupply();
 		
-		for (uint i=0; i< cnt; i++) {	
+		// for (uint i=0; i< cnt; i++) {	
 			
-			uint256 share = balanceOf(accounts[i]);
+		// 	uint256 share = balanceOf(accounts[i]);
 			
-			if ( checkCtoken ) {	// withdraw cToken first if there is any locked
-				unmintCtoken(accounts[i],share, tt, cAmount0, cAmount1 );   // withdraw stuck ctokens
-			}
+		// 	if ( checkCtoken ) {	// withdraw cToken first if there is any locked
+		// 		unmintCtoken(accounts[i],share, tt, cAmount0, cAmount1 );   // withdraw stuck ctokens
+		// 	}
 			
-			_burn(accounts[i], share);
+		// 	_burn(accounts[i], share);
 
-		    Assetholder[accounts[i]].deposit0 = 0;
-			Assetholder[accounts[i]].deposit1 = 0;
-			Assetholder[accounts[i]].current0 = 0;
-			Assetholder[accounts[i]].current1 = 0;
+		//     Assetholder[accounts[i]].deposit0 = 0;
+		// 	Assetholder[accounts[i]].deposit1 = 0;
+		// 	Assetholder[accounts[i]].current0 = 0;
+		// 	Assetholder[accounts[i]].current1 = 0;
+		// 	Assetholder[accounts[i]].withdrawPCT = 0;
 
 		    
-			uint256 amount0 = total0.mul( share ).div(tt);
-			uint256 amount1 = total1.mul( share ).div(tt);
+		// 	uint256 amount0 = total0.mul( share ).div(tt);
+		// 	uint256 amount1 = total1.mul( share ).div(tt);
 			
 
-	        if (amount0 > 0) token0.safeTransfer(accounts[i], amount0);
-	        if (amount1 > 0) token1.safeTransfer(accounts[i], amount1);
+	    //     if (amount0 > 0) token0.safeTransfer(accounts[i], amount0);
+	    //     if (amount1 > 0) token1.safeTransfer(accounts[i], amount1);
 			
 			
-        }
+        // }
 
 
 
-		//send rest tokens to governance
-		if ( token0.balanceOf(address(this)) > 0 ) 
-			token0.safeTransfer(governance, token0.balanceOf(address(this))) ;
+		// //send rest tokens to governance
+		// if ( token0.balanceOf(address(this)) > 0 ) 
+		// 	token0.safeTransfer(governance, token0.balanceOf(address(this))) ;
 
-		if ( token1.balanceOf(address(this)) > 0 ) 
-			token1.safeTransfer(governance, token1.balanceOf(address(this))) ;
+		// if ( token1.balanceOf(address(this)) > 0 ) 
+		// 	token1.safeTransfer(governance, token1.balanceOf(address(this))) ;
+
 
     }
 
-
+    
 	// send ctoken to user
 	function unmintCtoken(address to, uint256 share, uint256 tt, uint256 cAmount0, uint256 cAmount1) internal {
 			
