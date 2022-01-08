@@ -16,6 +16,7 @@ import (
 	VaultDeployer "viaroot/deploy/VaultDeployer"
 	VaultFactory "viaroot/deploy/VaultFactory"
 	VaultStrategy "viaroot/deploy/VaultStrategy"
+	ViaVault "viaroot/deploy/ViaVault"
 
 	//	VaultStrategy "viaroot/deploy/VaultStrategy"
 	//	ViaVault "viaroot/deploy/ViaVault"
@@ -443,7 +444,7 @@ func DeployVaultFactory() {
 
 	Network.VaultFactory = address.Hex()
 	fmt.Println("VaultFactory address:", address.Hex())
-	Cfg.VAULT_FACTORY = address.Hex()
+	Cfg.Contracts.VAULT = address.Hex()
 
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
@@ -466,7 +467,7 @@ func DeployVaultDeployer() {
 
 	_, _, _ = address, instance, tx
 
-	Cfg.VAULT_DEPLOYER = address.Hex()
+	Cfg.Contracts.VAULT_DEPLOYER = address.Hex()
 
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
@@ -480,9 +481,9 @@ func DeployVaultByDeployer() {
 
 	NonceGen()
 
-	myPrintln("DEPLOYER:", Cfg.VAULT_DEPLOYER)
+	myPrintln("DEPLOYER:", Cfg.Contracts.VAULT_DEPLOYER)
 
-	instance, err := VaultDeployer.NewApi(common.HexToAddress(Cfg.VAULT_DEPLOYER), Client)
+	instance, err := VaultDeployer.NewApi(common.HexToAddress(Cfg.Contracts.VAULT_DEPLOYER), Client)
 	if err != nil {
 		log.Fatal("vault deployer Instance err:", err)
 	}
@@ -492,12 +493,43 @@ func DeployVaultByDeployer() {
 	token1 := common.HexToAddress(Network.TokenB)
 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	factory := common.HexToAddress(Cfg.VAULT_FACTORY)
+	factory := common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
 
 	tx, err := instance.DeployVault(Auth, factory, viaAdmin, token0, token1, vaultCap, individualCap)
 
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
+
+}
+
+func DeployVaultByGo() string {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy Vault by Go. ..................")
+	fmt.Println("----------------------------------------------")
+
+	NonceGen()
+
+	viaAdmin := FromAddress
+	token0 := common.HexToAddress(Network.TokenA)
+	token1 := common.HexToAddress(Network.TokenB)
+	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	factory := common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
+
+	address, tx, instance, err := ViaVault.DeployApi(Auth, Client, factory, viaAdmin, token0, token1, vaultCap, individualCap)
+
+	if err != nil {
+		log.Fatal("vault deploy by go err:", err)
+	}
+	_ = instance
+
+	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
+	TxConfirm(tx.Hash())
+
+	Cfg.Contracts.VAULT = address.Hex()
+
+	return (Cfg.Contracts.VAULT)
 
 }
 
@@ -509,7 +541,7 @@ func DeployStratByDeployer() {
 
 	NonceGen()
 
-	_deployer := Cfg.STRAT_DEPLOYER
+	_deployer := Cfg.Contracts.STRAT_DEPLOYER
 
 	myPrintln("DEPLOYER:", _deployer)
 
@@ -530,7 +562,7 @@ func DeployStratByDeployer() {
 	VaultFactory := common.HexToAddress(Network.VaultFactory)
 	protocolAddr := common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 	creatorFee := uint8(10)
-	vault := common.HexToAddress(Cfg.VAULT)
+	vault := common.HexToAddress(Cfg.Contracts.VAULT)
 
 	contracts := [11]common.Address{
 		protocolAddr,
@@ -568,61 +600,112 @@ func DeployStratByDeployer() {
 
 }
 
-func DeployStratByGo() {
+func DeployStratByGoStruct() string {
 
 	fmt.Println("----------------------------------------------")
-	fmt.Println(".......................Deploy Strat by Go. ..................")
+	fmt.Println(".......................Deploy Strat by Go struct. ..................")
 	fmt.Println("----------------------------------------------")
 
 	NonceGen()
 
-	//	pool := FindPool() //tokens based on network selection
-	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	var params VaultStrategy.UniCompParam
+	params.Uni3Factory = common.HexToAddress(Network.Factory)
+	params.VaultFactory = common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
+	params.Protocol = common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+	params.Creator = FromAddress
+	params.CETH = common.HexToAddress(Network.LendingContracts.WETH)
+	params.WETH = common.HexToAddress(Network.LendingContracts.CETH)
+	params.CToken0 = common.HexToAddress(Network.CTOKEN0)
+	params.CToken1 = common.HexToAddress(Network.CTOKEN1)
+	params.Token0 = common.HexToAddress(Network.TokenA)
+	params.Token1 = common.HexToAddress(Network.TokenB)
+	params.Token0Decimals = Token[0].Decimals
+	params.Token1Decimals = Token[1].Decimals
+	params.VaultCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	params.IndividualCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	params.UniPortionRate = uint8(30)
+	params.CompPortionRate = uint8(70)
+	params.FeeTier = big.NewInt(Network.FeeTier)
+	params.TwapDuration = uint32(5)
+	params.MaxTwapDeviation = big.NewInt(2000)
+	params.ProtocolFeeRate = uint8(10)
+	params.MotivatorFeeRate = uint8(5)
 
-	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-	var uniPortionRate = uint8(30)
-	var compPortionRate = uint8(70)
-
-	protocolAddr := common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-	creatorFee := uint8(10)
-	vault := Cfg.VAULT
-
-	contracts := [11]common.Address{
-		protocolAddr,
-		FromAddress,
-		common.HexToAddress(Network.LendingContracts.WETH),
-		common.HexToAddress(Network.LendingContracts.CETH),
-		common.HexToAddress(Network.CTOKEN0),
-		common.HexToAddress(Network.CTOKEN1),
-		common.HexToAddress(Network.TokenA),
-		common.HexToAddress(Network.TokenB),
-		common.HexToAddress(vault),
-		FromAddress,
-		common.HexToAddress(Cfg.VAULT_FACTORY),
-	}
-
-	_ = vaultCap
-	_ = individualCap
-
-	address, tx, _, err := VaultStrategy.DeployApi(Auth, Client,
-		contracts,
-		uniPortionRate,
-		compPortionRate,
-		creatorFee,
-		big.NewInt(Network.FeeTier),
-		quoteAmount)
-
+	address, tx, _, err := VaultStrategy.DeployApi(Auth, Client, params)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("deployAPI panic>>> ", err)
 	}
 
 	myPrintln("strat address:", address.Hex())
 
 	TxConfirm(tx.Hash())
+
+	Cfg.Contracts.VAULT_STRATEGY = address.Hex()
+
+	return (address.Hex())
 	//WriteINI([]string{VaultFactory.Hex(), stratAddress, vaultAddress.Hex()})
 
 }
+
+// func DeployStratByGo() string {
+
+// 	fmt.Println("----------------------------------------------")
+// 	fmt.Println(".......................Deploy Strat by Go. ..................")
+// 	fmt.Println("----------------------------------------------")
+
+// 	NonceGen()
+
+// 	//	pool := FindPool() //tokens based on network selection
+// 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+// 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+
+// 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
+// 	var uniPortionRate = uint8(30)
+// 	var compPortionRate = uint8(70)
+
+// 	protocolAddr := common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
+// 	creatorFee := uint8(10)
+// 	vault := Cfg.Contracts.VAULT
+
+// 	contracts := [11]common.Address{
+// 		protocolAddr,
+// 		FromAddress,
+// 		common.HexToAddress(Network.LendingContracts.WETH),
+// 		common.HexToAddress(Network.LendingContracts.CETH),
+// 		common.HexToAddress(Network.CTOKEN0),
+// 		common.HexToAddress(Network.CTOKEN1),
+// 		common.HexToAddress(Network.TokenA),
+// 		common.HexToAddress(Network.TokenB),
+// 		common.HexToAddress(vault),
+// 		FromAddress,
+// 		common.HexToAddress(Cfg.Contracts.VAULT_FACTORY),
+// 	}
+
+// 	_ = vaultCap
+// 	_ = individualCap
+
+// 	address, tx, _, err := VaultStrategy.DeployApi(Auth, Client,
+// 		contracts,
+// 		uniPortionRate,
+// 		compPortionRate,
+// 		creatorFee,
+// 		big.NewInt(Network.FeeTier),
+// 		quoteAmount)
+
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	myPrintln("strat address:", address.Hex())
+
+// 	TxConfirm(tx.Hash())
+
+// 	Cfg.Contracts.VAULT_STRATEGY = address.Hex()
+
+// 	return (address.Hex())
+// 	//WriteINI([]string{VaultFactory.Hex(), stratAddress, vaultAddress.Hex()})
+
+// }
 
 func FactoryVault() {
 
@@ -649,8 +732,8 @@ func FactoryVault() {
 	feetier := Network.FeeTier
 	//	vault := common.HexToAddress(Network.Vault)
 
-	_stratD := Cfg.STRAT_DEPLOYER
-	_vaultD := Cfg.VAULT_DEPLOYER
+	_stratD := Cfg.Contracts.STRAT_DEPLOYER
+	_vaultD := Cfg.Contracts.VAULT_DEPLOYER
 	myPrintln("strategy deployer:", _stratD)
 	myPrintln("vault deployer:", _vaultD)
 
@@ -694,11 +777,11 @@ func FactoryVault() {
 	vaults, err := factoryInstance.Vaults(&bind.CallOpts{}, lastone.Sub(lastone, big.NewInt(1)))
 	myPrintln("new Vaults:", vaults)
 
-	Cfg.VAULT_STRATEGY = vaults.Strategy.Hex()
-	Cfg.VAULT = vaults.Vault.Hex()
+	Cfg.Contracts.VAULT_STRATEGY = vaults.Strategy.Hex()
+	Cfg.Contracts.VAULT = vaults.Vault.Hex()
 
-	// Cfg.VAULT_STRATEGY = "new strat3"
-	// Cfg.VAULT = "new vault3"
+	// Cfg.Contracts.VAULT_STRATEGY = "new strat3"
+	// Cfg.Contracts.VAULT = "new vault3"
 
 	//WriteINI([]string{VaultFactory.Hex(), stratAddress, vaultAddress.Hex()})
 
@@ -720,7 +803,7 @@ func DeployStratDeployer() {
 
 	_, _, _ = address, instance, tx
 
-	Cfg.STRAT_DEPLOYER = address.Hex()
+	Cfg.Contracts.STRAT_DEPLOYER = address.Hex()
 
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())

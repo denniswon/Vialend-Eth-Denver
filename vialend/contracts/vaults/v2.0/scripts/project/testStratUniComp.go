@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	VaultFactory "viaroot/deploy/VaultFactory"
+	VaultStrat "viaroot/deploy/VaultStrategy"
 	ViaVault "viaroot/deploy/ViaVault"
 
 	"github.com/ethereum/go-ethereum"
@@ -66,6 +68,8 @@ func GetStat(s string, v string) {
 	myPrintln("stat:", stat)
 
 }
+
+// addr : vault or strategy
 func CheckActive(addr string) {
 	facotryInstance, _, _ := GetInstance3()
 
@@ -82,6 +86,7 @@ func ChangeStat(_strategy string, _vault string, _stat int) {
 
 	myPrintln(">>>>>>>> Change Stat <<<<<<<<<<<<< ")
 
+	NonceGen()
 	if tx, err := factoryInst.ChangeStat(Auth,
 		common.HexToAddress(_strategy),
 		common.HexToAddress(_vault),
@@ -101,6 +106,8 @@ func Repair(_strategy string, _vault string) {
 	factoryInst, _, _ := GetInstance3()
 
 	myPrintln(">>>>>>>> Repair <<<<<<<<<<<<< ")
+
+	NonceGen()
 
 	if tx, err := factoryInst.Repair(Auth,
 		common.HexToAddress(_strategy),
@@ -163,11 +170,10 @@ func ViaStratUniCompPublicList() {
 	p9, _ := viaStratInstance.CHigh(&bind.CallOpts{})
 	p10, _ := viaStratInstance.UniPortion(&bind.CallOpts{})
 	p11, _ := viaStratInstance.CompPortion(&bind.CallOpts{})
-	p12, _ := viaStratInstance.CurComp0(&bind.CallOpts{})
-	p13, _ := viaStratInstance.CurComp1(&bind.CallOpts{})
-	p15, _ := viaStratInstance.ProtocolFee(&bind.CallOpts{})
+	p15, _ := viaStratInstance.ProtocolFeeRate(&bind.CallOpts{})
 	p6, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenA))
 	p17, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenB))
+	p18, _ := viaStratInstance.MotivatorFeeRate(&bind.CallOpts{})
 
 	myPrintln("\n", ">>>>>>via Strat  public attributes <<<<<<<<<<<", "\n")
 	myPrintln("Admin ", p1)
@@ -182,10 +188,8 @@ func ViaStratUniCompPublicList() {
 	myPrintln("CHigh", p9)
 	myPrintln("UniPortion", p10)
 	myPrintln("CompPortion", p11)
-	myPrintln("CurComp0", p12)
-	myPrintln("IndividualCap", p13)
-	myPrintln("ProtocolFee", p15)
-	//myPrintln("TriggerFee", p17)
+	myPrintln("ProtocolFeeRAte", p15)
+	myPrintln("DecenterFeeRates", p18)
 
 	myPrintln("\n", ">>>>>>via Strat  public functions <<<<<<<<<<<", "\n")
 
@@ -302,6 +306,71 @@ func GetPriceStratCall() {
 
 }
 
+// func GetTVL() {
+
+// 	_, stratInstance, vaultInstance := GetInstance3()
+// 	NonceGen()
+
+// 	tvl, err := vaultInstance.GetTVL(&bind.CallOpts{})
+// 	if err != nil {
+// 		log.Println("gettvl err: ", err)
+// 	}
+// 	myPrintln("fun gettvl:", tvl)
+
+// }
+func GetTotalAmounts() {
+
+	_, viaStratInstance, _ := GetInstance3()
+
+	NonceGen()
+	total0, total1, err := viaStratInstance.GetTotalAmounts(&bind.CallOpts{})
+	if err != nil {
+		log.Println("gettickprice err: ", err)
+	}
+
+	myPrintln("totalamounts in strat:", total0, total1)
+
+}
+
+func GetCompAmounts() {
+
+	_, viaStratInstance, _ := GetInstance3()
+
+	NonceGen()
+	total0, total1, err := viaStratInstance.GetCompAmounts(&bind.CallOpts{})
+	if err != nil {
+		log.Println("GetCompAmount err: ", err)
+	}
+
+	myPrintln("GetCompAmount :", total0, total1)
+
+}
+func GetTickPrice() {
+
+	_, viaStratInstance, _ := GetInstance3()
+
+	NonceGen()
+	price, err := viaStratInstance.GetTickPrice(&bind.CallOpts{})
+	if err != nil {
+		log.Println("gettickprice err: ", err)
+	}
+	myPrintln("fun gettickPrice:", price)
+
+}
+
+func GetTwap() {
+
+	_, viaStratInstance, _ := GetInstance3()
+
+	NonceGen()
+	twap, err := viaStratInstance.GetTwap(&bind.CallOpts{})
+	if err != nil {
+		log.Println("getTwap err: ", err)
+	}
+	myPrintln("fun getTwap:", twap)
+
+}
+
 func CalcPositionShares(a0 int, a1 int) {
 	_, _, vaultInstance := GetInstance3()
 
@@ -314,13 +383,23 @@ func CalcPositionShares(a0 int, a1 int) {
 
 }
 
-func CheckCap(a0 int, a1 int) {
-	_, _, vaultInstance := GetInstance3()
-	p, err := vaultInstance.CheckCap(&bind.CallOpts{}, big.NewInt(int64(a0)), big.NewInt(int64(a1)))
+// func CheckCap(a0 int, a1 int) {
+// 	_, _, vaultInstance := GetInstance3()
+// 	p, err := vaultInstance.CheckCap(&bind.CallOpts{}, big.NewInt(int64(a0)), big.NewInt(int64(a1)))
+// 	if err != nil {
+// 		log.Println("checkCap err: ", err)
+// 	}
+// 	myPrintln("cap:", p)
+
+// }
+
+func IsContract(_contract string) {
+	factoryInst, _, _ := GetInstance3()
+	size, err := factoryInst.IsContract(&bind.CallOpts{}, common.HexToAddress(_contract))
 	if err != nil {
-		log.Println("checkCap err: ", err)
+		log.Println("iscontract err: ", err)
 	}
-	myPrintln("cap:", p)
+	myPrintln("size:", size)
 
 }
 
@@ -363,15 +442,15 @@ func Event(contractAddr string, eventNameString string, fromBlock int, toBlock i
 		eventNames = strings.Split(eventNameString, ",")
 	}
 	if toBlock == 0 { //listen
-		ViaVaultEventListen(contractAddr, eventNames)
-	} else {
-		ViaVaultEventFiltered(contractAddr, fromBlock, toBlock, eventNameString)
+		EventListen(contractAddr, eventNames)
+	} else { // search in blocks
+		EventFiltered(contractAddr, fromBlock, toBlock, eventNameString)
 	}
 }
 
-func ViaVaultEventListen(contractAddr string, eventNames []string) {
+func EventListen(contract string, eventNames []string) {
 
-	contractAddress := common.HexToAddress(contractAddr)
+	contractAddress := common.HexToAddress(contract)
 
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{contractAddress},
@@ -384,8 +463,17 @@ func ViaVaultEventListen(contractAddr string, eventNames []string) {
 		log.Println("event subcribe:", err)
 	}
 
-	contractAbi, err := abi.JSON(strings.NewReader(string(ViaVault.ApiABI)))
-	//contractAbi, err := ViaVault.ApiMetaData.GetAbi()
+	var contractAbi *abi.ABI
+	if contract == Network.Vault {
+		//contractAbi, err := abi.JSON(strings.NewReader(string(ViaVault.ApiABI)))
+		contractAbi, err = ViaVault.ApiMetaData.GetAbi()
+	} else if contract == Network.VaultStrat {
+		contractAbi, err = VaultStrat.ApiMetaData.GetAbi()
+	} else if contract == Network.VaultFactory {
+		contractAbi, err = VaultFactory.ApiMetaData.GetAbi()
+	} else {
+		log.Fatal("invalid contract. no go package")
+	}
 	if err != nil {
 		log.Println(err)
 	}
@@ -401,7 +489,7 @@ func ViaVaultEventListen(contractAddr string, eventNames []string) {
 
 				event, err := contractAbi.Unpack(eventName, vLog.Data)
 				if err != nil {
-					log.Println("event:", err, "-> ", eventName)
+					log.Println("contractAbi.Unpack Error:", err, "-> ", eventName)
 					myPrintln(vLog)
 				} else {
 					myPrintln(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
@@ -429,7 +517,7 @@ func ViaVaultEventListen(contractAddr string, eventNames []string) {
 }
 
 // fileter e.g.
-func ViaVaultEventFiltered(contract string, _from int, _to int, eventName string) {
+func EventFiltered(contract string, _from int, _to int, eventName string) {
 
 	contractAddress := common.HexToAddress(contract)
 
@@ -450,26 +538,49 @@ func ViaVaultEventFiltered(contract string, _from int, _to int, eventName string
 
 	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
 
-	//contractAbi, err := abi.JSON(strings.NewReader(string(ViaVault.ApiABI)))
-	contractAbi, err := ViaVault.ApiMetaData.GetAbi()
+	//var contractAbi abi.ABI
+	var contractAbi *abi.ABI
+	if contract == Network.Vault {
+		//	contractAbi, err = abi.JSON(strings.NewReader(string(ViaVault.ApiABI)))
+		contractAbi, err = ViaVault.ApiMetaData.GetAbi()
+	} else if contract == Network.VaultStrat {
+		//contractAbi, err = abi.JSON(strings.NewReader(`[{"inputs":[{"internalType":"address[11]","name":"_contracts","type":"address[11]"},{"internalType":"uint8","name":"_uniPortion","type":"uint8"},{"internalType":"uint8","name":"_compPortion","type":"uint8"},{"internalType":"uint8","name":"_protocolFeeRate","type":"uint8"},{"internalType":"uint24","name":"_feetier","type":"uint24"},{"internalType":"uint128","name":"_quoteamount","type":"uint128"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"int24","name":"cLow","type":"int24"},{"indexed":true,"internalType":"int24","name":"cHigh","type":"int24"},{"indexed":true,"internalType":"uint128","name":"liquidity","type":"uint128"}],"name":"BurnUniV3Liquidity","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"int24","name":"newLow","type":"int24"},{"indexed":true,"internalType":"int24","name":"newHigh","type":"int24"},{"indexed":true,"internalType":"uint128","name":"liquidity","type":"uint128"}],"name":"MintUniV3Liquidity","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"","type":"string"},{"indexed":false,"internalType":"uint256","name":"","type":"uint256"}],"name":"MyLog","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"","type":"address"},{"indexed":false,"internalType":"uint256","name":"u0","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"u1","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"c0","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"c1","type":"uint256"}],"name":"Rebalance","type":"event"},{"stateMutability":"payable","type":"fallback"},{"inputs":[],"name":"UNIV3_FACTORY","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"_CETH","outputs":[{"internalType":"contract ICEth","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"_CTOKEN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"_WETH","outputs":[{"internalType":"address payable","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"cHigh","outputs":[{"internalType":"int24","name":"","type":"int24"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"cLow","outputs":[{"internalType":"int24","name":"","type":"int24"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"callFunds","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"compIn0","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"compIn1","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"compOut0","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"compOut1","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"compPortion","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"creator","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"curComp0","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"curComp1","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"decenter","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decenterFeeRate","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"decenters","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"int24","name":"tickLower","type":"int24"},{"internalType":"int24","name":"tickUpper","type":"int24"},{"internalType":"uint128","name":"liquidity","type":"uint128"},{"internalType":"uint256","name":"amount0","type":"uint256"},{"internalType":"uint256","name":"amount1","type":"uint256"},{"internalType":"bool","name":"redeemType","type":"bool"}],"name":"emergency","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"factory","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getCAmounts","outputs":[{"internalType":"uint256","name":"amount0","type":"uint256"},{"internalType":"uint256","name":"amount1","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"int24","name":"tick","type":"int24"},{"internalType":"uint128","name":"baseAmount","type":"uint128"},{"internalType":"address","name":"baseToken","type":"address"},{"internalType":"address","name":"quoteToken","type":"address"}],"name":"getQuoteAtTick","outputs":[{"internalType":"uint256","name":"quote","type":"uint256"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"getTickPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getTotalAmounts","outputs":[{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getTwap","outputs":[{"internalType":"int24","name":"tick","type":"int24"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"int24","name":"tickLower","type":"int24"},{"internalType":"int24","name":"tickUpper","type":"int24"}],"name":"getUniAmounts","outputs":[{"internalType":"uint256","name":"amount0","type":"uint256"},{"internalType":"uint256","name":"amount1","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"individualCap","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"lastCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxTwapDeviation","outputs":[{"internalType":"int24","name":"","type":"int24"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pool","outputs":[{"internalType":"contract IUniswapV3Pool","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"protocol","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"protocolFeeRate","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"quoteamount","outputs":[{"internalType":"uint128","name":"","type":"uint128"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"int24","name":"newLow","type":"int24"},{"internalType":"int24","name":"newHigh","type":"int24"}],"name":"rebalance","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"int24","name":"newLow","type":"int24"},{"internalType":"int24","name":"newHigh","type":"int24"}],"name":"rebalanceByVault","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint8","name":"ratio","type":"uint8"}],"name":"setCompPortionRatio","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"int24","name":"_maxTwapDeviation","type":"int24"}],"name":"setMaxTwapDeviation","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint32","name":"_twapDuration","type":"uint32"}],"name":"setTwapDuration","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint8","name":"ratio","type":"uint8"}],"name":"setUniPortionRatio","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_protocol","type":"address"}],"name":"setprotocol","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"tickSpacing","outputs":[{"internalType":"int24","name":"","type":"int24"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token0","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token1","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"twapDuration","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"uniPortion","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount0","type":"uint256"},{"internalType":"uint256","name":"amount1","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"uniswapV3MintCallback","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"int256","name":"amount0Delta","type":"int256"},{"internalType":"int256","name":"amount1Delta","type":"int256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"uniswapV3SwapCallback","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"vaultCap","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"stateMutability":"payable","type":"receive"}]`))
+		//contractAbi, err = abi.JSON(strings.NewReader(string(VaultStrat.ApiABI)))
+		contractAbi, err = VaultStrat.ApiMetaData.GetAbi()
+	} else if contract == Network.VaultFactory {
+		//contractAbi, err = abi.JSON(strings.NewReader(string(VaultFactory.ApiABI)))
+		contractAbi, err = VaultFactory.ApiMetaData.GetAbi()
+	} else {
+		log.Fatal("invalid contract. no go package")
+	}
 
 	if err != nil {
 		log.Println("contractAbi->", err)
 	}
 
+	myPrintln(">>>>>>> logs>>>>>>>>>\n", logs)
+
 	for _, vLog := range logs {
 
-		event, err := contractAbi.Unpack(eventName, vLog.Data)
+		//event, err := contractAbi.Unpack(eventName, vLog.Data)
+		event := struct {
+			Shares  *big.Int
+			Amount0 *big.Int
+			Amount1 *big.Int
+		}{}
+		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
 		if err != nil {
-			log.Println("event:", err, "-> ", eventName)
+			log.Println("contractAbi.Unpack error:", err, "-> ", eventName)
 		}
 
-		eventBlockInfo(eventName, int64(vLog.BlockNumber))
+		myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
 
-		for j, v := range event {
-			fmt.Println("event[", j, "]=", v)
-		}
-		fmt.Println()
+		//eventBlockInfo(eventName, int64(vLog.BlockNumber))
+
+		// for j, v := range event {
+		// 	fmt.Println("event[", j, "]=", v)
+		// }
+		// fmt.Println()
 
 		myPrintln("Topics: (", len(vLog.Topics), ")")
 		parseTopic(vLog.Topics)
@@ -480,6 +591,236 @@ func ViaVaultEventFiltered(contract string, _from int, _to int, eventName string
 
 }
 
+func EventDeposit(_from int, _to int) {
+
+	eventName := "Deposit"
+
+	fromBlock := big.NewInt(int64(_from))
+	toBlock := big.NewInt(int64(_to))
+	query := ethereum.FilterQuery{
+		FromBlock: fromBlock,
+		ToBlock:   toBlock,
+		Addresses: []common.Address{
+			common.HexToAddress(Network.Vault),
+			common.HexToAddress(Network.VaultStrat),
+		},
+	}
+
+	logs, err := ClientWS.FilterLogs(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
+
+	//var contractAbi abi.ABI
+	var contractAbi *abi.ABI
+	contractAbi, err = ViaVault.ApiMetaData.GetAbi()
+
+	if err != nil {
+		log.Println(" ViaVault.ApiMetaData.GetAbi error ", err)
+	}
+
+	for _, vLog := range logs {
+
+		event := struct {
+			Shares  *big.Int
+			Amount0 *big.Int
+			Amount1 *big.Int
+		}{}
+
+		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
+		if err != nil {
+			//log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
+		}
+
+		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
+		if event.Shares != nil {
+			myPrintln(eventName)
+			myPrintln("shares:", event.Shares)
+			myPrintln("amount0:", event.Amount0)
+			myPrintln("amount1:", event.Amount1)
+
+			parseTopic(vLog.Topics)
+		}
+
+	}
+
+}
+
+func EventWithdraw(_from int, _to int) {
+
+	eventName := "Withdraw"
+
+	fromBlock := big.NewInt(int64(_from))
+	toBlock := big.NewInt(int64(_to))
+	query := ethereum.FilterQuery{
+		FromBlock: fromBlock,
+		ToBlock:   toBlock,
+		Addresses: []common.Address{
+			common.HexToAddress(Network.Vault),
+			common.HexToAddress(Network.VaultStrat),
+		},
+	}
+
+	logs, err := ClientWS.FilterLogs(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
+
+	//var contractAbi abi.ABI
+	var contractAbi *abi.ABI
+	contractAbi, err = ViaVault.ApiMetaData.GetAbi()
+
+	if err != nil {
+		log.Println(" ViaVault.ApiMetaData.GetAbi error ", err)
+	}
+
+	for _, vLog := range logs {
+
+		event := struct {
+			Shares  *big.Int
+			Amount0 *big.Int
+			Amount1 *big.Int
+		}{}
+
+		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
+		if err != nil {
+			//log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
+		}
+
+		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
+		if event.Shares != nil {
+			myPrintln(eventName)
+			myPrintln("shares:", event.Shares)
+			myPrintln("amount0:", event.Amount0)
+			myPrintln("amount1:", event.Amount1)
+
+			parseTopic(vLog.Topics)
+		}
+
+	}
+
+}
+func EventAllocFees(_from int, _to int) {
+
+	eventName := "AllocFees"
+
+	fromBlock := big.NewInt(int64(_from))
+	toBlock := big.NewInt(int64(_to))
+	query := ethereum.FilterQuery{
+		FromBlock: fromBlock,
+		ToBlock:   toBlock,
+		Addresses: []common.Address{
+			common.HexToAddress(Network.Vault),
+			common.HexToAddress(Network.VaultStrat),
+		},
+	}
+
+	logs, err := ClientWS.FilterLogs(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
+
+	//var contractAbi abi.ABI
+	var contractAbi *abi.ABI
+	contractAbi, err = VaultStrat.ApiMetaData.GetAbi()
+
+	if err != nil {
+		log.Println(" .ApiMetaData.GetAbi error ", err)
+	}
+
+	for k, vLog := range logs {
+
+		event := struct {
+			UFees0 *big.Int
+			UFees1 *big.Int
+			LFees0 *big.Int
+			LFees1 *big.Int
+		}{}
+
+		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
+		if err != nil {
+			log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
+		}
+
+		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
+		if event.UFees0 != nil {
+			myPrintln(eventName)
+			myPrintln("UFees0:", event.UFees0)
+			myPrintln("UFees1:", event.UFees1)
+			myPrintln("LFees0:", event.LFees0)
+			myPrintln("LFees1:", event.LFees1)
+
+			parseTopic(vLog.Topics)
+		}
+
+	}
+
+}
+
+// fileter e.g.
+func EventMintFees(_from int, _to int) {
+
+	eventName := "MintFees"
+
+	fromBlock := big.NewInt(int64(_from))
+	toBlock := big.NewInt(int64(_to))
+	query := ethereum.FilterQuery{
+		FromBlock: fromBlock,
+		ToBlock:   toBlock,
+		Addresses: []common.Address{
+			common.HexToAddress(Network.Vault),
+			common.HexToAddress(Network.VaultStrat),
+		},
+	}
+
+	logs, err := ClientWS.FilterLogs(context.Background(), query)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
+
+	//var contractAbi abi.ABI
+	var contractAbi *abi.ABI
+	//	contractAbi, err = ViaVault.ApiMetaData.GetAbi()
+	contractAbi, err = VaultStrat.ApiMetaData.GetAbi()
+
+	if err != nil {
+		log.Println(".ApiMetaData.GetAbi error ", err)
+	}
+
+	for k, vLog := range logs {
+
+		event := struct {
+			Shares *big.Int
+			F0     *big.Int
+			F1     *big.Int
+		}{}
+
+		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
+		if err != nil {
+			log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
+		}
+
+		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
+		if event.Shares != nil {
+			myPrintln(eventName)
+			myPrintln("shares:", event.Shares)
+			myPrintln("fee0:", event.F0)
+			myPrintln("fee1:", event.F1)
+
+			parseTopic(vLog.Topics)
+		}
+
+	}
+
+}
 func typeof(v interface{}) {
 	fmt.Println(fmt.Sprintf("%T", v))
 }
@@ -495,11 +836,12 @@ func eventBlockInfo(eventName string, blockNumber int64) {
 
 func parseTopic(topic []common.Hash) {
 
+	myPrintln("Topics: Array(", len(topic), ")")
 	for k := 0; k < len(topic); k++ {
 
-		hint := hexToInt(topic[k].String())
-		fmt.Println("indexd topic ", k, " ", topic[k])
-		fmt.Println("hexToInt:", hint)
+		//hint := hexToInt(topic[k].String())
+		fmt.Println(k, ": ", topic[k])
+		//fmt.Println("hexToInt:", hint)
 	}
 
 }

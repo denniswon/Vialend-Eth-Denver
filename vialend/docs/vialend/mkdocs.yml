@@ -18,4 +18,7 @@ nav:
   - TEST : test.md  
   - GAS : gas.md  
   - TERMS : terms.md  
-  - NOTE : _note.md
+  - DEV-NOTE : dev-note.md
+  - INTEGRATION : integration.md
+  - ABOUT : _note.md
+  

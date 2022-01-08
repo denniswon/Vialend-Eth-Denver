@@ -49,36 +49,79 @@ func main() {
 	defer project.ConfigWrite()
 	// return
 	project.Init(-1, -1)
+	//#reload strategy
+	//// newStratAddr := project.DeployStratByGo()
+	// newStratAddr := project.DeployStratByGoStruct()
+	// project.ConfigWrite()
+	// project.Repair(newStratAddr, project.Network.Vault)
+	// project.ChangeStat(newStratAddr, project.Network.Vault, 1)
+	// return
 
-	// project.DeployVaultByDeployer()
-	// project.DeployStratByGo()
-	//return
+	//#reload vault
+	// newVaultAddr := project.DeployVaultByGo()
+	// project.ConfigWrite()
+	// project.Repair(project.Network.VaultStrat, newVaultAddr)
+	// project.ChangeStat(project.Network.VaultStrat, newVaultAddr, 1)
+
+	//#reload strategy & vault
+	newStratAddr := project.DeployStratByGoStruct()
+	newVaultAddr := project.DeployVaultByGo()
+	project.ConfigWrite()
+	project.Repair(newStratAddr, newVaultAddr)
+	project.ChangeStat(newStratAddr, newVaultAddr, 1)
+	return
+
+	// project.IsContract("0x1F98431c8aD98523631AE4a59f267346ea31F984")
+	// return
+
+	//### Events
+	//project.Event(project.Network.VaultStrat, "Rebalance", 6155070, 6155076)
+	//project.EventDeposit(6156334, 6156334)
+	// project.EventWithdraw(6156561, 6156561)
+	// //project.EventAllocFees(6156373, 6156373)
+	// project.EventMintFees(6156552, 6157116)
+
+	// project.EventRebalance(6156373, 6156373)
+	// return
+
 	// project.DeployVaultByDeployer()
 	// project.DeployStratByDeployer()
 	// return
 
-	project.DeployVaultDeployer()
-	project.DeployStratDeployer()
-	// return
-	project.DeployVaultFactory()
-	project.FactoryVault()
+	//# WEB deploy
+	// project.DeployVaultDeployer()
+	// project.DeployStratDeployer()
+	// // return
+	// project.DeployVaultFactory()
+	// project.FactoryVault()
 
-	project.ConfigWrite()
-	project.Init(-1, -1)
+	// project.ConfigWrite()
+	// project.Init(-1, -1)
 
-	// return
-	s := project.Network.VaultStrat
-	v := project.Network.Vault
-	project.ChangeStat(s, v, 1)
-	project.GetStat(s, v)
+	// // return
+	// s := project.Network.VaultStrat
+	// v := project.Network.Vault
+	// project.ChangeStat(s, v, 1)
+	// project.GetStat(s, v)
 
 	// project.CheckActive("0x2a8179A7893d00B33D2d9DBe9F0e4bBf2Cb97DE7")
 	// project.Rebalance(400, 0)
 	// return
-	// project.Repair("0x57D2Ae50F4F119f5265C642b2e291F137C1bd74c", project.Network.Vault)
-	// project.ChangeStat("0x57D2Ae50F4F119f5265C642b2e291F137C1bd74c", project.Network.Vault, 1)
 
-	// return
+	// project.SetTwapduration(5)
+	// project.GetTwap()
+	// project.GetPriceStratCall()
+	// // project.GetTwap()
+	// // project.GetPriceStratCall()
+	// project.GetTickPrice()
+
+	//project.MyAccountInfo(2)
+	//### ViaVaultInfo
+	// project.CheckActive(project.Network.Vault) // CheckVaultStatus()
+	//project.GetTVL()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
+	//return
 
 	// project.Deposit(1e17, 1e18, 0)
 	// project.Rebalance(400, 0)
@@ -86,28 +129,24 @@ func main() {
 	// project.ViewVaults()
 	//	return
 	//project.ChangeStat(s,v,1)
+
 	//project.ViaVaultPublicList()
 	// project.ViaStratUniCompPublicList()
-	// return
+	// //return
+
 	//project.ViaFactoryPublicList()
 	//project.DeployVaultFactory()
 	//project.DeployVaultStrategy()
 	//project.ChangeStat("0xb41e177E55FE7c1aA294B4c4781C2Dd8F9668b02", 2)
 	//project.CheckVaultStatus()
-	//project.ViewVaultInfo()
-	//project.Alloc(0)
-	// project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
 
-	// return
-	// project.Rebalance(400, 0)
-	// return
-	// project.Alloc(0)
-	// // // return
 	// project.EmergencyBurn()
-	// project.Withdraw(100, 1)
-	// project.Withdraw(100, 0)
-
+	// project.EmergencyWithdraw(0)
+	// project.EmergencyWithdraw(1)
+	// project.EmergencyWithdraw(2)
+	// project.EmergencyWithdraw(3)
 	// return
+
 	// s := "0x9a94272446f0c119E1006935c9E6D6fEB6c206f4"
 	// v := "0x6E09167c444AAbe5cD49Cff5Af16B15E33096e6C"
 	//project.FactoryVault()
@@ -119,21 +158,55 @@ func main() {
 	// //	project.DeployStratUniComp()
 	//project.Sleep(5000)
 
-	//return
-
 	project.Init(-1, -1)
 	project.Quiet = false
 
+	//project.SetTwapduration(10)
 	project.Deposit(1e17, 1e18, 0)
 	project.Deposit(2e17, 2e18, 1)
+
+	//	project.Withdraw(100, 1)
+	// project.Deposit(2e17, 2e18, 1)
+	// //project.Withdraw(100, 0)
+	// project.GetTVL()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
+
 	//project.MoveFunds()
+	project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	project.GetTVL()
+	project.GetTotalAmounts()
+	project.GetCompAmounts()
+
+	//project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	//project.Rebalance(600, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	project.Deposit(1e17, 1e18, 0)
+	// //project.Alloc(0)
+	//project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	project.Deposit(2e17, 2e18, 1)
+	project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	// project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
+	// project.EmergencyWithdraw(0)
+	// project.EmergencyWithdraw(1)
+
+	project.Withdraw(100, 0)
+	project.Withdraw(100, 1)
+	project.Withdraw(100, 2)
+	project.Withdraw(100, 3)
 	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
-	//	project.Alloc(0)
-	project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
-	project.Withdraw(100, 1)
-	project.Withdraw(100, 0)
-	//project.VaultInfo()
+	// //project.VaultInfo()
+	// project.MyAccountInfo(0)
+	// project.MyAccountInfo(1)
+	project.GetTVL()
+	project.GetTotalSupply()
+	project.GetTotalAmounts()
+	project.GetCompAmounts()
+
 	return
 
 	// fmt.Println(project.Network.ViaFactory)
@@ -146,9 +219,6 @@ func main() {
 	// project.Quiet = false
 
 	//project.GetViaVaultAddress()
-
-	// project.GetPriceVaultCall()
-	// return
 
 	//project.DeployFactory()
 	//BuildAll()

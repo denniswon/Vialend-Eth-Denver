@@ -17,6 +17,7 @@ import  { ICErc20, ICEth,IWETH9 }  from "./interfaces/IViaProtocols.sol";
 
 import "./UniCompFees.sol";
 //import "./libraries/UniCompHelper.sol"; 
+import "./libraries/Debugger.sol"; 
 
 import "./interfaces/IViaVault.sol";
 import "./interfaces/IVaultFactory.sol";
@@ -25,6 +26,30 @@ import "./interfaces/IVaultFactory.sol";
 /// @author  ViaLend
 /// @title   strategy Uni + Compound
 /// @notice  A Smart Contract that helps liquidity providers managing their funds on Uniswap V3 .
+
+struct UniCompParam {
+	address Uni3Factory;
+	address VaultFactory;
+	address Protocol; 
+	address Creator;
+	address Token0;
+	address Token1;
+	address CToken0;
+	address CToken1;
+	address WETH;
+	address CETH;
+	uint8 Token0Decimals;
+	uint8 Token1Decimals;
+	uint8 UniPortionRate;  
+	uint8 CompPortionRate;  
+	uint8 ProtocolFeeRate;  
+	uint8 MotivatorFeeRate; 
+	uint24 FeeTier;
+	uint32 TwapDuration;
+	int24 MaxTwapDeviation;
+	uint256 VaultCap;
+	uint256 IndividualCap;
+}
 
 contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 	
@@ -43,14 +68,15 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 
 	ICEth public immutable _CETH;
     IUniswapV3Pool public immutable pool;        // get by uni factory, token0, token1, feetier
-    uint128 public immutable quoamount;  		// for calc price, based on token0 decimal, ie: 1e18 for eth, 1e8 for wbtc
+    uint128 public immutable quoteamount;  		// for calc price, based on token0 decimal, ie: 1e18 for eth, 1e8 for wbtc
    
 // 	uint8 public decimal0;
 //    uint8 public decimal1;
     uint8 public uniPortion;       // uniswap portion ratio
     uint8 public compPortion;       // compound portion ratio
-    uint8 public protocolFee;		// 0 - 20% of profit
-    uint32 public twapDuration;        // oracle twap durantion
+    uint8 public protocolFeeRate;		// 0 - 20% of profit
+	uint8 public motivatorFeeRate;		// 0- 10% from profit for keeping system running by press buttons
+	uint32 public twapDuration;        // oracle twap durantion
 //    uint32 public threshold;	    // initial range
 
     int24 public tickSpacing;
@@ -60,77 +86,62 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 
     mapping (address => address) public _CTOKEN;
     
-	uint256 public curComp0;	// current amount of token0 in Compound pool
-	uint256 public curComp1;	// current amount of token1 in Compound pool
-	    
     uint256 public vaultCap;	   	// 0: no cap
     uint256 public individualCap;	//  0 : no cap      
 
     bool private isEmergency = false;  // only canbe changed within emergency
 
-    mapping (uint => address[] ) public decenter;		// who helped to triggering buttons e.g. decenter[1].push( address )  1=rebalance
+    mapping (uint => address[] ) public motivator;		// who helped to triggering buttons e.g. motivator[1].push( address )  1=rebalance
+	mapping (address => uint8) public Decimals;
     
- 	
-    enum ARRY {
-		    PROTOCOL,
-			CREATOR,
-			WETH,
-			CETH,
-			CTOKEN0,
-			CTOKEN1,
-			TOKEN0,
-			TOKEN1,
-			VAULT,
-			ADMIN,
-			FACTORY
-	}
+	uint256 public lastCount;
+	address[] public motivators;
+	mapping(address => uint) motivatorCounter;
 
-    constructor( 
-    	address[11] memory _contracts,
-		uint8  _uniPortion,
-		uint8  _compPortion, 
-		uint8  _protocolFee,
-		uint24 _feetier,
-		uint128  _quoamount ) 
-	{
-		factory = _contracts[uint(ARRY.FACTORY)]; 
+    constructor( UniCompParam memory params) {
+		factory = params.VaultFactory; 
 
-		protocol =  _contracts[uint(ARRY.PROTOCOL)];
-		creator = _contracts[uint(ARRY.CREATOR)];
-		admin =  _contracts[uint(ARRY.ADMIN)];
-//        vault =   payable(_contracts[uint(ARRY.VAULT)]);
+		protocol =  params.Protocol;
+		creator = params.Creator;
+		admin =  IVaultFactory(factory).getAdmin(); 
+        pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( params.Token0, params.Token1, params.FeeTier)); 
 
-        pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( _contracts[uint(ARRY.TOKEN0)],_contracts[uint(ARRY.TOKEN1)], _feetier)); 
-        // token0 & token1 could be changed order by the pool 
+        // token0 & token1 sort could be changed by the uni v3 pool 
         token0 = pool.token0();  
         token1 = pool.token1();
         
-        if ( token0 == _contracts[uint(ARRY.TOKEN1)] ) { 	
+        if ( token0 == params.Token1 ) { 	
         	// tokens order changed , the ctokens order must change accordingly.
-			_CTOKEN[token0] = _contracts[uint(ARRY.CTOKEN1)];	
-			_CTOKEN[token1] =_contracts[uint(ARRY.CTOKEN0)]; 
+			_CTOKEN[token0] = params.CToken1;	
+			_CTOKEN[token1] = params.CToken0; 
         } else {
-			_CTOKEN[token0] = _contracts[uint(ARRY.CTOKEN0)];
-			_CTOKEN[token1] =_contracts[uint(ARRY.CTOKEN1)];
+			_CTOKEN[token0] = params.CToken0;	
+			_CTOKEN[token1] = params.CToken1; 
         }
 
-		_WETH = payable (_contracts[uint(ARRY.WETH)]);	
-        _CETH = ICEth(_contracts[uint(ARRY.CETH)]);	
+		_WETH = payable (params.WETH);	
+        _CETH = ICEth(params.CETH);	
 		
 		tickSpacing = pool.tickSpacing();
-        twapDuration = 2;
-        maxTwapDeviation = 20000;
-		quoamount = _quoamount;
-        require( _uniPortion + _compPortion <= 100, "portion uni+com>100");
-        uniPortion =  _uniPortion;
-        compPortion =  _compPortion;
-        protocolFee = _protocolFee;
+		uniPortion =  params.UniPortionRate;
+        compPortion =  params.CompPortionRate;
+        require( params.UniPortionRate + params.CompPortionRate <= 100, "portion uni+com>100");
+        
+        protocolFeeRate = params.ProtocolFeeRate;
+
+        twapDuration = params.TwapDuration;   // mainnet should be 2
+        maxTwapDeviation = params.MaxTwapDeviation;
+        motivatorFeeRate = params.MotivatorFeeRate;
+		Decimals[token0] = params.Token0Decimals;        
+		Decimals[token1] = params.Token1Decimals;
+		quoteamount = uint128(10 ** Decimals[token1]);
+
     }
     
     event MintUniV3Liquidity(int24 indexed newLow, int24 indexed newHigh, uint128 indexed liquidity);
     event BurnUniV3Liquidity(int24 indexed cLow, int24 indexed cHigh, uint128 indexed liquidity);
-	event VaultWithdraw( address indexed to, uint256 amount0,  uint256 amount1);
     event Rebalance(address indexed,uint256 u0,  uint256 u1, uint256 c0,  uint256 c1);
+    event AllocFees(address indexed, uint256 uFees0, uint256 uFees1,uint256 lFees0,uint256 lFees1);
     event MyLog(string, uint256);
     
     
@@ -140,7 +151,12 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         _;
     }
     
-    
+    modifier onlyCreator {
+        require (msg.sender == creator,"not creator");  //only creator
+        _;
+    }
+
+
     modifier onlyAdmin {
         require (msg.sender == admin,"not admin");  //only admin 
         _;
@@ -217,9 +233,12 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 	
 	///@notice send funds back to vault
 	function callFunds() external onlyVault {
+		
 		alloc();
+		
 		uint256 a0 =IERC20(token0).balanceOf(address(this));
 		uint256 a1 =IERC20(token1).balanceOf(address(this));
+		
         if(a0>0) IERC20(token0).safeTransfer(myVault(), a0);
         if(a1>0) IERC20(token1).safeTransfer(myVault(), a1);
 	}
@@ -231,28 +250,57 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 	function rebalance(
 		int24 newLow,
         int24 newHigh
-		) external returns(uint256 u0,uint256 u1,uint256 c0,uint256 c1)	
+		) external 
 	{
 		bool isActive = IVaultFactory(factory).checkActive( address(this) );
 		require(isActive==true, 'not active');
 		
+		//countmotivator(msg.sender);
+
 		alloc();
-		IViaVault(myVault()).moveFunds();
-        ( u0, u1, c0, c1) =  _rebalance(newLow, newHigh); 
-        emit Rebalance(address(this), u0,u1,c0,c1);
+		allocFees();
+
+		//process pending withdrawals
+		uint _wdslength = IViaVault(myVault()).wdsLen();
+		if (_wdslength>0) {
+			//send all funds back to vault
+			IERC20(token0).safeTransfer(myVault(), getBalance(token0));
+		    IERC20(token1).safeTransfer(myVault(), getBalance(token1));		
+			IViaVault(myVault()).withdrawLoop();
+		}
+		
+		// move funds back from vault
+		if ( IERC20(token0).balanceOf(myVault()) > 0 ||  IERC20(token1).balanceOf(myVault()) > 0 ) {
+			IViaVault(myVault()).moveFunds();
+		}
+
+        _rebalance(newLow, newHigh); 
+        
 	}
+	
+
+	function rebalanceByVault(
+		int24 newLow,
+        int24 newHigh
+		) external 	onlyVault {
+
+        _rebalance(newLow, newHigh); 
+	}
+	
+
 
 	// make sure all position has been removed before doing rebalance. 
 	// when newLow and newHigh is 0, calc new range with current cLow and cHigh
 	function _rebalance(int24 newLow, int24 newHigh ) 
 		internal 
-		returns (uint256 u0, uint256 u1, uint256 c0,uint256 c1)
 	{
-		(	,int24 tick, , , , , ) 	= pool.slot0();
 
+		(	,int24 tick, , , , , ) 	= pool.slot0();
+		
     	if (newLow==0 && newHigh==0) {
+
 			if (cHigh == 0 && cLow ==0) {
-                return(0,0,0,0);  // cannot do rebalance if cLow and cHigh is 0
+                return;  // cannot do rebalance if cLow and cHigh is 0
             }
 			int24 hRange = ( cHigh - cLow ) / 2;
 			newHigh = (tick + hRange) / tickSpacing * tickSpacing;
@@ -264,27 +312,33 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		uint256 currentBalance0 = getBalance(token0);
 		uint256 currentBalance1 = getBalance(token1);
 
-        //#calculate the amounts to supply into uniswap
-        (u0, u1) = calcUniPortionAmounts(currentBalance0, currentBalance1);
+		// since all assets should be now available, if balance is 0, no need to continue
+		if (currentBalance0 == 0 && currentBalance1 == 0 ) return;
 
+		uint256 p = getPrice();
+        //#calculate the amounts to supply into uniswap
+        (uint256 u0, uint256 u1) = calcUniPortionAmounts(currentBalance0, currentBalance1, p);
+		
         if ( uniPortion > 0 ) {
 			mintUniV3( newLow, newHigh, u0, u1 );
             (cLow, cHigh) = (newLow, newHigh);    
 		}
-
+	
 		if (compPortion> 0 ) {
 			currentBalance0 = getBalance(token0);
 			currentBalance1 = getBalance(token1);
-			c0 = currentBalance0 * compPortion / 100 ;
-			c1 = currentBalance1 * compPortion / 100 ;
+			compIn0 = currentBalance0 * compPortion / 100 ;
+			compIn1 = currentBalance1 * compPortion / 100 ;
 
-	        mintCompound(token0,c0);
-	        mintCompound(token1,c1);
+	        mintCompound(token0,compIn0);
+	        mintCompound(token1,compIn1);
+			
 		}	
-
-		//if (aavePortion> 0 ) {}
 		
-		return(u0,u1,c0,c1);
+		// todo if (aavePortion> 0 ) {}
+		
+		emit Rebalance(address(this), u0,u1,compIn0,compIn1);
+
 	}
 	
 	function getBalance(address _token) internal view returns(uint256){
@@ -292,12 +346,30 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 	}
 	
     function getPrice() public view returns(uint256) {
-    	return(getQuoteAtTick(getTwap(), uint128(quoamount), token0, token1) );
+    	
+    	// Check price has not moved a lot recently. This mitigates price
+        // manipulation during rebalance and also prevents placing orders
+        // when it's too volatile.
+
+//        int24 twap = getTwap();
+
+        (	,int24 tick, , , , , ) 	= pool.slot0();
+    //    int24 deviation = tick > twap ? tick - twap : twap - tick;
+      //  require(deviation <= maxTwapDeviation, "maxTwapDeviation");
+
+    	return(getQuoteAtTick(tick, uint128(quoteamount), token0, token1) );
+    }
+    
+    function getTickPrice() public view returns(uint256) {
+    	
+        (uint160 sqrtPriceX96,,,,,,) =  pool.slot0();
+        uint256 p =  ( uint256(sqrtPriceX96) * uint256(sqrtPriceX96) >> (96 * 2) ) * quoteamount;
+        return p;
     }
     
     function getTwap() public view returns (int24 tick) {
         
-        require(twapDuration != 0, 'TWAP');   
+        require(twapDuration > 0, 'TWAP');   
         
         uint32[] memory secondsAgo = new uint32[](2);
         secondsAgo[0] = twapDuration;
@@ -319,7 +391,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     	
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
-        // Calculate quoamount with better precision if it doesn't overflow when multiplied by itself
+        // Calculate quoteamount with better precision if it doesn't overflow when multiplied by itself
         if (sqrtRatioX96 <= type(uint128).max) {
             uint256 ratioX192 = uint256(sqrtRatioX96) * sqrtRatioX96;
             quote = baseToken < quoteToken
@@ -333,54 +405,28 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         }
     }
     
-    // calculate withdraw amount requested by vault user
-    function vaultWithdraw(address to, uint256 amount0, uint256 amount1) 
-    	public 
-		onlyVault
-    	returns (bool)
-	{
-		// remove position (alloc fees)
-		// take fund from vault
-		// distract withdrawal amounts
-		// call rebalance. 	
-		// send funds to vault
-		//return success
-		
-		bool succ = alloc();
-		require(succ, "alloc");
-		
-      	if (amount0 > 0) IERC20(token0).safeTransfer(myVault(), amount0);
-	    if (amount1 > 0) IERC20(token1).safeTransfer(myVault(), amount1);	
-		
-    	_rebalance(0,0);
-		
-		emit VaultWithdraw( to, amount0,  amount1);
-
-		return true;
-		
-    }
-
-    function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyAdmin {
+    function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyCreator {
          require(_maxTwapDeviation > 0, "maxTwapDeviation");
         maxTwapDeviation = _maxTwapDeviation;
     }
 
-    function setTwapDuration(uint32 _twapDuration) external onlyAdmin {
+    function setTwapDuration(uint32 _twapDuration) external onlyCreator {
          require(_twapDuration > 0, "twapDuration");
         twapDuration = _twapDuration;
     }
     
-    function setUniPortionRatio(uint8 ratio) external onlyAdmin {
+    function setUniPortionRatio(uint8 ratio) external onlyCreator {
     	require (ratio <= 100,"ratio");
 		uniPortion = ratio;
     }
     
-    function setCompPortionRatio(uint8 ratio) external onlyAdmin {
+    function setCompPortionRatio(uint8 ratio) external onlyCreator {
     	require (ratio <= 100,"ratio");
 		compPortion = ratio;
     }
 
-	function setprotocol(address _protocol) external onlyAdmin {
+	///@notice set protocol address to collect fees
+	function setProtocol(address _protocol) external onlyAdmin {
         protocol = _protocol;
     }
    
@@ -415,6 +461,8 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         view
         returns (uint256 amount0, uint256 amount1)
     {
+		if (cLow == 0 && cHigh == 0 ) { return (0,0); }
+
         (uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) =
             _position(tickLower, tickUpper);
         (amount0, amount1) = _amountsForLiquidity(tickLower, tickUpper, liquidity);
@@ -447,6 +495,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 
 	function redeemCErc20(address underlying, uint256 amount, bool redeemType) internal {
 	
+		
 		if (underlying == _WETH) {
 			redeemCEth(amount, redeemType);
 			return;
@@ -468,6 +517,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 				// emergency 
 			}
         }	
+        
 	}	
 
     /// remove all positions from protocols, if any failed, an emergency maybe required.
@@ -494,9 +544,19 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         	
 	/// remove lending position; gether fees
 	function removeLending() internal {
+	
+		uint256 b0 = getBalance(token0);
+		uint256 b1 = getBalance(token1);
+
         (uint256 c0, uint256 c1 ) = getCAmounts();
         if(c0>0) redeemCErc20(token0, c0, true);
         if(c1>0) redeemCErc20(token1, c1, true);
+        
+        compOut0 = getBalance(token0);
+        compOut1 = getBalance(token1);
+        compOut0 = (compOut0 > b0 )? compOut0 - b0 : compIn0;
+        compOut1 = (compOut1 > b1 )? compOut1 - b1 : compIn1;
+        
 	}
 	
 	function _position(int24 tickLower, int24 tickUpper)
@@ -534,9 +594,12 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     }   
 
 	///@notice calculate best portion to put into uniswap
-	function calcUniPortionAmounts(uint256 total0, uint256 total1) internal view returns(uint256 amount0, uint256 amount1){
+	function calcUniPortionAmounts(uint256 total0, uint256 total1, uint256 price) internal view returns(uint256 amount0, uint256 amount1){
 
-		uint256 p = getPrice();
+		//uint256 p = getPrice();
+		//uint256 p = getTickPrice();
+		 uint256  p = price;
+		
 		uint256 total0In1 = total0 * p;   // to have same quantity of token0 as token1 upon current price
 		
 		if (total0In1 > total1)  {    
@@ -594,18 +657,72 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
             );
     }
     
-    function collectFees() internal {
+    function allocFees() internal {
     	
+		lFees0 = compOut0-compIn0;
+		lFees1 = compOut1-compIn1;
+		
+		uint256 allfees0 = uFees0 +lFees0;
+		uint256 allfees1 = uFees1 +lFees1;
+
+		if ( protocolFeeRate > 0 ) {
+			uint256 feecut0 = allfees0 * protocolFeeRate /100;
+			uint256 feecut1 = allfees1 * protocolFeeRate /100;
+			address team = IVaultFactory(factory).getTeam();
+			IViaVault(myVault()).mintFees( team, feecut0 , feecut1);
+			
+			if ( motivatorFeeRate > 0 ) {
+				uint256 dfeecut0 = feecut0 * motivatorFeeRate /100;
+				uint256 dfeecut1 = feecut1 * motivatorFeeRate /100;
+				IViaVault(myVault()).mintFees( msg.sender, dfeecut0 , dfeecut1);
+				//allocmotivatorFees( feecut0, feecut1);
+			}
+		}
+		
+		emit AllocFees(address(this), uFees0,uFees1,lFees0,lFees1);
+		
+		compOut0 = 0;
+		compIn0 = 0;
+		compOut1=0;
+		compIn1=0;
+		uFees0 =0;
+		lFees0 =0;
+		uFees1 =0;
+		lFees1 =0;
+		
     }
 
     function alloc() internal returns ( bool ){
     	
 		removePositions();		// get all assets back to vault
-		//collectFees();
 		return(true);  // fees are allocated
     }
 
-	function getCAmounts() internal view returns (uint256 amount0, uint256 amount1) {
+
+	function allocmotivatorFees(uint256 feecut0, uint256 feecut1) internal {
+		while (motivators.length > 0) {
+			uint i = motivators.length-1;
+			uint icount = motivatorCounter[motivators[i]];
+			if (icount > 0) {
+				IViaVault(myVault()).mintFees( motivators[i], feecut0 * icount / lastCount, feecut1 * icount / lastCount);
+				motivatorCounter[motivators[i]] = 0;
+				motivators.pop();
+			}
+		}
+		lastCount = 0;
+	}
+	function countmotivator(address addr) internal {
+		if (motivatorCounter[addr] > 0) {
+			motivatorCounter[addr]++;
+		} else {
+			motivatorCounter[addr] = 1;
+			motivators.push(addr);
+		}
+		lastCount++;
+	}
+	
+
+	function getCAmounts() public view returns (uint256 amount0, uint256 amount1) {
 		amount0 = ICErc20(_CTOKEN[token0]).balanceOf( address(this) );
 		amount1 = ICErc20(_CTOKEN[token1]).balanceOf( address(this) );
 	}
@@ -615,13 +732,34 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		amount1 = ICErc20(_CTOKEN[token1]).balanceOfUnderlying( address(this) );
 	}
 	
-	function getTotalAmounts() public returns(uint256 , uint256) {
+
+	
+	function getTotalAmounts() public view returns(uint256 , uint256) {
+		
+		uint256 b0 = IERC20(token0).balanceOf(address(this));
+		uint256 b1 = IERC20(token1).balanceOf(address(this));
+
 		(uint256 a0, uint256 a1) = getUniAmounts(cLow, cHigh);
-		(uint256 b0, uint256 b1) = getCtokenUnderlyingAmounts();
-		(uint256 c0, uint256 c1) = ( IERC20(token0).balanceOf(address(this)),IERC20(token1).balanceOf(address(this)) ); 
+		(uint256 c0, uint256 c1 ) = getCompAmounts();
+		
 		return (a0+b0+c0, a1+b1+c1);
 	}
+	
+ 	function getCompAmounts() public view returns(uint256 , uint256 ){
 
+    	(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
+		
+		if (cAmount0 == 0 && cAmount1 == 1 ) {return (0,0);	}
+
+    	ICErc20 ctoken0 = ICErc20(_CTOKEN[token0]);
+		ICErc20 ctoken1 = ICErc20(_CTOKEN[token1]);
+		
+        uint256 amount0 = cAmount0 * ctoken0.exchangeRateStored() / (10 ** Decimals[token0] );
+        uint256 amount1 = cAmount1 * ctoken1.exchangeRateStored() / (10 ** Decimals[token1] );
+
+		return(amount0,amount1);
+    }	
+	
   	function _validRange(int24 _lower, int24 _upper, int24 _tick) internal view {
         require(_lower < _upper, "V1");
         require(_lower < _tick , "V2");

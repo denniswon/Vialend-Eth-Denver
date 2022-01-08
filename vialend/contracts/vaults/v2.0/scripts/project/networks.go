@@ -14,7 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-var Networkid = 4 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby
+/// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby
+var Networkid = 3
 var Account = 0
 var ProviderSortId = 0
 
@@ -42,27 +43,32 @@ type LendingStruct struct {
 	USDT  string
 	CUSDT string
 }
-type Params struct {
-	ProviderUrl  []string
-	Factory      string
-	Callee       string
-	PrivateKey   []string
-	Governance   string
-	TokenA       string
-	TokenB       string
-	CTOKEN0      string
-	CTOKEN1      string
-	VaultFactory string
-	PendingTime  time.Duration
-	Pool         string
-	SwapRouter   string
-	BonusToken   string
-	Vault        string
-	FeeTier      int64
-	VaultBridge  string
-	VaultStrat   string
+type AccountStruct struct {
+	Address    string
+	PrivateKey string
+}
 
+type Params struct {
+	ProviderUrl      []string
+	Factory          string
+	Callee           string
+	PrivateKey       []string
+	Governance       string
+	TokenA           string
+	TokenB           string
+	CTOKEN0          string
+	CTOKEN1          string
+	VaultFactory     string
+	PendingTime      time.Duration
+	Pool             string
+	SwapRouter       string
+	BonusToken       string
+	Vault            string
+	FeeTier          int64
+	VaultBridge      string
+	VaultStrat       string
 	LendingContracts LendingStruct
+	Accounts         []AccountStruct
 }
 
 type Indi int
@@ -173,6 +179,10 @@ var Networks = [...]Params{
 			USDT:  "0xdAC17F958D2ee523a2206206994597C13D831ec7",
 			CUSDT: "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
 		},
+		[]AccountStruct{
+			{"0xa0df350d2637096571F7A701CBc1C5fdE30dF76A", "b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329"},
+			{"0xa0df350d2637096571F7A701CBc1C5fdE30dF76A", "b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329"},
+		},
 	},
 
 	{ // 1 local usdc/usdt
@@ -199,6 +209,7 @@ var Networks = [...]Params{
 		"0xdB11518974087276048364aef0596637527ddDBd", //VaultStrat
 
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
+		[]AccountStruct{},
 	},
 
 	{ // 2 local weth/usdc
@@ -223,13 +234,15 @@ var Networks = [...]Params{
 		"",   //VaultStrat
 
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
+		[]AccountStruct{},
 	},
 	{ ///3  goerli admin test 1
 		[]string{
-			//"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
+			"wss://goerli.infura.io/ws/v3/68070d464ba04080a428aeef1b9803c6",
 			//"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131", ///  provider url
-			"http://localhost:8547",
-		}, //  geth client local goerli
+			//"http://localhost:8547",
+		},
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
@@ -276,6 +289,7 @@ var Networks = [...]Params{
 			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
 			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
 		},
+		[]AccountStruct{},
 	},
 	{ ///4  goerli weth / usdc fee tier 0.1%
 		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
@@ -326,6 +340,7 @@ var Networks = [...]Params{
 			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
 			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
 		},
+		[]AccountStruct{},
 	},
 	{ ///5  goerli wbtc / usdc fee tier 0.3%
 		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
@@ -374,6 +389,7 @@ var Networks = [...]Params{
 			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
 			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
 		},
+		[]AccountStruct{},
 	},
 
 	{ ///6  rinkeby tester admin
@@ -415,6 +431,7 @@ var Networks = [...]Params{
 			DAI:   "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
 			CETH:  "0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e",
 		},
+		[]AccountStruct{},
 	},
 }
 
@@ -544,10 +561,11 @@ func Init(nid int, acc int) {
 
 	myPrintln()
 	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl)
+	fmt.Println(Cfg.Description)
 
-	Network.VaultFactory = Cfg.VAULT_FACTORY
-	Network.VaultStrat = Cfg.VAULT_STRATEGY
-	Network.Vault = Cfg.VAULT
+	Network.VaultFactory = Cfg.Contracts.VAULT_FACTORY
+	Network.VaultStrat = Cfg.Contracts.VAULT_STRATEGY
+	Network.Vault = Cfg.Contracts.VAULT
 
 	myPrintln("VaultFactory", Network.VaultFactory)
 	myPrintln("Vault Strategy", Network.VaultStrat)

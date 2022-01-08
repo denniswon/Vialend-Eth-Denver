@@ -353,7 +353,7 @@ istanbul
 berlin (experimental)
 
 
->>>>>>>>>>>>>>>>>>> install Go on WSL2 / ubuntu >>>>>>>>>>>>>>>>> 
+>>>>>>>>>>>>>>>>>>> install Go on WSL / ubuntu >>>>>>>>>>>>>>>>> 
 
 download go v1.17.3   from https://go.dev/doc/install
 in wsl2 
@@ -371,6 +371,20 @@ export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 source ~/.profile
 go version 
+
+>>>>>>>>>>>>>>>>>>> install abigen 1.10.14 on wsl / ubuntu >>>>>>>>>>>>>>>>>
+
+https://geth.ethereum.org/docs/install-and-build/installing-geth#install-on-ubuntu-via-ppas
+
+	sudo add-apt-repository -y ppa:ethereum/ethereum
+	sudo apt-get update
+	sudo apt-get install ethereum
+
+	/usr/bin/abigen --version
+	
+	usage:
+	 /usr/bin/abigen --abi=../build/test.abi --bin=../build/test.bin --pkg=api --out=../deploy/test/test.go
+
 
 
 >>>>>>>>>>>>>>>>>>> install abigen on wsl2 >>>>>>>>>>>>>>>>>
@@ -403,7 +417,8 @@ export GOPATH=$HOME/golang
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 source ~/.profile
 
-
+>>>>>>>>>>>>>>>>>>>>>> install abigen and get on windows >>>>>>>>>>>>>
+https://geth.ethereum.org/docs/install-and-build/installing-geth
 
 >>>>>>>>>>>>>>>>>>>>>> solc version select >>>>>>>>>>>>>>>>>>>
 install solc
@@ -468,5 +483,15 @@ Failed to deploy ViaVault by factory, vault address is 0
 OUT OF GAS. check gas limit and gas in GetSignature()
 
 
+### event ERROR:
+	contractAbi.Unpack error: abi: cannot marshal in to go type: length insufficient 32 require 64
 
+	solution: see below
 
+### event ERROR
+	Abi.Unpack error: abi: attempting to unmarshall an empty string while arguments are expected
+
+	solution:
+
+	use err = abi.UnpackIntoInterface(outptr.Interface(), "method", encb)
+	https://github.com/ethereum/go-ethereum/blob/master/accounts/abi/unpack_test.go

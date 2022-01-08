@@ -1,13 +1,22 @@
 # EVENT
 
+## Use Events 
+
+	project.Event(contract address, eventname, block_from, block_end)
+
+
 ## Related scripts
-* `/scripts/project/events.go` - all event implementation files....
-* `/scripts/auto/main.event.go` - event test
+
+	* `/scripts/project/events.go` - all event implementation files....
+	* `/scripts/auto/main.event.go` - event test
+
 
 ## Events 
 
-	* `Deposit` - bt Vault
+	`Deposit` - by ViaVault
 
-	* `Withdraw` - bt Vault
+	`Withdraw` - by ViaVault
 
-	* `CreatedVault(address _this, address sender, address strategy, address vault);` - by VaultFactory
+	`MintFees` - by ViaVault
+
+	`CreatedVault(address _this, address sender, address strategy, address vault);` - by VaultFactory

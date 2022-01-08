@@ -37,3 +37,19 @@ func SetUniswapPortionRatio(ratio uint8) {
 	TxConfirm(tx.Hash())
 
 }
+
+func SetTwapduration(period int) {
+
+	_, instance, _ := GetInstance3()
+
+	tx, err := instance.SetTwapDuration(Auth, uint32(period))
+
+	if err != nil {
+		log.Fatal("settwapduration err ", err)
+	}
+
+	fmt.Println("settwapduration ", period, " tx sent: ", tx.Hash().Hex())
+
+	TxConfirm(tx.Hash())
+
+}

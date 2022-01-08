@@ -4,7 +4,8 @@ go 1.17
 
 require (
 	github.com/briandowns/spinner v1.16.0
-	github.com/ethereum/go-ethereum v1.10.12
+	github.com/ethereum/go-ethereum v1.10.15
+	github.com/mitchellh/mapstructure v1.4.1
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
 )
 

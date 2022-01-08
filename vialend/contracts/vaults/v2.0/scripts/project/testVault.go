@@ -15,10 +15,7 @@ import (
 	cErc20 "viaroot/deploy/cErc20"
 
 	//vault "viaroot/deploy/FeeMaker"
-	callee "viaroot/deploy/TestUniswapV3Callee"
-	VaultFactory "viaroot/deploy/VaultFactory"
-	VaultStrategy "viaroot/deploy/VaultStrategy"
-	ViaVault "viaroot/deploy/ViaVault"
+
 	arb "viaroot/deploy/arb"
 	admin "viaroot/deploy/vaultAdmin"
 	bridge "viaroot/deploy/vaultBridge"
@@ -161,31 +158,18 @@ func Withdraw(_percent int, acc int) {
 	// 	log.Fatal("vault.NewApi ", err)
 	// }
 	_, _, instance := GetInstance3()
-	/*
-		///get account's available shares
-		myshares, err := instance.BalanceOf(&bind.CallOpts{}, FromAddress)
-		if err != nil {
-			log.Fatal("balance of myshare ", err)
-		}
 
-		myPrintln("myshares  = ", myshares, 18)
+	///get account's available shares
+	myshares, err := instance.BalanceOf(&bind.CallOpts{}, recipient)
+	if err != nil {
+		log.Fatal("balance of myshare ", err)
+	}
 
-		///calc required shares to withdraw
+	if myshares.Cmp(big.NewInt(0)) == 0 {
+		myPrintln("share==0 ", myshares)
+		return
+	}
 
-		shares := new(big.Int).Mul(myshares, percent)
-		shares.Div(shares, big.NewInt(100))
-		myPrintln("shares required = ", percent, "% = ", shares)
-
-		/// if required share > available share, set withdraw shares = awailable shares
-		if shares.Cmp(myshares) == 1 {
-			shares = myshares
-		}
-
-		if shares.Cmp(big.NewInt(0)) <= 0 {
-			myPrintln("share<=0 ", shares)
-			return
-		}
-	*/
 	NonceGen()
 	tx, err := instance.Withdraw(Auth, percent)
 
@@ -276,7 +260,7 @@ func Sweep(vaultAddr string, tokenAddr string, amount *big.Int) {
 func EmergencyBurn() {
 
 	myPrintln("----------------------------------------------")
-	myPrintln(".........Emergency withdraw , burn all positions and send fund back to users.........  ")
+	myPrintln(".........Emergency pull , burn all positions and send fund back to vault.........  ")
 	myPrintln("----------------------------------------------")
 
 	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
@@ -299,6 +283,22 @@ func EmergencyBurn() {
 	myPrintln("emergency tx: ", tx.Hash().Hex())
 
 	//Readstring("emergency sent sent.....  wait for pending..next .. white hacker to withdraw ")
+	TxConfirm(tx.Hash())
+
+}
+
+func EmergencyWithdraw(acc int) {
+	myPrintln("----------------------------------------------")
+	myPrintln(".........Emergency withdraw .........  ")
+	myPrintln("----------------------------------------------")
+	_, _, vaultInstance := GetInstance3()
+
+	ChangeAccount(acc)
+
+	tx, _ := vaultInstance.EmergencyWithdraw(Auth)
+
+	ChangeAccount(Account)
+
 	TxConfirm(tx.Hash())
 
 }
@@ -876,6 +876,13 @@ func SetVaults() {
 // 	TxConfirm(tx.Hash())
 
 // }
+func GetTotalSupply() {
+	_, _, vaultInstance := GetInstance3()
+
+	totalsupply, _ := vaultInstance.TotalSupply(&bind.CallOpts{})
+	myPrintln("totalsupply:", totalsupply)
+
+}
 
 func GetTVL2(vaultAddr string) *struct {
 	Total0 *big.Int
@@ -887,31 +894,39 @@ func GetTVL2(vaultAddr string) *struct {
 		Total1 *big.Int
 	})
 
-	vaultInstance := GetVaultInstance2(vaultAddr)
+	_, stratInstance, _ := GetInstance3()
 	token0Ins, _, _, _, _ := GetTokenInstance(Network.TokenA)
 	token1Ins, _, _, _, _ := GetTokenInstance(Network.TokenB)
 
 	//implement gettvl
-	cHigh, _ := vaultInstance.CHigh(&bind.CallOpts{})
-	cLow, _ := vaultInstance.CLow(&bind.CallOpts{})
+	cHigh, _ := stratInstance.CHigh(&bind.CallOpts{})
+	cLow, _ := stratInstance.CLow(&bind.CallOpts{})
 
-	uniliqs, _ := vaultInstance.GetPositionAmounts(&bind.CallOpts{}, cLow, cHigh)
-	myPrintln("balance in uniswap:  ", uniliqs)
+	uniliqs, _ := stratInstance.GetUniAmounts(&bind.CallOpts{}, cLow, cHigh)
+	myPrintln("liquidity in uniswap:  ", uniliqs)
 
-	lendingAmt0, lendingAmt1, exrate0, exrate1 := GetLendingAmounts(vaultAddr)
-	//lendingAmt0, lendingAmt1, exrate0, exrate1, _ := vaultInstance.GetLendingAmounts(&bind.CallOpts{})
+	lendingAmt0, lendingAmt1, exrate0, exrate1 := GetLendingAmounts(Network.VaultStrat)
 	myPrintln("balance in Compound: ", lendingAmt0, lendingAmt1)
 	myPrintln("exchange rate: ", exrate0, exrate1)
 
-	clending0, clending1 := vaultInstance.GetCAmounts(&bind.CallOpts{})
-	myPrintln("C Amounts in lending: ", clending0, clending1)
+	// clending0, clending1 := stratInstance.GetCAmounts(&bind.CallOpts{})
+	// myPrintln("C Amounts in lending: ", clending0, clending1)
 
-	balance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	balance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	myPrintln("balance in vault: ", balance0, balance1)
+	sbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
+	sbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
+	myPrintln("balance in strat: ", sbalance0, sbalance1)
+
+	vbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	vbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	myPrintln("balance in vault: ", vbalance0, vbalance1)
+
+	balance0 := new(big.Int).Add(sbalance0, vbalance0)
+	balance1 := new(big.Int).Add(sbalance1, vbalance1)
 
 	Totals.Total0 = balance0.Add(balance0, uniliqs.Amount0).Add(balance0, lendingAmt0)
 	Totals.Total1 = balance1.Add(balance1, uniliqs.Amount1).Add(balance1, lendingAmt1)
+
+	myPrintln("tvl: ", Totals.Total0, Totals.Total1)
 
 	return Totals
 }
@@ -952,17 +967,17 @@ func ApproveToken(tokenAddress common.Address, maxAmount *big.Int, toAddress str
 		log.Fatal("tokenInstance,", err)
 	}
 
-	myPrintln("to address be approved: ", toAddress)
-	myPrintln("fromAddress: ", FromAddress)
-
 	//check allowance
 	allow, _ := tokenInstance.Allowance(&bind.CallOpts{}, FromAddress, common.HexToAddress(toAddress))
 
-	myPrintln("Allowance amount:", allow)
 	if allow.Cmp(big.NewInt(0)) > 0 {
-		myPrintln("account is already approved")
 		return
 	}
+
+	myPrintln("APPROVE:")
+	myPrintln("to address be approved: ", toAddress)
+	myPrintln("fromAddress: ", FromAddress)
+	myPrintln("Allowance amount:", allow)
 
 	NonceGen()
 
@@ -1171,71 +1186,6 @@ func VaultInfo2(vaultAddr string) {
 	// uniswapPriceBySqrtP, _ := vaultInstance.GetPriceBySQRTP(&bind.CallOpts{}, sqrtPriceX96)
 	// myPrintln("GetPriceBySQRTP:", uniswapPriceBySqrtP)
 
-}
-
-func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
-
-	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), Client)
-	if err != nil {
-		log.Println("VaultFactory Instance err:", err)
-	}
-
-	A2, err := VaultStrategy.NewApi(common.HexToAddress(Network.VaultStrat), Client)
-	if err != nil {
-		log.Println("VaultStrat Instance err:", err)
-	}
-
-	A3, err := ViaVault.NewApi(common.HexToAddress(Network.Vault), Client)
-	if err != nil {
-		log.Println("ViaVault Instance err:", err)
-	}
-
-	return A1, A2, A3
-}
-
-func GetVaultInstance() *vault.Api {
-
-	instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
-	if err != nil {
-		log.Fatal("vaultInstance err:", err)
-	}
-	return instance
-}
-
-func GetVaultInstance2(_addr string) *vault.Api {
-
-	instance, err := vault.NewApi(common.HexToAddress(_addr), Client)
-	if err != nil {
-		log.Fatal("vaultInstance err:", err)
-	}
-	return instance
-}
-
-func GetCalleeInstance() *callee.Api {
-
-	instance, err := callee.NewApi(common.HexToAddress(Network.Callee), Client)
-	if err != nil {
-		log.Fatal("CalleeInstance err:", err)
-	}
-	return instance
-}
-
-func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *big.Int) {
-
-	instance, err := token.NewApi(common.HexToAddress(TokenAddress), Client)
-	if err != nil {
-		log.Fatal("get token Instance,", err)
-	}
-
-	name, err := instance.Name(&bind.CallOpts{})
-
-	symbol, err := instance.Symbol(&bind.CallOpts{})
-
-	decimals, err := instance.Decimals(&bind.CallOpts{})
-
-	maxsupply, err := instance.TotalSupply(&bind.CallOpts{})
-
-	return instance, name, symbol, decimals, maxsupply
 }
 
 func get_liquidity_0(x float64, sa float64, sb float64) float64 {

@@ -3,7 +3,7 @@ pragma solidity >=0.8.8;
 
 library UniCompHelper{ 
 
-	struct StratInfo {
+	struct StratInfo1 {
         uint256 _vaultCap;
         uint256 _individualCap;
         uint128  _quoteAmount;

@@ -279,6 +279,7 @@ library SafeERC20 {
 interface ICErc20 {
     function mint(uint256) external returns (uint256);
     function exchangeRateCurrent() external returns (uint256);
+    function exchangeRateStored() external view returns (uint);    
     function supplyRatePerBlock() external returns (uint256);
     function redeem(uint) external returns (uint);
     function redeemUnderlying(uint) external returns (uint);

@@ -14,10 +14,7 @@ import (
 func main() {
 
 	p.Init(-1, -1)
-	// //viaVault deposit
-	p.Network.ViaFactory = os.Getenv("ViaFactory")
-	p.Network.VaultStrat = os.Getenv("VaultStrat")
-	p.Network.Vault = os.Getenv("Vault")
+
 	contract := p.Network.Vault
 
 	//contract := "0x3acA8F82e5fca1f437D71BEc742F472b843451d0"

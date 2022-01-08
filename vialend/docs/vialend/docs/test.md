@@ -1,5 +1,15 @@
-site_name: 我的第一个站点
+# Festures to test
 
-nav:
-  - 首页: index.md  
-  - 测试页: test.md
+## Test Deploy
+	1. from web / metamask:
+		Deploy Factory
+		Deploy Vault
+		Deploy Strategy
+	2. from go admin
+		index.go --deployStrategy & register
+	
+## Test Deposit
+## Test Withdraw
+## Test Rebalance
+## Test Emergency
+## 

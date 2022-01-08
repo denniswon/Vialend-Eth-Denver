@@ -28,9 +28,16 @@ contract ViaVault is
 
 	uint256 public vaultCap;
 	uint256 public individualCap;
-	bool public isUsed = false;
+	bool public isEmergency = false;
+
+	struct Withdrawal {
+		address recipient;
+		uint8 percent;
+	}
 	
-    constructor(
+	Withdrawal[] public wds; 	
+   	
+	constructor(
     	address _factory,
 		address _admin,
         address _token0,
@@ -61,6 +68,9 @@ contract ViaVault is
         uint256 amount1
      
     );
+    
+    event MintFees(address indexed, uint256 share, uint256 f0, uint256 f1);
+
 
  	modifier onlyAdmin {
         require (msg.sender == admin, 'admin');  
@@ -89,11 +99,6 @@ contract ViaVault is
 	receive() external payable {}
 	fallback() external payable {}
 
-	
-
-	function setSrategy(address _strat) external onlyFactory {
-		strategy = _strat;
-	}
 
 	function setVaultCap(uint256 newMax) external onlyAdmin {
 			vaultCap = newMax;
@@ -103,14 +108,9 @@ contract ViaVault is
 			individualCap = newMax;
 	}
 	
-	function checkCap(uint256 amount0,uint256 amount1) public view returns(uint256){
-		uint256 price = IStrategy(myStrategy()).getPrice();
-		uint256 currentCap = (amount0 * price ) + amount1;
-		return( currentCap );
-	}
-
     function emergencyBurn() external onlyAdmin {
     	IStrategy(myStrategy()).callFunds();
+		isEmergency = true;
     }
 		
  	function sweep( address _token, uint256 amount) external  onlyAdmin {
@@ -130,62 +130,83 @@ contract ViaVault is
         if (amount0 > 0) IERC20(token0).safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
         
-        isUsed = false;
-
         emit Deposit(msg.sender, shares, amount0, amount1);
         
     }     
     
+    ///@notice get the strategy address from factory
     function myStrategy() internal view returns(address){
        return IVaultFactory(factory).getPair0(address(this));
     }
+    
+    function wdsLen() public view returns(uint256) {
+    	return wds.length;
+    }
+    
+	function withdrawLoop() public onlyStrategy {
 
-	///@notice withdraw function
-	///@dev withdraw function 
-    function withdraw( uint8 percent ) external 
+		while (wds.length > 0) {
+			uint i = wds.length-1;
+			withdrawProc(wds[i].recipient, wds[i].percent);
+			wds.pop();
+		}
+		
+	}
+	
+	///@notice this is pending withdraw to be put in a queue and its fund will be sent to user in next rebalance.
+    function withdraw( uint8 percent ) external     	
+	{
+		int id = checkExist(msg.sender);
+		if (id < 0 ) {
+			wds.push(Withdrawal({recipient:msg.sender, percent:percent}));
+		} else {
+			wds[uint(id)].percent = percent;
+		}
+		
+    }
+    
+    function checkExist(address addr) internal view returns(int){
+    	for (uint i=0; i< wds.length; i++ ) {
+			if (wds[i].recipient == addr) {
+				return int(i);
+			}
+		}
+		return -1;
+    }
+
+	
+    function withdrawProc(address to, uint8 percent) internal
     	returns (uint256 amount0, uint256 amount1) 
 	{
-		require (msg.sender != address(0), "w0x");
-		require ( percent <= 100, 'pc');
-        uint256 shares = balanceOf(msg.sender) * percent / 100;
+		
+		//require (to != address(0), "w0x");
+		//require ( percent <= 100, 'pc');
+
+        uint256 shares = balanceOf(to) * percent / 100;
 		uint256 _totalSupply = totalSupply();
-		require(shares > 0 && shares <= _totalSupply, 'shares');
-        _burn(msg.sender, shares);	// burn user's share
+		//require(shares > 0 && shares <= _totalSupply, 'shares');
+		
+		if ( to == address(0) ||  percent > 100 || shares == 0 || shares > _totalSupply ) 
+			return (0,0);
         
-        (uint256 stratTVL0, uint256 stratTVL1) = IStrategy(myStrategy()).getTotalAmounts();
-        (uint256 vaultTVL0, uint256 vaultTVL1) = ( getbalance0(), getbalance1());
-        (uint256 total0, uint256 total1) = (stratTVL0 + vaultTVL0, stratTVL1 + vaultTVL1);
+        (uint256 total0, uint256 total1) = ( getbalance0(), getbalance1());
+
         amount0 = total0 * shares / _totalSupply; 
         amount1 = total1 * shares / _totalSupply; 
         
-        bool success = false;
-        if (vaultTVL0 < amount0 || vaultTVL1 < amount1 )  {   // fund in this vault is not enough to withdraw
-        	success = IStrategy(myStrategy()).vaultWithdraw(msg.sender, amount0, amount1);
-	        (uint256 newBalance0, uint256 newBalance1) = ( getbalance0(), getbalance1());
-			require(newBalance0 >= amount0 && newBalance1 >= amount1, "new balance");
-        } else {
-        	success = true;
-        }
-        
-        require(success, "strat fund");
-        
-		IERC20(token0).safeTransfer(msg.sender, amount0);
-		IERC20(token1).safeTransfer(msg.sender, amount1);
+        _burn(to, shares);	// burn user's share
 
-        // get tvl in stratVault 
-        // get tvl sitting in this vault as they are already in 
-        // total0, total1 
-        // calc withdrawal amount0 , amount1 based on shares, totalsupply and total0, total1 and best ratio for vault
-        // best ratio is r(todo)
-        // 	amount0 = total0 * shares / totalsupply fun(r)
-        // 	amount1 = total1 * shares / totalsupply fun(r)
-        //  check if balance0 here is enough for withdraw, otherwise, call strategy to do re-balance or remove some position and send to this vault
-        // **check if balance here in this vault is enough again. 
-        // send fund to withdrawer.
+		if(amount0>0) { IERC20(token0).safeTransfer(to, amount0); }
+		if(amount1>0) { IERC20(token1).safeTransfer(to, amount1); }
 
-        
+		
 		//log withdraw
-        emit Withdraw(msg.sender, shares, amount0, amount1);
+        emit Withdraw(to, shares, amount0, amount1);
+    }
+    
+    function EmergencyWithdraw() external {
+    	if (!isEmergency) revert("not emergency");
+    	withdrawProc(msg.sender, 100);
     }
 	
 	function calcPositionShares( uint256 amountIn0, uint256 amountIn1) 
@@ -193,12 +214,11 @@ contract ViaVault is
 		returns(uint256 shares, uint256 amount0, uint256 amount1)
 	{
 		(amount0, amount1) = (amountIn0, amountIn1);
-		uint256 p = IStrategy(myStrategy()).getPrice(); 
-		require(p>0,'p0');
+
 
 		uint256 totalSupply = totalSupply();
 		if (totalSupply == 0 ) {
-			shares = calcShare(p, amount0, amount1);
+			shares = calcShare( amount0, amount1);
 			
 		} else {
 			( uint256 total0, uint256 total1 ) = IStrategy(myStrategy()).getTotalAmounts();
@@ -206,13 +226,25 @@ contract ViaVault is
 			total0 += getbalance0();
 			total1 += getbalance1();
 			
-			uint256 estTotalSupply = calcShare(p, total0, total1);
-			uint256 estShare =   calcShare(p, amountIn0, amountIn1); 
+			uint256 estTotalSupply = calcShare( total0, total1);
+			uint256 estShare =   calcShare( amountIn0, amountIn1); 
 			shares = estShare * totalSupply / estTotalSupply ;
 		}
 	}
 	
-	function calcShare(uint256 p, uint256 a0, uint256 a1) public pure returns(uint256){
+	function mintFees(address to, uint256 fee0, uint256 fee1) external onlyStrategy {
+		uint256 share = calcShare(fee0, fee1); 
+		_mint(to, share);
+		emit MintFees(to, share, fee0, fee1);
+
+	}
+	
+	function calcShare(uint256 a0, uint256 a1) public view returns(uint256){
+		
+		uint256 p = IStrategy(myStrategy()).getPrice(); 
+		
+		require(p>0,'p0');
+		
 		return(a0 + a1/p); 
 	}
 	
@@ -224,7 +256,6 @@ contract ViaVault is
 		uint256 a1 = getbalance1();
 		if (a0 > 0) IERC20(token0).safeTransfer(myStrategy() , a0);
         if (a1 > 0) IERC20(token1).safeTransfer(myStrategy() , a1);
-        isUsed = true;
     }
     
     function getbalance0() public view returns(uint256) {

@@ -8,7 +8,10 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 const fn = "C:\\Users\\xdotk\\torukmakto\\vialend\\contracts\\vaults\\v2.0\\scripts\\file\\ini"
@@ -16,29 +19,41 @@ const fn = "C:\\Users\\xdotk\\torukmakto\\vialend\\contracts\\vaults\\v2.0\\scri
 const cfg_file = "C:\\Users\\xdotk\\torukmakto\\vialend\\contracts\\vaults\\v2.0\\scripts\\file\\config.json"
 
 type Configuration struct {
-	STRAT_DEPLOYER string
-	VAULT_DEPLOYER string
-	VAULT_FACTORY  string
-	VAULT_STRATEGY string
-	VAULT          string
+	Description string `json:"Description"`
+	Contracts   struct {
+		STRAT_DEPLOYER string
+		VAULT_DEPLOYER string
+		VAULT_FACTORY  string
+		VAULT_STRATEGY string
+		VAULT          string
+	} `json:"Contracts"`
 }
 
 var Cfg Configuration
 
 func ConfigWrite() {
 
-	var Cfg2 Configuration
+	var Cfgs2 Configuration
 
-	Load(cfg_file, &Cfg2)
-
-	if !reflect.DeepEqual(Cfg, Cfg2) {
-		Save(cfg_file, &Cfg)
+	var result map[string]interface{}
+	Load(cfg_file, &result)
+	sid := strconv.Itoa(Networkid)
+	mapstructure.Decode(result[sid].(map[string]interface{}), &Cfgs2)
+	if !reflect.DeepEqual(Cfg, Cfgs2) {
+		result[sid] = &Cfg
+		Save(cfg_file, &result)
 	}
 
 }
-
 func ConfigParser() {
-	Load(cfg_file, &Cfg)
+
+	var result map[string]interface{}
+	Load(cfg_file, &result)
+
+	sid := strconv.Itoa(Networkid)
+
+	mapstructure.Decode(result[sid].(map[string]interface{}), &Cfg)
+
 }
 
 // Load gets your config from the json file,
