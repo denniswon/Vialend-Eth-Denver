@@ -264,20 +264,16 @@ var Networks = [...]Params{
 		"0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF", // CETH
 		"0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0", //CUSDC
 
-		"0x4a9c85e96C30EA642728926bC8df23eFC95224dF", //VaultFactory
-		40, //time pending interval
+		"READ FROM FILE", //VaultFactory
+		40,               //time pending interval
 		"0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool
 		"0xe592427a0aece92de3edee1f18e0157c05861564", // uni swap router
 		"0x3C3eF6Ad37F107CDd965C4da5f007526B959532f", // team  token
-
-		"0x68CBa5D5A74Bce067Ed15aD9cd53cfA8164693b9",
-		//		"0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", //vault   can delete account
-
-		3000, // fee
-
+		"READ FROM FILE", //vault
+		3000,             // fee
 		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
 
-		"", //VaultStrat
+		"READ FROM FILE", //VaultStrat
 
 		LendingStruct{
 			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",

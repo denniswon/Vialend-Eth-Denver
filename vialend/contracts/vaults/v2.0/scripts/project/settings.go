@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func SetProtocolFee(rate *big.Int) {
@@ -21,20 +23,28 @@ func SetProtocolFee(rate *big.Int) {
 	TxConfirm(tx.Hash())
 
 }
-func SetUniswapPortionRatio(ratio uint8) {
+func SetPortionRatio(uni uint8, comp uint8) {
 
-	vaultInstance := GetVaultInstance()
+	fmt.Println("setPortion Ratio uni=", uni, "% compound= ", comp, "%")
 
-	tx, err := vaultInstance.SetUniPortionRatio(Auth, ratio)
+	_, stratIns, _ := GetInstance3()
+
+	if uni+comp > 100 {
+		log.Fatal("portion ratio > 100", uni, comp)
+	}
+	NonceGen()
+	tx, err := stratIns.SetPortionRatio(Auth, uni, comp)
 
 	if err != nil {
-		log.Fatal("vaultInstance. setuniportion err ", err)
+		log.Fatal("SetPortionRatio err ", err)
 	}
 
-	fmt.Println("setuniportionp tx: ", tx.Hash().Hex())
-
-	//Readstring("tx sent.....  wait for pending..next .. ")
 	TxConfirm(tx.Hash())
+
+	checkuni, _ := stratIns.UniPortion(&bind.CallOpts{})
+	checkcomp, _ := stratIns.CompPortion(&bind.CallOpts{})
+
+	myPrintln("check uni, com :", checkuni, checkcomp)
 
 }
 

@@ -64,12 +64,12 @@ func main() {
 	// project.ChangeStat(project.Network.VaultStrat, newVaultAddr, 1)
 
 	//#reload strategy & vault
-	newStratAddr := project.DeployStratByGoStruct()
-	newVaultAddr := project.DeployVaultByGo()
-	project.ConfigWrite()
-	project.Repair(newStratAddr, newVaultAddr)
-	project.ChangeStat(newStratAddr, newVaultAddr, 1)
-	return
+	// newStratAddr := project.DeployStratByGoStruct()
+	// newVaultAddr := project.DeployVaultByGo()
+	// project.ConfigWrite()
+	// project.Repair(newStratAddr, newVaultAddr)
+	// project.ChangeStat(newStratAddr, newVaultAddr, 1)
+	// return
 
 	// project.IsContract("0x1F98431c8aD98523631AE4a59f267346ea31F984")
 	// return
@@ -108,31 +108,26 @@ func main() {
 	// project.Rebalance(400, 0)
 	// return
 
-	// project.SetTwapduration(5)
-	// project.GetTwap()
-	// project.GetPriceStratCall()
-	// // project.GetTwap()
-	// // project.GetPriceStratCall()
-	// project.GetTickPrice()
-
-	//project.MyAccountInfo(2)
-	//### ViaVaultInfo
-	// project.CheckActive(project.Network.Vault) // CheckVaultStatus()
-	//project.GetTVL()
-	// project.GetTotalAmounts()
-	// project.GetCompAmounts()
-	//return
-
-	// project.Deposit(1e17, 1e18, 0)
-	// project.Rebalance(400, 0)
-	// project.Withdraw(100, 0)
-	// project.ViewVaults()
-	//	return
-	//project.ChangeStat(s,v,1)
-
 	//project.ViaVaultPublicList()
 	// project.ViaStratUniCompPublicList()
-	// //return
+	// return
+
+	// project.SetTwapduration(5)
+	// project.GetPriceStratCall()
+	// project.GetTwap()
+	// project.GetTickPrice()
+	// return
+
+	//project.MyAccountInfo(2)
+
+	//### ViaVaultInfo
+	// project.CheckActive(project.Network.Vault) // CheckVaultStatus()
+
+	project.GetTVL()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
+	// project.LendingInfo()
+	return
 
 	//project.ViaFactoryPublicList()
 	//project.DeployVaultFactory()
@@ -140,12 +135,12 @@ func main() {
 	//project.ChangeStat("0xb41e177E55FE7c1aA294B4c4781C2Dd8F9668b02", 2)
 	//project.CheckVaultStatus()
 
-	// project.EmergencyBurn()
+	//project.EmergencyBurn()
 	// project.EmergencyWithdraw(0)
 	// project.EmergencyWithdraw(1)
 	// project.EmergencyWithdraw(2)
 	// project.EmergencyWithdraw(3)
-	// return
+	//return
 
 	// s := "0x9a94272446f0c119E1006935c9E6D6fEB6c206f4"
 	// v := "0x6E09167c444AAbe5cD49Cff5Af16B15E33096e6C"
@@ -158,9 +153,63 @@ func main() {
 	// //	project.DeployStratUniComp()
 	//project.Sleep(5000)
 
+	// project.SetPortionRatio(90, 10)
+	// return
+
 	project.Init(-1, -1)
 	project.Quiet = false
 
+	//#### WETH/USDC Test
+	//project.SetTwapduration(10)
+	//project.Deposit(1e16, 1e6, 0)
+	//project.Deposit(2e16, 2e6, 1)
+
+	//	project.Withdraw(100, 1)
+	// project.Deposit(2e17, 2e18, 1)
+	// //project.Withdraw(100, 0)
+	// project.GetTVL()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
+
+	//project.MoveFunds()
+	//project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	// project.GetTVL()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
+	//project.LendingInfo()
+
+	// //project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// //project.Rebalance(600, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Deposit(1e17, 1e6, 0)
+	// // //project.Alloc(0)
+	// //project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	// project.Deposit(2e17, 2e6, 1)
+	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	// // project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
+	// // project.EmergencyWithdraw(0)
+	// // project.EmergencyWithdraw(1)
+
+	project.Withdraw(100, 0)
+	project.Withdraw(100, 1)
+	project.Withdraw(100, 2)
+	project.Withdraw(100, 3)
+	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	// // //project.VaultInfo()
+	// // project.MyAccountInfo(0)
+	// // project.MyAccountInfo(1)
+	// project.GetTVL()
+	// project.GetTotalSupply()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
+
+	return
+
+	//#### WETH/DAI Test
 	//project.SetTwapduration(10)
 	project.Deposit(1e17, 1e18, 0)
 	project.Deposit(2e17, 2e18, 1)
@@ -175,37 +224,37 @@ func main() {
 	//project.MoveFunds()
 	project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
-	project.GetTVL()
-	project.GetTotalAmounts()
-	project.GetCompAmounts()
+	// project.GetTVL()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
 
-	//project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
-	//project.Rebalance(600, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
-	project.Deposit(1e17, 1e18, 0)
-	// //project.Alloc(0)
-	//project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
-	project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// //project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// //project.Rebalance(600, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Deposit(1e17, 1e18, 0)
+	// // //project.Alloc(0)
+	// //project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
-	project.Deposit(2e17, 2e18, 1)
-	project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Deposit(2e17, 2e18, 1)
+	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
-	// project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
-	// project.EmergencyWithdraw(0)
-	// project.EmergencyWithdraw(1)
+	// // project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
+	// // project.EmergencyWithdraw(0)
+	// // project.EmergencyWithdraw(1)
 
-	project.Withdraw(100, 0)
-	project.Withdraw(100, 1)
-	project.Withdraw(100, 2)
-	project.Withdraw(100, 3)
-	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Withdraw(100, 0)
+	// project.Withdraw(100, 1)
+	// project.Withdraw(100, 2)
+	// project.Withdraw(100, 3)
+	// project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
-	// //project.VaultInfo()
-	// project.MyAccountInfo(0)
-	// project.MyAccountInfo(1)
-	project.GetTVL()
-	project.GetTotalSupply()
-	project.GetTotalAmounts()
-	project.GetCompAmounts()
+	// // //project.VaultInfo()
+	// // project.MyAccountInfo(0)
+	// // project.MyAccountInfo(1)
+	// project.GetTVL()
+	// project.GetTotalSupply()
+	// project.GetTotalAmounts()
+	// project.GetCompAmounts()
 
 	return
 

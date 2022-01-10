@@ -12,11 +12,13 @@ site_name: VIALAND 开发文档
 
 nav:
   - DESIGN : design.md  
+  - USER MENU : User.md
+  - ADMIN MENU : Admin.md
   - CONTRACT : contracts.md  
   - SCRIPT : scripts.md
   - EVENT : events.md  
-  - TEST : test.md  
   - GAS : gas.md  
+  - TEST : test.md  
   - TERMS : terms.md  
   - DEV-NOTE : dev-note.md
   - INTEGRATION : integration.md

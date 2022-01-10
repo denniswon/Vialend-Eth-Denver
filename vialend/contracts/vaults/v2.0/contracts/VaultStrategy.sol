@@ -134,11 +134,11 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         motivatorFeeRate = params.MotivatorFeeRate;
 		Decimals[token0] = params.Token0Decimals;        
 		Decimals[token1] = params.Token1Decimals;
-		quoteamount = uint128(10 ** Decimals[token1]);
+		quoteamount = uint128(10 ** Decimals[token0]);
 
     }
     
-    event MintUniV3Liquidity(int24 indexed newLow, int24 indexed newHigh, uint128 indexed liquidity);
+    event MintUniV3Liquidity(int24 indexed newLow, int24 indexed newHigh, uint128 indexed liquidity, uint256 minied0, uint256 minted1 );
     event BurnUniV3Liquidity(int24 indexed cLow, int24 indexed cHigh, uint128 indexed liquidity);
     event Rebalance(address indexed,uint256 u0,  uint256 u1, uint256 c0,  uint256 c1);
     event AllocFees(address indexed, uint256 uFees0, uint256 uFees1,uint256 lFees0,uint256 lFees1);
@@ -247,6 +247,18 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
        return IVaultFactory(factory).getPair0(address(this));
     }
 
+/*	struct RebalanceParam {
+		uint8 uniPortion,
+		uint8 lendPortion,
+		uint8 lendingPool,
+		int24 baseLow,
+		int24 baseHigh,
+		int24 limitLow,
+		int24 limitHigh,
+		int24 hedging, 
+		int24 options
+	}
+*/	
 	function rebalance(
 		int24 newLow,
         int24 newHigh
@@ -255,8 +267,6 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		bool isActive = IVaultFactory(factory).checkActive( address(this) );
 		require(isActive==true, 'not active');
 		
-		//countmotivator(msg.sender);
-
 		alloc();
 		allocFees();
 
@@ -320,13 +330,15 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         (uint256 u0, uint256 u1) = calcUniPortionAmounts(currentBalance0, currentBalance1, p);
 		
         if ( uniPortion > 0 ) {
-			mintUniV3( newLow, newHigh, u0, u1 );
+			(uint256 minted0, uint256 minted1) = mintUniV3( newLow, newHigh, u0, u1 );
             (cLow, cHigh) = (newLow, newHigh);    
+
+			// update the current balances should there be minted amounts on uniswap 
+			currentBalance0 -= minted0;
+			currentBalance1 -= minted1;
 		}
 	
-		if (compPortion> 0 ) {
-			currentBalance0 = getBalance(token0);
-			currentBalance1 = getBalance(token1);
+		if (compPortion > 0 ) {
 			compIn0 = currentBalance0 * compPortion / 100 ;
 			compIn1 = currentBalance1 * compPortion / 100 ;
 
@@ -335,7 +347,9 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 			
 		}	
 		
+		// todo if ( hedging > 0) {}
 		// todo if (aavePortion> 0 ) {}
+
 		
 		emit Rebalance(address(this), u0,u1,compIn0,compIn1);
 
@@ -415,14 +429,8 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         twapDuration = _twapDuration;
     }
     
-    function setUniPortionRatio(uint8 ratio) external onlyCreator {
-    	require (ratio <= 100,"ratio");
-		uniPortion = ratio;
-    }
-    
-    function setCompPortionRatio(uint8 ratio) external onlyCreator {
-    	require (ratio <= 100,"ratio");
-		compPortion = ratio;
+    function setPortionRatio(uint8 uni, uint8 comp) external onlyCreator {
+		(uniPortion, compPortion ) =  ( uni, comp );
     }
 
 	///@notice set protocol address to collect fees
@@ -436,7 +444,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
         int24 newHigh,
         uint256 amount0,
         uint256 amount1
-    ) internal  { 
+    ) internal returns(uint256 minied0, uint256 minted1) { 
 	  
         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
         
@@ -449,8 +457,8 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
                 amount1
             );
             
-        pool.mint(address(this), newLow, newHigh, liquidity, "");
-        emit MintUniV3Liquidity(newLow, newHigh, liquidity);
+        (minied0, minted1 ) = pool.mint(address(this), newLow, newHigh, liquidity, "");
+        emit MintUniV3Liquidity(newLow, newHigh, liquidity,minied0, minted1);
 	}
 
 	
@@ -675,7 +683,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 				uint256 dfeecut0 = feecut0 * motivatorFeeRate /100;
 				uint256 dfeecut1 = feecut1 * motivatorFeeRate /100;
 				IViaVault(myVault()).mintFees( msg.sender, dfeecut0 , dfeecut1);
-				//allocmotivatorFees( feecut0, feecut1);
+				//allocMotivatorFees( feecut0, feecut1);
 			}
 		}
 		
@@ -699,7 +707,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     }
 
 
-	function allocmotivatorFees(uint256 feecut0, uint256 feecut1) internal {
+	function allocMotivatorFees(uint256 feecut0, uint256 feecut1) internal {
 		while (motivators.length > 0) {
 			uint i = motivators.length-1;
 			uint icount = motivatorCounter[motivators[i]];
@@ -711,7 +719,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		}
 		lastCount = 0;
 	}
-	function countmotivator(address addr) internal {
+	function countMotivator(address addr) internal {
 		if (motivatorCounter[addr] > 0) {
 			motivatorCounter[addr]++;
 		} else {
@@ -754,8 +762,11 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     	ICErc20 ctoken0 = ICErc20(_CTOKEN[token0]);
 		ICErc20 ctoken1 = ICErc20(_CTOKEN[token1]);
 		
-        uint256 amount0 = cAmount0 * ctoken0.exchangeRateStored() / (10 ** Decimals[token0] );
-        uint256 amount1 = cAmount1 * ctoken1.exchangeRateStored() / (10 ** Decimals[token1] );
+		uint256 exchangeRate0 = ctoken0.exchangeRateStored();  // (1* 10 ** 18 + Decimals[token0] -8 )));   // the sampled calculation get a wrong result
+		uint256 exchangeRate1 = ctoken1.exchangeRateStored();  // (1* 10 ** 18 + Decimals[token1] -8 ))); 
+				
+        uint256 amount0 = cAmount0 * exchangeRate0 / 1e18;
+        uint256 amount1 = cAmount1 * exchangeRate1 / 1e18;
 
 		return(amount0,amount1);
     }	

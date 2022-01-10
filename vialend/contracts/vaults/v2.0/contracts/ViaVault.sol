@@ -234,9 +234,8 @@ contract ViaVault is
 	
 	function mintFees(address to, uint256 fee0, uint256 fee1) external onlyStrategy {
 		uint256 share = calcShare(fee0, fee1); 
-		_mint(to, share);
 		emit MintFees(to, share, fee0, fee1);
-
+		_mint(to, share);
 	}
 	
 	function calcShare(uint256 a0, uint256 a1) public view returns(uint256){

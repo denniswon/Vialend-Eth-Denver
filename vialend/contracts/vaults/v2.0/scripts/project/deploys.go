@@ -613,8 +613,8 @@ func DeployStratByGoStruct() string {
 	params.VaultFactory = common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
 	params.Protocol = common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 	params.Creator = FromAddress
-	params.CETH = common.HexToAddress(Network.LendingContracts.WETH)
-	params.WETH = common.HexToAddress(Network.LendingContracts.CETH)
+	params.WETH = common.HexToAddress(Network.LendingContracts.WETH)
+	params.CETH = common.HexToAddress(Network.LendingContracts.CETH)
 	params.CToken0 = common.HexToAddress(Network.CTOKEN0)
 	params.CToken1 = common.HexToAddress(Network.CTOKEN1)
 	params.Token0 = common.HexToAddress(Network.TokenA)

@@ -14,6 +14,7 @@ import (
 	VaultFactory "viaroot/deploy/VaultFactory"
 	VaultStrategy "viaroot/deploy/VaultStrategy"
 	ViaVault "viaroot/deploy/ViaVault"
+	cErc20 "viaroot/deploy/cErc20"
 	vault "viaroot/deploy/vialendFeeMaker"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -83,4 +84,14 @@ func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *
 	maxsupply, err := instance.TotalSupply(&bind.CallOpts{})
 
 	return instance, name, symbol, decimals, maxsupply
+}
+
+func GetCTokenInstance(Address string) *cErc20.Api {
+
+	instance, err := cErc20.NewApi(common.HexToAddress(Address), Client)
+	if err != nil {
+		log.Fatal("get token Instance,", err)
+	}
+
+	return instance
 }

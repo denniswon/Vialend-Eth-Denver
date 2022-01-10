@@ -12,7 +12,6 @@ import (
 
 	//	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
 	token "viaroot/deploy/Tokens/erc20/deploy/Token"
-	cErc20 "viaroot/deploy/cErc20"
 
 	//vault "viaroot/deploy/FeeMaker"
 
@@ -385,14 +384,37 @@ func LendingInfo() {
 	myPrintln(".........Lending pool info .........  ")
 	myPrintln("----------------------------------------------")
 
+	myPrintln(".........Compound info .........  ")
 	checkCTokenBalance(Network.Vault, "CUSDC", Network.LendingContracts.CUSDC)
 	checkCTokenBalance(Network.Vault, "CETH", Network.LendingContracts.CETH)
 	checkETHBalance()
 
-	vaultInstance := GetVaultInstance()
-	lendingamts, _ := vaultInstance.GetCAmounts(&bind.CallOpts{})
+	_, stratInstance, _ := GetInstance3()
+	CAmounts, _ := stratInstance.GetCAmounts(&bind.CallOpts{})
+	myPrintln("CToken0, Ctoken1:", CAmounts)
 
-	myPrintln("CToken0, Ctoken1:", lendingamts)
+	exchangeRateStored, _ := GetCTokenInstance(Network.CTOKEN0).ExchangeRateStored(&bind.CallOpts{})
+
+	//dem := int(18 + int(Token[0].Decimals) - 8)
+	ctoken0Underlying := BigIntToFloat64(CAmounts.Amount0) * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
+	myPrintln("exchangeRateStored0:", exchangeRateStored)
+	myPrintln("ctoken0Underlying", ctoken0Underlying)
+
+	exchangeRateStored, _ = GetCTokenInstance(Network.CTOKEN1).ExchangeRateStored(&bind.CallOpts{})
+	//dem = int(18 + int(Token[1].Decimals) - 8)
+	ctoken1Underlying := BigIntToFloat64(CAmounts.Amount1) * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
+	myPrintln("exchangeRateStored1:", exchangeRateStored)
+	myPrintln("ctoken1Underlying", ctoken1Underlying)
+
+	myPrintln("counter check with GetCompAmounts() from contract:")
+	GetCompAmounts()
+
+	myPrintln("wbtc info")
+	exchangeRateStored, _ = GetCTokenInstance(Network.LendingContracts.CWBTC).ExchangeRateStored(&bind.CallOpts{})
+	cwbtcAmount := float64(141008860)
+	cwbtcUnderlying := cwbtcAmount * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
+	myPrintln("exchangeRateStored0:", exchangeRateStored)
+	myPrintln(cwbtcAmount, "CWBTC =  ", cwbtcUnderlying, "WBTC")
 
 }
 
@@ -420,16 +442,6 @@ func checkCTokenBalance(who string, tokenName string, cTokenAddress string) *big
 
 	return (bal)
 
-}
-
-func GetCTokenInstance(Address string) *cErc20.Api {
-
-	instance, err := cErc20.NewApi(common.HexToAddress(Address), Client)
-	if err != nil {
-		log.Fatal("get token Instance,", err)
-	}
-
-	return instance
 }
 
 /// param0 : fullRangeSize, param1: account
