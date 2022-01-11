@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.8.8;
-
+     
 interface IVaultFactory
 { 
+
+
     function getAdmin() external view returns(address);
     function getTeam() external view returns(address);
     function setTeam(address _team) external;
@@ -13,7 +15,7 @@ interface IVaultFactory
 	function getCount() external; 	
 	
 	function getStat(address _strategy, address _vault) external view returns(uint);
-	function checkActive(address sORv ) external view returns(bool); 
+	function checkStatus(address sORv, uint _stat ) external view returns(bool); 
 	function getPair0(address _addr) external view returns(address);
 	
 	///return true if a2 and a1 is a strategy/vault pair

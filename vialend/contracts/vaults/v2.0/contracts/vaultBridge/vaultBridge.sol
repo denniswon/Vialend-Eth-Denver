@@ -34,7 +34,6 @@ contract VaultBridge is VaultBridgeOwnable {
 
     mapping(uint  => address) public vaults;
 
-
   	constructor()  {
 		owner = msg.sender;
 	}

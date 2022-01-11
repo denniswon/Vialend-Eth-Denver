@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+
+	//	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -70,12 +72,12 @@ func GetStat(s string, v string) {
 }
 
 // addr : vault or strategy
-func CheckActive(addr string) {
+func CheckStatus(addr string, stat int) {
 	facotryInstance, _, _ := GetInstance3()
 
 	myPrintln(".... Check Vault Status.....")
 
-	result, _ := facotryInstance.CheckActive(&bind.CallOpts{}, common.HexToAddress(addr))
+	result, _ := facotryInstance.CheckStatus(&bind.CallOpts{}, common.HexToAddress(addr), big.NewInt(int64(stat)))
 	myPrintln("result:", result)
 
 }
@@ -122,13 +124,26 @@ func Repair(_strategy string, _vault string) {
 
 }
 
+func FactoryPublicList() {
+
+	factoryInstance, _, _ := GetInstance3()
+
+	p1, _ := factoryInstance.GetTeam(&bind.CallOpts{})
+	p2, _ := factoryInstance.GetAdmin(&bind.CallOpts{})
+	p3, _ := factoryInstance.GetCount(&bind.CallOpts{})
+
+	myPrintln("\n", ">>>>>>factory public attributes <<<<<<<<<<<", "\n")
+	myPrintln("TEAM", p1)
+	myPrintln("ADMIN", p2)
+	myPrintln("VAULTS COUNT", p3)
+
+}
+
 func ViaVaultPublicList() {
 
-	_, _, viaVaultInstance := GetInstance3()
+	factoryInstance, _, viaVaultInstance := GetInstance3()
 
-	myPrintln("Vault Address:", Network.Vault)
-
-	p1, _ := viaVaultInstance.Strategy(&bind.CallOpts{})
+	p1, _ := factoryInstance.GetPair0(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
 	p2, _ := viaVaultInstance.Admin(&bind.CallOpts{})
 	p3, _ := viaVaultInstance.Token0(&bind.CallOpts{})
 	p4, _ := viaVaultInstance.Token1(&bind.CallOpts{})
@@ -137,6 +152,7 @@ func ViaVaultPublicList() {
 
 	myPrintln()
 	myPrintln("\n", ">>>>>>via Vault  public attributes <<<<<<<<<<<", "\n")
+	myPrintln("Vault:", Network.Vault)
 	myPrintln("Strategy", p1)
 	myPrintln("Admin", p2)
 	myPrintln("Token0", p3)
@@ -189,11 +205,14 @@ func ViaStratUniCompPublicList() {
 	p17, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenB))
 	p18, _ := viaStratInstance.MotivatorFeeRate(&bind.CallOpts{})
 	p19, _ := viaStratInstance.Quoteamount(&bind.CallOpts{})
-	p20, _ := viaStratInstance.GetQuoteAtTick(&bind.CallOpts{}, big.NewInt(-174770), p19, common.HexToAddress(Network.TokenA), common.HexToAddress(Network.TokenB))
+	p20, _ := viaStratInstance.GetQuoteAtTick(&bind.CallOpts{}, big.NewInt(82894), p19, common.HexToAddress(Network.TokenA), common.HexToAddress(Network.TokenB))
+
 	//p20, _ := viaStratInstance.GetQuoteAtTick(&bind.CallOpts{}, big.NewInt(-174770), big.NewInt(1e18), common.HexToAddress(Network.TokenA), common.HexToAddress(Network.TokenB))
 	p21, _ := viaStratInstance.WETH(&bind.CallOpts{})
+	p22, _ := viaStratInstance.Factory(&bind.CallOpts{})
 
 	myPrintln("\n", ">>>>>>via Strat  public attributes <<<<<<<<<<<", "\n")
+	myPrintln("Factory ", p22)
 	myPrintln("Admin ", p1)
 	myPrintln("Team", p2)
 	myPrintln("Pool", p3)
@@ -358,7 +377,7 @@ func GetCompAmounts() {
 	_, viaStratInstance, _ := GetInstance3()
 
 	NonceGen()
-	total0, total1, err := viaStratInstance.GetCompAmounts(&bind.CallOpts{})
+	total0, total1, err := viaStratInstance.GetAmountsInComp(&bind.CallOpts{})
 	if err != nil {
 		log.Println("GetCompAmount err: ", err)
 	}
@@ -611,9 +630,7 @@ func EventFiltered(contract string, _from int, _to int, eventName string) {
 
 }
 
-func EventDeposit(_from int, _to int) {
-
-	eventName := "Deposit"
+func Events(eventName string, _from int, _to int) {
 
 	fromBlock := big.NewInt(int64(_from))
 	toBlock := big.NewInt(int64(_to))
@@ -621,6 +638,7 @@ func EventDeposit(_from int, _to int) {
 		FromBlock: fromBlock,
 		ToBlock:   toBlock,
 		Addresses: []common.Address{
+			common.HexToAddress(Network.VaultFactory),
 			common.HexToAddress(Network.Vault),
 			common.HexToAddress(Network.VaultStrat),
 		},
@@ -641,206 +659,30 @@ func EventDeposit(_from int, _to int) {
 		log.Println(" ViaVault.ApiMetaData.GetAbi error ", err)
 	}
 
+	Events := map[string]interface{}{}
 	for _, vLog := range logs {
-
-		event := struct {
-			Shares  *big.Int
-			Amount0 *big.Int
-			Amount1 *big.Int
-		}{}
-
-		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
+		err = contractAbi.UnpackIntoMap(Events, eventName, vLog.Data)
 		if err != nil {
-			//log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
+			//log.Println(": UnpackIntoMap error:", err, "-> ", eventName)
+			continue
 		}
 
-		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
-		if event.Shares != nil {
-			myPrintln(eventName)
-			myPrintln("shares:", event.Shares)
-			myPrintln("amount0:", event.Amount0)
-			myPrintln("amount1:", event.Amount1)
+		if len(Events) > 0 {
+			eventBlockInfo(eventName, int64(vLog.BlockNumber))
+
+			myPrintln("Topics: Array(", len(vLog.Topics), ")")
 
 			parseTopic(vLog.Topics)
+
+			myPrintln("Logs: ")
+
+			myPrintln(Events)
 		}
 
 	}
 
 }
 
-func EventWithdraw(_from int, _to int) {
-
-	eventName := "Withdraw"
-
-	fromBlock := big.NewInt(int64(_from))
-	toBlock := big.NewInt(int64(_to))
-	query := ethereum.FilterQuery{
-		FromBlock: fromBlock,
-		ToBlock:   toBlock,
-		Addresses: []common.Address{
-			common.HexToAddress(Network.Vault),
-			common.HexToAddress(Network.VaultStrat),
-		},
-	}
-
-	logs, err := ClientWS.FilterLogs(context.Background(), query)
-	if err != nil {
-		log.Println(err)
-	}
-
-	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
-
-	//var contractAbi abi.ABI
-	var contractAbi *abi.ABI
-	contractAbi, err = ViaVault.ApiMetaData.GetAbi()
-
-	if err != nil {
-		log.Println(" ViaVault.ApiMetaData.GetAbi error ", err)
-	}
-
-	for _, vLog := range logs {
-
-		event := struct {
-			Shares  *big.Int
-			Amount0 *big.Int
-			Amount1 *big.Int
-		}{}
-
-		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
-		if err != nil {
-			//log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
-		}
-
-		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
-		if event.Shares != nil {
-			myPrintln(eventName)
-			myPrintln("shares:", event.Shares)
-			myPrintln("amount0:", event.Amount0)
-			myPrintln("amount1:", event.Amount1)
-
-			parseTopic(vLog.Topics)
-		}
-
-	}
-
-}
-func EventAllocFees(_from int, _to int) {
-
-	eventName := "AllocFees"
-
-	fromBlock := big.NewInt(int64(_from))
-	toBlock := big.NewInt(int64(_to))
-	query := ethereum.FilterQuery{
-		FromBlock: fromBlock,
-		ToBlock:   toBlock,
-		Addresses: []common.Address{
-			common.HexToAddress(Network.Vault),
-			common.HexToAddress(Network.VaultStrat),
-		},
-	}
-
-	logs, err := ClientWS.FilterLogs(context.Background(), query)
-	if err != nil {
-		log.Println(err)
-	}
-
-	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
-
-	//var contractAbi abi.ABI
-	var contractAbi *abi.ABI
-	contractAbi, err = VaultStrat.ApiMetaData.GetAbi()
-
-	if err != nil {
-		log.Println(" .ApiMetaData.GetAbi error ", err)
-	}
-
-	for k, vLog := range logs {
-
-		event := struct {
-			UFees0 *big.Int
-			UFees1 *big.Int
-			LFees0 *big.Int
-			LFees1 *big.Int
-		}{}
-
-		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
-		if err != nil {
-			log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
-		}
-
-		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
-		if event.UFees0 != nil {
-			myPrintln(eventName)
-			myPrintln("UFees0:", event.UFees0)
-			myPrintln("UFees1:", event.UFees1)
-			myPrintln("LFees0:", event.LFees0)
-			myPrintln("LFees1:", event.LFees1)
-
-			parseTopic(vLog.Topics)
-		}
-
-	}
-
-}
-
-// fileter e.g.
-func EventMintFees(_from int, _to int) {
-
-	eventName := "MintFees"
-
-	fromBlock := big.NewInt(int64(_from))
-	toBlock := big.NewInt(int64(_to))
-	query := ethereum.FilterQuery{
-		FromBlock: fromBlock,
-		ToBlock:   toBlock,
-		Addresses: []common.Address{
-			common.HexToAddress(Network.Vault),
-			common.HexToAddress(Network.VaultStrat),
-		},
-	}
-
-	logs, err := ClientWS.FilterLogs(context.Background(), query)
-	if err != nil {
-		log.Println(err)
-	}
-
-	fmt.Println(" Block from ", fromBlock, " to:", toBlock)
-
-	//var contractAbi abi.ABI
-	var contractAbi *abi.ABI
-	//	contractAbi, err = ViaVault.ApiMetaData.GetAbi()
-	contractAbi, err = VaultStrat.ApiMetaData.GetAbi()
-
-	if err != nil {
-		log.Println(".ApiMetaData.GetAbi error ", err)
-	}
-
-	for k, vLog := range logs {
-
-		event := struct {
-			Shares *big.Int
-			F0     *big.Int
-			F1     *big.Int
-		}{}
-
-		err = contractAbi.UnpackIntoInterface(&event, eventName, vLog.Data)
-		if err != nil {
-			log.Println(k, ": contractAbi.Unpack error:", err, "-> ", eventName)
-		}
-
-		//myPrintln(">>>>>>>>>the log>>>>>>>\n", event)
-		if event.Shares != nil {
-			myPrintln(eventName)
-			myPrintln("shares:", event.Shares)
-			myPrintln("fee0:", event.F0)
-			myPrintln("fee1:", event.F1)
-
-			parseTopic(vLog.Topics)
-		}
-
-	}
-
-}
 func typeof(v interface{}) {
 	fmt.Println(fmt.Sprintf("%T", v))
 }
@@ -850,41 +692,17 @@ func eventBlockInfo(eventName string, blockNumber int64) {
 	if err != nil {
 		log.Fatal("block ", err)
 	}
-	myPrintln("----- event: ", eventName, " | event time:", time.Unix(int64(block.Time()), 0).Format("2006.01.02 15:04:05"))
+	myPrintln("## event: ", eventName, " | event time:", time.Unix(int64(block.Time()), 0).Format("2006.01.02 15:04:05"), " | blocknumber:", blockNumber)
 
 }
 
 func parseTopic(topic []common.Hash) {
 
-	myPrintln("Topics: Array(", len(topic), ")")
 	for k := 0; k < len(topic); k++ {
 
 		//hint := hexToInt(topic[k].String())
 		fmt.Println(k, ": ", topic[k])
 		//fmt.Println("hexToInt:", hint)
-	}
-
-}
-
-func parseLog(_eventname string, vLogData []uint8) {
-
-	//contractAbi, err := abi.JSON(strings.NewReader(string(ViaVault.ApiABI)))
-	contractAbi, err := ViaVault.ApiMetaData.GetAbi()
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	event, err := contractAbi.Unpack(_eventname, vLogData)
-	if err != nil {
-		log.Println("event:", err, "-> ", _eventname)
-	}
-
-	fmt.Println("event : ", _eventname, ", (", len(event), ")")
-	fmt.Println(time.Now().Format("2006.01.02 15:04:05"))
-
-	for j := 0; j < len(event); j++ {
-		fmt.Println("event[", j, "]=", event[j])
 	}
 
 }

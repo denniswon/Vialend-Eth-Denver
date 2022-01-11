@@ -256,10 +256,10 @@ func Sweep(vaultAddr string, tokenAddr string, amount *big.Int) {
 
 }
 
-func EmergencyBurn() {
+func EmergencyCall() {
 
 	myPrintln("----------------------------------------------")
-	myPrintln(".........Emergency pull , burn all positions and send fund back to vault.........  ")
+	myPrintln(".........Emergency call setup emergency stat.........  ")
 	myPrintln("----------------------------------------------")
 
 	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
@@ -273,7 +273,7 @@ func EmergencyBurn() {
 	// lendingAmount0 := checkCTokenBalance("CETH", Network.LendingContracts.CETH)
 	// lendingAmount1 := checkCTokenBalance("CUSDC", Network.LendingContracts.CUSDC)
 
-	tx, err := vaultInstance.EmergencyBurn(Auth)
+	tx, err := vaultInstance.EmergencyCall(Auth)
 
 	if err != nil {
 		log.Fatal("emergency tx err ", err)
@@ -1269,9 +1269,9 @@ func TxConfirm(tx common.Hash) {
 	myPrintln("CumulativeGasUsed:", tr.CumulativeGasUsed)
 	myPrintln("GasUsed:", tr.GasUsed)
 
-	//	if 	Sleep(5000)
-
-	//	myPrintln("ContractAddress:", tr.ContractAddress)
+	if tr.Status == 0 {
+		log.Fatal("!!!!!!!! Failed tx ")
+	}
 
 }
 

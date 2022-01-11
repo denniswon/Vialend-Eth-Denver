@@ -444,7 +444,7 @@ func DeployVaultFactory() {
 
 	Network.VaultFactory = address.Hex()
 	fmt.Println("VaultFactory address:", address.Hex())
-	Cfg.Contracts.VAULT = address.Hex()
+	Cfg.Contracts.VAULT_FACTORY = address.Hex()
 
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
@@ -555,8 +555,8 @@ func DeployStratByDeployer() {
 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 
 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-	var uniPortionRate = uint8(30)
-	var compPortionRate = uint8(70)
+	var uniPortionRate = uint8(90)
+	var compPortionRate = uint8(100)
 
 	networkid := uint8(5) // 5: goerli
 	VaultFactory := common.HexToAddress(Network.VaultFactory)
@@ -623,8 +623,8 @@ func DeployStratByGoStruct() string {
 	params.Token1Decimals = Token[1].Decimals
 	params.VaultCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	params.IndividualCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	params.UniPortionRate = uint8(30)
-	params.CompPortionRate = uint8(70)
+	params.UniPortionRate = uint8(90)
+	params.CompPortionRate = uint8(100)
 	params.FeeTier = big.NewInt(Network.FeeTier)
 	params.TwapDuration = uint32(5)
 	params.MaxTwapDeviation = big.NewInt(2000)
@@ -660,8 +660,8 @@ func DeployStratByGoStruct() string {
 // 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 
 // 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-// 	var uniPortionRate = uint8(30)
-// 	var compPortionRate = uint8(70)
+// 	var uniPortionRate = uint8(90)
+// 	var compPortionRate = uint8(100)
 
 // 	protocolAddr := common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 // 	creatorFee := uint8(10)
@@ -722,8 +722,8 @@ func FactoryVault() {
 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 
 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-	var uniPortionRate = uint8(30)
-	var compPortionRate = uint8(70)
+	var uniPortionRate = uint8(90)
+	var compPortionRate = uint8(100)
 
 	networkid := uint8(5) // 5: goerli
 	VaultFactory := common.HexToAddress(Network.VaultFactory)
@@ -821,8 +821,8 @@ func DeployStratDeployer() {
 // 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 
 // 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-// 	var uniPortionRate = uint8(30)
-// 	var compPortionRate = uint8(70)
+// 	var uniPortionRate = uint8(90)
+// 	var compPortionRate = uint8(100)
 
 // 	networkid := uint8(5) // 5: goerli
 // 	VaultFactory := common.HexToAddress(Network.VaultFactory)

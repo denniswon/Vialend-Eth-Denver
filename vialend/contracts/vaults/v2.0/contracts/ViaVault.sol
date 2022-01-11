@@ -71,6 +71,7 @@ contract ViaVault is
     
     event MintFees(address indexed, uint256 share, uint256 f0, uint256 f1);
 
+	event PendingWithdraw(address to, bool pending);
 
  	modifier onlyAdmin {
         require (msg.sender == admin, 'admin');  
@@ -84,7 +85,7 @@ contract ViaVault is
     }
     
     modifier onlyActive {
-        require (IVaultFactory(factory).checkActive( address(this) ), 'not active');
+        require (IVaultFactory(factory).checkStatus( address(this),1 ), 'not active');
         _;
     }
     
@@ -92,6 +93,11 @@ contract ViaVault is
     
     modifier onlyFactory {
     	require(msg.sender == factory, 'factory');
+		_;
+    }
+    
+    modifier onlyNotEmergency {
+        require (! IVaultFactory(factory).checkStatus( address(this), 3 ), 'emergency');
 		_;
     }
     
@@ -108,9 +114,32 @@ contract ViaVault is
 			individualCap = newMax;
 	}
 	
-    function emergencyBurn() external onlyAdmin {
-    	IStrategy(myStrategy()).callFunds();
+	///@notice simply set status to emergency to cease the vault.
+    function emergencyCall() external onlyAdmin {
+		
 		isEmergency = true;
+
+		//set status inactive
+		IVaultFactory(factory).changeStat(
+			myStrategy(), 
+			address(this),
+			3); 
+    }
+    
+    function emergencyProc() external onlyAdmin {
+    	
+    }
+    
+    
+    function EmergencyWithdraw() external {
+    	if (!isEmergency) revert("not emergency");
+    	withdrawProc(msg.sender, 100);
+    }
+
+    
+    ///@notice call funds back to vault
+    function callFunds() external onlyAdmin {
+    	IStrategy(myStrategy()).callFunds();
     }
 		
  	function sweep( address _token, uint256 amount) external  onlyAdmin {
@@ -119,11 +148,12 @@ contract ViaVault is
         IERC20(_token).safeTransfer(msg.sender, amount);
     }	
 
-    function deposit( uint256 amountIn0, uint256 amountIn1) external onlyActive {
+    function deposit( uint256 amountIn0, uint256 amountIn1) external  {
     	
 		require(amountIn0>0 || amountIn1>0, 'amt0');
 		require(msg.sender != address(0), 'd0x');
        	(uint256 shares, uint256 amount0, uint256 amount1) = calcPositionShares(amountIn0, amountIn1);
+
 		require (shares > 0, 'share<=0'); //affirm the shares
 		
         _mint( msg.sender, shares);
@@ -156,12 +186,38 @@ contract ViaVault is
 	///@notice this is pending withdraw to be put in a queue and its fund will be sent to user in next rebalance.
     function withdraw( uint8 percent ) external     	
 	{
-		int id = checkExist(msg.sender);
-		if (id < 0 ) {
-			wds.push(Withdrawal({recipient:msg.sender, percent:percent}));
-		} else {
-			wds[uint(id)].percent = percent;
+		//10% reserve for withdraw
+		
+		bool pending = true;
+		require ( percent <= 100 , 'p100');
+		
+		uint256 shares = balanceOf(msg.sender) * percent / 100;
+		uint256 _totalSupply = totalSupply();
+		( uint256 total0, uint256 total1 ) = IStrategy(myStrategy()).getTotalAmounts();
+		uint256 reserve0 = getbalance0(); 
+		uint256 reserve1 = getbalance1(); 
+		total0 += reserve0;
+		total1 += reserve1;
+		
+		uint256 t0 = total0 * shares / _totalSupply;
+		uint256 t1 = total1 * shares / _totalSupply;
+		
+		if (reserve0 >= t0 && reserve1 >= t1) {
+			withdrawFinal(msg.sender, shares,t0, t1);
+			pending = false;
 		}
+		
+		if ( pending ) {
+			int id = checkExist(msg.sender);
+			// if pending withdraw exists, updates the withdraw data.
+			if (id < 0 ) {
+				wds.push(Withdrawal({recipient:msg.sender, percent:percent}));
+			} else {
+				wds[uint(id)].percent = percent;
+			}
+		}
+		
+		emit PendingWithdraw(msg.sender, pending);
 		
     }
     
@@ -175,40 +231,42 @@ contract ViaVault is
     }
 
 	
-    function withdrawProc(address to, uint8 percent) internal
-    	returns (uint256 amount0, uint256 amount1) 
+    function withdrawProc(address to, uint8 percent) internal    	
 	{
-		
-		//require (to != address(0), "w0x");
-		//require ( percent <= 100, 'pc');
 
         uint256 shares = balanceOf(to) * percent / 100;
 		uint256 _totalSupply = totalSupply();
-		//require(shares > 0 && shares <= _totalSupply, 'shares');
 		
-		if ( to == address(0) ||  percent > 100 || shares == 0 || shares > _totalSupply ) 
-			return (0,0);
+		if ( to == address(0) ||  shares > _totalSupply ) 
+			return;
         
         (uint256 total0, uint256 total1) = ( getbalance0(), getbalance1());
 
-        amount0 = total0 * shares / _totalSupply; 
-        amount1 = total1 * shares / _totalSupply; 
+        withdrawFinal(
+        	to, 
+        	shares,
+        	total0 * shares / _totalSupply,
+			total1 * shares / _totalSupply
+		);
         
+    }
+    
+    function withdrawFinal(address to, uint256 shares, uint256 amount0, uint256 amount1) internal onlyNotEmergency {
+    	
+		//log withdraw
+        emit Withdraw(to, shares, amount0, amount1);
+		
+		if (shares == 0 ) {
+			return;	
+		}
+		
         _burn(to, shares);	// burn user's share
 
 		if(amount0>0) { IERC20(token0).safeTransfer(to, amount0); }
 		if(amount1>0) { IERC20(token1).safeTransfer(to, amount1); }
-
 		
-		//log withdraw
-        emit Withdraw(to, shares, amount0, amount1);
     }
-    
-    function EmergencyWithdraw() external {
-    	if (!isEmergency) revert("not emergency");
-    	withdrawProc(msg.sender, 100);
-    }
-	
+
 	function calcPositionShares( uint256 amountIn0, uint256 amountIn1) 
 		public 
 		returns(uint256 shares, uint256 amount0, uint256 amount1)

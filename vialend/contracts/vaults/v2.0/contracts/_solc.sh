@@ -14,6 +14,7 @@ abigen --abi=../build/VaultDeployer.abi --bin=../build/VaultDeployer.bin --pkg=a
 
 solc --optimize --overwrite --abi VaultFactory.sol -o ../build
 solc --optimize --overwrite --bin VaultFactory.sol -o ../build
+/usr/bin/abigen --abi=../build/VaultFactory.abi --bin=../build/VaultFactory.bin --pkg=api --out=../deploy/VaultFactory/VaultFactory.go
 solc --optimize --overwrite --abi VaultStrategy.sol -o ../build
 solc --optimize --overwrite --bin VaultStrategy.sol -o ../build
 /usr/bin/abigen --abi=../build/VaultStrategy.abi --bin=../build/VaultStrategy.bin --pkg=api --out=../deploy/VaultStrategy/VaultStrategy.go

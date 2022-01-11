@@ -16,8 +16,7 @@ contract VaultFactory {
     address private viaAdmin;
     address private team;  // team account which to collect fees separately, default viaAdmin
 
-    mapping (address => mapping(address =>uint )) private stat;   // pending 2, active 1, abandoned 3
-    
+    mapping (address => mapping(address =>uint )) private stat;   // 1: active ; 2 pending;  3 emergency ; 4 abandoned     
     mapping (address => address) public pairs;	// strategy <->  vault   
     
     struct VaultReg {
@@ -131,25 +130,29 @@ contract VaultFactory {
     		return(stat[_strategy][_vault]);
     }
     
-    function checkActive(address sORv ) public view returns(bool) {
-   	    return ( stat[sORv][pairs[sORv]] == 1 || 
-				stat[pairs[sORv]][sORv] == 1 );
+    function checkStatus(address sORv, uint _stat ) public view returns(bool) {
+   	    return ( stat[sORv][ pairs[sORv] ] == _stat || 
+				stat[ pairs[sORv] ][sORv] == _stat );
 
     }
 
     function pair(address _strategy, address _vault ) internal {
-    	stat[_strategy][_vault] = 2;  
+
+    	stat[_strategy][_vault] = 2;  //2 pending, 1: active, 3:abandoned.
 		pairs[_strategy] = _vault;
 		pairs[_vault] = _strategy;
+		
 		vaults.push(VaultReg(_strategy, _vault));
 		
-		//IViaVault(_vault).setSrategy(_strategy);
-
     }
 
 
-    function repair(address _strategy, address _vault ) public onlyAdmin {
-    		pair(_strategy, _vault);
+    function register(address _strategy, address _vault ) public onlyAdmin {
+		
+		require (pairs[_vault] != _strategy, "dup");
+   		
+		pair(_strategy, _vault);
+		
     }
     
     function getPair0(address _addr) public view returns(address) {

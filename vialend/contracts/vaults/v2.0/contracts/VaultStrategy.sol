@@ -125,7 +125,6 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		tickSpacing = pool.tickSpacing();
 		uniPortion =  params.UniPortionRate;
         compPortion =  params.CompPortionRate;
-        require( params.UniPortionRate + params.CompPortionRate <= 100, "portion uni+com>100");
         
         protocolFeeRate = params.ProtocolFeeRate;
 
@@ -147,7 +146,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     
     /// check status == 1
     modifier onlyActive {
-        require (IVaultFactory(factory).checkActive( address(this) ), 'not active');
+        require (IVaultFactory(factory).checkStatus( address(this),1 ), 'not active');
         _;
     }
     
@@ -258,14 +257,18 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		int24 hedging, 
 		int24 options
 	}
+	
+	
+	function rebalanceReady() public view {
+		
+		
+	}
 */	
 	function rebalance(
 		int24 newLow,
         int24 newHigh
-		) external 
+		) external onlyActive
 	{
-		bool isActive = IVaultFactory(factory).checkActive( address(this) );
-		require(isActive==true, 'not active');
 		
 		alloc();
 		allocFees();
@@ -430,6 +433,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     }
     
     function setPortionRatio(uint8 uni, uint8 comp) external onlyCreator {
+    	require(uni <=100 && comp <=100,'100');
 		(uniPortion, compPortion ) =  ( uni, comp );
     }
 
@@ -728,7 +732,6 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		}
 		lastCount++;
 	}
-	
 
 	function getCAmounts() public view returns (uint256 amount0, uint256 amount1) {
 		amount0 = ICErc20(_CTOKEN[token0]).balanceOf( address(this) );
@@ -740,20 +743,18 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 		amount1 = ICErc20(_CTOKEN[token1]).balanceOfUnderlying( address(this) );
 	}
 	
-
-	
 	function getTotalAmounts() public view returns(uint256 , uint256) {
 		
 		uint256 b0 = IERC20(token0).balanceOf(address(this));
 		uint256 b1 = IERC20(token1).balanceOf(address(this));
 
 		(uint256 a0, uint256 a1) = getUniAmounts(cLow, cHigh);
-		(uint256 c0, uint256 c1 ) = getCompAmounts();
+		(uint256 c0, uint256 c1 ) = getAmountsInComp();
 		
 		return (a0+b0+c0, a1+b1+c1);
 	}
 	
- 	function getCompAmounts() public view returns(uint256 , uint256 ){
+ 	function getAmountsInComp() public view returns(uint256 , uint256 ){
 
     	(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
 		

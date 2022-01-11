@@ -29,7 +29,7 @@ func SetPortionRatio(uni uint8, comp uint8) {
 
 	_, stratIns, _ := GetInstance3()
 
-	if uni+comp > 100 {
+	if uni > 100 || comp > 100 {
 		log.Fatal("portion ratio > 100", uni, comp)
 	}
 	NonceGen()
