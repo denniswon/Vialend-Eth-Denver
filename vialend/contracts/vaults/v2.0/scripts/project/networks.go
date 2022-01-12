@@ -571,7 +571,7 @@ func loadEnv() {
 		//		fmt.Println(Networks[i].ProviderUrl[0])
 		//		fmt.Println(Networks[i].ProviderUrl[1])
 
-		j := 0
+		j := 1
 
 		for os.Getenv(networkName[i]+"_ACCOUNT"+strconv.Itoa(j)) != "" {
 
@@ -593,19 +593,5 @@ func loadEnv() {
 
 func setEnv() {
 	// Set Environment Variables
-
-	os.Setenv("NETWORK_MAINNET_PROVIDER", "https://goerli.infura.io/v3/;wss://goerli.infura.io/v3/")
-	os.Setenv("NETWORK_GOERLI_PROVIDER", "https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6;wss://goerli.infura.io/ws/v3/68070d464ba04080a428aeef1b9803c6")
-	os.Setenv("NETWORK_LOCAL_PROVIDER", "http://localhost:8547;ws://localhost:8547")
-
-	os.Setenv("MAINNET_ACCOUNT0", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
-	os.Setenv("MAINNET_ACCOUNT1", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
-
-	os.Setenv("GOERLI_ACCOUNT0", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
-	os.Setenv("GOERLI_ACCOUNT1", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
-	os.Setenv("GOERLI_ACCOUNT2", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
-
-	os.Setenv("LOCAL_ACCOUNT0", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
-	os.Setenv("LOCAL_ACCOUNT1", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
 
 }
