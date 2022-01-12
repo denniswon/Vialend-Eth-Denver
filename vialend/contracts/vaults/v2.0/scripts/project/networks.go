@@ -173,10 +173,7 @@ var Networks = [...]Params{
 			USDT:  "0xdAC17F958D2ee523a2206206994597C13D831ec7",
 			CUSDT: "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
 		},
-		[]AccountStruct{
-			{"0xa0df350d2637096571F7A701CBc1C5fdE30dF76A", "b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329"},
-			{"0xa0df350d2637096571F7A701CBc1C5fdE30dF76A", "b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329"},
-		},
+		[]AccountStruct{},
 	},
 
 	{ // 1 local usdc/usdt
