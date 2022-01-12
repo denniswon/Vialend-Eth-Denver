@@ -47,14 +47,14 @@ func Deposit(_amount0 int, _amount1 int, acc int) {
 	myPrintln("TokenB:", Network.TokenB)
 	myPrintln("fromAddress to deposit: ", FromAddress)
 
-	// instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
+	// instance, err := vault.NewApi(common.HexToAddress(Network.Vault), EthClient)
 	// if err != nil {
 	// 	log.Fatal("vault.NewApi ", err)
 	// }
 
 	_, _, instance := GetInstance3()
 
-	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
+	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), EthClient)
 	if err != nil {
 		log.Fatal("tokenAInstance,", err)
 	}
@@ -66,7 +66,7 @@ func Deposit(_amount0 int, _amount1 int, acc int) {
 		log.Fatal("bal0 err ", err)
 	}
 
-	tokenBInstance, err := token.NewApi(common.HexToAddress(Network.TokenB), Client)
+	tokenBInstance, err := token.NewApi(common.HexToAddress(Network.TokenB), EthClient)
 	if err != nil {
 		log.Fatal("tokenBInstance,", err)
 	}
@@ -152,7 +152,7 @@ func Withdraw(_percent int, acc int) {
 
 	percent := uint8(_percent)
 
-	// instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
+	// instance, err := vault.NewApi(common.HexToAddress(Network.Vault), EthClient)
 	// if err != nil {
 	// 	log.Fatal("vault.NewApi ", err)
 	// }
@@ -256,35 +256,35 @@ func Sweep(vaultAddr string, tokenAddr string, amount *big.Int) {
 
 }
 
-func EmergencyCall() {
+// func EmergencyCall() {
 
-	myPrintln("----------------------------------------------")
-	myPrintln(".........Emergency call setup emergency stat.........  ")
-	myPrintln("----------------------------------------------")
+// 	myPrintln("----------------------------------------------")
+// 	myPrintln(".........Emergency call setup emergency stat.........  ")
+// 	myPrintln("----------------------------------------------")
 
-	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
+// 	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
-	_, _, vaultInstance := GetInstance3()
+// 	_, _, vaultInstance := GetInstance3()
 
-	// tickLower, err := vaultInstance.CLow(&bind.CallOpts{})
-	// tickUpper, err := vaultInstance.CHigh(&bind.CallOpts{})
-	// liquidity, err := vaultInstance.GetSSLiquidity(&bind.CallOpts{}, qTickLower, qTickUpper)
+// 	// tickLower, err := vaultInstance.CLow(&bind.CallOpts{})
+// 	// tickUpper, err := vaultInstance.CHigh(&bind.CallOpts{})
+// 	// liquidity, err := vaultInstance.GetSSLiquidity(&bind.CallOpts{}, qTickLower, qTickUpper)
 
-	// lendingAmount0 := checkCTokenBalance("CETH", Network.LendingContracts.CETH)
-	// lendingAmount1 := checkCTokenBalance("CUSDC", Network.LendingContracts.CUSDC)
+// 	// lendingAmount0 := checkCTokenBalance("CETH", Network.LendingContracts.CETH)
+// 	// lendingAmount1 := checkCTokenBalance("CUSDC", Network.LendingContracts.CUSDC)
+// 	NonceGen()
+// 	tx, err := vaultInstance.EmergencyCall(Auth)
 
-	tx, err := vaultInstance.EmergencyCall(Auth)
+// 	if err != nil {
+// 		log.Fatal("emergency tx err ", err)
+// 	}
 
-	if err != nil {
-		log.Fatal("emergency tx err ", err)
-	}
+// 	myPrintln("emergency tx: ", tx.Hash().Hex())
 
-	myPrintln("emergency tx: ", tx.Hash().Hex())
+// 	//Readstring("emergency sent sent.....  wait for pending..next .. white hacker to withdraw ")
+// 	TxConfirm(tx.Hash())
 
-	//Readstring("emergency sent sent.....  wait for pending..next .. white hacker to withdraw ")
-	TxConfirm(tx.Hash())
-
-}
+// }
 
 func EmergencyWithdraw(acc int) {
 	myPrintln("----------------------------------------------")
@@ -313,7 +313,7 @@ func Strategy1(_range int64, acc int64) {
 
 	myPrintln("vaultAddress: ", common.HexToAddress(Network.Vault))
 
-	vaultInstance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
+	vaultInstance, err := vault.NewApi(common.HexToAddress(Network.Vault), EthClient)
 	if err != nil {
 		log.Fatal("vault.NewApi ", err)
 	}
@@ -709,7 +709,7 @@ func CheckFees() {
 				// calc APY  below
 				blockNumber := Assets.Block
 
-				block, err := Client.BlockByNumber(context.Background(), blockNumber)
+				block, err := EthClient.BlockByNumber(context.Background(), blockNumber)
 
 				if err != nil {
 					log.Fatal("block ", err)
@@ -722,13 +722,13 @@ func CheckFees() {
 
 				myPrintln("deposit block info:", blockNumber, block.Time()) // 1527211625
 
-				header, err := Client.HeaderByNumber(context.Background(), nil)
+				header, err := EthClient.HeaderByNumber(context.Background(), nil)
 				if err != nil {
 					log.Fatal("block header ", err)
 				}
 				Sleep(1000)
 
-				headerblock, err := Client.BlockByNumber(context.Background(), header.Number)
+				headerblock, err := EthClient.BlockByNumber(context.Background(), header.Number)
 				if err != nil {
 					log.Fatal("block ", err)
 				}
@@ -974,7 +974,7 @@ func GetLendingAmounts(vaultAddr string) (*big.Int, *big.Int, *big.Int, *big.Int
 
 func ApproveToken(tokenAddress common.Address, maxAmount *big.Int, toAddress string) {
 
-	tokenInstance, err := token.NewApi(tokenAddress, Client)
+	tokenInstance, err := token.NewApi(tokenAddress, EthClient)
 	if err != nil {
 		log.Fatal("tokenInstance,", err)
 	}
@@ -1057,7 +1057,7 @@ func MyAccountInfo(accId int) {
 
 	myPrintln("Eth balance:", EthBalance(accountAddress.String()))
 
-	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
+	tokenAInstance, err := token.NewApi(common.HexToAddress(Network.TokenA), EthClient)
 	if err != nil {
 		log.Fatal("tokenAInstance,", err)
 	}
@@ -1065,7 +1065,7 @@ func MyAccountInfo(accId int) {
 	bal, err := tokenAInstance.BalanceOf(&bind.CallOpts{}, accountAddress)
 	myPrintln("tokenA in Wallet ", bal)
 
-	tokenBInstance, err := token.NewApi(common.HexToAddress(Network.TokenB), Client)
+	tokenBInstance, err := token.NewApi(common.HexToAddress(Network.TokenB), EthClient)
 	if err != nil {
 		log.Fatal("tokenBInstance,", err)
 	}
@@ -1075,7 +1075,7 @@ func MyAccountInfo(accId int) {
 
 	///----------- token in vault
 
-	// vaultInstance, err := vault.NewApi(vaultAddress, Client)
+	// vaultInstance, err := vault.NewApi(vaultAddress, EthClient)
 	// if err != nil {
 	// 	log.Fatal("vault.NewApi ", err)
 	// }
@@ -1099,7 +1099,7 @@ func MyAccountInfo(accId int) {
 func CalcShares(myAddress common.Address) (mybal *big.Int, totalbal *big.Int) {
 
 	/// vault as token
-	vaultTokenInstance, err := token.NewApi(common.HexToAddress(Network.Vault), Client)
+	vaultTokenInstance, err := token.NewApi(common.HexToAddress(Network.Vault), EthClient)
 	if err != nil {
 		log.Fatal("vaultTokenInstance,", err)
 	}
@@ -1253,7 +1253,7 @@ func TxConfirm(tx common.Hash) {
 
 	myPrintln("tx: ", tx.Hex())
 
-	tr, err := Client.TransactionReceipt(context.Background(), tx)
+	tr, err := EthClient.TransactionReceipt(context.Background(), tx)
 	for i := 0; i < 20; i++ {
 		if err != nil {
 			//log.Fatal(err)
@@ -1261,7 +1261,7 @@ func TxConfirm(tx common.Hash) {
 		} else {
 			break
 		}
-		tr, err = Client.TransactionReceipt(context.Background(), tx)
+		tr, err = EthClient.TransactionReceipt(context.Background(), tx)
 	}
 
 	myPrintln("BlockNumber:", tr.BlockNumber)
@@ -1277,7 +1277,7 @@ func TxConfirm(tx common.Hash) {
 
 func SetVaultAddress(_address string, ind int64) {
 
-	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), Client)
+	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), EthClient)
 
 	if err != nil {
 		log.Fatal("vaultbridgeInstance err:", err)
@@ -1295,7 +1295,7 @@ func SetVaultAddress(_address string, ind int64) {
 
 func GetVaultAddress(ind int64) {
 
-	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), Client)
+	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), EthClient)
 
 	if err != nil {
 		log.Fatal("vaultBridgeInstance err:", err)
@@ -1313,7 +1313,7 @@ func GetVaultAddress(ind int64) {
 
 func AuthAdmin(vaultAddr string, _admin string) {
 
-	instance, err := admin.NewApi(common.HexToAddress(vaultAddr), Client)
+	instance, err := admin.NewApi(common.HexToAddress(vaultAddr), EthClient)
 
 	if err != nil {
 		log.Fatal("vaultAdmin Instance err:", err)
@@ -1333,7 +1333,7 @@ func GetArbInstance() *arb.Api {
 
 	arbAddress := "0xa9712b5e7C1537936Ba383B2632455A02D9d49B6"
 
-	instance, err := arb.NewApi(common.HexToAddress(arbAddress), Client)
+	instance, err := arb.NewApi(common.HexToAddress(arbAddress), EthClient)
 	if err != nil {
 		log.Fatal("arb Instance err -- :", err)
 	}

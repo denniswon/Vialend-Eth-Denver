@@ -16,7 +16,7 @@ contract VaultFactory {
     address private viaAdmin;
     address private team;  // team account which to collect fees separately, default viaAdmin
 
-    mapping (address => mapping(address =>uint )) private stat;   // 1: active ; 2 pending;  3 emergency ; 4 abandoned     
+    mapping (address => mapping(address =>uint )) public stat;   // 1: active ; 2 pending;  3 emergency ; 4 abandoned     
     mapping (address => address) public pairs;	// strategy <->  vault   
     
     struct VaultReg {
@@ -126,14 +126,13 @@ contract VaultFactory {
         return size;
     }
 
-    function getStat(address _strategy, address _vault ) public view returns(uint) {
+    function getStat2(address _strategy, address _vault ) public view returns(uint) {
     		return(stat[_strategy][_vault]);
     }
     
-    function checkStatus(address sORv, uint _stat ) public view returns(bool) {
-   	    return ( stat[sORv][ pairs[sORv] ] == _stat || 
-				stat[ pairs[sORv] ][sORv] == _stat );
-
+    function getStat(address sORv ) public view returns(uint) {
+   	    // it either 0 | 0 means not a valid pair, or 0 | x = x 
+		return ( stat[sORv][ pairs[sORv] ] | stat[ pairs[sORv] ][sORv] ) ;
     }
 
     function pair(address _strategy, address _vault ) internal {
@@ -158,10 +157,6 @@ contract VaultFactory {
     function getPair0(address _addr) public view returns(address) {
     	require(pairs[_addr] != address(0), 'is0' );
     	return(pairs[_addr]);
-    }
-    
-    function onlyPair(address a1, address a2) public view returns(bool) {
-    	return( pairs[a1] == a2 || pairs[a2] == a1 );
     }
 	  
   

@@ -34,7 +34,7 @@ func CreatePool(do int) common.Address {
 
 	factoryAddress := common.HexToAddress(Network.Factory)
 
-	instance, err := factory.NewApi(factoryAddress, Client)
+	instance, err := factory.NewApi(factoryAddress, EthClient)
 	if err != nil {
 		log.Fatal("factory.NewApi ", err)
 	}
@@ -95,7 +95,7 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	myPrintln("----------------------------------------------")
 
 	poolAddress := common.HexToAddress(_pool)
-	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(Network.Callee), Client)
+	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(Network.Callee), EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -104,7 +104,7 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	myPrintln("pool address:", poolAddress)
 	myPrintln("callee address:", Network.Callee)
 
-	poolInstance, err := pool.NewApi(poolAddress, Client)
+	poolInstance, err := pool.NewApi(poolAddress, EthClient)
 	if err != nil {
 		log.Fatal("poolInstance err:", err)
 	}
@@ -194,7 +194,7 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	myPrintln("----------------------------------------------")
 
 	poolAddress := common.HexToAddress(_pool)
-	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(Network.Callee), Client)
+	calleeInstance, err := swapCallee.NewApi(common.HexToAddress(Network.Callee), EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -203,7 +203,7 @@ func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	myPrintln("pool address:", poolAddress)
 	myPrintln("callee address:", Network.Callee)
 
-	poolInstance, err := pool.NewApi(poolAddress, Client)
+	poolInstance, err := pool.NewApi(poolAddress, EthClient)
 	if err != nil {
 		log.Fatal("poolInstance err:", err)
 	}
@@ -300,7 +300,7 @@ func InitialPool(do int) {
 
 	myPrintln("pool address:", common.HexToAddress(Network.Pool))
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
+	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -383,7 +383,7 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 
 	factoryAddress := common.HexToAddress(Network.Factory)
 
-	factoryInstance, err := factory.NewApi(factoryAddress, Client)
+	factoryInstance, err := factory.NewApi(factoryAddress, EthClient)
 
 	if err != nil {
 		log.Fatal("factory.NewApi ", err)
@@ -422,7 +422,7 @@ func PoolInfo() {
 
 	myPrintln("pool address:", common.HexToAddress(Network.Pool))
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
+	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -475,7 +475,7 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 
 	Auth = GetSignature(Networkid, 0)
 
-	token0Instance, err := token.NewApi(common.HexToAddress(Network.TokenA), Client)
+	token0Instance, err := token.NewApi(common.HexToAddress(Network.TokenA), EthClient)
 	if err != nil {
 		log.Fatal("token0Instance,", err)
 	}
@@ -488,7 +488,7 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 		log.Fatal("token0 approve callee err, ", err)
 	}
 
-	token1Instance, err := token.NewApi(common.HexToAddress(Network.TokenB), Client)
+	token1Instance, err := token.NewApi(common.HexToAddress(Network.TokenB), EthClient)
 	if err != nil {
 		log.Fatal("token1Instance,", err)
 	}
@@ -543,7 +543,7 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 
 func TokenInfo(tokenAddress common.Address, owner common.Address) (*big.Int, string) {
 
-	tokenInstance, err := token.NewApi(tokenAddress, Client)
+	tokenInstance, err := token.NewApi(tokenAddress, EthClient)
 
 	if err != nil {
 		log.Fatal("tokenInfo NewApi err ", err)
@@ -584,7 +584,7 @@ func PrintPrice() {
 
 func GetPoolInstance() *pool.Api {
 
-	instance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
+	instance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
 
 	if err != nil {
 		log.Fatal("poolInstance err:", err)

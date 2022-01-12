@@ -59,8 +59,6 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 	address constant public UNIV3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
 	address public creator;
 	address public immutable factory;
-	address public immutable 	admin;
-//	address payable public immutable  vault;
 	address payable public immutable 	_WETH;
     address public immutable token0;         // underlying token0
     address public immutable token1;         // underlying token1
@@ -103,8 +101,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 
 		protocol =  params.Protocol;
 		creator = params.Creator;
-		admin =  IVaultFactory(factory).getAdmin(); 
-        pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( params.Token0, params.Token1, params.FeeTier)); 
+		pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( params.Token0, params.Token1, params.FeeTier)); 
 
         // token0 & token1 sort could be changed by the uni v3 pool 
         token0 = pool.token0();  
@@ -146,7 +143,7 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     
     /// check status == 1
     modifier onlyActive {
-        require (IVaultFactory(factory).checkStatus( address(this),1 ), 'not active');
+        require (IVaultFactory(factory).getStat( address(this)) == 1 , 'not active');
         _;
     }
     
@@ -157,12 +154,15 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
 
 
     modifier onlyAdmin {
-        require (msg.sender == admin,"not admin");  //only admin 
+        require(IVaultFactory(factory).getAdmin() == msg.sender, 'only admin');
         _;
     }
 
     modifier onlyVault {
-    	require(IVaultFactory(factory).onlyPair(address(this), msg.sender), "not vault");
+
+		require( IVaultFactory(factory).getPair0(address(this)) == msg.sender, "not vault");
+
+    	//require(IVaultFactory(factory).onlyPair(address(this), msg.sender), "not vault");
         //require (msg.sender == vault, 'not vault');
         _;
     }    
@@ -202,33 +202,6 @@ contract VaultStrategy is ReentrancyGuard , UniCompFees  {
     }
 	
 	
-    /// external & public functions:
-
-	///@notice low level calls to pull all positions backt to vault
-	///@param redeemType is true amount is ctoken, false amount is underlying 
-	function emergency(		 
-		int24 tickLower,
-        int24 tickUpper,
-        uint128 liquidity,
-        uint256 amount0,
-        uint256 amount1,
-        bool redeemType
-	) external onlyAdmin {
-		
-        isEmergency = true;
-        
-        pool.burn(tickLower, tickUpper, liquidity);
-        pool.collect(address(this), tickLower, tickUpper, type(uint128).max, type(uint128).max);
-        
-        // from outside CEth.balanceOf(address(this)
-        if (amount0>0) redeemCErc20(token0, amount0, redeemType);
-        if (amount1>0) redeemCErc20(token1, amount1, redeemType);
-        
-        //transfer to vault or hold asssets here for user to withdraw
-        IERC20(token0).safeTransfer(myVault(), IERC20(token0).balanceOf(address(this)) );
-        IERC20(token1).safeTransfer(myVault(), IERC20(token1).balanceOf(address(this)) );
-
-	}
 	
 	///@notice send funds back to vault
 	function callFunds() external onlyVault {

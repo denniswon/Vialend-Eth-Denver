@@ -495,3 +495,17 @@ OUT OF GAS. check gas limit and gas in GetSignature()
 
 	use err = abi.UnpackIntoInterface(outptr.Interface(), "method", encb)
 	https://github.com/ethereum/go-ethereum/blob/master/accounts/abi/unpack_test.go
+
+
+
+### 
+	`ERROR` -
+	
+	go runtime panic: runtime error: invalid memory address or nil pointer dereference
+	calling TxConfirm(tx.Hash())
+	goerli tx : 0x4d432c2ef310242b004c5b3fe0955b66e0d53782eccf1d2bc2107d9f5dba4266
+	
+	`cause: 	` -
+	
+	`solution: 	` - 
+	

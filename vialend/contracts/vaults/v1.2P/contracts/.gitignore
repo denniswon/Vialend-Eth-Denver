@@ -1,7 +1,0 @@
-#*
-#!.gitignore
-@uniswap/
-@openzeppelin/
-compound-protocol/
-*.go
-*.bat

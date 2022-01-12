@@ -24,7 +24,7 @@ func main() {
 	_B := common.HexToAddress("0x402a3dBDB42f246a9Fb7c70F7b89F19265d5F54B")
 	_A := common.HexToAddress("0x9d98133037dDef780d69C4B498b51e1f7cDe4c53")
 
-	Ainstance, err := AB.NewA(_A, project.Client)
+	Ainstance, err := AB.NewA(_A, project.EthClient)
 	if err != nil {
 		log.Fatal("AInstance err:", err)
 	}
@@ -37,7 +37,7 @@ func main() {
 
 	project.TxConfirm(tx.Hash())
 
-	Binstance, err := AB.NewB(_B, project.Client)
+	Binstance, err := AB.NewB(_B, project.EthClient)
 	if err != nil {
 		log.Fatal("BInstance err:", err)
 	}

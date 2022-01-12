@@ -23,17 +23,17 @@ import (
 
 func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
 
-	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), Client)
+	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), EthClient)
 	if err != nil {
 		log.Println("VaultFactory Instance err:", err)
 	}
 
-	A2, err := VaultStrategy.NewApi(common.HexToAddress(Network.VaultStrat), Client)
+	A2, err := VaultStrategy.NewApi(common.HexToAddress(Network.VaultStrat), EthClient)
 	if err != nil {
 		log.Println("VaultStrat Instance err:", err)
 	}
 
-	A3, err := ViaVault.NewApi(common.HexToAddress(Network.Vault), Client)
+	A3, err := ViaVault.NewApi(common.HexToAddress(Network.Vault), EthClient)
 	if err != nil {
 		log.Println("ViaVault Instance err:", err)
 	}
@@ -43,7 +43,7 @@ func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
 
 func GetVaultInstance() *vault.Api {
 
-	instance, err := vault.NewApi(common.HexToAddress(Network.Vault), Client)
+	instance, err := vault.NewApi(common.HexToAddress(Network.Vault), EthClient)
 	if err != nil {
 		log.Fatal("vaultInstance err:", err)
 	}
@@ -52,7 +52,7 @@ func GetVaultInstance() *vault.Api {
 
 func GetVaultInstance2(_addr string) *vault.Api {
 
-	instance, err := vault.NewApi(common.HexToAddress(_addr), Client)
+	instance, err := vault.NewApi(common.HexToAddress(_addr), EthClient)
 	if err != nil {
 		log.Fatal("vaultInstance err:", err)
 	}
@@ -61,7 +61,7 @@ func GetVaultInstance2(_addr string) *vault.Api {
 
 func GetCalleeInstance() *callee.Api {
 
-	instance, err := callee.NewApi(common.HexToAddress(Network.Callee), Client)
+	instance, err := callee.NewApi(common.HexToAddress(Network.Callee), EthClient)
 	if err != nil {
 		log.Fatal("CalleeInstance err:", err)
 	}
@@ -70,7 +70,7 @@ func GetCalleeInstance() *callee.Api {
 
 func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *big.Int) {
 
-	instance, err := token.NewApi(common.HexToAddress(TokenAddress), Client)
+	instance, err := token.NewApi(common.HexToAddress(TokenAddress), EthClient)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}
@@ -88,7 +88,7 @@ func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *
 
 func GetCTokenInstance(Address string) *cErc20.Api {
 
-	instance, err := cErc20.NewApi(common.HexToAddress(Address), Client)
+	instance, err := cErc20.NewApi(common.HexToAddress(Address), EthClient)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}

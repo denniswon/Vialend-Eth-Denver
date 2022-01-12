@@ -23,7 +23,7 @@ var to = "0x14792757D21e54453179376c849662dE341797F2"
 
 func main() {
 
-	fmt.Println("Env: NetworkId=", project.Networkid, ",client=", project.Network.ProviderUrl[project.ProviderSortId])
+	fmt.Println("Env: NetworkId=", project.Networkid, ",EthClient=", project.Network.ProviderUrl[project.ProviderSortId])
 
 	//wrapEth()
 	//unWrapEth()
@@ -251,7 +251,7 @@ func checkEvent(block0 int64, block1 int64) {
 
 func GetVialendInstance() *vialend.Api {
 
-	instance, err := vialend.NewApi(common.HexToAddress(vialendContract), project.Client)
+	instance, err := vialend.NewApi(common.HexToAddress(vialendContract), project.EthClient)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}
@@ -261,7 +261,7 @@ func GetVialendInstance() *vialend.Api {
 
 func GetCTokenInstance(Address string) *ctoken.Api {
 
-	instance, err := ctoken.NewApi(common.HexToAddress(Address), project.Client)
+	instance, err := ctoken.NewApi(common.HexToAddress(Address), project.EthClient)
 	if err != nil {
 		log.Fatal("get token Instance,", err)
 	}

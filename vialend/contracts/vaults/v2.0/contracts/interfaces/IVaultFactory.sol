@@ -14,8 +14,8 @@ interface IVaultFactory
 	/// get stored vaults array size
 	function getCount() external; 	
 	
-	function getStat(address _strategy, address _vault) external view returns(uint);
-	function checkStatus(address sORv, uint _stat ) external view returns(bool); 
+	function getStat(address) external view returns(uint);
+	function getStat2(address _strategy, address _vault) external view returns(uint);
 	function getPair0(address _addr) external view returns(address);
 	
 	///return true if a2 and a1 is a strategy/vault pair

@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -52,8 +55,7 @@ type Params struct {
 	ProviderUrl      []string
 	Factory          string
 	Callee           string
-	PrivateKey       []string
-	Governance       string
+	PrivateKey       [11]string
 	TokenA           string
 	TokenB           string
 	CTOKEN0          string
@@ -85,10 +87,11 @@ var Token [2]TokenStruct
 
 var Network = Networks[Networkid]
 
-var Client = GetClient(Networkid, 0)
-var ClientWS = GetClient(Networkid, 1)
+var EthClientWS = GetEthClient(Networkid, 1)
 
-var Auth = GetSignature(Networkid, Account)
+var EthClient = GetEthClient(Networkid, 0)
+
+var Auth *bind.TransactOpts
 
 var FromAddress common.Address
 
@@ -108,12 +111,7 @@ var Networks = [...]Params{
 	// 	//[]string{"http://192.168.0.12:8545"},
 	// 	"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 	// 	"0x4aF84E4bcCcFfF5dB4c23771F90C631eFb5260b3", //callee
-	// 	[]string{
-	// 		"f26887db999a7be876a49e3d103b95a6d2c871354ee15b3a51aa87f9981409a5", //local   0x51cF2C014fE76b9CD510060875910c323bB21135
-	// 		"3f1474473ad3ad26cf8b3d5df0c97fb27459c6af5a38a50387f77e29b684cbcf", //local  0x054cFa85b74A20aC47d1E72B88ed346B749F8e05
-	// 		"1bc53c5056101a41e3fdefc16ee7df3994495b3b2e3e7823d480c23379432a5e", //local  0x3539F281e4c43949374c04cdA5959302e4199Fa5 ,
-	// 	},
-	// 	"", // Governance
+	// 	[]string{},
 	// 	"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
 	// 	"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
 	// 	"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //cusdc
@@ -149,11 +147,7 @@ var Networks = [...]Params{
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b", //callee
-		[]string{"b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329", //local   0xa0df350d2637096571F7A701CBc1C5fdE30dF76A
-			"5c2313d8a6b81a83ad1df1bf12a193cbc51d5de84a000db734fd7a05aa63e5a2", //local  0xEC2DD0d0b15D494a58653427246DC076281C377a
-			"2deeef19c7418df1c35425d5b637133305ec425f063a0ea6bc1702559b1e3123", //local  0x5ACb5DB941E3Fc33E0c0BC80B90114b6CD0249B5 ,
-		},
-		"", // Governance
+		[11]string{}, //privatekeys
 		"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
 		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
 		"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //cusdc
@@ -189,11 +183,7 @@ var Networks = [...]Params{
 		[]string{"http://127.0.0.1:7545", "ws://127.0.0.1:7545"},
 		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
 		"0x210FA31C72D9F020D16BF948e54F108D1C688f81", //callee
-		[]string{"b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329", //local   0xa0df350d2637096571F7A701CBc1C5fdE30dF76A
-			"5c2313d8a6b81a83ad1df1bf12a193cbc51d5de84a000db734fd7a05aa63e5a2", //local  0xEC2DD0d0b15D494a58653427246DC076281C377a
-			"2deeef19c7418df1c35425d5b637133305ec425f063a0ea6bc1702559b1e3123", //local  0x5ACb5DB941E3Fc33E0c0BC80B90114b6CD0249B5 ,
-		},
-		"", // Governance
+		[11]string{},
 		"0x59Cd9D486a8fA9b39F715915743997daA12d138e", //tokenB usdt
 		"0x9D96eC63f96A4E985e227BF520dD742315AB77c7", //tokenA usdc
 		"", //ctoken0
@@ -216,9 +206,7 @@ var Networks = [...]Params{
 		[]string{"http://127.0.0.1:7545", "http://127.0.0.1:8545"},
 		"0x0c8D15944A4f799D678029523eC1F82c84b85F32", //factory
 		"0x210FA31C72D9F020D16BF948e54F108D1C688f81", //callee
-		[]string{"e8ef3a782d9002408f2ca6649b5f95b3e5772364a5abe203f1678817b6093ff0",
-			"f804a123dd9876c73cef5d198cce0899e6dfc2f851ed2527b003e11cd5383c54"},
-		"", // Governance
+		[11]string{},
 		"0xB73A78A3C493ACdbA893da9331ff39Fe4E59bFA3", //e weth1
 		"0xd8F4E5E1cE1a2961b5fB401B8c2286549607B294", //e usdc1
 		"", //ctoken0
@@ -247,14 +235,7 @@ var Networks = [...]Params{
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
 		"0xE97f1488F053251032ef358dE5b4188cD960D413", //callee
-		[]string{"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7", //0,  admin 	0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
-			"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f",  //1,  admin 1  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
-			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a",  //2,  admin 2  0xD8Dbe65b64428464fFa14DEAbe288b83C240e713
-			"2d9e2b4c955159dd8a22faf3cb3074f03cfc182213729224915921daabaa5d6a",  //3, team			0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440
-			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
-			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
-			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
-		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
+		[11]string{}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
 
 		// "0x48FCb48bb7F70F399E35d9eC95fd2A614960Dcf8", //tokenA eWeth
 		// "0x6f38602e142D0Bd3BC162f5912535f543D3B73d7", //tokenB  eusdc
@@ -295,16 +276,7 @@ var Networks = [...]Params{
 		"0x9779ECDd5E44Ab4160687CEc04a8aB8D23C53E37", //callee
 		//"0xE97f1488F053251032ef358dE5b4188cD960D413", //callee
 
-		[]string{
-			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",  //0,  admin 	0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
-			"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f",  //1,  admin 1  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
-			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a",  //2,  admin 2  0xD8Dbe65b64428464fFa14DEAbe288b83C240e713
-			"2d9e2b4c955159dd8a22faf3cb3074f03cfc182213729224915921daabaa5d6a",  //3, team			0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440
-			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
-			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
-			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
-
-		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
+		[11]string{},
 
 		"0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", //  Weth
 		"0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60", //  DAI
@@ -346,16 +318,7 @@ var Networks = [...]Params{
 		//"0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
 		"0x9779ECDd5E44Ab4160687CEc04a8aB8D23C53E37", //callee
 
-		[]string{
-			"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7",  //0,  admin 	0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
-			"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f",  //1,  admin 1  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
-			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a",  //2,  admin 2  0xD8Dbe65b64428464fFa14DEAbe288b83C240e713
-			"2d9e2b4c955159dd8a22faf3cb3074f03cfc182213729224915921daabaa5d6a",  //3, team			0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440
-			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
-			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
-			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
-
-		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  // Governance 0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"",
+		[11]string{}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
 
 		"0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05", //  Wbtc
 		"0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60", //  DAI
@@ -394,14 +357,7 @@ var Networks = [...]Params{
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"", //callee
-		[]string{"2b200539ce93eab329be1bd7c199860782e547eb7f95a43702c1b0641c0486a7", //0,  admin 	0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E
-			"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f",  //1,  admin 1  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0
-			"d8cda34b6928af75aff58c60fe9ed3339896b57a13fa88695aa6da7b775cda2a",  //2,  admin 2  0xD8Dbe65b64428464fFa14DEAbe288b83C240e713
-			"2d9e2b4c955159dd8a22faf3cb3074f03cfc182213729224915921daabaa5d6a",  //3, team			0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440
-			"01e8c8df56230b8b6e4ce6371bed124f4f9950c51d64adc581938239724ed5e6",  //4,  user 1	0x14792757D21e54453179376c849662dE341797F2
-			"67f7046a9f3712d77dab07a843c91d060ab5f27b808ed54d6db1293c7cd5eff3",  //5,  user 2	0x4F211267896C4D3f2388025263AC6BD67B0f2C54
-			"a830f08514d29b0d278b251773b2265cd462e02ad14ca016591929d42fb203d1"}, //6 arb01 0x8a01C3E04798D0B6D7423EaFF171932943FB9A8D
-		"284b65567176c10bc010345042b1d9852fcc1c42ae4b76317e6da040318fbe7f", //  0x6dd19aEB91d1f43C46f0DD74C9E8A92BFe2a3Cd0"", // Governance
+		[11]string{},
 
 		"0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a", //tokenA Weth
 		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
@@ -463,15 +419,17 @@ func AddSettingString(name string, value string) {
 }
 
 // 0: https, 1: wss
-func GetClient(nid int, sortId int) *ethclient.Client {
+func GetEthClient(nid int, sortId int) *ethclient.Client {
 
 	Networkid = nid
 	Network = Networks[Networkid]
 
-	//myPrintln("GetClient:", Network.ProviderUrl[sortId])
 	c, err := ethclient.Dial(Network.ProviderUrl[sortId])
 	if err != nil {
-		log.Fatal("getclient err:", err)
+		myPrintln("networkid:", Networkid)
+		myPrintln("network:", Network.ProviderUrl[sortId])
+
+		log.Fatal("getEthClient err:", err)
 	}
 
 	return c
@@ -506,9 +464,34 @@ func GetSignature(nid int, accId int) *bind.TransactOpts {
 
 }
 
+func GetSignatureByKey(key string) (*bind.TransactOpts, string) {
+
+	privateKey, err := crypto.HexToECDSA(key)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("error casting public key to ECDSA")
+	}
+
+	publicAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	fmt.Println("signed by ", FromAddress)
+
+	auth := bind.NewKeyedTransactor(privateKey)
+	auth.Value = big.NewInt(0)          // in wei
+	auth.GasLimit = uint64(6721975)     // in gwei
+	auth.GasPrice = big.NewInt(2 * 1e9) // 2*1e9 = 2 gwei.  1 gwei = 1e9 wei
+
+	return auth, publicAddress.Hex()
+
+}
 func NonceGen() {
 
-	nonce, err := Client.PendingNonceAt(context.Background(), FromAddress)
+	nonce, err := EthClient.PendingNonceAt(context.Background(), FromAddress)
 
 	if err != nil {
 		log.Fatal("NonceGen ", err)
@@ -545,7 +528,12 @@ func Init(nid int, acc int) {
 
 	}
 
-	Client = GetClient(nid, 0)
+	setEnv()
+	loadEnv()
+
+	EthClient = GetEthClient(nid, 0)
+
+	EthClientWS = GetEthClient(nid, 1)
 
 	Auth = GetSignature(nid, acc)
 
@@ -556,7 +544,8 @@ func Init(nid int, acc int) {
 	myPrintln(Token[1].Symbol, ":", common.HexToAddress(Network.TokenB), ", Decimals:", Token[1].Decimals)
 
 	myPrintln()
-	fmt.Println("Env: NetworkId=", Networkid, ",client=", Network.ProviderUrl)
+	fmt.Println("Env: NetworkId=", Networkid, ",EthClient=", Network.ProviderUrl)
+	myPrintln("FromAddress:", FromAddress)
 	fmt.Println(Cfg.Description)
 
 	Network.VaultFactory = Cfg.Contracts.VAULT_FACTORY
@@ -566,6 +555,57 @@ func Init(nid int, acc int) {
 	myPrintln("VaultFactory", Network.VaultFactory)
 	myPrintln("Vault Strategy", Network.VaultStrat)
 	myPrintln("Vault ", Network.Vault)
+
 	myPrintln()
+
+}
+
+func loadEnv() {
+
+	networkName := map[int]string{0: "MAINNET", 1: "LOCAL", 2: "LOCAL", 3: "GOERLI", 4: "GOERLI", 5: "GOERLI", 6: "RINKEBY"}
+
+	i := 0
+
+	for i = 0; i < 6; i++ {
+		Networks[i].ProviderUrl = strings.Split(os.Getenv("NETWORK_"+networkName[i]+"_PROVIDER"), ";")
+		//		fmt.Println(Networks[i].ProviderUrl[0])
+		//		fmt.Println(Networks[i].ProviderUrl[1])
+
+		j := 0
+
+		for os.Getenv(networkName[i]+"_ACCOUNT"+strconv.Itoa(j)) != "" {
+
+			v := os.Getenv(networkName[i] + "_ACCOUNT" + strconv.Itoa(j))
+			if len(strings.TrimSpace(v)) != 0 {
+				k := strings.Split(v, ":")
+				Networks[i].PrivateKey[j] = k[1]
+				//fmt.Println(Networks[i].PrivateKey[j])
+				j++
+
+			} else {
+				break
+			}
+
+		}
+	}
+
+}
+
+func setEnv() {
+	// Set Environment Variables
+
+	os.Setenv("NETWORK_MAINNET_PROVIDER", "https://goerli.infura.io/v3/;wss://goerli.infura.io/v3/")
+	os.Setenv("NETWORK_GOERLI_PROVIDER", "https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6;wss://goerli.infura.io/ws/v3/68070d464ba04080a428aeef1b9803c6")
+	os.Setenv("NETWORK_LOCAL_PROVIDER", "http://localhost:8547;ws://localhost:8547")
+
+	os.Setenv("MAINNET_ACCOUNT0", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
+	os.Setenv("MAINNET_ACCOUNT1", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
+
+	os.Setenv("GOERLI_ACCOUNT0", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
+	os.Setenv("GOERLI_ACCOUNT1", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
+	os.Setenv("GOERLI_ACCOUNT2", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
+
+	os.Setenv("LOCAL_ACCOUNT0", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
+	os.Setenv("LOCAL_ACCOUNT1", "0xE1190667976b71f1c186521e50fFdAEDF722C830:d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4")
 
 }

@@ -45,7 +45,7 @@ func DeployFactory() *factory.Api {
 	fmt.Println("----------------------------------------------")
 
 	NonceGen()
-	address, tx, instance, err := factory.DeployApi(Auth, Client)
+	address, tx, instance, err := factory.DeployApi(Auth, EthClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func DeployVault() {
 	var maxTwapDeviation = big.NewInt(20)
 	var twapDuration = uint32(2)
 
-	address, tx, instance, err := vault.DeployApi(Auth, Client,
+	address, tx, instance, err := vault.DeployApi(Auth, EthClient,
 		pool,
 		protocolFee,
 		maxTotalSupply,
@@ -119,7 +119,7 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 
 	NonceGen()
 
-	address, tx, instance, err := mocktoken.DeployApi(Auth, Client, name, symbol, decimals, totalSupply)
+	address, tx, instance, err := mocktoken.DeployApi(Auth, EthClient, name, symbol, decimals, totalSupply)
 
 	if err != nil {
 		log.Fatal(err)
@@ -142,7 +142,7 @@ func DeployWrappedEther() *weth.Api {
 	fmt.Println("----------------------------------------------")
 
 	NonceGen()
-	address, tx, instance, err := weth.DeployApi(Auth, Client)
+	address, tx, instance, err := weth.DeployApi(Auth, EthClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func VaultGen(
 
 	var uniPortionRate = uint8(_uniPortion)
 
-	address, tx, instance, err := vialend.DeployApi(Auth, Client,
+	address, tx, instance, err := vialend.DeployApi(Auth, EthClient,
 		pool,
 		_weth,
 		_cToken0,
@@ -241,7 +241,7 @@ func DeployCallee() {
 	fmt.Println(".......................Deploy Test Callee . ..................")
 	fmt.Println("----------------------------------------------")
 
-	address, tx, instance, err := callee.DeployApi(Auth, Client)
+	address, tx, instance, err := callee.DeployApi(Auth, EthClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -266,7 +266,7 @@ func DeployVaultBridge() {
 
 	NonceGen()
 
-	address, tx, instance, err := bridge.DeployApi(Auth, Client)
+	address, tx, instance, err := bridge.DeployApi(Auth, EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -297,7 +297,7 @@ func DeployVaultAdmin() {
 		PrivateToPublic(Network.PrivateKey[1]),
 		PrivateToPublic(Network.PrivateKey[2]),
 	}
-	address, tx, instance, err := admin.DeployApi(Auth, Client, admins)
+	address, tx, instance, err := admin.DeployApi(Auth, EthClient, admins)
 
 	if err != nil {
 		log.Fatal(err)
@@ -319,7 +319,7 @@ func DeployArb() {
 
 	NonceGen()
 
-	address, tx, instance, err := arb.DeployApi(Auth, Client)
+	address, tx, instance, err := arb.DeployApi(Auth, EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -371,7 +371,7 @@ func DeployVialendFeemaker(networkid int, acc int, _protocolfee *big.Int, _uniPo
 
 	fmt.Println(".......................Deploy vault ...................")
 
-	address, tx, instance, err := vialend.DeployApi(Auth, Client,
+	address, tx, instance, err := vialend.DeployApi(Auth, EthClient,
 		pool,
 		_weth,
 		_cToken0,
@@ -409,7 +409,7 @@ func DeployAB() *AB.B {
 
 	NonceGen()
 
-	address, tx, instance, err := AB.DeployB(Auth, Client)
+	address, tx, instance, err := AB.DeployB(Auth, EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -434,7 +434,7 @@ func DeployVaultFactory() {
 
 	NonceGen()
 
-	address, tx, instance, err := VaultFactory.DeployApi(Auth, Client, common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440"))
+	address, tx, instance, err := VaultFactory.DeployApi(Auth, EthClient, common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -459,7 +459,7 @@ func DeployVaultDeployer() {
 
 	NonceGen()
 
-	address, tx, instance, err := VaultDeployer.DeployApi(Auth, Client)
+	address, tx, instance, err := VaultDeployer.DeployApi(Auth, EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -483,7 +483,7 @@ func DeployVaultByDeployer() {
 
 	myPrintln("DEPLOYER:", Cfg.Contracts.VAULT_DEPLOYER)
 
-	instance, err := VaultDeployer.NewApi(common.HexToAddress(Cfg.Contracts.VAULT_DEPLOYER), Client)
+	instance, err := VaultDeployer.NewApi(common.HexToAddress(Cfg.Contracts.VAULT_DEPLOYER), EthClient)
 	if err != nil {
 		log.Fatal("vault deployer Instance err:", err)
 	}
@@ -510,14 +510,13 @@ func DeployVaultByGo() string {
 
 	NonceGen()
 
-	viaAdmin := FromAddress
 	token0 := common.HexToAddress(Network.TokenA)
 	token1 := common.HexToAddress(Network.TokenB)
 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	factory := common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
 
-	address, tx, instance, err := ViaVault.DeployApi(Auth, Client, factory, viaAdmin, token0, token1, vaultCap, individualCap)
+	address, tx, instance, err := ViaVault.DeployApi(Auth, EthClient, factory, token0, token1, vaultCap, individualCap)
 
 	if err != nil {
 		log.Fatal("vault deploy by go err:", err)
@@ -527,8 +526,9 @@ func DeployVaultByGo() string {
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
 
-	Cfg.Contracts.VAULT = address.Hex()
+	myPrintln("vault address：", address.Hex())
 
+	Cfg.Contracts.VAULT = address.Hex()
 	return (Cfg.Contracts.VAULT)
 
 }
@@ -545,7 +545,7 @@ func DeployStratByDeployer() {
 
 	myPrintln("DEPLOYER:", _deployer)
 
-	deployerInstance, err := StratDeployer.NewApi(common.HexToAddress(_deployer), Client)
+	deployerInstance, err := StratDeployer.NewApi(common.HexToAddress(_deployer), EthClient)
 	if err != nil {
 		log.Println("strat by deployer Instance err:", err)
 	}
@@ -623,15 +623,15 @@ func DeployStratByGoStruct() string {
 	params.Token1Decimals = Token[1].Decimals
 	params.VaultCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	params.IndividualCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	params.UniPortionRate = uint8(90)
-	params.CompPortionRate = uint8(100)
+	params.UniPortionRate = uint8(100)
+	params.CompPortionRate = uint8(0)
 	params.FeeTier = big.NewInt(Network.FeeTier)
 	params.TwapDuration = uint32(5)
 	params.MaxTwapDeviation = big.NewInt(2000)
 	params.ProtocolFeeRate = uint8(10)
 	params.MotivatorFeeRate = uint8(5)
 
-	address, tx, _, err := VaultStrategy.DeployApi(Auth, Client, params)
+	address, tx, _, err := VaultStrategy.DeployApi(Auth, EthClient, params)
 	if err != nil {
 		log.Fatal("deployAPI panic>>> ", err)
 	}
@@ -684,7 +684,7 @@ func DeployStratByGoStruct() string {
 // 	_ = vaultCap
 // 	_ = individualCap
 
-// 	address, tx, _, err := VaultStrategy.DeployApi(Auth, Client,
+// 	address, tx, _, err := VaultStrategy.DeployApi(Auth, EthClient,
 // 		contracts,
 // 		uniPortionRate,
 // 		compPortionRate,
@@ -795,7 +795,7 @@ func DeployStratDeployer() {
 
 	NonceGen()
 
-	address, tx, instance, err := StratDeployer.DeployApi(Auth, Client)
+	address, tx, instance, err := StratDeployer.DeployApi(Auth, EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -845,7 +845,7 @@ func DeployStratDeployer() {
 
 // 	myPrintln("VaultFactory:", VaultFactory)
 // 	myPrintln("Network:", networkid)
-// 	address, tx, instanceStrat, err := VaultStrategy.DeployApi(Auth, Client,
+// 	address, tx, instanceStrat, err := VaultStrategy.DeployApi(Auth, EthClient,
 // 		contracts,
 // 		uniPortionRate,
 // 		compPortionRate,
@@ -891,7 +891,7 @@ func DeployStratDeployer() {
 // 	token0 := common.HexToAddress(Network.TokenA)
 // 	token1 := common.HexToAddress(Network.TokenB)
 
-// 	address, tx, _, err := ViaVault.DeployApi(Auth, Client,
+// 	address, tx, _, err := ViaVault.DeployApi(Auth, EthClient,
 // 		admin,
 // 		token0,
 // 		token1,

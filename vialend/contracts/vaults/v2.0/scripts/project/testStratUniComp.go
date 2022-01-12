@@ -53,7 +53,7 @@ func ViewVaults() {
 		myPrintln("strategy:", vaults.Strategy)
 		myPrintln("vault:", vaults.Vault)
 
-		stat, _ := facotryInstance.GetStat(&bind.CallOpts{}, vaults.Strategy, vaults.Vault)
+		stat, _ := facotryInstance.GetStat2(&bind.CallOpts{}, vaults.Strategy, vaults.Vault)
 		myPrintln("stat:", stat)
 	}
 
@@ -64,21 +64,10 @@ func GetStat(s string, v string) {
 
 	myPrintln(".... Check Vault Status.....")
 
-	stat, _ := facotryInstance.GetStat(&bind.CallOpts{}, common.HexToAddress(s), common.HexToAddress(v))
+	stat, _ := facotryInstance.GetStat2(&bind.CallOpts{}, common.HexToAddress(s), common.HexToAddress(v))
 	myPrintln("stat:", s)
 	myPrintln("vault:", v)
 	myPrintln("stat:", stat)
-
-}
-
-// addr : vault or strategy
-func CheckStatus(addr string, stat int) {
-	facotryInstance, _, _ := GetInstance3()
-
-	myPrintln(".... Check Vault Status.....")
-
-	result, _ := facotryInstance.CheckStatus(&bind.CallOpts{}, common.HexToAddress(addr), big.NewInt(int64(stat)))
-	myPrintln("result:", result)
 
 }
 
@@ -103,21 +92,21 @@ func ChangeStat(_strategy string, _vault string, _stat int) {
 
 }
 
-func Repair(_strategy string, _vault string) {
+func Register(_strategy string, _vault string) {
 
 	factoryInst, _, _ := GetInstance3()
 
-	myPrintln(">>>>>>>> Repair <<<<<<<<<<<<< ")
+	myPrintln(">>>>>>>> Register <<<<<<<<<<<<< ")
 
 	NonceGen()
 
-	if tx, err := factoryInst.Repair(Auth,
+	if tx, err := factoryInst.Register(Auth,
 		common.HexToAddress(_strategy),
 		common.HexToAddress(_vault)); err == nil {
 
 		TxConfirm(tx.Hash())
 	} else {
-		log.Fatal("repair", err)
+		log.Fatal("Register", err)
 	}
 
 	GetStat(_strategy, _vault)
@@ -131,11 +120,13 @@ func FactoryPublicList() {
 	p1, _ := factoryInstance.GetTeam(&bind.CallOpts{})
 	p2, _ := factoryInstance.GetAdmin(&bind.CallOpts{})
 	p3, _ := factoryInstance.GetCount(&bind.CallOpts{})
+	p4, _ := factoryInstance.GetStat(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
 
 	myPrintln("\n", ">>>>>>factory public attributes <<<<<<<<<<<", "\n")
 	myPrintln("TEAM", p1)
 	myPrintln("ADMIN", p2)
 	myPrintln("VAULTS COUNT", p3)
+	myPrintln("getStat", p4)
 
 }
 
@@ -144,7 +135,6 @@ func ViaVaultPublicList() {
 	factoryInstance, _, viaVaultInstance := GetInstance3()
 
 	p1, _ := factoryInstance.GetPair0(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	p2, _ := viaVaultInstance.Admin(&bind.CallOpts{})
 	p3, _ := viaVaultInstance.Token0(&bind.CallOpts{})
 	p4, _ := viaVaultInstance.Token1(&bind.CallOpts{})
 	p5, _ := viaVaultInstance.VaultCap(&bind.CallOpts{})
@@ -154,7 +144,6 @@ func ViaVaultPublicList() {
 	myPrintln("\n", ">>>>>>via Vault  public attributes <<<<<<<<<<<", "\n")
 	myPrintln("Vault:", Network.Vault)
 	myPrintln("Strategy", p1)
-	myPrintln("Admin", p2)
 	myPrintln("Token0", p3)
 	myPrintln("Token1", p4)
 	myPrintln("VaultCap", p5)
@@ -190,7 +179,6 @@ func ViaStratUniCompPublicList() {
 	myPrintln()
 	myPrintln("--Strat Uni Comp address:", Network.VaultStrat)
 
-	p1, _ := viaStratInstance.Admin(&bind.CallOpts{})
 	p2, _ := viaStratInstance.Protocol(&bind.CallOpts{})
 	p3, _ := viaStratInstance.Pool(&bind.CallOpts{})
 	p4, _ := viaStratInstance.Token0(&bind.CallOpts{})
@@ -213,7 +201,6 @@ func ViaStratUniCompPublicList() {
 
 	myPrintln("\n", ">>>>>>via Strat  public attributes <<<<<<<<<<<", "\n")
 	myPrintln("Factory ", p22)
-	myPrintln("Admin ", p1)
 	myPrintln("Team", p2)
 	myPrintln("Pool", p3)
 	myPrintln("Token0", p4)
@@ -457,6 +444,19 @@ func MoveFunds() {
 
 }
 
+func CallFunds() {
+
+	_, _, vaultInstance := GetInstance3()
+
+	myPrintln(">>>>>>>> Call Funds <<<<<<<<<<<<< ")
+
+	if tx, err := vaultInstance.CallFunds(Auth); err == nil {
+		TxConfirm(tx.Hash())
+	} else {
+		log.Fatal("movefunds", err)
+	}
+
+}
 func ViaCommand(cmd string, params []string) {
 
 	if cmd == "lookup" {
@@ -498,7 +498,7 @@ func EventListen(contract string, eventNames []string) {
 
 	logs := make(chan types.Log)
 
-	sub, err := ClientWS.SubscribeFilterLogs(context.Background(), query, logs)
+	sub, err := EthClientWS.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
 		log.Println("event subcribe:", err)
 	}
@@ -571,7 +571,7 @@ func EventFiltered(contract string, _from int, _to int, eventName string) {
 		},
 	}
 
-	logs, err := ClientWS.FilterLogs(context.Background(), query)
+	logs, err := EthClientWS.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Println(err)
 	}
@@ -644,7 +644,7 @@ func Events(eventName string, _from int, _to int) {
 		},
 	}
 
-	logs, err := ClientWS.FilterLogs(context.Background(), query)
+	logs, err := EthClientWS.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Println(err)
 	}
@@ -688,7 +688,7 @@ func typeof(v interface{}) {
 }
 
 func eventBlockInfo(eventName string, blockNumber int64) {
-	block, err := Client.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
+	block, err := EthClient.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
 	if err != nil {
 		log.Fatal("block ", err)
 	}

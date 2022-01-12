@@ -88,7 +88,7 @@ func main() {
 func checkBalance(cnt int) bool {
 
 	//account := common.HexToAddress(_ceth)
-	// balance, err := project.Client.BalanceAt(context.Background(), account, nil)
+	// balance, err := project.EthClient.BalanceAt(context.Background(), account, nil)
 	// if err != nil {
 	// 	log.Fatal("client context background() err:   ", err)
 	// }

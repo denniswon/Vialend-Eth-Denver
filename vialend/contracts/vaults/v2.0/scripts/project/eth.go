@@ -10,7 +10,7 @@ import (
 
 func BlockNumber() *big.Int {
 
-	header, err := Client.HeaderByNumber(context.Background(), nil)
+	header, err := EthClient.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,7 +24,7 @@ func EthBalance(_addr string) *big.Int {
 
 	account := common.HexToAddress(_addr)
 	myPrintln("address:", _addr)
-	balance, err := Client.BalanceAt(context.Background(), account, nil)
+	balance, err := EthClient.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		log.Fatal("eth balance via context background() err:   ", err)
 	}

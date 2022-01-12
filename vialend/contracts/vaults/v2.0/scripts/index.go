@@ -45,10 +45,16 @@ var sw = new(Switcher)
 
 func main() {
 
+	project.SendTestTokens()
+	return
+
 	project.ConfigParser()
 	defer project.ConfigWrite()
 	// return
 	project.Init(-1, -1)
+
+	DeployVaultBridge()
+	return
 
 	// project.DeployVaultFactory()
 	// return
@@ -58,28 +64,30 @@ func main() {
 	//// newStratAddr := project.DeployStratByGo()
 	// newStratAddr := project.DeployStratByGoStruct()
 	// project.ConfigWrite()
-	// project.Repair(newStratAddr, project.Network.Vault)
+	// project.Register(newStratAddr, project.Network.Vault)
 	// project.ChangeStat(newStratAddr, project.Network.Vault, 1)
-	//	return
+	// return
 
 	//#reload vault
 	// newVaultAddr := project.DeployVaultByGo()
 	// project.ConfigWrite()
-	// project.Repair(project.Network.VaultStrat, newVaultAddr)
+	// project.Register(project.Network.VaultStrat, newVaultAddr)
 	// project.ChangeStat(project.Network.VaultStrat, newVaultAddr, 1)
 
 	//#reload strategy & vault
 	// newStratAddr := project.DeployStratByGoStruct()
 	// newVaultAddr := project.DeployVaultByGo()
 	// project.ConfigWrite()
-	// project.Repair(newStratAddr, newVaultAddr)
+	// project.Register(newStratAddr, newVaultAddr)
 	// project.ChangeStat(newStratAddr, newVaultAddr, 1)
 	// return
 
-	//# Just Repair/Register strategy & vault
-	// project.Repair(project.Network.VaultStrat, project.Network.Vault)
+	//# Just Register/Register strategy & vault
+	// project.Register(project.Network.VaultStrat, project.Network.Vault)
 	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
 	//return
+
+	project.Init(-1, -1)
 
 	// project.IsContract("0x1F98431c8aD98523631AE4a59f267346ea31F984")
 	// return
@@ -118,15 +126,16 @@ func main() {
 	// project.Rebalance(400, 0)
 	// return
 
-	// project.CheckStatus(project.Network.Vault, 1) // CheckVaultStatus()
+	// project.FactoryPublicList()
+	// project.ViewVaults()
+	// // project.CheckStatus(project.Network.Vault, 1) // CheckVaultStatus()
 	// project.ViaVaultPublicList()
-	//project.ViaStratUniCompPublicList()
-	//project.ViewVaults()
+	// //project.ViaStratUniCompPublicList()
 
-	// project.GetTwap()
-	// project.GetPriceStratCall()
+	// // project.GetTwap()
+	// // project.GetPriceStratCall()
 
-	//return
+	// return
 
 	// project.SetTwapduration(5)
 	// project.GetPriceStratCall()
@@ -146,21 +155,24 @@ func main() {
 	//project.LendingInfo()
 	//return
 
-	// project.FactoryPublicList()
 	// //project.DeployVaultFactory()
 	// //project.DeployVaultStrategy()
 	//project.ChangeStat("0xd029FDcEB5B0E971e675D7f2766188e5F8ccEeE9", "0xD06d9CF030401a72476B9e10AA47a94CE5f3798E", 2)
 	// //project.CheckVaultStatus()
 	//return
 
-	// project.EmergencyCall() //by admin
-	// //project.VaultCallFunds()  // by admin, check to make sure all funds are back to vaults.
-	// //project.ChangeStat(4)		//by admin to change the status to abandoned and only with draw allowed
-	// project.EmergencyWithdraw(0)
-	// project.EmergencyWithdraw(1)
-	// project.Withdraw(2)
-	// project.Withdraw(3)
-	//return
+	// project.Deposit(1e16, 1e6, 0)
+	// //project.Withdraw(100, 0)
+	// project.Rebalance(500, 0)
+	// // return
+	// //project.EmergencyCall() //by admin
+	// project.CallFunds() // by admin, check to make sure all funds are back to vaults.
+	// // // //project.ChangeStat(4)		//by admin to change the status to abandoned and only with draw allowed
+	// // project.EmergencyWithdraw(0)
+	// //project.EmergencyWithdraw(1)
+	// project.Withdraw(100, 0)
+	// // project.Withdraw(3)
+	// return
 
 	// s := "0x9a94272446f0c119E1006935c9E6D6fEB6c206f4"
 	// v := "0x6E09167c444AAbe5cD49Cff5Af16B15E33096e6C"
@@ -233,16 +245,17 @@ func main() {
 	//project.SetTwapduration(10)
 	project.Deposit(1e17, 1e18, 0)
 	project.Deposit(2e17, 2e18, 1)
-	project.Withdraw(100, 0)
+	// project.Withdraw(100, 0)
 	// project.Withdraw(100, 1)
 	// project.Deposit(2e17, 2e18, 1)
 	// //project.Withdraw(100, 0)
-	// project.GetTVL()
+	//project.GetTVL()
 	// project.GetTotalAmounts()
 	// project.GetCompAmounts()
 
 	//project.MoveFunds()
 	project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	project.Withdraw(50, 0)
 
 	project.GetTVL()
 	// project.GetTotalAmounts()
@@ -250,7 +263,7 @@ func main() {
 
 	//project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 	// //project.Rebalance(600, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
-	// project.Deposit(1e17, 1e18, 0)
+	project.Deposit(1e17, 1e18, 0)
 	// // //project.Alloc(0)
 	// //project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
@@ -258,7 +271,6 @@ func main() {
 	// project.Deposit(2e17, 2e18, 1)
 	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
-	// // project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
 	// // project.EmergencyWithdraw(0)
 	// // project.EmergencyWithdraw(1)
 

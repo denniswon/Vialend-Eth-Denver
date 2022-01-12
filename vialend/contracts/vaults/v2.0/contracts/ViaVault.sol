@@ -21,14 +21,11 @@ contract ViaVault is
     using SafeERC20 for IERC20;
     
     address public immutable factory;  
-    address public  strategy;  
-    address public immutable admin; 
     address public immutable token0;   // token0
 	address public immutable token1;   // token1
 
 	uint256 public vaultCap;
 	uint256 public individualCap;
-	bool public isEmergency = false;
 
 	struct Withdrawal {
 		address recipient;
@@ -39,7 +36,6 @@ contract ViaVault is
    	
 	constructor(
     	address _factory,
-		address _admin,
         address _token0,
 		address _token1,
 		uint256 _vaultCap,
@@ -47,7 +43,6 @@ contract ViaVault is
     ) ERC20("ViaLend Uni Compound Token","VUC0") {
     	
 		factory = _factory;
-		admin = _admin;
         token0 = _token0;
         token1 = _token1;
         vaultCap = _vaultCap;
@@ -74,21 +69,24 @@ contract ViaVault is
 	event PendingWithdraw(address to, bool pending);
 
  	modifier onlyAdmin {
-        require (msg.sender == admin, 'admin');  
+        //require (msg.sender == admin, 'admin');  
+        require(IVaultFactory(factory).getAdmin() == msg.sender, 'only admin');
         _;
     }
     
     modifier onlyStrategy {
-    	require (IVaultFactory(factory).onlyPair(address(this), msg.sender), "not strat");
+		require( IVaultFactory(factory).getPair0(address(this)) == msg.sender, "not strat");
+
+    	//IVaultFactory(factory).onlyPair(address(this), msg.sender);
+    	//require (IVaultFactory(factory).onlyPair(address(this), msg.sender), "not strat");
         //require (msg.sender == strategy, 'strat');
         _;
     }
     
     modifier onlyActive {
-        require (IVaultFactory(factory).checkStatus( address(this),1 ), 'not active');
+        require ( IVaultFactory(factory).getStat( address(this)) == 1, 'not active');
         _;
     }
-    
     
     
     modifier onlyFactory {
@@ -96,8 +94,8 @@ contract ViaVault is
 		_;
     }
     
-    modifier onlyNotEmergency {
-        require (! IVaultFactory(factory).checkStatus( address(this), 3 ), 'emergency');
+    modifier onlyEmergency {
+        require ( IVaultFactory(factory).getStat(address(this)) == 3 , 'emergency');
 		_;
     }
     
@@ -113,32 +111,15 @@ contract ViaVault is
 	function setIndividualCap(uint256 newMax) external onlyAdmin {
 			individualCap = newMax;
 	}
-	
-	///@notice simply set status to emergency to cease the vault.
-    function emergencyCall() external onlyAdmin {
-		
-		isEmergency = true;
 
-		//set status inactive
-		IVaultFactory(factory).changeStat(
-			myStrategy(), 
-			address(this),
-			3); 
-    }
     
-    function emergencyProc() external onlyAdmin {
-    	
-    }
-    
-    
-    function EmergencyWithdraw() external {
-    	if (!isEmergency) revert("not emergency");
+    function EmergencyWithdraw() external onlyEmergency {
     	withdrawProc(msg.sender, 100);
     }
 
     
     ///@notice call funds back to vault
-    function callFunds() external onlyAdmin {
+    function callFunds() external  {
     	IStrategy(myStrategy()).callFunds();
     }
 		
@@ -148,7 +129,7 @@ contract ViaVault is
         IERC20(_token).safeTransfer(msg.sender, amount);
     }	
 
-    function deposit( uint256 amountIn0, uint256 amountIn1) external  {
+    function deposit( uint256 amountIn0, uint256 amountIn1) external onlyActive {
     	
 		require(amountIn0>0 || amountIn1>0, 'amt0');
 		require(msg.sender != address(0), 'd0x');
@@ -184,7 +165,7 @@ contract ViaVault is
 	}
 	
 	///@notice this is pending withdraw to be put in a queue and its fund will be sent to user in next rebalance.
-    function withdraw( uint8 percent ) external     	
+    function withdraw( uint8 percent ) external onlyActive
 	{
 		//10% reserve for withdraw
 		
@@ -251,7 +232,7 @@ contract ViaVault is
         
     }
     
-    function withdrawFinal(address to, uint256 shares, uint256 amount0, uint256 amount1) internal onlyNotEmergency {
+    function withdrawFinal(address to, uint256 shares, uint256 amount0, uint256 amount1) internal  {
     	
 		//log withdraw
         emit Withdraw(to, shares, amount0, amount1);

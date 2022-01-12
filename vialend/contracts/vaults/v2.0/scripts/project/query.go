@@ -23,7 +23,7 @@ func CheckPrice(do bool, interval time.Duration) {
 	//var network = Networks[Networkid]
 
 	poolAddress := common.HexToAddress(Network.Pool)
-	poolInstance, err := pool.NewApi(poolAddress, Client)
+	poolInstance, err := pool.NewApi(poolAddress, EthClient)
 	if err != nil {
 		log.Fatal("pool.NewApi ", err)
 	}
@@ -80,7 +80,7 @@ func PoolInfo2(do bool) {
 	poolAddress := common.HexToAddress("0xaa16E934A327D500fdE1493302CeB394Ff6Ff0b2")
 	fmt.Println("pool address:", poolAddress)
 
-	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), Client)
+	poolInstance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
 
 	if err != nil {
 		log.Fatal(err)
@@ -126,7 +126,7 @@ func Equation(do bool, doSet bool) {
 	testerAddress := common.HexToAddress("0xa9c7752485080511344A90212C84c868628DB7A3")
 	LPaddress := common.HexToAddress("0x2EE910a84E27aCa4679a3C2C465DCAAe6c47cB1E")
 
-	poolInstance, err := pool.NewApi(poolAddress, Client)
+	poolInstance, err := pool.NewApi(poolAddress, EthClient)
 	if err != nil {
 		log.Fatal("pool.NewApi ", err)
 	}
@@ -138,7 +138,7 @@ func Equation(do bool, doSet bool) {
 
 	fmt.Println("slot0=", slot0)
 
-	testerInstance, err := tester.NewApi(testerAddress, Client)
+	testerInstance, err := tester.NewApi(testerAddress, EthClient)
 	if err != nil {
 		log.Fatal("isntance err: ", err)
 	}

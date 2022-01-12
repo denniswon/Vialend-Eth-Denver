@@ -37,7 +37,7 @@ func VaultEvent(
 			common.HexToAddress(Network.Vault),
 		},
 	}
-	logs, err := Client.FilterLogs(context.Background(), query)
+	logs, err := EthClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func VialendEvent(
 			common.HexToAddress(contractAddress),
 		},
 	}
-	logs, err := Client.FilterLogs(context.Background(), query)
+	logs, err := EthClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Println(err)
 	}
@@ -148,7 +148,7 @@ func TestCalleeEvent(
 			common.HexToAddress(Network.Callee),
 		},
 	}
-	logs, err := Client.FilterLogs(context.Background(), query)
+	logs, err := EthClient.FilterLogs(context.Background(), query)
 	if err != nil {
 		log.Fatal(err)
 	}
