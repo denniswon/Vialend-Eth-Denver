@@ -26,6 +26,7 @@ type Configuration struct {
 		VAULT_FACTORY  string
 		VAULT_STRATEGY string
 		VAULT          string
+		VAULT_BRIDGE   string
 	} `json:"Contracts"`
 }
 

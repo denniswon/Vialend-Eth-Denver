@@ -1,20 +1,29 @@
 # Vialend Solidity Contracts
 
-# Introduction
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+### VaultFactory.sol
 
+### VaultStrategy.sol
 
+### ViaVault.sol
 
-## VaultFactory.sol
+### VaultBridge
 
-## VaultStrategy.sol
+`function getAddress(uint ind) external view returns( address)` - get vault address by number
+	 	
+	0: factory
+	1: weth/dai 0.05%
+	2: weth/usdc 0.3%
+	
+`setAddress(address newAddress,  uint ind ) external onlyOwner ` - Set address 
 
-## ViaVault.sol
+`setPermit(address addr,  uint level ) external onlyOwner ` - Set admin by level 
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
+	1: admin
+	0/other: non-admin
+	
+`getPermit(address addr ) external onlyOwner ` - get admin permission
 
-#### sub-sub-Commands
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+	1: admin
+	0/other: non-admin
+

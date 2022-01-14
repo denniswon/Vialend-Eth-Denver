@@ -297,6 +297,7 @@ func DeployVaultAdmin() {
 		PrivateToPublic(Network.PrivateKey[1]),
 		PrivateToPublic(Network.PrivateKey[2]),
 	}
+
 	address, tx, instance, err := admin.DeployApi(Auth, EthClient, admins)
 
 	if err != nil {

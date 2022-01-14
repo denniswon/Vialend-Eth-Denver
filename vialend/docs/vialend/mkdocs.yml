@@ -9,18 +9,28 @@ theme: readthedocs
 #mkdocs build
 
 site_name: VIALAND 开发文档
+#site_url: https://example.com/
 
 nav:
-  - DESIGN : design.md  
-  - USER MENU : User.md
-  - ADMIN MENU : Admin.md
-  - CONTRACT : contracts.md  
-  - SCRIPT : scripts.md
-  - EVENT : events.md  
-  - GAS : gas.md  
-  - TEST : test.md  
-  - TERMS : terms.md  
-  - DEV-NOTE : dev-note.md
-  - INTEGRATION : integration.md
-  - ABOUT : _note.md
-  
+    - <p><p><b>USER GUIDE</b></p>: userguid.md
+
+    - User Interface: User.md
+    - Smart Contracts : contracts.md  
+    - Whitpaper: Whitpaper.md
+    - Terms : terms.md  
+
+    - <p><p><strong>DEVELOPER</strong></p>: developer.md
+    
+    - About : _note.md
+    - Contracts : contracts.md
+    - Versions : versions.md
+    - Design : design.md  
+    - Scripts : scripts.md
+    - Events : events.md  
+    - Gas : gas.md  
+    - TEST : test.md  
+    - Dev-Note : dev-note.md
+    - Integration : integration.md
+    - API : API.md
+    - ADMIN MENU : Admin.md
+    

@@ -1,15 +1,15 @@
 #v2.0
 -2021/12/05
 
-Full script:
+	Full script:
 	
-	deploy ViaAuth, address as viaAdmin 
-	
-	deploy StratUniComp ( also hidden deploy VaultUniComp)
-	
-	address of VaultUniComp 
-	address of StratUniComp
-end script	
+		deploy ViaAuth, address as viaAdmin 
+		
+		deploy StratUniComp ( also hidden deploy VaultUniComp)
+		
+		address of VaultUniComp 
+		address of StratUniComp
+	end script	
 
 
 	两个合约互相调用， stratedy 合约 创建 viaVault 合约， 

@@ -505,7 +505,7 @@ OUT OF GAS. check gas limit and gas in GetSignature()
 	calling TxConfirm(tx.Hash())
 	goerli tx : 0x4d432c2ef310242b004c5b3fe0955b66e0d53782eccf1d2bc2107d9f5dba4266
 	
-	`cause: 	` -
+	`cause: 	` -  
 	
 	`solution: 	` - 
 	

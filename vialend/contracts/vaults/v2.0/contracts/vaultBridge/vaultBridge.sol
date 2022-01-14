@@ -9,18 +9,11 @@ abigen --abi=../../build/vaultBridge.abi --bin=../../build/vaultBridge.bin --pkg
 
 abigen --abi=../../build/vaultAdmin.abi --bin=../../build/vaultAdmin.bin --pkg=api --out=../../deploy/vaultAdmin/vaultAdmin.go
 
+deployed on remix
+0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec
+
 */
 
-contract VaultBridgeOwnable {
-	address internal owner  ;
-
-
-   modifier onlyOwner {
-         require(msg.sender == owner, "owner");
-        _;
-    }
- 	
-}
 
 /*
 	VaultBridge 
@@ -29,15 +22,25 @@ contract VaultBridgeOwnable {
 		1: weth/dai  vault
 */
 
-contract VaultBridge is VaultBridgeOwnable {
+contract VaultBridge  {
 
+	address public owner  ;
+    
+    mapping(address => uint ) public permit;
 
     mapping(uint  => address) public vaults;
+
 
   	constructor()  {
 		owner = msg.sender;
 	}
         
+   	modifier onlyOwner {
+         require(msg.sender == owner, "owner");
+        _;
+    }
+
+
     function getAddress(uint ind) external view returns( address) {
     	return vaults[ind];
     }
@@ -47,82 +50,17 @@ contract VaultBridge is VaultBridgeOwnable {
     	
     }
 
-    
+    function getPermit(address addr ) external view returns(uint) {
+		return permit[addr];
+    	
+    }
 
-}
-
-
-/*
-	VaultAdmin
-	store admin addresses
-*/
-contract VaultAdmin is VaultBridgeOwnable {
-
-
-    address[] private admins;
-    
-    mapping (address => uint) private addrIndex;
-
-  	constructor(address[] memory _admins )  {
-		owner = msg.sender;
-		
-		for (uint i=0; i< _admins.length; i++) {
-			
-			admins.push(_admins[i]) ;
-			
-			addrIndex[_admins[i]] = i+1;   // index can not be 0
-			
-		}
-	}
-        
-	function setAdmin(address _addr ) external onlyOwner {
-			
-		if (! exist( _addr)  ) {
-		 admins.push(_addr);
-		 addrIndex[_addr] = admins.length;
-		}
-	}
-
-	function delAdmin(address _addr ) external onlyOwner {
-			
-		require( addrIndex[_addr] > 0, "invalid address");
-
-		uint index = addrIndex[_addr]-1;
-
-		delete admins[ index ] ;	
-		
-		uint newIndex = admins.length-1;
-
-		admins[index] = admins[newIndex];   // move last to fill the deleted slot
-
-		admins.pop();
-		
-		addrIndex[admins[index]] = newIndex+1;  // update the address Index mapping
-		
-		delete addrIndex[_addr]; // delete the address mapping 
-		
-
-	}
-
-
-// 	function getIndex(address _addr ) public view returns (uint ){
-		
-// 		return(  addrIndex[_addr] );
-		
-// 	}
-
-	function exist(address _addr ) private view returns (bool){
-		
-		bool exists = addrIndex[_addr] > 0 ;
-		
-		return (exists);
-		
-	}
-	
-	function authAdmin(address _admin) external view returns (  bool  ) {
-		return exist(_admin) ;
-	}
+    function setPermit(address addr,  uint level ) external onlyOwner {
+		permit[addr] = level;
+    	
+    }
 
     
 
 }
+

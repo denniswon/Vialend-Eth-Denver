@@ -45,19 +45,23 @@ var sw = new(Switcher)
 
 func main() {
 
-	project.SendTestTokens()
+	project.AuthAdmin(project.Network.VaultAdmin, "0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879")
 	return
+
+	// project.SendTestTokens()
+	// return
 
 	project.ConfigParser()
 	defer project.ConfigWrite()
-	// return
+
 	project.Init(-1, -1)
 
-	DeployVaultBridge()
+	//project.DeployVaultBridge()  // deploy and manually update config.json
+	// setVaultBridge()
 	return
 
-	// project.DeployVaultFactory()
-	// return
+	//project.DeployVaultFactory()
+	//return
 
 	//#reload strategy
 
@@ -283,7 +287,7 @@ func main() {
 	// // //project.VaultInfo()
 	// // project.MyAccountInfo(0)
 	// // project.MyAccountInfo(1)
-	// project.GetTVL()
+	project.GetTVL()
 	// project.GetTotalSupply()
 	// project.GetTotalAmounts()
 	// project.GetCompAmounts()
@@ -417,12 +421,11 @@ func main() {
 	//networkid, account, protocolfee, uniportion, team address to get fee cut
 	//project.DeployVialendFeemaker(3, 1, big.NewInt(10), 90, "0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
 
-	//DeployVaultBridge()
 	//project.DeployArb()
 	// project.DeployCallee()
 	// return
 
-	project.SetVaultAddress("0xBC6b6e273171C428d85cDdB23D344a8400B48441", 2)
+	//project.SetVaultAddress("0xBC6b6e273171C428d85cDdB23D344a8400B48441", 2)
 	// return
 
 	// project.GetPool("0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05", "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60", 10000)
@@ -574,10 +577,10 @@ func newVault() {
 
 }
 
-func DeployVaultBridge() {
+func setVaultBridge() {
 
-	// vault bridge on goreli 0x033F3C5eAd18496BA462783fe9396CFE751a2342
-	// vault admin on goreli  0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879
+	// vault bridge v1 on goreli 0x033F3C5eAd18496BA462783fe9396CFE751a2342
+	// vault bridge v2 on goreli 0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec
 
 	//	project.DeployVaultBridge()
 
@@ -585,7 +588,8 @@ func DeployVaultBridge() {
 	// project.AuthAdmin(Network.VaultAdmin, "0xfd8a5AE495Df1CA34F90572cb99A33B27173eDe1")
 	// return
 
-	project.SetVaultAddress("0xD0fF8fF803a30C5d7BBDdc797B544E07Ff3458cD", 0)
+	project.SetVaultAddress("0xBDa573F33c18c69Cda004d5035e44Dd4635f69d1", 0)
+	project.SetVaultAddress("0x45aE8C6868F068d2e4AC774106aA86C8489E6E60", 1)
 	// project.SetVaultAddress("0xf231F818a111FE5d2EFf006451689eCBbf5ef159", 1)
 
 	// project.GetVaultAddress(0)

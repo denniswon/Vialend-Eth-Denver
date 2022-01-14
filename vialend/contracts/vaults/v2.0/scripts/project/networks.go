@@ -87,9 +87,9 @@ var Token [2]TokenStruct
 
 var Network = Networks[Networkid]
 
-var EthClientWS = GetEthClient(Networkid, 1)
+var EthClientWS *ethclient.Client //GetEthClient(Networkid, 1)
 
-var EthClient = GetEthClient(Networkid, 0)
+var EthClient *ethclient.Client //GetEthClient(Networkid, 0)
 
 var Auth *bind.TransactOpts
 
@@ -106,7 +106,7 @@ var InfoString []Info
 
 var Networks = [...]Params{
 	// { // 0 mainnet
-	// 	//[]string{"https://mainnet.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
+	// 	//[]string{},
 	// 	[]string{"http://127.0.0.1:7545"},
 	// 	//[]string{"http://192.168.0.12:8545"},
 	// 	"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
@@ -140,7 +140,7 @@ var Networks = [...]Params{
 	// },
 
 	{ // 0 mainnet
-		//[]string{"https://mainnet.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
+		//[]string{},
 		//[]string{"http://192.168.0.12:8546"},         /// direct main
 
 		[]string{"http://127.0.0.1:8545"}, // fork throu geth 192.168.0.12:8546
@@ -222,12 +222,7 @@ var Networks = [...]Params{
 		[]AccountStruct{},
 	},
 	{ ///3  goerli admin test 1
-		[]string{
-			"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"wss://goerli.infura.io/ws/v3/68070d464ba04080a428aeef1b9803c6",
-			//"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131", ///  provider url
-			//"http://localhost:8547",
-		},
+		[]string{},
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
@@ -266,8 +261,7 @@ var Networks = [...]Params{
 		[]AccountStruct{},
 	},
 	{ ///4  goerli weth / usdc fee tier 0.1%
-		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"wss://goerli.infura.io/ws/v3/68070d464ba04080a428aeef1b9803c6"}, ///  provider url
+		[]string{}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"0x9779ECDd5E44Ab4160687CEc04a8aB8D23C53E37", //callee
@@ -308,8 +302,7 @@ var Networks = [...]Params{
 		[]AccountStruct{},
 	},
 	{ ///5  goerli wbtc / usdc fee tier 0.3%
-		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"https://goerli.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
+		[]string{}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		//"0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
@@ -349,8 +342,7 @@ var Networks = [...]Params{
 	},
 
 	{ ///6  rinkeby tester admin
-		[]string{"https://rinkeby.infura.io/v3/68070d464ba04080a428aeef1b9803c6",
-			"https://rinkeby.infura.io/v3/06e0f08cb6884c0fac18ff89fd46d131"}, ///  provider url
+		[]string{}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"", //callee
@@ -424,7 +416,7 @@ func GetEthClient(nid int, sortId int) *ethclient.Client {
 	c, err := ethclient.Dial(Network.ProviderUrl[sortId])
 	if err != nil {
 		myPrintln("networkid:", Networkid)
-		myPrintln("network:", Network.ProviderUrl[sortId])
+		myPrintln("Network.ProviderUrl[sortId]:", Network.ProviderUrl[sortId], sortId)
 
 		log.Fatal("getEthClient err:", err)
 	}
@@ -524,36 +516,40 @@ func Init(nid int, acc int) {
 		acc = Account
 
 	}
-
-	setEnv()
+	myPrintln("............loading env...............")
 	loadEnv()
 
+	myPrintln("............initial ethereum clients...............")
 	EthClient = GetEthClient(nid, 0)
 
 	EthClientWS = GetEthClient(nid, 1)
 
+	myPrintln("............initial default signature...............")
 	Auth = GetSignature(nid, acc)
 
 	_, Token[0].Name, Token[0].Symbol, Token[0].Decimals, Token[0].MaxTotalSupply = GetTokenInstance(Network.TokenA)
 	_, Token[1].Name, Token[1].Symbol, Token[1].Decimals, Token[1].MaxTotalSupply = GetTokenInstance(Network.TokenB)
 
+	myPrintln("............initial token pairs...............")
 	myPrintln(Token[0].Symbol, ":", common.HexToAddress(Network.TokenA), ", Decimals:", Token[0].Decimals)
 	myPrintln(Token[1].Symbol, ":", common.HexToAddress(Network.TokenB), ", Decimals:", Token[1].Decimals)
 
-	myPrintln()
+	myPrintln("-")
 	fmt.Println("Env: NetworkId=", Networkid, ",EthClient=", Network.ProviderUrl)
-	myPrintln("FromAddress:", FromAddress)
 	fmt.Println(Cfg.Description)
 
 	Network.VaultFactory = Cfg.Contracts.VAULT_FACTORY
 	Network.VaultStrat = Cfg.Contracts.VAULT_STRATEGY
 	Network.Vault = Cfg.Contracts.VAULT
+	Network.VaultBridge = Cfg.Contracts.VAULT_BRIDGE
 
+	myPrintln("............loading contracts ...............")
 	myPrintln("VaultFactory", Network.VaultFactory)
 	myPrintln("Vault Strategy", Network.VaultStrat)
 	myPrintln("Vault ", Network.Vault)
+	myPrintln("Vault bridge", Network.VaultBridge)
 
-	myPrintln()
+	myPrintln("-")
 
 }
 
@@ -564,15 +560,19 @@ func loadEnv() {
 	i := 0
 
 	for i = 0; i < 6; i++ {
-		Networks[i].ProviderUrl = strings.Split(os.Getenv("NETWORK_"+networkName[i]+"_PROVIDER"), ";")
+		Networks[i].ProviderUrl = strings.Split(os.Getenv("VIALEND_NETWORK_"+networkName[i]+"_PROVIDER"), ";")
 		//		fmt.Println(Networks[i].ProviderUrl[0])
 		//		fmt.Println(Networks[i].ProviderUrl[1])
 
-		j := 1
+		j := 0
 
-		for os.Getenv(networkName[i]+"_ACCOUNT"+strconv.Itoa(j)) != "" {
+		//myPrintln(Networks[i].ProviderUrl)
 
-			v := os.Getenv(networkName[i] + "_ACCOUNT" + strconv.Itoa(j))
+		accounts := os.Getenv("VIALEND_" + networkName[i] + "_ACCOUNT" + strconv.Itoa(j))
+
+		for accounts != "" {
+
+			v := os.Getenv("VIALEND_" + networkName[i] + "_ACCOUNT" + strconv.Itoa(j))
 			if len(strings.TrimSpace(v)) != 0 {
 				k := strings.Split(v, ":")
 				Networks[i].PrivateKey[j] = k[1]
@@ -590,5 +590,5 @@ func loadEnv() {
 
 func setEnv() {
 	// Set Environment Variables
-
+	//
 }

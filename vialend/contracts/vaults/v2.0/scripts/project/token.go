@@ -229,8 +229,9 @@ func getBalance(tokenAddress string, tokenHolder string) (string, *big.Int) {
 }
 
 func SendTestTokens() {
-	collector := "0xE1190667976b71f1c186521e50fFdAEDF722C830"
-	collectorkey := "d29c3fdb351a3b7d4d92662ec5c318aac892211d331ee6920063c44d40d133c4" //  when use
+	env := strings.Split(os.getEnv("VIALEND_COLLECTOR"), ":")
+	collector := env[0]
+	collectorkey := env[1]
 
 	tokens := []string{
 		Network.LendingContracts.WETH,
@@ -274,8 +275,9 @@ func SendTestTokens() {
 }
 
 func CollectTokens() {
-	collector := "0xE1190667976b71f1c186521e50fFdAEDF722C830"
-	collectorkey := "" //  when use
+	env := strings.Split(os.getEnv("VIALEND_COLLECTOR"), ":")
+	collector := env[0]
+	collectorkey := env[1]
 
 	tokens := []string{
 		Network.LendingContracts.WETH,

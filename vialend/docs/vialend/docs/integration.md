@@ -1,9 +1,9 @@
-## COMPOUND
+### COMPOUND
 
 
-## UNISWAP
+### UNISWAP
 
 
-## OPYN SQUEETH
+### OPYN SQUEETH
 
 [https://github.com/opynfinance/Opyn-GitBooks-Docs/blob/master/otoken.md](https://github.com/opynfinance/Opyn-GitBooks-Docs/blob/master/otoken.md)
