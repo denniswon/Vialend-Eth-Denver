@@ -8,15 +8,15 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Festures to test - VIALAND 开发文档</title>
+  <title>Vialend Solidity Contracts - VIALAND 开发文档</title>
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Festures to test";
-    var mkdocs_page_input_path = "test.md";
+    var mkdocs_page_name = "Vialend Solidity Contracts";
+    var mkdocs_page_input_path = "contracts.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -83,7 +83,7 @@
     
       
     
-    <li>Festures to test</li>
+    <li>Vialend Solidity Contracts</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -93,20 +93,51 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="festures-to-test">Festures to test</h1>
-<h2 id="test-deploy">Test Deploy</h2>
-<pre><code>1. from web / metamask:
-    Deploy Factory
-    Deploy Vault
-    Deploy Strategy
-2. from go admin
-    index.go --deployStrategy &amp; register
+                <h1 id="vialend-solidity-contracts">Vialend Solidity Contracts</h1>
+<h3 id="vaultfactorysol">VaultFactory.sol</h3>
+<h3 id="vaultstrategysol">VaultStrategy.sol</h3>
+<h3 id="viavaultsol">ViaVault.sol</h3>
+<h3 id="vaultbridge">VaultBridge</h3>
+<p><code>contract address:</code></p>
+<pre><code>- v1.x
+    0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879
+
+- v2.x
+    0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec
 </code></pre>
-<h2 id="test-deposit">Test Deposit</h2>
-<h2 id="test-withdraw">Test Withdraw</h2>
-<h2 id="test-rebalance">Test Rebalance</h2>
-<h2 id="test-emergency">Test Emergency</h2>
-<h2 id="_1"></h2>
+<p><code>getAddress</code>  </p>
+<pre><code>- function getAddress (uint ind) external view returns( address) 
+- inputs 
+    0: factory
+    x: vault address
+
+    ie:
+    1: weth/dai 0.05%
+    2: weth/usdc 0.3%
+    ....
+
+- returns
+    vault address 
+        or 
+    address(0): invalid input number
+</code></pre>
+<p><code>setAddress</code> </p>
+<pre><code>- function setAddress (address newAddress,  uint ind ) external onlyOwner  
+- Set address
+</code></pre>
+<p><code>setPermit</code></p>
+<pre><code>- function setPermit (address addr,  uint level ) external onlyOwner  
+- Set admin 
+        1: admin
+        0/other: non-admin
+</code></pre>
+<p><code>getPermit</code> - </p>
+<pre><code>- function getPermit(address addr ) external view returns(uint)  
+- get admin access level 
+- returns
+    1: if address is admin
+    0: non-admin
+</code></pre>
               
             </div>
           </div>

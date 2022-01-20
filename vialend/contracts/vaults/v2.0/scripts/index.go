@@ -45,8 +45,8 @@ var sw = new(Switcher)
 
 func main() {
 
-	project.AuthAdmin(project.Network.VaultAdmin, "0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879")
-	return
+	// project.AuthAdmin(project.Network.VaultAdmin, "0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879")
+	// return
 
 	// project.SendTestTokens()
 	// return
@@ -58,7 +58,7 @@ func main() {
 
 	//project.DeployVaultBridge()  // deploy and manually update config.json
 	// setVaultBridge()
-	return
+	//	return
 
 	//project.DeployVaultFactory()
 	//return
@@ -197,13 +197,13 @@ func main() {
 	project.Quiet = false
 
 	//#### WETH/USDC Test
-	// project.Deposit(1e16, 1e6, 0)
+	//project.Deposit(1e16, 1e6, 0)
 	// project.Deposit(2e16, 2e6, 1)
 
-	//project.Withdraw(100, 0)
+	project.Withdraw(100, 0)
 	// // project.Deposit(2e17, 2e18, 1)
 	// //project.Withdraw(100, 0)
-	// // project.GetTVL()
+	project.GetTVL()
 	// // project.GetTotalAmounts()
 	// // project.GetCompAmounts()
 
@@ -243,7 +243,7 @@ func main() {
 	// // project.GetTotalAmounts()
 	// // project.GetCompAmounts()
 
-	// return
+	return
 
 	//#### WETH/DAI Test
 	//project.SetTwapduration(10)

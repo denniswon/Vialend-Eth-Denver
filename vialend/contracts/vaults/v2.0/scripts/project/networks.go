@@ -18,7 +18,7 @@ import (
 )
 
 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby
-var Networkid = 4
+var Networkid = 3
 var Account = 0
 var ProviderSortId = 0
 

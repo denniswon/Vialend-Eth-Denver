@@ -8,15 +8,15 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Festures to test - VIALAND 开发文档</title>
+  <title>EVENT - VIALAND 开发文档</title>
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Festures to test";
-    var mkdocs_page_input_path = "test.md";
+    var mkdocs_page_name = "EVENT";
+    var mkdocs_page_input_path = "events.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -83,7 +83,7 @@
     
       
     
-    <li>Festures to test</li>
+    <li>EVENT</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -93,20 +93,23 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="festures-to-test">Festures to test</h1>
-<h2 id="test-deploy">Test Deploy</h2>
-<pre><code>1. from web / metamask:
-    Deploy Factory
-    Deploy Vault
-    Deploy Strategy
-2. from go admin
-    index.go --deployStrategy &amp; register
+                <h1 id="event">EVENT</h1>
+<h2 id="use-events">Use Events</h2>
+<pre><code>project.Event(contract address, eventname, block_from, block_end)
 </code></pre>
-<h2 id="test-deposit">Test Deposit</h2>
-<h2 id="test-withdraw">Test Withdraw</h2>
-<h2 id="test-rebalance">Test Rebalance</h2>
-<h2 id="test-emergency">Test Emergency</h2>
-<h2 id="_1"></h2>
+<h2 id="related-scripts">Related scripts</h2>
+<pre><code>* `/scripts/project/events.go` - all event implementation files....
+* `/scripts/auto/main.event.go` - event test
+</code></pre>
+<h2 id="events">Events</h2>
+<pre><code>`Deposit` - by ViaVault
+
+`Withdraw` - by ViaVault
+
+`MintFees` - by ViaVault
+
+`CreatedVault(address _this, address sender, address strategy, address vault);` - by VaultFactory
+</code></pre>
               
             </div>
           </div>

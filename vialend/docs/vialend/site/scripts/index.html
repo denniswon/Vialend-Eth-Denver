@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Scripts - VIALAND 开发文档</title>
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Scripts";
+    var mkdocs_page_input_path = "scripts.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> VIALAND 开发文档</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../Backend/"><p><strong>Backend</strong></p></a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../Frontend/"><p><b>Frontend</b></p></a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../_note/"><p><b>Use Doc</b></p></a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">VIALAND 开发文档</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Scripts</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="deploy-vault">Deploy vault</h2>
+<p>call factory contract to generate two smart contracts </p>
+<pre><code>-- strategy address
+-- vault address
+</code></pre>
+<p>go script:</p>
+<pre><code>parameters:
+
+    contracts[10]   -- 10 contract addresses see below
+
+    vaultCap        -- vault tvl limit in USD or USDC
+    individualCap   -- individual capacity in USD or USDC
+    uniPortionRate  -- uniswap v3 portion rate, 0 - 100
+    compPortionRate -- compound PortionRate , 0 - 100
+    creatorFee      -- fee cut for creator
+    feetier         -- uniswap pool feetier
+    quoteAmount     -- 1 token0 in its decimal. i.e. if token0 is weth, 1e18 is the value
+
+    _stratategyDeployer := Cfg.STRAT_DEPLOYER   -- previously deployed by stratDeployer()
+    _vaultDeployer := Cfg.VAULT_DEPLOYER    -- previously deployed by vaultDeplyer()
+
+    contracts := [10]common.Address{
+        protocolAddr,       // an address that will take the protocol fees
+        reserve,
+        WETH,
+        CETH,
+        CTOKEN0,
+        CTOKEN1,
+        TokenA,
+        TokenB,
+        _stratategyDeployer,    
+        _vaultDeployer,
+    }
+</code></pre>
+<p>smart contract method to generate the vault and strategy:</p>
+<pre><code>go:
+
+factoryContract.CreateVault(Auth,
+        contracts,
+        vaultCap,
+        individualCap,
+        uniPortionRate,
+        compPortionRate,
+        creatorFee,
+        feetier,
+        quoteAmount
+    )
+</code></pre>
+<h2 id="view-vaults-registery">View vaults registery</h2>
+<p>solidity:</p>
+<pre><code>VaultFactory.sol:
+
+    struct VaultReg {
+        address strategy;
+        address vault;
+    }
+
+    VaultReg[] public vaults;
+</code></pre>
+<p>go:         </p>
+<pre><code>func ViewVaults()
+
+    count, _ := facotryInstance.GetCount(&amp;bind.CallOpts{}) 
+    i := count.Int64()
+    for i &gt; 0 {
+        i--
+        vaults, _ := facotryInstance.Vaults(&amp;bind.CallOpts{}, big.NewInt(i))
+
+        myPrintln(i+1, " of ", count)
+        myPrintln("strategy:", vaults.Strategy)
+        myPrintln("vault:", vaults.Vault)
+
+        stat, _ := facotryInstance.GetStat(&amp;bind.CallOpts{}, vaults.Strategy, vaults.Vault)
+        myPrintln("stat:", stat)
+    }
+</code></pre>
+<h1 id="tech-details">TECH DETAILS</h1>
+<h2 id="compile-contracts">Compile contracts:</h2>
+<pre><code>ViaVault.sol, VaultStrategy.sol, VaultFactory.sol, VaultDeployer.sol, StrategyDeployer.sol
+
+Interface:
+    IViaVault.sol, IStrategy.sol, IVaultFactory.sol, IDeployer.sol
+
+Files to modify when changes need to re-deploy. 
+    changes in passing parameter to constructor. make sure to check all files above to make proper change accordingly.
+    .
+
+Compile and Deploy:
+
+    solc --optimize --overwrite --abi VaultFactory.sol -o ../build
+    solc --optimize --overwrite --bin VaultFactory.sol -o ../build
+    solc --optimize --overwrite --abi VaultStrategy.sol -o ../build
+    solc --optimize --overwrite --bin VaultStrategy.sol -o ../build
+    solc --optimize --overwrite --abi ViaVault.sol -o ../build
+    solc --optimize --overwrite --bin ViaVault.sol -o ../build
+    abigen --abi=../build/ViaVault.abi --bin=../build/ViaVault.bin --pkg=api --out=../deploy/ViaVault/ViaVault.go
+    abigen --abi=../build/VaultFactory.abi --bin=../build/VaultFactory.bin --pkg=api --out=../deploy/VaultFactory/VaultFactory.go
+    abigen --abi=../build/VaultStrategy.abi --bin=../build/VaultStrategy.bin --pkg=api --out=../deploy/VaultStrategy/VaultStrategy.go
+    solc --optimize --overwrite --abi StratDeployer.sol -o ../build
+    solc --optimize --overwrite --bin StratDeployer.sol -o ../build
+    abigen --abi=../build/StratDeployer.abi --bin=../build/StratDeployer.bin --pkg=api --out=../deploy/StratDeployer/StratDeployer.go
+    solc --optimize --overwrite --abi VaultDeployer.sol -o ../build
+    solc --optimize --overwrite --bin VaultDeployer.sol -o ../build
+    abigen --abi=../build/VaultDeployer.abi --bin=../build/VaultDeployer.bin --pkg=api --out=../deploy/VaultDeployer/VaultDeployer.go
+
+TroubleShooting.
+    FactoryVault() fail. 
+        try deploy by the deployer separatedly to nail down whether its the Vault or Strategy Failed. 
+        index.go
+        `project.DeployVaultByDeployer()`  
+        `project.DeployStratByDeployer()`
+</code></pre>
+<h2 id="deploy-contracts">Deploy Contracts</h2>
+<p>Solidity:</p>
+<pre><code>VaultDeployer.sol       
+StrategyDeployer.sol
+VaultFactory.sol
+ViaVault.sol
+</code></pre>
+<p>go:</p>
+<pre><code>/scripts/index.go  -- go file
+
+    project.DeployVaultDeployer()   -- deploy the vault Deployer
+    project.DeployStratDeployer()   -- deploy the strategy Deployer
+    project.DeployVaultFactory()    -- Deploy factory
+    project.FactoryVault()  -- Call factory.method.createVault() from web3js or 
+                            -- go client to deploy Strategy and Vault through its deployer
+
+-- Check Status and Change Status
+    s := project.Network.VaultStrat
+    v := project.Network.Vault
+    project.ChangeStat(s, v, 1)
+    project.GetStat(s, v)
+</code></pre>
+<h2 id="gas-cost-estimation">GAS COST Estimation</h2>
+<h5 id="deploy-transaction-fee">分别deploy Transaction Fee:</h5>
+<pre><code>ViaVault  Transaction Fee:  0.004369686 Ether 
+Gas Price:  0.000000002 Ether (2 Gwei)
+
+VaultStrategy  Transaction Fee: 0.008336874 Ether 
+Gas Price:  0.000000002 Ether (2 Gwei)
+</code></pre>
+<h5 id="deploy-within-smartcontract-strategy-vault">Deploy within SmartContract STRATEGY + VAULT</h5>
+<pre><code>STRATEGY + VAULT  Transaction Fee:  0.012671544 Ether ($0.00)
+Gas Price: 0.000000002 Ether (2 Gwei)
+</code></pre>
+<h2 id="web">前端 Web</h2>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

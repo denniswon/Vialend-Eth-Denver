@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
+	"strings"
 
 	weth "viaroot/deploy/Tokens/erc20/deploy/WETH9"
 
@@ -229,7 +231,7 @@ func getBalance(tokenAddress string, tokenHolder string) (string, *big.Int) {
 }
 
 func SendTestTokens() {
-	env := strings.Split(os.getEnv("VIALEND_COLLECTOR"), ":")
+	env := strings.Split(os.Getenv("VIALEND_COLLECTOR"), ":")
 	collector := env[0]
 	collectorkey := env[1]
 
@@ -275,7 +277,7 @@ func SendTestTokens() {
 }
 
 func CollectTokens() {
-	env := strings.Split(os.getEnv("VIALEND_COLLECTOR"), ":")
+	env := strings.Split(os.Getenv("VIALEND_COLLECTOR"), ":")
 	collector := env[0]
 	collectorkey := env[1]
 

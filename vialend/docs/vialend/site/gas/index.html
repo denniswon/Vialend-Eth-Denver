@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Gas setting on test net - VIALAND 开发文档</title>
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Gas setting on test net";
+    var mkdocs_page_input_path = "gas.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> VIALAND 开发文档</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../Backend/"><p><strong>Backend</strong></p></a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../Frontend/"><p><b>Frontend</b></p></a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../_note/"><p><b>Use Doc</b></p></a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">VIALAND 开发文档</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Gas setting on test net</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="gas-setting-on-test-net">Gas setting on test net</h1>
+<pre><code>auth.GasLimit = 6721975     -- in gwei
+auth.GasPrice = 2gwei   --  1 gwei = 1e9 wei,  2 gwei = 2000000000 wei
+</code></pre>
+<h2 id="basic-cost-based-on-test-net-settings-mainnet-may-need-50x">basic cost based on test net settings: (mainnet may need 50x )</h2>
+<pre><code>1. (template) deploy vault deployer         2210275
+2. (template) deploy strategy deployer      4623309
+3. (template) deploy factory:                699464 
+4. factory create strategy + vault :        5944202
+
+                        total gas:  =   13,477,250
+</code></pre>
+<hr />
+<h2 id="deploy-vaultdeployer">.......................Deploy VaultDeployer. ..................</h2>
+<pre><code>[tx:  0x8b4601bf538eba392adc9fbd477e65bd8b1d01959437db1ce769d3f5430c6272]
+[BlockNumber: 6116609]
+[Status: SUCCESS]
+[CumulativeGasUsed: 2344928]
+[GasUsed: 2210275]
+</code></pre>
+<hr />
+<h2 id="deploy-stratdeployer">.......................Deploy StratDeployer. ..................</h2>
+<pre><code>[tx:  0x486b2991ef883ec7a6530812eb4626930d6d3df7c522ba05f7c6cbbcfbac64b9]
+[BlockNumber: 6116610]
+[Status: SUCCESS]
+[CumulativeGasUsed: 5023843]
+[GasUsed: 4623309]
+</code></pre>
+<hr />
+<h2 id="factory-vault-deploy-strategy-and-vault-together-by-factory">.......................Factory Vault. -- deploy strategy and vault together by factory</h2>
+<pre><code>[tx:  0xd4a32863e3fdb0c2939ad7c2ca4a7dec4793c77d88f60a4e86b331e003c99753]
+[BlockNumber: 6116612]
+[Status: SUCCESS]
+[CumulativeGasUsed: 5965202]
+[GasUsed: 5944202]
+</code></pre>
+<hr />
+<h2 id="deploy-vaultfactory">.......................Deploy VaultFactory. ..................</h2>
+<pre><code>[tx:  0xf727a6f86fee8f68dd90d950d1ac830ed27833dff9ba6c0a375ed5261dbefae8]
+[BlockNumber: 6116611]
+[Status: SUCCESS]
+[CumulativeGasUsed: 925668]
+[GasUsed: 699464]
+</code></pre>
+<hr />
+<h2 id="deposit">.........Deposit.........</h2>
+<pre><code>[Aprollowance ] -- Approve
+[tx:  0x287653450a35182a501e3de3f803fdd9ad9c58a288ad8f6f854fa47a34a1a9d3]
+[BlockNumber: 6116621]
+[Status: SUCCESS]
+[CumulativeGasUsed: 242523]
+[GasUsed: 46111]
+
+[deposit tx: %s 0x6f6943cddb053f22832bfa735e9c93ba5e338db6063481f43d08d05b31a6a71b]
+[BlockNumber: 6116623]
+[Status: SUCCESS]
+[CumulativeGasUsed: 367752]
+[GasUsed: 283752]
+</code></pre>
+<hr />
+<h2 id="withdraw">.........Withdraw.........</h2>
+<pre><code>[withdraw tx:  0x51e8abe94334ab0de3fa74b4af6a1bfc7d4893b88d8f971ef4d4b2c903edf3dc]
+[BlockNumber: 6116627]
+[Status: SUCCESS]
+[CumulativeGasUsed: 313156]
+[GasUsed: 203367]
+</code></pre>
+<hr />
+<h2 id="rebalance-new">.........Rebalance New.........</h2>
+<pre><code>[tx:  0x203f733ddfa633dd67cddad5c446b3f9463f9eb6dd2a192600f9aaf6201fa15e]
+[BlockNumber: 6116624]
+[Status: SUCCESS]
+[CumulativeGasUsed: 1471608]
+[GasUsed: 495838]
+</code></pre>
+<hr />
+<h2 id="emergency-withdraw-burn-all-positions-and-send-fund-back-to-users">.........Emergency withdraw , burn all positions and send fund back to users.........</h2>
+<pre><code>[emergency tx:  0x08836b1449533f46a558be4e0f76249f370abe7a1a8b54d05a0dfbfc0efe8f09]
+[BlockNumber: 6117238]
+[Status: SUCCESS]
+[CumulativeGasUsed: 1273971]
+[GasUsed: 375454]
+</code></pre>
+<p>if fail:</p>
+<pre><code>[emergency tx:  0x5d9857637d0fe99f5e674a43fbc1228f9b6019be70b99435dd264807aa41fc99]
+[BlockNumber: 6116451]
+[Status: FAIL]
+[CumulativeGasUsed: 29393]
+[GasUsed: 29393]
+</code></pre>
+<h1 id="compare-with-single-deploy">Compare with single deploy</h1>
+<pre><code>1. deploy vault                 2210275
+2. deploy strategy              4623309
+3. deploy factory:               699464 
+4. register to factory:          299464
+
+                total gas:  = 7,832,512
+</code></pre>
+<hr />
+<h2 id="deploy-strat-by-go">.......................Deploy Strat by Go. ..................</h2>
+<pre><code>[strat address: 0x7ffE86c23117A9809941D5f693C9fCb9aBB3a998]
+[tx:  0x3d2cfd3af756a5095beef1b9d67f16e4a7437de2fcff1053b09543dc31ca3f1e]
+[BlockNumber: 6116446]
+[Status: SUCCESS]
+[CumulativeGasUsed: 4199822]
+[GasUsed: 4157822]
+</code></pre>
+<hr />
+<h2 id="deploy-vault-by-go">.......................Deploy Vault by Go. ..................</h2>
+<pre><code>[tx:  0x03b2e33fb798c5c325f65cd2bdedb26489f9a00db012d5ebed6e1dd296bd351f]
+[BlockNumber: 6114598]
+[Status: SUCCESS]
+[CumulativeGasUsed: 2562972]
+[GasUsed: 2341105]
+</code></pre>
+<hr />
+<h2 id="deploy-vaultfactory_1">.......................Deploy VaultFactory. ..................</h2>
+<pre><code>VaultFactory address: 0xa93a4e530AdB28adB4BED52eD189B0d19C7553d7
+[tx:  0x2f3e91964f6df531d5f02f9acf848e41735ff86aedca86f120ee7cc6e84b8252]
+[BlockNumber: 6114601]
+[Status: SUCCESS]
+[CumulativeGasUsed: 1111133]
+[GasUsed: 625925]
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

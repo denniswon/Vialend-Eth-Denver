@@ -1,6 +1,28 @@
+#v2.1
+-2021/12/05
+
+	Fontend integration:
+
+
 #v2.0
 -2021/12/05
 
+
+	Fontend integration:
+	
+	vaultBridge address: 0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec
+	
+		method getAddress(uint8 sortorder)
+		sortorder 0: VaultFactory
+		sortorder 1: vault Address weth / usdc
+		sortorder 2: vault Address weth / dai
+	
+	Call vaultFactory .getPair0(vault address ) to get strategy address. 
+	
+	Check public properties/methods in VaultStrategy.sol 
+	
+		
+	
 	Full script:
 	
 		deploy ViaAuth, address as viaAdmin 

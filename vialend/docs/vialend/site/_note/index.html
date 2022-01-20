@@ -8,15 +8,15 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Festures to test - VIALAND 开发文档</title>
+  <title><p><b>Use Doc</b></p> - VIALAND 开发文档</title>
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Festures to test";
-    var mkdocs_page_input_path = "test.md";
+    var mkdocs_page_name = "<p><b>Use Doc</b></p>";
+    var mkdocs_page_input_path = "_note.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -56,9 +56,37 @@
     <a class="" href="../Frontend/"><p><b>Frontend</b></p></a>
 	    </li>
           
-            <li class="toctree-l1">
+            <li class="toctree-l1 current">
 		
-    <a class="" href="../_note/"><p><b>Use Doc</b></p></a>
+    <a class="current" href="./"><p><b>Use Doc</b></p></a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#install-markdocs">install markdocs</a></li>
+    
+
+    <li class="toctree-l2"><a href="#run-client-in-cmd">run client in cmd</a></li>
+    
+
+    <li class="toctree-l2"><a href="#build-a-website">build a website</a></li>
+    
+
+    <li class="toctree-l2"><a href="#referal">referal</a></li>
+    
+
+    <li class="toctree-l2"><a href="#samples">SAMPLES</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#sub-commands">sub-Commands</a></li>
+        
+            <li><a class="toctree-l3" href="#project-layout">Project layout</a></li>
+        
+            <li><a class="toctree-l3" href="#mcdocs-shide">mcdocs 还是挺有趣的shide</a></li>
+        
+        </ul>
+    
+
+    </ul>
 	    </li>
           
         </ul>
@@ -83,7 +111,7 @@
     
       
     
-    <li>Festures to test</li>
+    <li><p><b>Use Doc</b></p></li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -93,24 +121,51 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="festures-to-test">Festures to test</h1>
-<h2 id="test-deploy">Test Deploy</h2>
-<pre><code>1. from web / metamask:
-    Deploy Factory
-    Deploy Vault
-    Deploy Strategy
-2. from go admin
-    index.go --deployStrategy &amp; register
+                <h1 id="install-markdocs">install markdocs</h1>
+<p><code>pip install mkdocs</code> - install from cmd</p>
+<h1 id="run-client-in-cmd">run client in cmd</h1>
+<p><code>mkdocs serve</code> - <a href="http://127.0.0.1:8000">http://127.0.0.1:8000</a></p>
+<h1 id="build-a-website">build a website</h1>
+<p><code>mkdocs build</code> - a 'site' folder is created as ready for deploy</p>
+<h1 id="referal">referal</h1>
+<p><code>mkdocs</code>  -  <a href="https://mkdocs-like-code.readthedocs.io/zh_CN/latest/">https://mkdocs-like-code.readthedocs.io/zh_CN/latest/</a></p>
+<p><code>markdown syntax</code>  -  <a href="https://www.markdownguide.org/basic-syntax/">https://www.markdownguide.org/basic-syntax/</a></p>
+<h1 id="samples">SAMPLES</h1>
+<pre><code>~~要删除的文本~~
 </code></pre>
-<h2 id="test-deposit">Test Deposit</h2>
-<h2 id="test-withdraw">Test Withdraw</h2>
-<h2 id="test-rebalance">Test Rebalance</h2>
-<h2 id="test-emergency">Test Emergency</h2>
-<h2 id="_1"></h2>
+<h3 id="sub-commands">sub-Commands</h3>
+<ul>
+<li><code>mkdocs new [dir-name]</code> - Create a new project.</li>
+<li><code>mkdocs serve</code> - Start the live-reloading docs server.</li>
+</ul>
+<h4 id="sub-sub-commands">sub-sub-Commands</h4>
+<ul>
+<li><code>mkdocs build</code> - Build the documentation site.</li>
+<li><code>mkdocs -h</code> - Print help message and exit.</li>
+</ul>
+<h5 id="sub-sub-commands_1">sub-sub-Commands</h5>
+<ul>
+<li><code>mkdocs build</code> - Build the documentation site.</li>
+<li><code>mkdocs -h</code> - Print help message and exit.</li>
+</ul>
+<h2 id="project-layout">Project layout</h2>
+<pre><code>mkdocs.yml    # The configuration file.
+docs/
+    index.md  # The documentation homepage.
+    ...       # Other markdown pages, images and other files.
+</code></pre>
+<h2 id="mcdocs-shide">mcdocs 还是挺有趣的shide</h2>
               
             </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../Frontend/" class="btn btn-neutral" title="<p><b>Frontend</b></p>"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
@@ -133,6 +188,8 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
+      
+        <span><a href="../Frontend/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
     </span>
