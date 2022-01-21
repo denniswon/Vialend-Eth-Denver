@@ -139,12 +139,8 @@ export const constantRoutes: RouteConfig[] = [
   //     ]
   //   },
   {
-    name: 'newpair',
     path: '/newpair',
-    meta: {
-      name: 'newpair',
-      roles: ['admin', 'user']
-    },
+    meta: { roles: ['admin', 'user'] },
     component: Layout,
     children: [
       {
@@ -181,11 +177,6 @@ export const constantRoutes: RouteConfig[] = [
  * the routes that need to be dynamically loaded based on user roles
 */
 export const asyncRoutes: RouteConfig[] = [
-  {
-    path: '*',
-    redirect: '/404',
-    meta: { hidden: true }
-  },
   {
     path: '/template',
     component: Layout,
@@ -256,7 +247,7 @@ export const asyncRoutes: RouteConfig[] = [
     name: 'more',
     path: '/more',
     meta: {
-      name: 'newpair',
+      name: 'more',
       roles: ['admin', 'user']
     },
     component: Layout,
@@ -274,6 +265,11 @@ export const asyncRoutes: RouteConfig[] = [
         }
       }
     ]
+  },
+  {
+    path: '*',
+    redirect: '/',
+    meta: { hidden: true }
   }
 ]
 

@@ -416,6 +416,20 @@ export default class extends Vue {
     this.getShares(newVal)
   }
 
+  @Watch('$store.state.currentAccount')
+  watchCurrentAccount(newVal:string, oldVal:string) {
+    console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
+    // if (newVal !== '' && this.$store.state.validNetwork) {
+    //   console.log('Account changed,pairlist size:', this.pairsList.size())
+    //   if (this.pairsList.size() === 0 && !this.$parent.pairsInfoLoading) {
+    //     this.$parent.loadPairsInfo()
+    //   } else {
+    //     this.pairsListComplete = false
+    //     this.loadMyPairsList()
+    //   }
+    // }
+  }
+
   setSharePercent(percent:number) {
     this.sharePercent = percent
   }

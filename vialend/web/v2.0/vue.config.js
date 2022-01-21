@@ -9,10 +9,7 @@ const mockServerPort = 9528 // TODO: get this variable from setting.ts
 const name = 'Vialend' // TODO: get this variable from setting.ts
 
 module.exports = {
-  publicPath:
-        process.env.NODE_ENV === 'production'
-          ? '/'
-          : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/web' : '/staging',
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
@@ -46,10 +43,7 @@ module.exports = {
   pluginOptions: {
     'style-resources-loader': {
       preProcessor: 'scss',
-      patterns: [
-        path.resolve(__dirname, 'src/styles/_variables.scss'),
-        path.resolve(__dirname, 'src/styles/_mixins.scss')
-      ]
+      patterns: [path.resolve(__dirname, 'src/styles/_variables.scss'), path.resolve(__dirname, 'src/styles/_mixins.scss')]
     }
   },
   chainWebpack(config) {

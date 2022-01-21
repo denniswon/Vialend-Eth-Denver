@@ -32,7 +32,7 @@ class PairsData {
       this.pairsBaseInfoLoading = false
       this.pairsBalanceLoading = false
       this.pairsLoadComplete = false
-      this.bridgeAddress = '0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec'
+      this.bridgeAddress = store.state.bridgeAddress
       this.calculateAPY = false
       this.calculateAPR = false
       this.ethereum = (window as any).ethereum
@@ -42,52 +42,54 @@ class PairsData {
     }
 
     async loadPairsInfo() {
-      const pairsBaseData = await store.dispatch('getPairInfo', { key: 'pairBaseInfo' })
-      // console.log('pairsBaseData=', pairsBaseData)
-      // const pairsBaseData = null
-      if (pairsBaseData !== undefined && pairsBaseData !== null) {
-        this.pairsList.elementData = JSON.parse(pairsBaseData).elementData
-        this.pairsLoadComplete = true
-        console.log('pairsBaseData has value,pairsBaseData=', JSON.stringify(pairsBaseData))
-      } else {
+      if (!this.pairsBaseInfoLoading) {
         this.pairsBaseInfoLoading = true
-        this.pairsLoadComplete = false
-        console.log('pairsBaseData is null')
-        const bridgeContract = await contractInstance(VaultBridgeABI, this.bridgeAddress)
-        let iNum = 0
-        let vaultAddressInContract
-        while (true) {
-          try {
-            if (iNum === 0) {
-              this.factoryAddress = await bridgeContract.methods.getAddress(iNum).call()
-              console.log('factoryAddress=', this.factoryAddress)
-            } else {
-              vaultAddressInContract = await bridgeContract.methods.getAddress(iNum).call()
-              console.log('vaultAddressInContract', iNum, '=', vaultAddressInContract)
-              if (vaultAddressInContract === null || vaultAddressInContract === undefined || Number(vaultAddressInContract) === 0) {
-                console.log('vaultAddressInContract', iNum, ' is null,so break;')
-                break
+        const pairsBaseData = await store.dispatch('getPairInfo', { key: 'pairBaseInfo' })
+        // console.log('pairsBaseData=', pairsBaseData)
+        if (pairsBaseData !== undefined && pairsBaseData !== null) {
+          this.pairsList.elementData = JSON.parse(pairsBaseData).elementData
+          this.pairsBaseInfoLoading = false
+          this.pairsLoadComplete = true
+          console.log('pairsBaseData has value,pairsBaseData=', JSON.stringify(pairsBaseData))
+        } else {
+          this.pairsLoadComplete = false
+          console.log('pairsBaseData is null')
+          const bridgeContract = await contractInstance(VaultBridgeABI, this.bridgeAddress)
+          let iNum = 0
+          let vaultAddressInContract
+          while (true) {
+            try {
+              if (iNum === 0) {
+                this.factoryAddress = await bridgeContract.methods.getAddress(iNum).call()
+                console.log('factoryAddress=', this.factoryAddress)
+              } else {
+                vaultAddressInContract = await bridgeContract.methods.getAddress(iNum).call()
+                console.log('vaultAddressInContract', iNum, '=', vaultAddressInContract)
+                if (vaultAddressInContract === null || vaultAddressInContract === undefined || Number(vaultAddressInContract) === 0) {
+                  console.log('vaultAddressInContract', iNum, ' is null,so break;')
+                  break
+                }
               }
+            } catch (err) {
+              console.log('getting vault Address in contract occurs error:', err)
             }
-          } catch (err) {
-            console.log('getting vault Address in contract occurs error:', err)
+            if (iNum > 0) {
+              let pair = new Pairs()
+              pair.index = iNum - 1
+              pair.id = iNum
+              pair.vaultAddress = vaultAddressInContract
+              console.log('vault address(', iNum, ')=', vaultAddressInContract)
+              pair = await this.getPairsBaseInfo(pair)
+              this.pairsList.add(pair)
+            }
+            iNum++
           }
-          if (iNum > 0) {
-            let pair = new Pairs()
-            pair.index = iNum - 1
-            pair.id = iNum
-            pair.vaultAddress = vaultAddressInContract
-            console.log('vault address(', iNum, ')=', vaultAddressInContract)
-            pair = await this.getPairsBaseInfo(pair)
-            this.pairsList.add(pair)
-          }
-          iNum++
+          // if (this.pairsList.size() > 0) sessionStorage.setItem('pairBaseInfo', JSON.stringify(this.pairsList))
+          if (this.pairsList.size() > 0) await store.dispatch('setPairInfo', { key: 'pairBaseInfo', value: JSON.stringify(this.pairsList) })
+          console.log('pairsLoadComplete!!!,Pairs count:', this.pairsList.size())
+          this.pairsLoadComplete = true
+          this.pairsBaseInfoLoading = false
         }
-        // if (this.pairsList.size() > 0) sessionStorage.setItem('pairBaseInfo', JSON.stringify(this.pairsList))
-        if (this.pairsList.size() > 0) await store.dispatch('setPairInfo', { key: 'pairBaseInfo', value: JSON.stringify(this.pairsList) })
-        console.log('pairsLoadComplete!!!,Pairs count:', this.pairsList.size())
-        this.pairsLoadComplete = true
-        this.pairsBaseInfoLoading = false
       }
     }
 
@@ -129,38 +131,52 @@ class PairsData {
         pair.token1.decimals = await token1Contract.methods.decimals().call()
         pair.token1.iconLink = this.getIconLink(pair.token1.symbol)
         console.log('loadTokensInfo->token1.iconLink:', pair.token1.iconLink)
-        const slot0 = await poolContract.methods.slot0().call()
-        if (slot0 !== null && slot0 !== undefined) {
-          pair.currentTick = slot0.tick
-          pair.currentPrice = tickToPrice(pair.currentTick, pair.token0.decimals, pair.token1.decimals)
-          if (pair.tickLower === 0 || pair.tickUpper === 0) {
-            pair.tickLower = parseInt(pair.currentTick.toString()) - 500
-            pair.tickUpper = parseInt(pair.currentTick.toString()) + 500
-            console.log('slot0_tickLower0=', pair.tickLower, 'slot0_tickUpper0=', pair.tickUpper)
-          } else {
-            console.log('slot0_tickLower1=', pair.tickLower, ';slot0_tickUpper1=', pair.tickUpper)
-          }
-        } else {
-          console.log('slot0 is null')
-        }
+        // Get pair tickLower and tickUpper
+        pair = await this.getTickInfo(pair)
         // Get token approve status
-        if (this.ethereum.selectedAddress !== null && this.ethereum.selectedAddress !== undefined) {
-          const allowA = await token0Contract.methods.allowance(this.ethereum.selectedAddress, pair.vaultAddress).call()
-          const allowB = await token1Contract.methods.allowance(this.ethereum.selectedAddress, pair.vaultAddress).call()
-          console.log('allowA=', allowA, 'allowB=', allowB)
-          if (allowA > 0) {
-            pair.token0.tokenApproved = true
-          } else {
-            pair.token0.tokenApproved = false
-          }
-          if (allowB > 0) {
-            pair.token1.tokenApproved = true
-          } else {
-            pair.token1.tokenApproved = false
-          }
-        }
+        pair = await this.getTokenApproveStatus(pair)
         pair.feeTier = await poolContract.methods.fee().call()
         console.log('loadTokensInfo->pair.feeTier:', pair.feeTier)
+      }
+      return pair
+    }
+
+    async getTickInfo(pair: Pairs) {
+      const poolContract = await contractInstance(uniswapV3PoolABI, pair.poolAddress)
+      const slot0 = await poolContract.methods.slot0().call()
+      if (slot0 !== null && slot0 !== undefined) {
+        pair.currentTick = slot0.tick
+        pair.currentPrice = tickToPrice(pair.currentTick, pair.token0.decimals, pair.token1.decimals)
+        if (pair.tickLower === 0 || pair.tickUpper === 0) {
+          pair.tickLower = parseInt(pair.currentTick.toString()) - 500
+          pair.tickUpper = parseInt(pair.currentTick.toString()) + 500
+          console.log('slot0_tickLower0=', pair.tickLower, 'slot0_tickUpper0=', pair.tickUpper)
+        } else {
+          console.log('slot0_tickLower1=', pair.tickLower, ';slot0_tickUpper1=', pair.tickUpper)
+        }
+      } else {
+        console.log('slot0 is null')
+      }
+      return pair
+    }
+
+    async getTokenApproveStatus(pair: Pairs) {
+      if (this.ethereum.selectedAddress !== null && this.ethereum.selectedAddress !== undefined) {
+        const token0Contract = await contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
+        const token1Contract = await contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
+        const allowA = await token0Contract.methods.allowance(this.ethereum.selectedAddress, pair.vaultAddress).call()
+        const allowB = await token1Contract.methods.allowance(this.ethereum.selectedAddress, pair.vaultAddress).call()
+        console.log('allowA=', allowA, 'allowB=', allowB)
+        if (allowA > 0) {
+          pair.token0.tokenApproved = true
+        } else {
+          pair.token0.tokenApproved = false
+        }
+        if (allowB > 0) {
+          pair.token1.tokenApproved = true
+        } else {
+          pair.token1.tokenApproved = false
+        }
       }
       return pair
     }
@@ -370,7 +386,31 @@ class PairsData {
         // }
         const myDepositInToken1 = Number(deposit0) * Number(oraclePriceTwap) + Number(deposit1)
         console.log('deposit0=', deposit0, 'deposit1=', deposit1, 'myDepositInToken1=', myDepositInToken1)
-        pair.currentDeposits = myDepositInToken1
+        if (this.ethereum.selectedAddress !== null && this.ethereum.selectedAddress !== undefined) {
+          const price = await strategyContract.methods.getPrice().call()
+
+          const token0Contract = await contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
+          const token1Contract = await contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
+          const token0Amount = await token0Contract.methods.balanceOf(this.ethereum.selectedAddress).call()
+          const token1Amount = await token1Contract.methods.balanceOf(this.ethereum.selectedAddress).call()
+          console.log('amount0=', token0Amount)
+          console.log('amount1=', token1Amount)
+          console.log('price=', price)
+          console.log('amount0 * price', token0Amount * price)
+          console.log('amount0+amount1=', token0Amount + token1Amount)
+          console.log('with decimals', token0Amount / Math.pow(10, Number(pair.token0.decimals)) + token1Amount / Math.pow(10, Number(pair.token1.decimals)))
+
+          const totalAmount = token0Amount * price / Math.pow(10, Number(pair.token0.decimals)) + token1Amount
+          console.log('totalAmount=', totalAmount)
+          const currDeposits = totalAmount / Math.pow(10, Number(pair.token1.decimals))
+          console.log('currDeposits=', currDeposits, ';decimal=', Math.pow(10, Number(pair.token1.decimals)))
+
+          // amount0 = weth . balanceOf(user address)
+          // amount1= usdc.balanceOf(user address)
+          // totalInUSDC = amount0 * price + amount1
+          // current deposit display = totalInUSDC / 10^(decimals(usdc))
+          pair.currentDeposits = currDeposits
+        }
         //* ****************Fee function is to be developed ***********************/
         // const fees = await keeperContract.methods.Fees().call()
         // let myFeesInToken1 = 0

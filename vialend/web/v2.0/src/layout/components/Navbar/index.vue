@@ -25,15 +25,12 @@
       </div>
       <!-- <button @click="logout">Logout</button> -->
       <div class="btnnetwork">
-        <div v-if="$store.state.isConnected === false"
-             :class="[walletButtonClass, disConnectClass]">
-          <a href="#"
-             @click="connectWallet">Connect Wallet</a>
+        <div v-if="$store.state.isConnected === false" :class="[walletButtonClass, disConnectClass]">
+          <a href="#" @click="connectWallet">Connect Wallet</a>
         </div>
         <div v-else-if="$store.state.isConnected && $store.state.validNetwork"
              :class="[walletButtonClass, connectClass]">
           <!-- <a href="#" @click="disconnectWallet">{{ $store.state.currentAccount }}</a> -->
-
           <el-popover placement="bottom"
                       width="180"
                       @show="showWalletMenu"
@@ -43,17 +40,11 @@
               <ul>
                 <li>CHANGE WALLET</li>
                 <li>COPY ADDRESS</li>
-                <li>OPEN IN ETHERSCAN</li>
+                <li><a :href="'https://goerli.etherscan.io/address/' + $store.state.currentAccount" target="_blank">OPEN IN ETHERSCAN</a></li>
                 <li @click="disconnectWallet">DISCONNECT</li>
               </ul>
             </div>
-            <el-link slot="reference"
-                     :underline="false">{{ formatWalletAddress($store.state.currentAccount)
-              }}<i :class="[
-                  'el-select__caret',
-                  'el-icon-arrow-up',
-                  walletMenuVisible ? 'is-reverse' : ''
-                ]"></i></el-link>
+            <el-link slot="reference" :underline="false">{{ formatWalletAddress($store.state.currentAccount)}}<i :class="['el-select__caret','el-icon-arrow-up',walletMenuVisible ? 'is-reverse' : '']"></i></el-link>
           </el-popover>
         </div>
         <div v-else
@@ -73,7 +64,7 @@ import { AppModule } from '@/store/modules/app'
 import { UserModule } from '@/store/modules/user'
 import Hamburger from '@/components/Hamburger/index.vue'
 // import { AbiItem } from 'web3-utils'
-const VaultAdminABI = require('../../../abi/VaultAdmin.json')
+const VaultBridgeABI = require('../../../abi/VaultBridge.json')
 
 @Component({
   name: 'Navbar',
@@ -83,7 +74,7 @@ const VaultAdminABI = require('../../../abi/VaultAdmin.json')
 })
 export default class extends Vue {
   web3 = getWeb3Instance()
-  isAdmin = false
+  isAdmin = '0'
   validNetwork = false
   isConnected = this.$store.state.isConnected
   walletButtonClass = 'walletButton'
@@ -92,6 +83,7 @@ export default class extends Vue {
   containerClass = 'container'
   centerDialogVisible = false
   walletMenuVisible = false
+  doDisconnect = false
 
   get sidebar() {
     return AppModule.sidebar
@@ -159,21 +151,17 @@ export default class extends Vue {
 
   async checkValidAdmin() {
     console.log('(window as any).ethereum.selectedAddress =', (window as any).ethereum.selectedAddress)
-    if (
-      (window as any).ethereum.selectedAddress !== null &&
-      (window as any).ethereum.selectedAddress !== undefined
-    ) {
-      const vaultAdminContract = await contractInstance(
-        VaultAdminABI,
-        '0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879'
-      )
-      this.isAdmin = await vaultAdminContract.methods
-        .authAdmin((window as any).ethereum.selectedAddress)
-        .call()
-      console.log('isAdmin=', this.isAdmin)
-      // this.$store.state.isAdmin = this.isAdmin
-      this.$store.state.isAdmin = true
-      UserModule.ChangeRoles(this.isAdmin ? 'admin' : 'user').then(() => {
+    if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
+      const vaultAdminContract = await contractInstance(VaultBridgeABI, this.$store.state.bridgeAddress)
+      this.isAdmin = await vaultAdminContract.methods.getPermit((window as any).ethereum.selectedAddress).call()
+      if (this.isAdmin === '1') {
+        this.$store.state.isAdmin = true
+        console.log('isAdmin=true')
+      } else {
+        this.$store.state.isAdmin = false
+        console.log('isAdmin=false')
+      }
+      UserModule.ChangeRoles(this.$store.state.isAdmin ? 'admin' : 'user').then(() => {
         this.$emit('role changed')
       })
       localStorage.setItem('isAdmin', this.isAdmin.toString())
@@ -213,36 +201,30 @@ export default class extends Vue {
   async checkChain() {
     this.$store.state.chainId = await this.web3.eth.getChainId()
     console.log('check chain id=', this.$store.state.chainId)
-    if (
-      this.$store.state.availableChainId.includes(this.$store.state.chainId)
-    ) {
+    if (this.$store.state.availableChainId.includes(this.$store.state.chainId)) {
       // this.$store.state.isConnected = true
       this.$store.state.validNetwork = true
       return true
     } else {
-      this.isAdmin = false
       this.$store.state.isConnected = false
       this.$store.state.validNetwork = false
       return false
     }
   }
 
-  connectWallet() {
-    if (
-      (window as any).ethereum.selectedAddress !== null &&
-      (window as any).ethereum.selectedAddress !== undefined
-    ) {
+  async connectWallet() {
+    this.$store.state.doDisconnect = false
+    if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
       if (!this.$store.state.validNetwork) {
         this.$message({
           message: 'Please select Goerli Test Network.',
           type: 'warning'
         })
       } else {
-        this.$store.state.currentAccount = (
-          window as any
-        ).ethereum.selectedAddress
-        this.$store.state.isConnected = true
-        this.$store.state.validNetwork = true
+        if (await this.checkChain()) {
+          this.changeAccount()
+          this.checkValidAdmin()
+        }
       }
     } else {
       console.log('call connectWallet')
@@ -273,41 +255,38 @@ export default class extends Vue {
   }
 
   changeAccount() {
-    if (
-      (window as any).ethereum.selectedAddress !== null &&
-      (window as any).ethereum.selectedAddress !== undefined
-    ) {
+    console.log('doChangeAccount')
+    if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
       this.$store.state.isConnected = true
-      this.$store.state.currentAccount = (
-        window as any
-      ).ethereum.selectedAddress
+      this.$store.state.currentAccount = (window as any).ethereum.selectedAddress
     } else {
-      this.$store.state.currentAccount = ''
       this.$store.state.isConnected = false
+      this.$store.state.currentAccount = ''
       this.isConnected = false
-      this.isAdmin = false
     }
   }
 
   disconnectWallet() {
     this.$store.state.isConnected = false
     this.$store.state.currentAccount = ''
+    this.$store.state.isAdmin = false
+    this.$store.state.doDisconnect = true
+    UserModule.ChangeRoles('user').then(() => {
+      this.$emit('role changed')
+    })
     console.log('Disconnect wallet!')
   }
 
   async created() {
     if (await this.checkChain()) {
-      if (
-        (window as any).ethereum.selectedAddress !== null &&
-        (window as any).ethereum.selectedAddress !== undefined
-      ) {
-        console.log('currentAccount is connected.')
-        this.$store.state.currentAccount = (
-          window as any
-        ).ethereum.selectedAddress
-        this.$store.state.isConnected = true
-        this.isConnected = true
-        this.checkValidAdmin()
+      if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
+        if (!this.$store.state.doDisconnect) {
+          console.log('currentAccount is connected.')
+          this.$store.state.currentAccount = (window as any).ethereum.selectedAddress
+          this.$store.state.isConnected = true
+          this.isConnected = true
+          this.checkValidAdmin()
+        }
       } else {
         console.log('ethereum.selectedAddress is null.')
         this.$store.state.currentAccount = ''
@@ -551,7 +530,12 @@ export default class extends Vue {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
   line-height: 36px;
+  cursor:pointer;
 }
+.connect-menu li:hover {
+  color: #f56c6c;
+}
+
 .el-select__caret {
   transition: transform 0.3s;
   transform: rotate(180deg);

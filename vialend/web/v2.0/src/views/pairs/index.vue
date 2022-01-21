@@ -39,22 +39,22 @@
                 <th>{{currentPair.token0.symbol}}</th>
                 <td>{{Number(currentPair.token0.balanceInWallet).toFixed(2)}}</td>
                 <!-- + ' / $' + token0BalanceUSDInWallet.toFixed(2) -->
-                <td>{{Number(currentPair.token0.balanceInVault).toFixed(2)}}</td>
+                <td>{{Math.floor(Number(currentPair.token0.balanceInVault))}}</td>
                 <!-- + ' / $' + token0BalanceUSDInVault.toFixed(2) -->
-                <td>{{Number(currentPair.token0.balanceInPool).toFixed(2)}}</td>
+                <td>{{Math.floor(Number(currentPair.token0.balanceInPool))}}</td>
                 <!-- + ' / $' + token0BalanceUSDInPool.toFixed(2) -->
-                <td>{{Number(currentPair.token0.balanceInLending).toFixed(2)}}</td>
+                <td>{{Math.floor(Number(currentPair.token0.balanceInLending))}}</td>
                 <!-- + ' / $' + token0BalanceUSDInLending.toFixed(2) -->
               </tr>
               <tr>
                 <th>{{currentPair.token1.symbol}}</th>
                 <td>{{Number(currentPair.token1.balanceInWallet).toFixed(2)}}</td>
                 <!-- + ' / $' + token1BalanceUSDInWallet.toFixed(2) -->
-                <td>{{Number(currentPair.token1.balanceInVault).toFixed(2)}}</td>
+                <td>{{Math.floor(Number(currentPair.token1.balanceInVault))}}</td>
                 <!-- + ' / $' + token1BalanceUSDInVault.toFixed(2) -->
-                <td>{{Number(currentPair.token1.balanceInPool).toFixed(2)}}</td>
+                <td>{{Math.floor(Number(currentPair.token1.balanceInPool))}}</td>
                 <!-- + ' / $' + token1BalanceUSDInPool.toFixed(2) -->
-                <td>{{Number(currentPair.token1.balanceInLending).toFixed(2)}}</td>
+                <td>{{Math.floor(Number(currentPair.token1.balanceInLending))}}</td>
                 <!-- + ' / $' + token1BalanceUSDInLending.toFixed(2) -->
                 <!-- <td>{{accruedProtocolFees1}}</td> -->
               </tr>
