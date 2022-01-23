@@ -31,6 +31,9 @@ module.exports = {
           ['^' + process.env.VUE_APP_BASE_API]: ''
         }
       }
+    },
+    historyApiFallback: {
+      index: '/index.html' // 与output的publicPath
     }
   },
   pwa: {

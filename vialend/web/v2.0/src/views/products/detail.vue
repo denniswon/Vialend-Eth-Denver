@@ -271,7 +271,7 @@ export default class extends Vue {
               token.approveLoading = false
               _this.$message(tokenName + ' approved!')
             }
-            _this.$store.dispatch('setPairInfo', {
+            _this.$store.dispatch('setSessionData', {
               key: _this.pairsymbol, value: JSON.stringify(_this.pairInfo)
             })
             if ((this.pairInfo as any).token0.tokenApproved || (this.pairInfo as any).token1.tokenApproved) {
@@ -443,7 +443,7 @@ export default class extends Vue {
 
   async created() {
     this.pairsymbol = this.$route.params && this.$route.params.pair
-    const jsonPairInfo: string | null = await this.$store.dispatch('getPairInfo', { key: this.pairsymbol })
+    const jsonPairInfo: string | null = await this.$store.dispatch('getSessionData', { key: this.pairsymbol })
     console.log('jsonPairInfo=', jsonPairInfo)
 
     if (jsonPairInfo !== null) {

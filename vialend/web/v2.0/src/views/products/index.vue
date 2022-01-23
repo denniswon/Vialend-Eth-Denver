@@ -267,6 +267,7 @@ export default class extends Vue {
   }
 
   async created() {
+    console.log('this.$store.state.pairsData=', this.$store.state.pairsData)
     this.pairsData.calculateAPY = true
     console.log('bridgeAddress value123=', this.pairsData.bridgeAddress)
     console.log('pairsList.size=', this.pairsData.pairsList.size())
@@ -274,7 +275,7 @@ export default class extends Vue {
     const validChain = await this.$store.dispatch('checkChain')
     console.log('product chainId=', validChain)
     if (validChain && this.pairsData.pairsList.size() === 0) {
-      this.pairsData.loadPairsInfo()
+      await this.pairsData.loadPairsInfo()
     }
   }
 

@@ -11,6 +11,7 @@ export default new Vuex.Store({
     availableChainId: [5],
     pairsData: undefined,
     bridgeAddress: '0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec',
+    factoryAddress: '',
     validNetwork: false,
     isAdmin: false,
     doDisconnect: false,
@@ -124,10 +125,10 @@ export default new Vuex.Store({
         return value
       }
     },
-    setPairInfo(state, dt) {
+    setSessionData(state, dt) {
       sessionStorage.setItem(dt.key, dt.value)
     },
-    getPairInfo(state, dt) {
+    getSessionData(state, dt) {
       return sessionStorage.getItem(dt.key)
     },
     getChainID() {

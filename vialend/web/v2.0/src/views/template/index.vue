@@ -124,12 +124,12 @@ export default class extends Vue {
       return this.pairsData.pairsList.size()
     }
 
-    created() {
+    async created() {
       this.pairsData.calculateAPR = true
       console.log('bridgeAddress value123=', this.pairsData.bridgeAddress)
       console.log('pairsList.size=', this.pairsData.pairsList.size())
       if (this.$store.state.validNetwork && this.$store.state.isConnected && this.pairsData.pairsList.size() === 0) {
-        this.pairsData.loadPairsInfo()
+        await this.pairsData.loadPairsInfo()
       }
     }
 

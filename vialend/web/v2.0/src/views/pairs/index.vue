@@ -192,8 +192,34 @@
                 </a>
               </div>
             </el-col>
+            <el-col :xs="23" :sm="12" :md="12" :lg="12">
+              <div class="security-col">
+                <span class="sec-title">Factory Address:</span>&nbsp;&nbsp;
+                <span class="sec-val">{{factoryAddress}}</span>
+                <a
+                  :href="'https://goerli.etherscan.io/address/'+factoryAddress"
+                  style="cursor:hand"
+                  target="_black"
+                >
+                  <svg-icon name="goto-detail" width="30" height="30" />
+                </a>
+              </div>
+            </el-col>
+            <el-col :xs="23" :sm="12" :md="12" :lg="12">
+              <div class="security-col">
+                <span class="sec-title">Strategy Address:</span>&nbsp;&nbsp;
+                <span class="sec-val">{{currentPair.strategyAddress}}</span>
+                <a
+                  :href="'https://goerli.etherscan.io/address/'+currentPair.strategyAddress"
+                  style="cursor:hand"
+                  target="_black"
+                >
+                  <svg-icon name="goto-detail" width="30" height="30" />
+                </a>
+              </div>
+            </el-col>
           </el-row>
-          <div class="emergency-container">
+          <div class="emergency-container" v-show="showEmergencyButton">
             <el-button
               type="warning"
               :loading="emergencyLoading"
@@ -340,6 +366,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 
 const ViaLendFeeMakerABI = require('../../abi/ViaLendFeeMakerABI.json')
+const VaultFactoryABI = require('../../abi/VaultFactory.json')
 Vue.prototype.$ = $
 const ethereum = (window as any).ethereum
 
@@ -351,6 +378,8 @@ export default class extends Vue {
   pairsData = new PairsData()
   pairsList = this.pairsData.pairsList
   pairSelectedIndex = ''
+  factoryAddress = ''
+  showEmergencyButton = false
   currentPair = new Pairs()
   rangeStatusDisplay = 'none'
   errorRebalance = ''
@@ -538,16 +567,22 @@ export default class extends Vue {
     }
   }
 
-  created() {
+  async created() {
     console.log('bridgeAddress value123=', this.pairsData.bridgeAddress)
     console.log('pairsList.size=', this.pairsData.pairsList.size())
     if (this.$store.state.validNetwork && this.$store.state.isConnected && this.pairsData.pairsList.size() === 0) {
-      this.pairsData.loadPairsInfo()
+      console.log('pair loading')
+
+      await this.pairsData.loadPairsInfo()
     }
+    this.factoryAddress = await this.$store.dispatch('getSessionData', { key: 'factoryAddress' })
+    console.log('factory address = ', this.factoryAddress)
+    console.log('strategy address = ', this.currentPair.strategyAddress)
+    console.log('vault address = ', this.currentPair.vaultAddress)
   }
 
   @Watch('pairSelectedIndex')
-  watchPairSelectedIndex(newVal: number, oldVal: number) {
+  async watchPairSelectedIndex(newVal: number, oldVal: number) {
     console.log('pairSelectedIndex:', newVal, ',old value:', oldVal)
     console.log(
       'pairsData.pairsList.get(pairSelectedIndex).token1.balanceInWallet=',
@@ -558,6 +593,15 @@ export default class extends Vue {
     this.loadPriceRange(this.currentPair)
     this.calculateRangeStatus()
     // this.pairsData.getPairsSettingData(this.currentPair)
+    let stat = '-1'
+    if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
+      const factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
+      stat = await factoryContract.methods.stat(this.currentPair.strategyAddress, this.currentPair.vaultAddress).call()
+    }
+    if (stat === '3') {
+      this.showEmergencyButton = true
+    }
+    console.log('Emergency stat=', stat)
   }
 
   @Watch('newMinPrice')
@@ -778,6 +822,7 @@ padding:30px;
   transition: 0.3s;
   line-height: 20px;
   padding: 12px;
+  margin-bottom: 10px;
 }
 .security-col .sec-title {
   font-family: Georgia, 'Times New Roman', Times, serif;

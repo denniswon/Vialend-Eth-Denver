@@ -44,7 +44,7 @@ class PairsData {
     async loadPairsInfo() {
       if (!this.pairsBaseInfoLoading) {
         this.pairsBaseInfoLoading = true
-        const pairsBaseData = await store.dispatch('getPairInfo', { key: 'pairBaseInfo' })
+        const pairsBaseData = await store.dispatch('getSessionData', { key: 'pairBaseInfo' })
         // console.log('pairsBaseData=', pairsBaseData)
         if (pairsBaseData !== undefined && pairsBaseData !== null) {
           this.pairsList.elementData = JSON.parse(pairsBaseData).elementData
@@ -61,6 +61,7 @@ class PairsData {
             try {
               if (iNum === 0) {
                 this.factoryAddress = await bridgeContract.methods.getAddress(iNum).call()
+                await store.dispatch('setSessionData', { key: 'factoryAddress', value: this.factoryAddress })
                 console.log('factoryAddress=', this.factoryAddress)
               } else {
                 vaultAddressInContract = await bridgeContract.methods.getAddress(iNum).call()
@@ -85,7 +86,7 @@ class PairsData {
             iNum++
           }
           // if (this.pairsList.size() > 0) sessionStorage.setItem('pairBaseInfo', JSON.stringify(this.pairsList))
-          if (this.pairsList.size() > 0) await store.dispatch('setPairInfo', { key: 'pairBaseInfo', value: JSON.stringify(this.pairsList) })
+          if (this.pairsList.size() > 0) await store.dispatch('setSessionData', { key: 'pairBaseInfo', value: JSON.stringify(this.pairsList) })
           console.log('pairsLoadComplete!!!,Pairs count:', this.pairsList.size())
           this.pairsLoadComplete = true
           this.pairsBaseInfoLoading = false
@@ -97,7 +98,6 @@ class PairsData {
       console.log('loadTokensInfo->vaultAddress:', pair.vaultAddress)
       if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
         this.factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
-        console.log('factoryContract=', this.factoryContract)
         console.log('pair.vaultAddress=:', pair.vaultAddress)
         pair.strategyAddress = await (this.factoryContract as any).methods.getPair0(pair.vaultAddress).call()
         console.log('strategyAddress=', pair.strategyAddress)
@@ -333,7 +333,7 @@ class PairsData {
       }
       pair.gettingData = false
       pair.loadDataCompleted = true
-      await store.dispatch('setPairInfo', { key: pair.token0.symbol.concat('-', pair.token1.symbol), value: JSON.stringify(pair) })
+      await store.dispatch('setSessionData', { key: pair.token0.symbol.concat('-', pair.token1.symbol), value: JSON.stringify(pair) })
       // sessionStorage.setItem(pair.token0.symbol.concat('-', pair.token1.symbol), JSON.stringify(pair))
       return pair
     }
