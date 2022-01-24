@@ -46,25 +46,25 @@
             element-loading-text="Loading"
             element-loading-spinner="el-icon-loading"
             element-loading-background="rgba(0, 0, 0, 0.8)">
-          <tr v-for="pair in pairsList._getData()"
-        :key="pair.id"
-        >
-            <td class="symbol">
-              <cryptoicon :symbol="pair.token1.symbol" size="60" />
-            </td>
-            <td>
-              <span class="token-title">{{ pair.token0.symbol }}-{{ pair.token1.symbol }}</span>
-              <br />
-              <span class="token-desc">Uniswap V3 Compound Yield Generator</span>
-            </td>
-            <td>
-              <span class="perc">{{Number(Number(pair.currentAPR).toFixed(2))}}%</span>
-            </td>
-            <td>
-              <span class="amount">{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
-                          ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}}</span>
-            </td>
-          </tr>
+            <tbody v-for="pair in pairsList._getData()" :key="pair.id">
+              <tr v-if="pair.disabled === false">
+                <td class="symbol">
+                  <cryptoicon :symbol="pair.token1.symbol" size="60" />
+                </td>
+                <td>
+                  <span class="token-title">{{ pair.token0.symbol }}-{{ pair.token1.symbol }}</span>
+                  <br />
+                  <span class="token-desc">Uniswap V3 Compound Yield Generator</span>
+                </td>
+                <td>
+                  <span class="perc">{{Number(Number(pair.currentAPR).toFixed(2))}}%</span>
+                </td>
+                <td>
+                  <span class="amount">{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
+                              ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}}</span>
+                </td>
+              </tr>
+          </tbody>
         </table>
       </div>
     </div>

@@ -3,6 +3,8 @@
 import Token from './Token'
 
 export default class Pairs {
+	  public disabled:boolean;
+		public stat:number;
     public index:number;
     public id:number;
     public token0:Token;
@@ -61,6 +63,8 @@ export default class Pairs {
     public protocolFee:string;
 
     constructor() {
+      this.disabled = false
+      this.stat = -1
 	  this.index = 0
 	  this.id = 0
 	  this.token0 = new Token()

@@ -39,7 +39,7 @@
             <div class="connect-menu">
               <ul>
                 <li>CHANGE WALLET</li>
-                <li>COPY ADDRESS</li>
+                <li id="copyaddr" @click="copyAddress()">COPY ADDRESS</li>
                 <li><a :href="'https://goerli.etherscan.io/address/' + $store.state.currentAccount" target="_blank">OPEN IN ETHERSCAN</a></li>
                 <li @click="disconnectWallet">DISCONNECT</li>
               </ul>
@@ -63,6 +63,7 @@ import { getWeb3Instance, contractInstance } from '../../../common/Web3'
 import { AppModule } from '@/store/modules/app'
 import { UserModule } from '@/store/modules/user'
 import Hamburger from '@/components/Hamburger/index.vue'
+import Clipboard from 'clipboard'
 // import { AbiItem } from 'web3-utils'
 const VaultBridgeABI = require('../../../abi/VaultBridge.json')
 
@@ -275,6 +276,16 @@ export default class extends Vue {
       this.$emit('role changed')
     })
     console.log('Disconnect wallet!')
+  }
+
+  copyAddress() {
+    const _this = this
+    this.$copyText(this.$store.state.currentAccount).then(() => {
+      _this.$message.success('Address copied.')
+    }
+    ).catch(() => {
+      _this.$message.success('Copy failed.')
+    })
   }
 
   async created() {
@@ -533,6 +544,12 @@ export default class extends Vue {
   cursor:pointer;
 }
 .connect-menu li:hover {
+  color: #f56c6c;
+}
+.connect-menu li a {
+  color: #ffffff;
+}
+.connect-menu li a:hover {
   color: #f56c6c;
 }
 

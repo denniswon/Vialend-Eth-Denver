@@ -89,6 +89,7 @@
               horizontal="true"
               height="500px"
               v-model="pair.flipped"
+              v-if="pair.disabled === false"
             >
               <template v-slot:front class="front">
                 <el-card

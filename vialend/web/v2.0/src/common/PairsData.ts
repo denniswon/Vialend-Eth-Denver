@@ -48,6 +48,12 @@ class PairsData {
         // console.log('pairsBaseData=', pairsBaseData)
         if (pairsBaseData !== undefined && pairsBaseData !== null) {
           this.pairsList.elementData = JSON.parse(pairsBaseData).elementData
+          let pair = new Pairs()
+          for (let i = 0; i < this.pairsList.size(); i++) {
+            pair = this.pairsList.get(i)
+            pair = await this.getPairStatus(pair)
+            this.pairsList.set(i, pair)
+          }
           this.pairsBaseInfoLoading = false
           this.pairsLoadComplete = true
           console.log('pairsBaseData has value,pairsBaseData=', JSON.stringify(pairsBaseData))
@@ -81,6 +87,7 @@ class PairsData {
               pair.vaultAddress = vaultAddressInContract
               console.log('vault address(', iNum, ')=', vaultAddressInContract)
               pair = await this.getPairsBaseInfo(pair)
+              pair = await this.getPairStatus(pair)
               this.pairsList.add(pair)
             }
             iNum++
@@ -92,6 +99,19 @@ class PairsData {
           this.pairsBaseInfoLoading = false
         }
       }
+    }
+
+    async getPairStatus(pair:Pairs) {
+      if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
+        const factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
+        pair.stat = await factoryContract.methods.stat(pair.strategyAddress, pair.vaultAddress).call()
+        if (Number(pair.stat) === 1) {
+          pair.disabled = false
+        } else {
+          pair.disabled = true
+        }
+      }
+      return pair
     }
 
     async getPairsBaseInfo(pair:Pairs) {

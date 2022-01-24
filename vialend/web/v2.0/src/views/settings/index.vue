@@ -42,12 +42,13 @@
           :label="pair.token0.symbol + '/' + pair.token1.symbol"
           :value="pair.index"
         ></el-option>
-      </el-select>
+      </el-select>&nbsp;&nbsp;
+      <el-input v-model="stat"  style="width:300px;"></el-input>&nbsp;&nbsp;
+    <el-button type="primary" @click="setStat" v-loading="changeStatLoading">Change Stat</el-button>
     </div>
     <div class="clear"></div>
     <div class="stat-container" v-loading="statDataLoading">
-    <el-input v-model="stat"  style="width:300px;"></el-input>&nbsp;&nbsp;
-    <el-button type="primary" @click="setStat" v-loading="changeStatLoading">Change Stat</el-button>
+
     </div>
   </el-tab-pane>
 </el-tabs>
@@ -73,7 +74,7 @@ export default class extends Vue {
     pairsData = new PairsData()
     pairsList = this.pairsData.pairsList
     currentPair = new Pairs()
-    pairSelectedIndex = ''
+    pairSelectedIndex ?= 0
     loadTickerLoading = false
     currTokenVal = 1
     currTokenId = 'BTC'
@@ -82,7 +83,7 @@ export default class extends Vue {
     priceUSD = 0
     factoryAddress = ''
     statDataLoading = false
-    stat = '0'
+    stat = -1
     changeStatLoading = false
 
     @Watch('currTokenVal')
@@ -101,12 +102,13 @@ export default class extends Vue {
       this.statDataLoading = true
       this.factoryAddress = await this.$store.dispatch('getSessionData', { key: 'factoryAddress' })
       this.currentPair = this.pairsData.pairsList.get(newVal)
-      if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
-        const factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
-        console.log('strategy address = ', this.currentPair.strategyAddress)
-        console.log('vault address = ', this.currentPair.vaultAddress)
-        this.stat = await factoryContract.methods.stat(this.currentPair.strategyAddress, this.currentPair.vaultAddress).call()
-      }
+      this.stat = this.currentPair.stat
+      // if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
+      //   const factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
+      //   console.log('strategy address = ', this.currentPair.strategyAddress)
+      //   console.log('vault address = ', this.currentPair.vaultAddress)
+      //   this.stat = await factoryContract.methods.stat(this.currentPair.strategyAddress, this.currentPair.vaultAddress).call()
+      // }
       this.statDataLoading = false
       console.log('Emergency stat=', this.stat)
     }
@@ -172,6 +174,10 @@ export default class extends Vue {
       if (this.$store.state.validNetwork && this.$store.state.isConnected && this.pairsData.pairsList.size() === 0) {
         console.log('pair loading')
         await this.pairsData.loadPairsInfo()
+        if (this.pairsData.pairsList.size() > 0) {
+          this.pairSelectedIndex = 0
+          this.stat = this.pairsData.pairsList.get(0).stat
+        }
       }
       const response = await axios.get('https://api.coinlore.net/api/tickers/')
       if (response !== undefined && response !== null) {
