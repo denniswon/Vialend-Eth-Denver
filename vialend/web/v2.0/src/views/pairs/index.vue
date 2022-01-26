@@ -120,39 +120,28 @@
                     <br />
                     {{currentPair.token1.symbol}} per {{currentPair.token0.symbol}}
                   </el-form-item>
-
-                  <el-form-item>
-                    <el-button
-                      type="primary"
-                      :loading="rebalanceLoading"
-                      @click="doRebalance"
-                    >Rebalance</el-button>
-                    <!-- <el-button type="primary"
-                    @click="getY">getY</el-button>-->
+                <br>
+                <div class="rebalance_action">
+                    <el-button-group>
+                      <el-button :loading="rebalanceLoading" type="primary" :disabled="currentPair.vaultAddress !== '' ? false : true" @click="doRebalance">Rebalance</el-button>
+                      <el-button type="primary" :disabled="doRebalanceEtherscanDisable" class="godetail">
+                        <a v-if="rebalanceTransHashLink !== ''" :href="rebalanceTransHashLink" target="_blank">
+                          <svg-icon name="goto-detail" width="12" height="12" style="transform:scale(2);" />
+                        </a>
+                        <svg-icon v-else name="goto-detail" width="12" height="12" style="transform:scale(2);" />
+                      </el-button>
+                    </el-button-group>
                     &nbsp;&nbsp;
-                    <a
-                      :href="goToEtherscan"
-                      target="_blank"
-                      :class="['btn','btn-primary',doRebalanceEtherscanDisable?'disabled':'']"
-                      role="button"
-                    >View on etherscan</a>
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button
-                      type="primary"
-                      :loading="removePositionsLoading"
-                      @click="doRemovePositions"
-                    >RemovePositions</el-button>
-                    <!-- <el-button type="primary"
-                    @click="getY">getY</el-button>-->
-                    &nbsp;&nbsp;
-                    <a
-                      :href="goToEtherscan"
-                      target="_blank"
-                      :class="['btn','btn-primary',removePositionsEtherscanDisable?'disabled':'']"
-                      role="button"
-                    >View on etherscan</a>
-                  </el-form-item>
+                    <el-button-group>
+                      <el-button :loading="removePositionsLoading" type="primary" :disabled="currentPair.vaultAddress !== '' ? false : true" @click="doRemovePositions">RemovePositions</el-button>
+                      <el-button type="primary" :disabled="removePositionsEtherscanDisable" class="godetail">
+                        <a v-if="removePositionTransHashLink !== ''" :href="removePositionTransHashLink" target="_blank">
+                          <svg-icon name="goto-detail" width="12" height="12" style="transform:scale(2);" />
+                        </a>
+                        <svg-icon v-else name="goto-detail" width="12" height="12" style="transform:scale(2);" />
+                      </el-button>
+                    </el-button-group>
+                  </div>
                 </el-form>
                 {{errorRebalance}}
               </div>
@@ -357,6 +346,7 @@
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import PairsData from '../../common/PairsData'
 import { contractInstance } from '../../common/Web3'
+import { getEtherscanTx, getEtherscanAddress } from '../../common/Etherscan'
 import Pairs from '../../model/Pairs'
 import IonRangeSlider from '@/components/IonRangeSlider/index.vue'
 import { priceToTick, tickToPrice } from '../../common/Tools'
@@ -424,6 +414,9 @@ export default class extends Vue {
     maxPrice: 0.0
   }
 
+  rebalanceTransHashLink = ''
+  removePositionTransHashLink = ''
+
   get pairsListCount() {
     return this.pairsData.pairsList.size()
   }
@@ -480,7 +473,7 @@ export default class extends Vue {
             _this.rebalanceLoading = false
           }
           if (receipt.status) {
-            _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
+            _this.rebalanceTransHashLink = getEtherscanTx(receipt.transactionHash)
             _this.doRebalanceEtherscanDisable = false
             _this.$message('Rebalance submitted!')
             // _this.loadTokensBalance()
@@ -497,8 +490,38 @@ export default class extends Vue {
     console.log('')
   }
 
-  doRemovePositions() {
-    console.log('')
+  async doRemovePositions() {
+    const _this = this
+    const keeperContract = await contractInstance(ViaLendFeeMakerABI, this.currentPair.vaultAddress)
+    this.removePositionsLoading = true
+    if (keeperContract != null) {
+      keeperContract.methods
+        .alloc()
+        .send({
+          from: ethereum.selectedAddress,
+          // gasPrice: '1000000000',
+          // gas: 900000,
+          value: 0
+        })
+        .on('confirmation', function(confirmationNumber:number, receipt:any) {
+          console.log((new Date()).toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
+        })
+        .on('receipt', function(receipt:any) {
+          if (_this.removePositionsLoading) {
+            _this.removePositionsLoading = false
+          }
+          if (receipt.status) {
+            _this.removePositionTransHashLink = getEtherscanTx(receipt.transactionHash)
+            _this.removePositionsEtherscanDisable = false
+            _this.$message('RemovePositions submitted!')
+            // _this.loadTokensBalance()
+          } else { _this.$message('RemovePositions failed!') }
+        })
+        .on('error', function(error:any) {
+          _this.removePositionsLoading = false
+          _this.$message.error(error)
+        })
+    }
   }
 
   emergencyBurn() {
@@ -801,6 +824,44 @@ export default class extends Vue {
 }
 </script>
 <style scoped>
+.rebalance_action{
+  font-family: monospace,'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  width:100%;
+  margin:0 auto;
+  text-align: center;
+
+}
+
+.remove_position_action{
+  width:180px;
+    font-family: monospace,'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    border: 1px solid #1890ff;
+    background-color: #409eff;
+    color:#ffffff;
+    font-size:16px;
+    margin-top:10px;
+    padding-left: 10px;
+    border-radius: 4px;
+}
+
+.godetail{
+  padding:10px 10px !important;
+}
+.godetail a{
+  color:#ffffff;
+}
+.table>tbody{
+  border:none !important;
+}
+.table>:not(caption)>*>*{
+  border: none !important;
+}
+.el-link.el-link--default{
+  color:#ffffff !important;
+}
+.rebalance_action a{
+  color:#ffffff;
+}
 .range-text{
   float:left;
 }
@@ -844,6 +905,10 @@ padding:30px;
   border: 1px solid #e7e7e7;
   background-color: #f8f8f8;
 }
+.el-input-number--medium{
+  width:300px !important;
+}
+
 .table-setting{
     width:100%;
 }
@@ -990,6 +1055,7 @@ padding:30px;
 }
 .price-setting {
   padding-top: 50px;
+  text-align: center;
 }
 .el-form-item__label {
   line-height: 20px !important;
