@@ -320,9 +320,12 @@ export default class extends Vue {
   font-size: 16px;
   font-family: Arial, Helvetica, sans-serif;
 }
+.table>:not(:first-child){
+  border-top: none;
+}
 .part2 {
   height: auto;
-  border: 2px solid #000000;
+  border: 0px solid #000000;
   border-radius: 16px;
 }
 .part2 /deep/ .el-loading-mask{

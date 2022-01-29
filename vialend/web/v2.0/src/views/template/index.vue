@@ -42,9 +42,7 @@
               <div class="card-container">
                 <div class="card-pairinfo">
                   <div class="text item">
-                      Fee Tier<br><span><input class="btn btn-default btn-sm"
-                               type="button"
-                               :value="Number(pair.feeTier / 10000) + '%'"></span>
+                      Fee Tier<br><span>{{Number(pair.feeTier / 10000)}}%</span>
                     </div>
                     <div class="text item">
                       Current APR<br><span>{{Number(pair.currentAPR).toFixed(2)}}%</span>
@@ -126,7 +124,6 @@ export default class extends Vue {
 
     async created() {
       this.pairsData.calculateAPR = true
-      console.log('bridgeAddress value123=', this.pairsData.bridgeAddress)
       console.log('pairsList.size=', this.pairsData.pairsList.size())
       if (this.$store.state.validNetwork && this.$store.state.isConnected && this.pairsData.pairsList.size() === 0) {
         await this.pairsData.loadPairsInfo()

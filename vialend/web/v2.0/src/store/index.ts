@@ -9,12 +9,13 @@ export default new Vuex.Store({
   state: {
     name: 'Vialend',
     availableChainId: [5],
-    pairsData: undefined,
-    bridgeAddress: '0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec',
+    pairsData: undefined,    
     factoryAddress: '',
     validNetwork: false,
     isAdmin: false,
     doDisconnect: false,
+    priceRangeFrom: 0,
+    priceRangeTo: 0,
     tokenExchangeTable: [
       {
         id: '32610',
@@ -130,6 +131,9 @@ export default new Vuex.Store({
     },
     getSessionData(state, dt) {
       return sessionStorage.getItem(dt.key)
+    },
+    removeSessionData(state, dt) {
+      sessionStorage.removeItem(dt.key)
     },
     getChainID() {
       const web3 = getWeb3Instance()

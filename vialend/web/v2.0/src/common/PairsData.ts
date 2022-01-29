@@ -1,11 +1,11 @@
 // import { Vue } from 'vue-property-decorator'
 import { contractInstance, getWeb3Instance } from './Web3'
-import Token from '../model/Token'
 import Pairs from '../model/Pairs'
 import ArrayList from './ArrayList'
 import store from '@/store'
 // import axios from 'axios'
 import { priceToTick, tickToPrice } from './Tools'
+import { CHAININFO, checkChain } from '@/constants/chains'
 
 const VaultBridgeABI = require('../abi/VaultBridge.json')
 const contractABI = require('../abi/ViaLendFeeMakerABI.json')
@@ -19,29 +19,32 @@ class PairsData {
     pairsBaseInfoLoading:boolean;
     pairsBalanceLoading:boolean;
     pairsLoadComplete:boolean;
-    bridgeAddress:string;
     calculateAPY:boolean;
     calculateAPR:boolean;
     ethereum:any;
     web3:any;
     factoryContract:object;
     factoryAddress:string;
+    error:string;
 
     constructor() {
       this.pairsList = new ArrayList<Pairs>()
       this.pairsBaseInfoLoading = false
       this.pairsBalanceLoading = false
       this.pairsLoadComplete = false
-      this.bridgeAddress = store.state.bridgeAddress
       this.calculateAPY = false
       this.calculateAPR = false
       this.ethereum = (window as any).ethereum
       this.web3 = getWeb3Instance()
       this.factoryAddress = ''
       this.factoryContract = {}
+      this.error = ''
     }
 
     async loadPairsInfo() {
+      console.log('CHAININFO chainId=', store.state.chainId)
+      console.log('CHAININFO bridgeAddress=', CHAININFO[store.state.chainId].bridgeAddress)
+      console.log('CheckChainIDValid=', await checkChain())
       if (!this.pairsBaseInfoLoading) {
         this.pairsBaseInfoLoading = true
         const pairsBaseData = await store.dispatch('getSessionData', { key: 'pairBaseInfo' })
@@ -56,11 +59,11 @@ class PairsData {
           }
           this.pairsBaseInfoLoading = false
           this.pairsLoadComplete = true
-          console.log('pairsBaseData has value,pairsBaseData=', JSON.stringify(pairsBaseData))
+          // console.log('pairsBaseData has value,pairsBaseData=', JSON.stringify(pairsBaseData))
         } else {
           this.pairsLoadComplete = false
           console.log('pairsBaseData is null')
-          const bridgeContract = await contractInstance(VaultBridgeABI, this.bridgeAddress)
+          const bridgeContract = await contractInstance(VaultBridgeABI, CHAININFO[store.state.chainId].bridgeAddress)
           let iNum = 0
           let vaultAddressInContract
           while (true) {
@@ -77,23 +80,25 @@ class PairsData {
                   break
                 }
               }
+              if (iNum > 0) {
+                let pair = new Pairs()
+                pair.index = iNum - 1
+                pair.id = iNum
+                pair.vaultAddress = vaultAddressInContract
+                console.log('vault address(', iNum, ')=', vaultAddressInContract)
+                pair = await this.getPairsBaseInfo(pair)
+                pair = await this.getPairStatus(pair)
+                this.pairsList.add(pair)
+              }
+              iNum++
             } catch (err) {
               console.log('getting vault Address in contract occurs error:', err)
+              this.error = 'An error occurred while loading pairs information.'
+              break
             }
-            if (iNum > 0) {
-              let pair = new Pairs()
-              pair.index = iNum - 1
-              pair.id = iNum
-              pair.vaultAddress = vaultAddressInContract
-              console.log('vault address(', iNum, ')=', vaultAddressInContract)
-              pair = await this.getPairsBaseInfo(pair)
-              pair = await this.getPairStatus(pair)
-              this.pairsList.add(pair)
-            }
-            iNum++
           }
           // if (this.pairsList.size() > 0) sessionStorage.setItem('pairBaseInfo', JSON.stringify(this.pairsList))
-          if (this.pairsList.size() > 0) await store.dispatch('setSessionData', { key: 'pairBaseInfo', value: JSON.stringify(this.pairsList) })
+          if (this.pairsList.size() > 0 && this.error === '') await store.dispatch('setSessionData', { key: 'pairBaseInfo', value: JSON.stringify(this.pairsList) })
           console.log('pairsLoadComplete!!!,Pairs count:', this.pairsList.size())
           this.pairsLoadComplete = true
           this.pairsBaseInfoLoading = false
@@ -234,7 +239,7 @@ class PairsData {
 
     async getTokensBalance(pair: Pairs) {
       this.pairsBalanceLoading = true
-      console.log('contractABI=', contractABI)
+      // console.log('contractABI=', contractABI)
       console.log('vault Address:', pair.vaultAddress)
       const strategyContract = await contractInstance(VaultStrategyABI, pair.strategyAddress)
       const token0LendingContract = await contractInstance(ViaLendTokenABI, pair.token0.tokenLendingAddress)
@@ -285,6 +290,7 @@ class PairsData {
     }
 
     async getPairPublicData(pair: Pairs) {
+      pair.gettingData = true
       console.log('pair.vaultAddress=', pair.vaultAddress)
       console.log('pair.token0->tokenLendingAddress=', pair.token0.tokenLendingAddress)
       console.log('pair.token1->tokenLendingAddress=', pair.token1.tokenLendingAddress)
@@ -353,8 +359,11 @@ class PairsData {
       }
       pair.gettingData = false
       pair.loadDataCompleted = true
+      console.log('setSessionData->pairsSymbol:start')
       await store.dispatch('setSessionData', { key: pair.token0.symbol.concat('-', pair.token1.symbol), value: JSON.stringify(pair) })
       // sessionStorage.setItem(pair.token0.symbol.concat('-', pair.token1.symbol), JSON.stringify(pair))
+      console.log('setSessionData->pairsSymbol:done')
+
       return pair
     }
 

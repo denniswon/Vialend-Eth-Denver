@@ -61,7 +61,7 @@
             </tbody>
           </table>
 
-          <el-card class="box-card">
+          <el-card class="box-card" v-if="$store.state.validNetwork">
             <div slot="header" class="clearfix">
               <div class="range-title">
                 <div class="range-text">Set Price Range</div>
@@ -429,6 +429,21 @@ export default class extends Vue {
     return this.rangeForm.maxPrice
   }
 
+  get priceRangeFrom() {
+    // return (this.$refs.priceRangeSlider as any).from
+    //    console.log('this.$refs.priceRangeSlider=', this.$refs.priceRangeSlider)
+    if (this.$refs.priceRangeSlider) {
+      const priceRangeSlider = (this.$refs.priceRangeSlider as any).rangeSliderObject
+      if (priceRangeSlider.result) {
+        return priceRangeSlider.result.from
+      } else {
+        return null
+      }
+    } else {
+      return null
+    }
+  }
+
   async doRebalance() {
     if (!this.$store.state.isConnected) {
       this.$message('Please connect wallet!')
@@ -591,7 +606,6 @@ export default class extends Vue {
   }
 
   async created() {
-    console.log('bridgeAddress value123=', this.pairsData.bridgeAddress)
     console.log('pairsList.size=', this.pairsData.pairsList.size())
     if (this.$store.state.validNetwork && this.$store.state.isConnected && this.pairsData.pairsList.size() === 0) {
       console.log('pair loading')
@@ -602,6 +616,9 @@ export default class extends Vue {
     console.log('factory address = ', this.factoryAddress)
     console.log('strategy address = ', this.currentPair.strategyAddress)
     console.log('vault address = ', this.currentPair.vaultAddress)
+
+    const priceRangeSlider = (this.$refs.priceRangeSlider as any).rangeSliderObject
+    console.log('this.$refs.priceRangeSlider=', priceRangeSlider)
   }
 
   @Watch('pairSelectedIndex')
@@ -645,6 +662,18 @@ export default class extends Vue {
       this.currentPair.tickUpper = priceToTick(newVal, this.currentPair.token0.decimals, this.currentPair.token1.decimals)
     } else { this.currentPair.tickUpper = 0 }
     this.calculateRangeStatus()
+  }
+
+  @Watch('$store.state.priceRangeFrom')
+  watchPriceRangeSliderFrom(newVal:number, oldVal:number) {
+    console.log('priceRangeSlider.from = ', newVal, 'old = ', oldVal)
+    this.rangeForm.minPrice = newVal
+  }
+
+  @Watch('$store.state.priceRangeTo')
+  watchPriceRangeSliderTo(newVal:number, oldVal:number) {
+    console.log('priceRangeSlider.to = ', newVal, 'old = ', oldVal)
+    this.rangeForm.maxPrice = newVal
   }
 
   calculateRangeStatus() {
@@ -821,6 +850,15 @@ export default class extends Vue {
     // this.userFee1Total = 0
     // this.myEarnedValue = 0.00
   }
+
+  ionRangeSliderTesting() {
+    const priceRangeSlider = (this.$refs.priceRangeSlider as any).rangeSliderObject
+    if (priceRangeSlider.result) {
+      console.log('priceRangeSlider->from:', priceRangeSlider.result.from)
+      console.log('priceRangeSlider->to:', priceRangeSlider.result.to)
+    }
+    console.log('priceRangeSlider=', priceRangeSlider)
+  }
 }
 </script>
 <style scoped>
@@ -849,6 +887,10 @@ export default class extends Vue {
 }
 .godetail a{
   color:#ffffff;
+}
+.el-select-dropdown__wrap{
+  margin-bottom: 0px !important;
+  margin-right: 0px !important;
 }
 .table>tbody{
   border:none !important;
@@ -956,9 +998,6 @@ padding:30px;
   font-weight: bold;
   color: black;
 }
-.range-status {
-  padding-bottom: 30px;
-}
 .el-tag {
   font-size: 14px !important;
 }
@@ -968,7 +1007,6 @@ padding:30px;
 }
 .tick-info ul {
   list-style: none;
-  margin-left: 50px;
 }
 .tick-info li {
   display: inline;

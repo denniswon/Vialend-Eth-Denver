@@ -2,7 +2,10 @@
     <div id="setting_container" v-loading="loadTickerLoading">
           <div class="token_exchange_form">
             <el-tabs type="border-card">
-  <el-tab-pane label="CurrencyConverter">
+  <el-tab-pane>
+    <span slot="label" style="font-size:16px;">
+      <svg-icon name="currencyconverter" width="26px" height="26px" /> CurrencyConverter
+    </span>
     <el-form :inline="true"
                          class="demo-form-inline">
                   <el-form-item>
@@ -29,7 +32,10 @@
                   </el-form-item>
                 </el-form>
   </el-tab-pane>
-  <el-tab-pane label="Emergency">
+  <el-tab-pane>
+    <span slot="label" style="font-size:16px;">
+      <svg-icon name="emergency" width="20px" height="20px" /> Emergency
+    </span>
     <div class="pairs-selector">
       <el-select
         v-model="pairSelectedIndex"

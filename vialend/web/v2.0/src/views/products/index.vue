@@ -1,7 +1,7 @@
 <template>
   <div class="pairs-list" v-loading="pairsData.pairsBaseInfoLoading">
     <!-- <MyPairsList v-bind:pairsData="pairsData"></MyPairsList> -->
-    <div id="pairs_container" class="pairs-container">
+    <div id="pairs_container" class="pairs-container" v-if="validChain">
       <div style="margin:15px;">
         <el-select
           v-model="listQuery.network"
@@ -229,6 +229,7 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import PairsData from '../../common/PairsData'
+import { checkChain } from '@/constants/chains'
 // import MyPairsList from '../../components/PairsList/MyPairsList.vue'
 import VueFlip from 'vue-flip'
 
@@ -241,6 +242,7 @@ export default class extends Vue {
   // pairsList = this.pairsData.pairsList;
   maxCapacity = 60;
   reloadPairs = false;
+  validChain = false;
 
   private listQuery = {
     page: 1,
@@ -270,13 +272,18 @@ export default class extends Vue {
   async created() {
     console.log('this.$store.state.pairsData=', this.$store.state.pairsData)
     this.pairsData.calculateAPY = true
-    console.log('bridgeAddress value123=', this.pairsData.bridgeAddress)
     console.log('pairsList.size=', this.pairsData.pairsList.size())
     console.log('validNetwork=', this.$store.state.validNetwork)
-    const validChain = await this.$store.dispatch('checkChain')
-    console.log('product chainId=', validChain)
-    if (validChain && this.pairsData.pairsList.size() === 0) {
+    // const validChain = await this.$store.dispatch('checkChain')
+
+    this.validChain = await checkChain()
+    console.log('ValidChain in Product=', this.validChain)
+    if (this.validChain && this.pairsData.pairsList.size() === 0) {
       await this.pairsData.loadPairsInfo()
+      if (this.pairsData.error !== '') {
+        this.$message(this.pairsData.error)
+        this.pairsData.error = ''
+      }
     }
   }
 
@@ -284,8 +291,11 @@ export default class extends Vue {
     for (let i = 0; i < this.pairsData.pairsList.size(); i++) {
       if (!this.pairsData.pairsList.get(i).loadDataCompleted || this.reloadPairs) {
         console.log('pair id=', this.pairsData.pairsList.get(i).id)
-        this.pairsData.pairsList.get(i).gettingData = true
-        this.pairsData.getPairPublicData(this.pairsData.pairsList.get(i))
+        // this.pairsData.pairsList.get(i).gettingData = true
+        this.pairsData.getPairPublicData(this.pairsData.pairsList.get(i)).then(() => {
+          this.pairsData.pairsList.get(i).gettingData = false
+          console.log('getPairPublicData loadDataCompleted')
+        })
       }
     }
     if (this.reloadPairs) this.reloadPairs = false
@@ -298,12 +308,18 @@ export default class extends Vue {
   }
 
   @Watch('$store.state.currentAccount')
-  watchCurrentAccount(newVal: string, oldVal: string) {
+  async watchCurrentAccount(newVal: string, oldVal: string) {
     console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
     if (newVal !== '' && this.$store.state.validNetwork) {
       console.log('currentAccount changed,pairlist size:', this.pairsData.pairsList.size())
+      console.log('this.pairsData.pairsBaseInfoLoading=', this.pairsData.pairsBaseInfoLoading)
+
       if (this.pairsData.pairsList.size() === 0 && !this.pairsData.pairsBaseInfoLoading) {
-        this.pairsData.loadPairsInfo()
+        await this.pairsData.loadPairsInfo()
+        if (this.pairsData.error !== '') {
+          this.$message(this.pairsData.error)
+          this.pairsData.error = ''
+        }
       } else {
         this.reloadPairs = true
         this.loadPairPublicData()
@@ -313,15 +329,11 @@ export default class extends Vue {
 
   @Watch('$store.state.isConnected')
   watchConnectionStatus() {
-    console.log(
-      'Dashboard $store.state.isConnected:',
-      this.$store.state.isConnected,
-      'this.$store.state.validNetwork=',
-      this.$store.state.validNetwork
-    )
-    if (!this.$store.state.validNetwork || !this.$store.state.isConnected) {
-      this.clearMyData()
-    }
+    console.log('Dashboard $store.state.isConnected:', this.$store.state.isConnected, 'this.$store.state.validNetwork=', this.$store.state.validNetwork)
+    // if (!this.$store.state.validNetwork || !this.$store.state.isConnected) {
+    //   this.validChain = false
+    //   this.clearMyData()
+    // }
     // if (this.$store.state.validNetwork && this.$store.state.isConnected && !this.pairsData.pairsBaseInfoLoading) {
     //   this.pairsData.loadPairsInfo()
     // } else {
@@ -330,27 +342,35 @@ export default class extends Vue {
   }
 
   @Watch('$store.state.chainId')
-  watchNetworkChainId(newVal: number, oldVal: number) {
+  async watchNetworkChainId(newVal: number, oldVal: number) {
     console.log('chainid newVal=', newVal, 'oldVal=', oldVal)
+    console.log('this.$store.state.validNetwork=', this.$store.state.validNetwork)
     if (oldVal > 0 && this.$store.state.validNetwork) {
+      this.clearMyData()
+      this.validChain = true
       console.log('network chainId changed,pairlist size:', this.pairsData.pairsList.size())
+      console.log('this.pairsData.pairsBaseInfoLoading=', this.pairsData.pairsBaseInfoLoading)
       if (this.pairsData.pairsList.size() === 0 && !this.pairsData.pairsBaseInfoLoading) {
-        this.pairsData.loadPairsInfo()
+        await this.pairsData.loadPairsInfo()
+        if (this.pairsData.error !== '') {
+          this.$message(this.pairsData.error)
+          this.pairsData.error = ''
+        }
       }
     } else if (!this.$store.state.validNetwork) {
-      this.clearMyData()
+      this.validChain = false
     }
   }
 
   clearMyData() {
-    // this.pairsData.pairsList.clear()
-    // sessionStorage.removeItem('pairBaseInfo')
-    console.log('clearMyData:pairsList.size=', this.pairsData.pairsList.size())
+    this.$store.dispatch('removeSessionData', { key: 'pairBaseInfo' })
     for (let i = 0; i < this.pairsData.pairsList.size(); i++) {
       this.pairsData.pairsList.get(i).gettingData = false
       this.pairsData.pairsList.get(i).currentDeposits = 0
       this.pairsData.pairsList.get(i).netAPY = 0
     }
+    this.pairsData.pairsList.clear()
+    console.log('clearMyData:pairsList.size=', this.pairsData.pairsList.size())
     // this.pairsLoadComplete = false
     // this.pairsListComplete = false
     // this.myValueLocked = 0.00

@@ -63,7 +63,8 @@ import { getWeb3Instance, contractInstance } from '../../../common/Web3'
 import { AppModule } from '@/store/modules/app'
 import { UserModule } from '@/store/modules/user'
 import Hamburger from '@/components/Hamburger/index.vue'
-import Clipboard from 'clipboard'
+import { CHAININFO, checkChain } from '@/constants/chains'
+// import Clipboard from 'clipboard'
 // import { AbiItem } from 'web3-utils'
 const VaultBridgeABI = require('../../../abi/VaultBridge.json')
 
@@ -151,9 +152,10 @@ export default class extends Vue {
   }
 
   async checkValidAdmin() {
-    console.log('(window as any).ethereum.selectedAddress =', (window as any).ethereum.selectedAddress)
+    console.log('Nav->CHAININFO[this.$store.state.chainId].bridgeAddress=', CHAININFO[this.$store.state.chainId].bridgeAddress)
+
     if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
-      const vaultAdminContract = await contractInstance(VaultBridgeABI, this.$store.state.bridgeAddress)
+      const vaultAdminContract = await contractInstance(VaultBridgeABI, CHAININFO[this.$store.state.chainId].bridgeAddress)
       this.isAdmin = await vaultAdminContract.methods.getPermit((window as any).ethereum.selectedAddress).call()
       if (this.isAdmin === '1') {
         this.$store.state.isAdmin = true
@@ -175,16 +177,19 @@ export default class extends Vue {
     (window as any).ethereum.autoRefreshOnNetworkChange = false;
     (window as any).ethereum.on('accountsChanged', async() => {
       console.log('accountsChanged')
-      if (await this.checkChain()) {
+      if (await checkChain()) {
         this.changeAccount()
         this.checkValidAdmin()
       }
     });
     (window as any).ethereum.on('networkChanged', async() => {
       console.log('networkChanged')
-      if (await this.checkChain()) {
+      this.clearSessionData()
+      if (await checkChain()) {
         this.changeAccount()
         this.checkValidAdmin()
+      } else {
+        this.disconnectWallet()
       }
     })
     ;(window as any).ethereum.on('disconnect', () => {
@@ -195,37 +200,40 @@ export default class extends Vue {
     })
   }
 
+  clearSessionData() {
+    this.$store.dispatch('removeSessionData', { key: 'pairBaseInfo' })
+    this.$store.dispatch('removeSessionData', { key: 'factoryAddress' })
+  }
+
   handleCommand(command: any) {
     this.$message('click on item ' + command)
   }
 
-  async checkChain() {
-    this.$store.state.chainId = await this.web3.eth.getChainId()
-    console.log('check chain id=', this.$store.state.chainId)
-    if (this.$store.state.availableChainId.includes(this.$store.state.chainId)) {
-      // this.$store.state.isConnected = true
-      this.$store.state.validNetwork = true
-      return true
-    } else {
-      this.$store.state.isConnected = false
-      this.$store.state.validNetwork = false
-      return false
-    }
-  }
+  // async checkChain() {
+  //   this.$store.state.chainId = await this.web3.eth.getChainId()
+  //   console.log('check chain id=', this.$store.state.chainId)
+  //   if (this.$store.state.availableChainId.includes(this.$store.state.chainId)) {
+  //     // this.$store.state.isConnected = true
+  //     this.$store.state.validNetwork = true
+  //     return true
+  //   } else {
+  //     this.$store.state.isConnected = false
+  //     this.$store.state.validNetwork = false
+  //     return false
+  //   }
+  // }
 
   async connectWallet() {
     this.$store.state.doDisconnect = false
     if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
-      if (!this.$store.state.validNetwork) {
+      if (await checkChain()) {
+        this.changeAccount()
+        this.checkValidAdmin()
+      } else {
         this.$message({
-          message: 'Please select Goerli Test Network.',
+          message: 'Wrong Network!',
           type: 'warning'
         })
-      } else {
-        if (await this.checkChain()) {
-          this.changeAccount()
-          this.checkValidAdmin()
-        }
       }
     } else {
       console.log('call connectWallet')
@@ -233,7 +241,6 @@ export default class extends Vue {
         .request({ method: 'eth_requestAccounts' })
         .then(this.requestAccountsCallBack)
         .catch((err: any) => {
-          // Some unexpected error.
           // For backwards compatibility reasons, if no accounts are available,
           // eth_accounts will return an empty array.
           console.error(err)
@@ -289,7 +296,7 @@ export default class extends Vue {
   }
 
   async created() {
-    if (await this.checkChain()) {
+    if (await checkChain()) {
       if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
         if (!this.$store.state.doDisconnect) {
           console.log('currentAccount is connected.')
