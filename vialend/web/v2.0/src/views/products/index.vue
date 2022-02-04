@@ -3,65 +3,18 @@
     <!-- <MyPairsList v-bind:pairsData="pairsData"></MyPairsList> -->
     <div id="pairs_container" class="pairs-container" v-if="validChain">
       <div style="margin:15px;">
-        <el-select
-          v-model="listQuery.network"
-          placeholder="Network"
-          clearable
-          style="width: 120px"
-          class="filter-item"
-          size="small"
-        >
-          <el-option
-            v-for="item in networkOptions"
-            :key="item"
-            :label="item"
-            :value="item"
-          /> </el-select
-        >&nbsp;&nbsp;
-        <el-select
-          v-model="listQuery.strategy"
-          placeholder="Strategy"
-          clearable
-          style="width: 120px"
-          class="filter-item"
-          size="small"
-        >
-          <el-option
-            v-for="item in strategyOptions"
-            :key="item"
-            :label="item"
-            :value="item"
-          />
+        <el-select v-model="listQuery.network" placeholder="Network" clearable style="width: 120px" class="filter-item" size="small">
+          <el-option v-for="item in networkOptions" :key="item" :label="item" :value="item" />
         </el-select>
-        <el-select
-          v-model="listQuery.depositasset"
-          placeholder="Deposit Asset"
-          clearable
-          style="width: 120px"
-          class="filter-item"
-          size="small"
-        >
-          <el-option
-            v-for="item in depositassetOptions"
-            :key="item"
-            :label="item"
-            :value="item"
-          />
+        &nbsp;&nbsp;
+        <el-select v-model="listQuery.strategy" placeholder="Strategy" clearable style="width: 120px" class="filter-item" size="small">
+          <el-option v-for="item in strategyOptions" :key="item" :label="item" :value="item" />
         </el-select>
-        <el-select
-          v-model="listQuery.sortby"
-          placeholder="Sort By"
-          clearable
-          style="width: 120px"
-          class="filter-item"
-          size="small"
-        >
-          <el-option
-            v-for="item in sortbyOptions"
-            :key="item"
-            :label="item"
-            :value="item"
-          />
+        <el-select v-model="listQuery.depositasset" placeholder="Deposit Asset" clearable style="width: 120px" class="filter-item" size="small">
+          <el-option v-for="item in depositassetOptions" :key="item" :label="item" :value="item" />
+        </el-select>
+        <el-select v-model="listQuery.sortby" placeholder="Sort By" clearable style="width: 120px" class="filter-item" size="small">
+          <el-option v-for="item in sortbyOptions" :key="item" :label="item" :value="item" />
         </el-select>
         <div class="phone">
           <svg-icon name="phone" width="26px" height="26px"></svg-icon>
@@ -69,135 +22,73 @@
       </div>
       <div class="clear"></div>
 
-      <el-row
-        :gutter="20"
-        class="panel-group"
-        justify="center"
-        v-if="pairsListCount > 0"
-      >
-        <el-col
-          :xs="23"
-          :sm="12"
-          :md="7"
-          :lg="7"
-          class="card-panel-col"
-          v-for="pair in pairsData.pairsList._getData()"
-          :key="pair.id"
-        >
-            <vue-flip
-              width="320px"
-              horizontal="true"
-              height="500px"
-              v-model="pair.flipped"
-              v-if="pair.disabled === false"
-            >
-              <template v-slot:front class="front">
-                <el-card
-                  class="box-card"
-                  v-loading="pair.gettingData"
-                  element-loading-text="Loading pair data"
-                  element-loading-spinner="el-icon-loading"
-                  element-loading-background="rgba(0, 0, 0, 0.8)"
-                >
-                  <div slot="header" class="clearfix card-title">
-                    <div class="block">
-                      <el-tag size="small" hit>UNI-COMP</el-tag>&nbsp;&nbsp;
-                      <el-tag
-                        class="tag-item"
-                        type="info"
-                        effect="plain"
-                        size="small"
-                        >V1</el-tag
-                      >
-                    </div>
+      <el-row :gutter="20" class="panel-group" justify="center" v-if="pairsListCount > 0">
+        <el-col :xs="23" :sm="12" :md="7" :lg="7" class="card-panel-col" v-for="pair in pairsData.pairsList._getData()" :key="pair.id">
+          <vue-flip width="320px" horizontal="true" height="500px" v-model="pair.flipped" v-if="pair.disabled === false">
+            <template v-slot:front class="front">
+              <el-card class="box-card" v-loading="pair.gettingData" element-loading-text="Loading pair data" element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
+                <div slot="header" class="clearfix card-title">
+                  <div class="block">
+                    <el-tag size="small" hit>UNI-COMP</el-tag>
+                    &nbsp;&nbsp;
+                    <el-tag class="tag-item" type="info" effect="plain" size="small">V1</el-tag>
+                  </div>
 
-                    <span
-                      style="float: right; padding: 3px 0;cursor: pointer;"
-                      type="text"
-                      @click="pair.flipped = !pair.flipped"
-                    >
-                      <i class="el-icon-menu"></i>
-                    </span>
-                  </div>
-                  <div class="token-icon">
-                    <cryptoicon :symbol="pair.token1.symbol" size="60" />
-                  </div>
-                  <div class="card-container">
-                    <router-link :to="'products/' + pair.token0.symbol.concat('-', pair.token1.symbol)">
+                  <span style="float: right; padding: 3px 0;cursor: pointer;" type="text" @click="pair.flipped = !pair.flipped">
+                    <i class="el-icon-menu"></i>
+                  </span>
+                </div>
+                <div class="token-icon">
+                  <cryptoicon :symbol="pair.token1.symbol" size="60" />
+                </div>
+                <div class="card-container">
+                  <router-link :to="'products/' + pair.token0.symbol.concat('-', pair.token1.symbol)">
                     <div class="card-pairinfo">
                       <div class="pair-name text item">
-                        <span
-                          >{{ pair.token0.symbol }} -
-                          {{ pair.token1.symbol }}</span
-                        >
+                        <span>{{ pair.token0.symbol }} - {{ pair.token1.symbol }}</span>
                       </div>
                       <div class="pair-intro text item">
                         <span>
-                          Generates yield by providing concentrated liquidity on
-                          Uniswap V3 and lending pools.
+                          Generates yield by providing concentrated liquidity on Uniswap V3 and lending pools.
                         </span>
                       </div>
                       <div class="pair-apy text item">
                         <span class="f12">CURRENT PROJECTED YIELD(APY)</span>
                         <br />
-                        <span class="f24"
-                          >{{ Number(pair.netAPY).toFixed(2) }}%</span
-                        >
+                        <span class="f24">{{ Number(pair.netAPY).toFixed(2) }}%</span>
                       </div>
                       <div class="text item">
-                        <span class="pair-current-deposits"
-                          >Current Deposits</span
-                        ><br>
-                        <span class="pair-deposits-val">
-                          {{
-                            pair.currentDeposits
-                          }}&nbsp;{{ pair.token1.symbol }}
-                        </span>
+                        <span class="pair-current-deposits">Current Deposits</span>
+                        <br />
+                        <span class="pair-deposits-val">{{ pair.currentDeposits }}&nbsp;{{ pair.token1.symbol.toLowerCase() === 'weth' ? pair.token0.symbol : pair.token1.symbol }}</span>
                       </div>
                       <div style="clear:both;"></div>
                       <div class="text item">
-                        <el-slider
-                          v-model="maxCapacity"
-                          :show-tooltip="false"
-                        ></el-slider>
+                        <el-slider v-model="maxCapacity" :show-tooltip="false"></el-slider>
                       </div>
                       <div style="clear:both;"></div>
                       <div class="text item">
                         <span class="pair-max-capacity">Max Capacity</span>
-                        <span class="pair-capacity-val"
-                          >100M&nbsp;{{ pair.token1.symbol }}</span
-                        >
+                        <span class="pair-capacity-val">100M&nbsp;{{ pair.token1.symbol.toLowerCase() === 'weth' ? pair.token0.symbol : pair.token1.symbol }}</span>
                       </div>
                     </div>
-                    </router-link>
-                    <div class="card-your-position">
-                      <span class="text">Your Position</span>
-                      <span class="pos-val">---</span>
-                    </div>
+                  </router-link>
+                  <div class="card-your-position">
+                    <span class="text">Your Position</span>
+                    <span class="pos-val">---</span>
                   </div>
-                </el-card>
-              </template>
-              <template v-slot:back class="back">
-                <el-card
-                  class="box-card"
-                  v-loading="pair.gettingData"
-                  element-loading-text="Loading pair data"
-                  element-loading-spinner="el-icon-loading"
-                  element-loading-background="rgba(0, 0, 0, 0.8)"
-                >
-                  <div slot="header" class="clearfix card-title">
-                    <span style="font-size:20px;"
-                      >{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</span
-                    >
-                    <span
-                      style="float: right; padding: 3px 0"
-                      type="text"
-                      @click="pair.flipped = !pair.flipped"
-                    >
-                      <i class="el-icon-s-data"></i>
-                    </span>
-                  </div>
-                  <router-link :to="'products/' + pair.token0.symbol.concat('-', pair.token1.symbol)">
+                </div>
+              </el-card>
+            </template>
+            <template v-slot:back class="back">
+              <el-card class="box-card" v-loading="pair.gettingData" element-loading-text="Loading pair data" element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
+                <div slot="header" class="clearfix card-title">
+                  <span style="font-size:20px;">{{ pair.token0.symbol }} / {{ pair.token1.symbol }}</span>
+                  <span style="float: right; padding: 3px 0" type="text" @click="pair.flipped = !pair.flipped">
+                    <i class="el-icon-s-data"></i>
+                  </span>
+                </div>
+                <router-link :to="'products/' + pair.token0.symbol.concat('-', pair.token1.symbol)">
                   <div class="text item">
                     <span>Token Detail</span>
                   </div>
@@ -213,10 +104,10 @@
                     <br />
                     <span>&nbsp;</span>
                   </div>
-                  </router-link>
-                </el-card>
-              </template>
-            </vue-flip>
+                </router-link>
+              </el-card>
+            </template>
+          </vue-flip>
         </el-col>
       </el-row>
     </div>
@@ -238,11 +129,11 @@ import VueFlip from 'vue-flip'
   components: { 'vue-flip': VueFlip }
 })
 export default class extends Vue {
-  pairsData = new PairsData();
+  pairsData = new PairsData()
   // pairsList = this.pairsData.pairsList;
-  maxCapacity = 60;
-  reloadPairs = false;
-  validChain = false;
+  maxCapacity = 60
+  reloadPairs = false
+  validChain = false
 
   private listQuery = {
     page: 1,
@@ -251,19 +142,13 @@ export default class extends Vue {
     strategy: undefined,
     depositasset: undefined,
     sortby: undefined
-  };
+  }
 
-  private networkOptions = ['Ethereum', 'Polygon', 'Optimism'];
-  private strategyOptions = [
-    'UniV3+Compound',
-    'UniV3+Aave',
-    'UniV3 Charm-Style',
-    'UniV3 Visor-STYLE',
-    'Bancor3'
-  ];
+  private networkOptions = ['Ethereum', 'Polygon', 'Optimism']
+  private strategyOptions = ['UniV3+Compound', 'UniV3+Aave', 'UniV3 Charm-Style', 'UniV3 Visor-STYLE', 'Bancor3']
 
-  private depositassetOptions = ['All', 'WETH', 'USDC', 'WBTC', 'DAI', 'USDT'];
-  private sortbyOptions = ['None', 'APY', 'Current Deposits'];
+  private depositassetOptions = ['All', 'WETH', 'USDC', 'WBTC', 'DAI', 'USDT']
+  private sortbyOptions = ['None', 'APY', 'Current Deposits']
 
   get pairsListCount() {
     return this.pairsData.pairsList.size()
@@ -482,7 +367,7 @@ body {
 }
 .f24 {
   color: #ffffff;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 24px;
   text-transform: uppercase;
 }
@@ -493,7 +378,7 @@ body {
 }
 .pair-name {
   font-size: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding-bottom: 20px;
 }
 .pair-intro {
@@ -511,14 +396,14 @@ body {
 .pair-max-capacity {
   float: left;
   color: #ffffff;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 12px;
 }
 .pair-deposits-val,
 .pair-capacity-val {
   float: right;
   color: #ffffff;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 12px;
   font-weight: bold;
 }

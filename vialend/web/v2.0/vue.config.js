@@ -9,7 +9,7 @@ const mockServerPort = 9528 // TODO: get this variable from setting.ts
 const name = 'Vialend' // TODO: get this variable from setting.ts staging
 
 module.exports = {
-  publicPath: process.env.NODE_ENV === 'production' ? '/web' : '/staging',
+  publicPath: process.env.NODE_ENV === 'production' ? '/web' : '/',
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {

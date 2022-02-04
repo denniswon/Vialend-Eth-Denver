@@ -22,33 +22,33 @@ export default class Pairs {
     public tvlTotal0USD:number;
     public tvlTotal1USD:number;
     public lendingRatio:number;
-	public uniswapRatio:number;
-	public uniToken0Rate:number;
-	public uniToken1Rate:number;
-	public lendingToken0Rate:number;
-	public lendingToken1Rate:number;
-	public tickLower:number;
-	public tickUpper:number;
+		public uniswapRatio:number;
+		public uniToken0Rate:number;
+		public uniToken1Rate:number;
+		public lendingToken0Rate:number;
+		public lendingToken1Rate:number;
+		public tickLower:number;
+		public tickUpper:number;
     public currentTick:number;
     public currentPrice:number;
     public vaultAddress:string;
 		public strategyAddress:string;
 
-	public token0Address:string;
-	public token1Address:string;
-	public poolAddress:string;
-    public keeperContract:object;
-	public token0Contract:object;
-	public token1Contract:object;
-	public token0LendingContract:object;
-	public token1LendingContract:object;
-    public myShare:number;
-	public totalShares:number;
-	public myValueToken0Locked:number;
-	public myValueToken1Locked:number;
-	public myValueToken0USDLocked:number;
-	public myValueToken1USDLocked:number;
-	public flipped:boolean;
+		public token0Address:string;
+		public token1Address:string;
+		public poolAddress:string;
+		public keeperContract:object;
+		public token0Contract:object;
+		public token1Contract:object;
+		public token0LendingContract:object;
+		public token1LendingContract:object;
+		public myShare:number;
+		public totalShares:number;
+		public myValueToken0Locked:number;
+		public myValueToken1Locked:number;
+		public myValueToken0USDLocked:number;
+		public myValueToken1USDLocked:number;
+		public flipped:boolean;
     public gettingData:boolean;
     public loadDataCompleted:boolean;
     public uniliqs:object;
@@ -65,49 +65,49 @@ export default class Pairs {
     constructor() {
       this.disabled = false
       this.stat = -1
-	  this.index = 0
-	  this.id = 0
-	  this.token0 = new Token()
-	  this.token1 = new Token()
-	  this.feeTier = ''
-	  this.currentAPR = 0
-	  this.capacity = ''
-	  this.tvl = 0
-	  this.maxTVL = 0
-	  this.ofCapUsed = 0
-	  this.vaultRange = 0
-	  this.vaultLending = 0
-	  this.tvlTotal0 = 0
-	  this.tvlTotal1 = 0
-	  this.tvlTotal0USD = 0
-	  this.tvlTotal1USD = 0
-	  this.lendingRatio = 0
-	  this.uniswapRatio = 0
-	  this.uniToken0Rate = 0
-	  this.uniToken1Rate = 0
-	  this.lendingToken0Rate = 0
-	  this.lendingToken1Rate = 0
-	  this.tickLower = 0
-	  this.tickUpper = 0
+      this.index = 0
+      this.id = 0
+      this.token0 = new Token()
+      this.token1 = new Token()
+      this.feeTier = ''
+      this.currentAPR = 0
+      this.capacity = ''
+      this.tvl = 0
+      this.maxTVL = 0
+      this.ofCapUsed = 0
+      this.vaultRange = 0
+      this.vaultLending = 0
+      this.tvlTotal0 = 0
+      this.tvlTotal1 = 0
+      this.tvlTotal0USD = 0
+      this.tvlTotal1USD = 0
+      this.lendingRatio = 0
+      this.uniswapRatio = 0
+      this.uniToken0Rate = 0
+      this.uniToken1Rate = 0
+      this.lendingToken0Rate = 0
+      this.lendingToken1Rate = 0
+      this.tickLower = 0
+      this.tickUpper = 0
       this.currentTick = 0
       this.currentPrice = 0
-	  this.vaultAddress = ''
+      this.vaultAddress = ''
       this.strategyAddress = ''
-	  this.token0Address = ''
-	  this.token1Address = ''
-	  this.poolAddress = ''
-	  this.keeperContract = {}
-	  this.token0Contract = {}
-	  this.token1Contract = {}
-	  this.token0LendingContract = {}
-	  this.token1LendingContract = {}
-	  this.myShare = 0
-	  this.totalShares = 0
-	  this.myValueToken0Locked = 0
-	  this.myValueToken1Locked = 0
-	  this.myValueToken0USDLocked = 0
-	  this.myValueToken1USDLocked = 0
-	  this.flipped = false
+      this.token0Address = ''
+      this.token1Address = ''
+      this.poolAddress = ''
+      this.keeperContract = {}
+      this.token0Contract = {}
+      this.token1Contract = {}
+      this.token0LendingContract = {}
+      this.token1LendingContract = {}
+      this.myShare = 0
+      this.totalShares = 0
+      this.myValueToken0Locked = 0
+      this.myValueToken1Locked = 0
+      this.myValueToken0USDLocked = 0
+      this.myValueToken1USDLocked = 0
+      this.flipped = false
       this.gettingData = false
       this.loadDataCompleted = false
       this.uniliqs = {}

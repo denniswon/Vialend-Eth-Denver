@@ -13,6 +13,7 @@ const uniswapV3PoolABI = require('../abi/UniswapV3PoolABI.json')
 const ViaLendTokenABI = require('../abi/VialendTokenABI.json')
 const VaultFactoryABI = require('../abi/VaultFactory.json')
 const VaultStrategyABI = require('../abi/VaultStrategy.json')
+const StratUniCompABI = require('../abi/StratUniCompABI.json')
 
 class PairsData {
     pairsList:ArrayList<Pairs>;
@@ -55,6 +56,7 @@ class PairsData {
           for (let i = 0; i < this.pairsList.size(); i++) {
             pair = this.pairsList.get(i)
             pair = await this.getPairStatus(pair)
+            pair = await this.getTickInfo(pair)
             this.pairsList.set(i, pair)
           }
           this.pairsBaseInfoLoading = false
@@ -119,55 +121,13 @@ class PairsData {
       return pair
     }
 
-    async getPairsBaseInfo(pair:Pairs) {
-      console.log('loadTokensInfo->vaultAddress:', pair.vaultAddress)
-      if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
-        this.factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
-        console.log('pair.vaultAddress=:', pair.vaultAddress)
-        pair.strategyAddress = await (this.factoryContract as any).methods.getPair0(pair.vaultAddress).call()
-        console.log('strategyAddress=', pair.strategyAddress)
-        const strategyContract = await contractInstance(VaultStrategyABI, pair.strategyAddress)
-        pair.poolAddress = await strategyContract.methods.pool().call()
-        console.log('loadTokensInfo->poolAddress:', pair.poolAddress)
-        pair.token0.tokenAddress = await strategyContract.methods.token0().call()
-        pair.token1.tokenAddress = await strategyContract.methods.token1().call()
-        console.log('loadTokensInfo->token0Address:', pair.token0.tokenAddress)
-        console.log('loadTokensInfo->token1Address:', pair.token1.tokenAddress)
-        pair.token0.tokenLendingAddress = await strategyContract.methods._CTOKEN(pair.token0.tokenAddress).call()
-        pair.token1.tokenLendingAddress = await strategyContract.methods._CTOKEN(pair.token1.tokenAddress).call()
-        console.log('loadTokensInfo-token0->tokenLendingAddress:', pair.token0.tokenLendingAddress)
-        console.log('loadTokensInfo-token1->tokenLendingAddress:', pair.token1.tokenLendingAddress)
-        pair.tickLower = await strategyContract.methods.cLow().call()
-        console.log('loadTokensInfo->pair.cLow:', pair.tickLower)
-        pair.tickUpper = await strategyContract.methods.cHigh().call()
-        console.log('loadTokensInfo->pair.cHigh:', pair.tickUpper)
-        // const keeperContract = await contractInstance(contractABI, pair.vaultAddress)
-        const poolContract = await contractInstance(uniswapV3PoolABI, pair.poolAddress)
-        const token0Contract = await contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
-        const token1Contract = await contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
-        pair.token0.name = await token0Contract.methods.name().call()
-        pair.token0.symbol = await token0Contract.methods.symbol().call()
-        console.log('loadTokensInfo->symbol:', pair.token0.symbol)
-        pair.token0.decimals = await token0Contract.methods.decimals().call()
-        pair.token0.iconLink = this.getIconLink(pair.token0.symbol)
-        console.log('loadTokensInfo->token0.iconLink:', pair.token0.iconLink)
-        pair.token1.name = await token1Contract.methods.name().call()
-        pair.token1.symbol = await token1Contract.methods.symbol().call()
-        pair.token1.decimals = await token1Contract.methods.decimals().call()
-        pair.token1.iconLink = this.getIconLink(pair.token1.symbol)
-        console.log('loadTokensInfo->token1.iconLink:', pair.token1.iconLink)
-        // Get pair tickLower and tickUpper
-        pair = await this.getTickInfo(pair)
-        // Get token approve status
-        pair = await this.getTokenApproveStatus(pair)
-        pair.feeTier = await poolContract.methods.fee().call()
-        console.log('loadTokensInfo->pair.feeTier:', pair.feeTier)
-      }
-      return pair
-    }
-
     async getTickInfo(pair: Pairs) {
+      const strategyContract = await contractInstance(VaultStrategyABI, pair.strategyAddress)
       const poolContract = await contractInstance(uniswapV3PoolABI, pair.poolAddress)
+      pair.tickLower = await strategyContract.methods.cLow().call()
+      console.log('getPairsBaseInfo->tickLower:', pair.tickLower)
+      pair.tickUpper = await strategyContract.methods.cHigh().call()
+      console.log('getPairsBaseInfo->tickUpper:', pair.tickUpper)
       const slot0 = await poolContract.methods.slot0().call()
       if (slot0 !== null && slot0 !== undefined) {
         pair.currentTick = slot0.tick
@@ -176,11 +136,47 @@ class PairsData {
           pair.tickLower = parseInt(pair.currentTick.toString()) - 500
           pair.tickUpper = parseInt(pair.currentTick.toString()) + 500
           console.log('slot0_tickLower0=', pair.tickLower, 'slot0_tickUpper0=', pair.tickUpper)
-        } else {
-          console.log('slot0_tickLower1=', pair.tickLower, ';slot0_tickUpper1=', pair.tickUpper)
         }
       } else {
-        console.log('slot0 is null')
+        console.log('getTickInfo->slot0 is null')
+      }
+      return pair
+    }
+
+    async getPairsBaseInfo(pair:Pairs) {
+      if (this.factoryAddress !== undefined && this.factoryAddress !== '') {
+        this.factoryContract = await contractInstance(VaultFactoryABI, this.factoryAddress)
+        console.log('getPairsBaseInfo->vaultAddress:', pair.vaultAddress)
+        pair.strategyAddress = await (this.factoryContract as any).methods.getPair0(pair.vaultAddress).call()
+        console.log('getPairsBaseInfo->strategyAddress:', pair.strategyAddress)
+        const strategyContract = await contractInstance(VaultStrategyABI, pair.strategyAddress)
+        pair.poolAddress = await strategyContract.methods.pool().call()
+        console.log('getPairsBaseInfo->poolAddress:', pair.poolAddress)
+        pair.token0.tokenAddress = await strategyContract.methods.token0().call()
+        pair.token1.tokenAddress = await strategyContract.methods.token1().call()
+        console.log('getPairsBaseInfo->token0Address:', pair.token0.tokenAddress)
+        console.log('getPairsBaseInfo->token1Address:', pair.token1.tokenAddress)
+        pair.token0.tokenLendingAddress = await strategyContract.methods._CTOKEN(pair.token0.tokenAddress).call()
+        pair.token1.tokenLendingAddress = await strategyContract.methods._CTOKEN(pair.token1.tokenAddress).call()
+        console.log('getPairsBaseInfo:token0->tokenLendingAddress:', pair.token0.tokenLendingAddress)
+        console.log('getPairsBaseInfo:token1->tokenLendingAddress:', pair.token1.tokenLendingAddress)
+        const poolContract = await contractInstance(uniswapV3PoolABI, pair.poolAddress)
+        const token0Contract = await contractInstance(ViaLendTokenABI, pair.token0.tokenAddress)
+        const token1Contract = await contractInstance(ViaLendTokenABI, pair.token1.tokenAddress)
+        pair.token0.name = await token0Contract.methods.name().call()
+        pair.token0.symbol = await token0Contract.methods.symbol().call()
+        pair.token0.decimals = await token0Contract.methods.decimals().call()
+        pair.token1.name = await token1Contract.methods.name().call()
+        pair.token1.symbol = await token1Contract.methods.symbol().call()
+        pair.token1.decimals = await token1Contract.methods.decimals().call()
+        console.log('getPairsBaseInfo:token0->symbol:', pair.token0.symbol, ',decimals:', pair.token0.decimals)
+        console.log('getPairsBaseInfo:token1->symbol:', pair.token1.symbol, ',decimals:', pair.token1.decimals)
+        // Get pair tickLower and tickUpper
+        pair = await this.getTickInfo(pair)
+        pair.feeTier = await poolContract.methods.fee().call()
+        console.log('getPairsBaseInfo->pair.feeTier:', pair.feeTier)
+        // tvl
+        // this.getTVL(pair)
       }
       return pair
     }
@@ -213,28 +209,6 @@ class PairsData {
       pair.teamAddress = await keeperContract.methods.team().call()
       pair.uniPortionRatio = await keeperContract.methods.uniPortion().call()
       pair.protocolFee = await keeperContract.methods.protocolFee().call()
-    }
-
-    getIconLink(symbol:string) {
-      let iconLink = ''
-      switch (symbol.toLowerCase()) {
-        case 'weth':
-          iconLink = 'images/weth.png'
-          break
-        case 'usdc':
-          iconLink = 'images/usdc.png'
-          break
-        case 'dai':
-          iconLink = 'images/dai.png'
-          break
-        case 'usdt':
-          iconLink = 'images/usdt.png'
-          break
-        case 'wbtc':
-          iconLink = 'images/wbtc.png'
-          break
-      }
-      return iconLink
     }
 
     async getTokensBalance(pair: Pairs) {
@@ -276,7 +250,16 @@ class PairsData {
       pair.token1.balanceInVault = await token1Contract.methods.balanceOf(pair.vaultAddress).call()
       console.log('token0.balanceInVault=', pair.token0.balanceInVault)
       console.log('token1.balanceInVault=', pair.token1.balanceInVault)
-
+      // -->Get Strategy Amounts Begin
+      pair.token0.balanceInStrategy = await token0Contract.methods.balanceOf(pair.strategyAddress).call()
+      pair.token1.balanceInStrategy = await token1Contract.methods.balanceOf(pair.strategyAddress).call()
+      console.log('token0.balanceInStrategy=', pair.token0.balanceInStrategy)
+      console.log('token1.balanceInStrategy=', pair.token1.balanceInStrategy)
+      // Show TVL result
+      console.log('getTVL -> sbalance0:', pair.token0.balanceInStrategy, ',sbalance1:', pair.token1.balanceInStrategy)
+      console.log('getTVL -> vbalance0:', pair.token0.balanceInVault, ',vbalance1:', pair.token1.balanceInVault)
+      console.log('getTVL -> lendingAmt0:', pair.token0.balanceInLending, ',lendingAmt1:', pair.token1.balanceInLending)
+      console.log('getTVL -> uniliqs.Amount0:', pair.token0.balanceInPool, ',uniliqs.Amount1:', pair.token1.balanceInPool)
       if (this.ethereum.selectedAddress !== null && this.ethereum.selectedAddress !== undefined) {
         // ---------- Get Tokens Balance In Wallet ---------------------
       // token0 balance in wallet
@@ -287,6 +270,7 @@ class PairsData {
         pair.token1.balanceInWallet = parseInt((balanceWei / Math.pow(10, pair.token1.decimals) * 1000).toString()) / 1000
       }
       this.pairsBalanceLoading = false
+      return pair
     }
 
     async getPairPublicData(pair: Pairs) {
@@ -303,8 +287,8 @@ class PairsData {
       await this.getTokensBalance(pair)
       pair.token0.decimals = await token0Contract.methods.decimals().call()
       pair.token1.decimals = await token1Contract.methods.decimals().call()
-      pair.tvlTotal0 = (Number(pair.token0.balanceInVault) + Number(pair.token0.balanceInPool) + Number(pair.token0.balanceInLending)) / Number(Math.pow(10, pair.token0.decimals))
-      pair.tvlTotal1 = (Number(pair.token1.balanceInVault) + Number(pair.token1.balanceInPool) + Number(pair.token1.balanceInLending)) / Number(Math.pow(10, pair.token1.decimals))
+      pair.tvlTotal0 = (Number(pair.token0.balanceInStrategy) + Number(pair.token0.balanceInVault) + Number(pair.token0.balanceInPool) + Number(pair.token0.balanceInLending)) / Number(Math.pow(10, pair.token0.decimals))
+      pair.tvlTotal1 = (Number(pair.token1.balanceInStrategy) + Number(pair.token1.balanceInVault) + Number(pair.token1.balanceInPool) + Number(pair.token1.balanceInLending)) / Number(Math.pow(10, pair.token1.decimals))
       console.log('tvlTotal0=', pair.tvlTotal0, 'tvlTotal1=', pair.tvlTotal1)
       const totalUniswap = Number(pair.token0.balanceInPool) * 300 + Number(pair.token1.balanceInPool)
       const totalLending = Number(pair.token0.balanceInLending) * 300 + Number(pair.token1.balanceInLending)
@@ -357,13 +341,14 @@ class PairsData {
         if (this.calculateAPY) await this.calcAPY(strategyContract, pair)
         if (this.calculateAPR) await this.calcAPR(strategyContract, pair)
       }
+      // Get token approve status
+      pair = await this.getTokenApproveStatus(pair)
       pair.gettingData = false
       pair.loadDataCompleted = true
       console.log('setSessionData->pairsSymbol:start')
       await store.dispatch('setSessionData', { key: pair.token0.symbol.concat('-', pair.token1.symbol), value: JSON.stringify(pair) })
       // sessionStorage.setItem(pair.token0.symbol.concat('-', pair.token1.symbol), JSON.stringify(pair))
       console.log('setSessionData->pairsSymbol:done')
-
       return pair
     }
 

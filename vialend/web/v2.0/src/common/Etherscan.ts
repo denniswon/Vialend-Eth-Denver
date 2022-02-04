@@ -1,9 +1,14 @@
+import { CHAININFO } from '@/constants/chains'
+import store from '@/store'
+
 export function getEtherscanTx(txHash:string) {
-  const link = 'https://goerli.etherscan.io/tx/'
+  const link = CHAININFO[store.state.chainId].etherscanTxLink
   return link.concat(txHash)
 }
 
 export function getEtherscanAddress(address:string) {
-  const link = 'https://goerli.etherscan.io/address/'
+  console.log('Etherscan store.state.chainId:', store.state.chainId)
+
+  const link = CHAININFO[store.state.chainId].etherscanAddressLink
   return link.concat(address)
 }

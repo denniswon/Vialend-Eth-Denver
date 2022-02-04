@@ -14,6 +14,7 @@ export default class Token {
     public balanceInVault:number;
     public balanceInPool:number;
     public balanceInLending:number;
+    public balanceInStrategy:number;
     public tokenApproved:boolean;
     public approveLoading:boolean;
 
@@ -33,6 +34,7 @@ export default class Token {
       this.balanceInVault = 0
       this.balanceInPool = 0
       this.balanceInLending = 0
+      this.balanceInStrategy = 0
       this.tokenApproved = false
       this.approveLoading = false
     }

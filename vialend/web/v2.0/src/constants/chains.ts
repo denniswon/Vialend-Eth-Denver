@@ -11,6 +11,8 @@ export enum SupportedChainId {
 
 interface ChainInfo{
 readonly bridgeAddress : string
+readonly etherscanTxLink: string
+readonly etherscanAddressLink: string
 }
 
 type ChainObject = { readonly [chainId: number]: ChainInfo } & { readonly [chainId in SupportedChainId]: ChainInfo}
@@ -20,13 +22,17 @@ export const CHAININFO:ChainObject = {
   //   bridgeAddress: ''
   // },
   [SupportedChainId.ROPSTEN]: {
-    bridgeAddress: '0x033F3C5eAd18496BA462783fe9396CFE751a2342'
+    bridgeAddress: '0xE1FE39c9dc4004C4625499063A73fCA6012C1192',
+    etherscanTxLink: 'https://ropsten.etherscan.io/tx/',
+    etherscanAddressLink: 'https://ropsten.etherscan.io/address/'
   },
   // [SupportedChainId.RINKEBY]: {
   //   bridgeAddress: ''
   // },
   [SupportedChainId.GOERLI]: {
-    bridgeAddress: '0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec'
+    bridgeAddress: '0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec',
+    etherscanTxLink: 'https://goerli.etherscan.io/tx/',
+    etherscanAddressLink: 'https://goerli.etherscan.io/address/'
   }
   // ,[SupportedChainId.KOVAN]: {
   //   bridgeAddress: ''

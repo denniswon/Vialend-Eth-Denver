@@ -1,24 +1,16 @@
 <template>
   <div id="pairs_container" class="pairs-container" v-loading="pairsData.pairsBaseInfoLoading">
     <div class="pairs-selector">
-      <el-select
-        v-model="pairSelectedIndex"
-        placeholder="Please select pairs"
-        v-if="pairsData.pairsList && pairsData.pairsList.size() > 0"
-      >
-        <el-option
-          v-for="pair in pairsData.pairsList._getData()"
-          :key="pair.index"
-          :label="pair.token0.symbol + '/' + pair.token1.symbol"
-          :value="pair.index"
-        ></el-option>
+      <el-select v-model="pairSelectedIndex" :popper-append-to-body="false" placeholder="Please select pairs" v-if="pairsData.pairsList && pairsData.pairsList.size() > 0">
+        <el-option v-for="pair in pairsData.pairsList._getData()" :key="pair.index" :label="pair.token0.symbol + '/' + pair.token1.symbol" :value="pair.index"></el-option>
       </el-select>
     </div>
     <div class="clear"></div>
     <el-tabs type="border-card">
       <el-tab-pane>
         <span slot="label">
-          <i class="el-icon-menu"></i> Rebalance
+          <i class="el-icon-menu"></i>
+          Rebalance
         </span>
         <div style="width:100%">
           <table class="table table-striped">
@@ -31,30 +23,27 @@
                 <th>Compound</th>
               </tr>
             </thead>
-            <tbody
-              v-if="pairSelectedIndex !== '' && Number(pairSelectedIndex) >= 0"
-              v-loading="pairsData.pairsBalanceLoading"
-            >
+            <tbody v-if="pairSelectedIndex !== '' && Number(pairSelectedIndex) >= 0" v-loading="pairsData.pairsBalanceLoading">
               <tr>
-                <th>{{currentPair.token0.symbol}}</th>
-                <td>{{Number(currentPair.token0.balanceInWallet).toFixed(2)}}</td>
+                <th>{{ currentPair.token0.symbol }}</th>
+                <td>{{ Number(currentPair.token0.balanceInWallet).toFixed(2) }}</td>
                 <!-- + ' / $' + token0BalanceUSDInWallet.toFixed(2) -->
-                <td>{{Math.floor(Number(currentPair.token0.balanceInVault))}}</td>
+                <td>{{ Math.floor(Number(currentPair.token0.balanceInVault)) }}</td>
                 <!-- + ' / $' + token0BalanceUSDInVault.toFixed(2) -->
-                <td>{{Math.floor(Number(currentPair.token0.balanceInPool))}}</td>
+                <td>{{ Math.floor(Number(currentPair.token0.balanceInPool)) }}</td>
                 <!-- + ' / $' + token0BalanceUSDInPool.toFixed(2) -->
-                <td>{{Math.floor(Number(currentPair.token0.balanceInLending))}}</td>
+                <td>{{ Math.floor(Number(currentPair.token0.balanceInLending)) }}</td>
                 <!-- + ' / $' + token0BalanceUSDInLending.toFixed(2) -->
               </tr>
               <tr>
-                <th>{{currentPair.token1.symbol}}</th>
-                <td>{{Number(currentPair.token1.balanceInWallet).toFixed(2)}}</td>
+                <th>{{ currentPair.token1.symbol }}</th>
+                <td>{{ Number(currentPair.token1.balanceInWallet).toFixed(2) }}</td>
                 <!-- + ' / $' + token1BalanceUSDInWallet.toFixed(2) -->
-                <td>{{Math.floor(Number(currentPair.token1.balanceInVault))}}</td>
+                <td>{{ Math.floor(Number(currentPair.token1.balanceInVault)) }}</td>
                 <!-- + ' / $' + token1BalanceUSDInVault.toFixed(2) -->
-                <td>{{Math.floor(Number(currentPair.token1.balanceInPool))}}</td>
+                <td>{{ Math.floor(Number(currentPair.token1.balanceInPool)) }}</td>
                 <!-- + ' / $' + token1BalanceUSDInPool.toFixed(2) -->
-                <td>{{Math.floor(Number(currentPair.token1.balanceInLending))}}</td>
+                <td>{{ Math.floor(Number(currentPair.token1.balanceInLending)) }}</td>
                 <!-- + ' / $' + token1BalanceUSDInLending.toFixed(2) -->
                 <!-- <td>{{accruedProtocolFees1}}</td> -->
               </tr>
@@ -66,31 +55,30 @@
               <div class="range-title">
                 <div class="range-text">Set Price Range</div>
                 <div class="range-status">
-                <el-button size="mini" :style="{display: rangeStatusDisplay}">
-                  <span :class="['dot',rangeStatusStyle]"></span>
-                  <span class="status">{{rangeStatus}}</span>
-                </el-button>
-              </div>
+                  <el-button size="mini" :style="{ display: rangeStatusDisplay }">
+                    <span :class="['dot', rangeStatusStyle]"></span>
+                    <span class="status">{{ rangeStatus }}</span>
+                  </el-button>
+                </div>
               </div>
               <div class="tick-info">
                 <ul>
                   <li>
-                    <el-tag type="info">Min Tick:{{currentPair.tickLower}}</el-tag>
+                    <el-tag type="info">Min Tick:{{ currentPair.tickLower }}</el-tag>
                   </li>
                   <li>
-                    <el-tag type="info">Max Tick:{{currentPair.tickUpper}}</el-tag>
+                    <el-tag type="info">Max Tick:{{ currentPair.tickUpper }}</el-tag>
                   </li>
                   <li>
-                    <el-tag type="info">Current Tick:{{currentPair.currentTick}}</el-tag>
+                    <el-tag type="info">Current Tick:{{ currentPair.currentTick }}</el-tag>
                   </li>
                   <li>
-                    <el-tag type="danger">Current Price:{{currentPair.currentPrice}}</el-tag>
+                    <el-tag type="danger">Current Price:{{ currentPair.currentPrice }}</el-tag>
                   </li>
                 </ul>
               </div>
             </div>
             <div class="text item">
-
               <div class="clearfix"></div>
               <div class="block ranger-slider">
                 <ion-range-slider ref="priceRangeSlider" v-model="dataRange"></ion-range-slider>
@@ -99,29 +87,17 @@
               <div class="price-setting">
                 <el-form :inline="true" :model="rangeForm" class="demo-form-inline">
                   <el-form-item label="Min Price">
-                    <el-input-number
-                      v-model="rangeForm.minPrice"
-                      size="medium"
-                      @change="minPriceChange"
-                      :precision="precision"
-                      :step="step"
-                    ></el-input-number>
+                    <el-input-number v-model="rangeForm.minPrice" size="medium" @change="minPriceChange" :precision="precision" :step="step"></el-input-number>
                     <br />
-                    {{currentPair.token1.symbol}} per {{currentPair.token0.symbol}}
+                    {{ currentPair.token1.symbol }} per {{ currentPair.token0.symbol }}
                   </el-form-item>
                   <el-form-item label="Max Price">
-                    <el-input-number
-                      v-model="rangeForm.maxPrice"
-                      size="medium"
-                      @change="maxPriceChange"
-                      :precision="precision"
-                      :step="step"
-                    ></el-input-number>
+                    <el-input-number v-model="rangeForm.maxPrice" size="medium" @change="maxPriceChange" :precision="precision" :step="step"></el-input-number>
                     <br />
-                    {{currentPair.token1.symbol}} per {{currentPair.token0.symbol}}
+                    {{ currentPair.token1.symbol }} per {{ currentPair.token0.symbol }}
                   </el-form-item>
-                <br>
-                <div class="rebalance_action">
+                  <br />
+                  <div class="rebalance_action">
                     <el-button-group>
                       <el-button :loading="rebalanceLoading" type="primary" :disabled="currentPair.vaultAddress !== '' ? false : true" @click="doRebalance">Rebalance</el-button>
                       <el-button type="primary" :disabled="doRebalanceEtherscanDisable" class="godetail">
@@ -143,7 +119,7 @@
                     </el-button-group>
                   </div>
                 </el-form>
-                {{errorRebalance}}
+                {{ errorRebalance }}
               </div>
             </div>
           </el-card>
@@ -151,191 +127,131 @@
       </el-tab-pane>
       <el-tab-pane>
         <span slot="label">
-          <svg-icon name="security" /> Security
+          <svg-icon name="security" />
+          Security
         </span>
         <div width="100%">
           <el-row :gutter="20" class="panel-group" justify="center">
             <el-col :xs="23" :sm="12" :md="12" :lg="12">
               <div class="security-col">
-                <span class="sec-title">Pool Address:</span>&nbsp;&nbsp;
-                <span class="sec-val">{{currentPair.poolAddress}}</span>
-                <a
-                  :href="'https://goerli.etherscan.io/address/'+currentPair.poolAddress"
-                  style="cursor:hand"
-                  target="_black"
-                >
+                <span class="sec-title">Pool Address:</span>
+                &nbsp;&nbsp;
+                <span class="sec-val">{{ currentPair.poolAddress }}</span>
+                <a :href="'https://goerli.etherscan.io/address/' + currentPair.poolAddress" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
             </el-col>
             <el-col :xs="23" :sm="12" :md="12" :lg="12">
               <div class="security-col">
-                <span class="sec-title">Vault Address:</span>&nbsp;&nbsp;
-                <span class="sec-val">{{currentPair.vaultAddress}}</span>
-                <a
-                  :href="'https://goerli.etherscan.io/address/'+currentPair.vaultAddress"
-                  style="cursor:hand"
-                  target="_black"
-                >
+                <span class="sec-title">Vault Address:</span>
+                &nbsp;&nbsp;
+                <span class="sec-val">{{ currentPair.vaultAddress }}</span>
+                <a :href="'https://goerli.etherscan.io/address/' + currentPair.vaultAddress" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
             </el-col>
             <el-col :xs="23" :sm="12" :md="12" :lg="12">
               <div class="security-col">
-                <span class="sec-title">Factory Address:</span>&nbsp;&nbsp;
-                <span class="sec-val">{{factoryAddress}}</span>
-                <a
-                  :href="'https://goerli.etherscan.io/address/'+factoryAddress"
-                  style="cursor:hand"
-                  target="_black"
-                >
+                <span class="sec-title">Factory Address:</span>
+                &nbsp;&nbsp;
+                <span class="sec-val">{{ factoryAddress }}</span>
+                <a :href="'https://goerli.etherscan.io/address/' + factoryAddress" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
             </el-col>
             <el-col :xs="23" :sm="12" :md="12" :lg="12">
               <div class="security-col">
-                <span class="sec-title">Strategy Address:</span>&nbsp;&nbsp;
-                <span class="sec-val">{{currentPair.strategyAddress}}</span>
-                <a
-                  :href="'https://goerli.etherscan.io/address/'+currentPair.strategyAddress"
-                  style="cursor:hand"
-                  target="_black"
-                >
+                <span class="sec-title">Strategy Address:</span>
+                &nbsp;&nbsp;
+                <span class="sec-val">{{ currentPair.strategyAddress }}</span>
+                <a :href="'https://goerli.etherscan.io/address/' + currentPair.strategyAddress" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
             </el-col>
           </el-row>
           <div class="emergency-container" v-show="showEmergencyButton">
-            <el-button
-              type="warning"
-              :loading="emergencyLoading"
-              @click="emergencyBurn"
-            >EmergencyBurn</el-button>&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;
-            <a
-              :href="goToEtherscan"
-              target="_blank"
-              :class="['btn','btn-primary',emergencyEtherscanDisable?'disabled':'']"
-              role="button"
-            >View on etherscan</a>
+            <el-button type="warning" :loading="emergencyLoading" @click="emergencyBurn">EmergencyBurn</el-button>
+            &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;
+            <a :href="goToEtherscan" target="_blank" :class="['btn', 'btn-primary', emergencyEtherscanDisable ? 'disabled' : '']" role="button">View on etherscan</a>
           </div>
         </div>
       </el-tab-pane>
       <el-tab-pane>
         <span slot="label">
-          <i class="el-icon-setting"></i> Settings
+          <i class="el-icon-setting"></i>
+          Settings
         </span>
         <div class="table-responsive">
-        <table class="table-setting">
-          <tr>
-            <td class="setting-title">UniPortionRatio:</td>
-            <td>
-              <el-input v-model="currentPair.uniPortionRatio" style="width:500px;"></el-input>
-            </td>
-            <td>
-              <el-button type="primary" :loading="uniPortionRatioLoading" @click="setUniPortionRatio">SetUniPortionRatio</el-button>&nbsp;&nbsp;
-              <a
-                :href="goToEtherscan"
-                target="_blank"
-                :class="['btn','btn-primary',uniPortionRatioEtherscanDisable?'disabled':'']"
-                role="button"
-              >View on etherscan</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="setting-title">MaxTotalSupply:</td>
-            <td>
-              <el-input v-model="currentPair.maxTotalSupply" style="width:500px;"></el-input>
-            </td>
-            <td>
-              <el-button
-                type="primary"
-                :loading="maxTotalSupplyLoading"
-                @click="setMaxTotalSupply"
-              >SetMaxTotalSupply</el-button>&nbsp;&nbsp;
-              <a
-                :href="goToEtherscan"
-                target="_blank"
-                :class="['btn','btn-primary',maxTotalSupplyEtherscanDisable?'disabled':'']"
-                role="button"
-              >View on etherscan</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="setting-title">ProtocolFee:</td>
-            <td>
-              <el-input v-model="currentPair.protocolFee" style="width:500px;"></el-input>
-            </td>
-            <td>
-              <el-button
-                type="primary"
-                :loading="protocolFeeLoading"
-                @click="setProtocolFee"
-              >SetProtocolFee</el-button>&nbsp;&nbsp;
-              <a
-                :href="goToEtherscan"
-                target="_blank"
-                :class="['btn','btn-primary',protocolFeeEtherscanDisable?'disabled':'']"
-                role="button"
-              >View on etherscan</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="setting-title">Governance:</td>
-            <td>
-              <el-input v-model="currentPair.governanceAddress" style="width:500px;"></el-input>&nbsp;&nbsp;
-              <a
-                  :href="'https://goerli.etherscan.io/address/'+currentPair.governanceAddress"
-                  style="cursor:hand"
-                  target="_black"
-                >
+          <table class="table-setting">
+            <tr>
+              <td class="setting-title">UniPortionRatio:</td>
+              <td>
+                <el-input v-model="currentPair.uniPortionRatio" style="width:500px;"></el-input>
+              </td>
+              <td>
+                <el-button type="primary" :loading="uniPortionRatioLoading" @click="setUniPortionRatio">SetUniPortionRatio</el-button>
+                &nbsp;&nbsp;
+                <a :href="goToEtherscan" target="_blank" :class="['btn', 'btn-primary', uniPortionRatioEtherscanDisable ? 'disabled' : '']" role="button">View on etherscan</a>
+              </td>
+            </tr>
+            <tr>
+              <td class="setting-title">MaxTotalSupply:</td>
+              <td>
+                <el-input v-model="currentPair.maxTotalSupply" style="width:500px;"></el-input>
+              </td>
+              <td>
+                <el-button type="primary" :loading="maxTotalSupplyLoading" @click="setMaxTotalSupply">SetMaxTotalSupply</el-button>
+                &nbsp;&nbsp;
+                <a :href="goToEtherscan" target="_blank" :class="['btn', 'btn-primary', maxTotalSupplyEtherscanDisable ? 'disabled' : '']" role="button">View on etherscan</a>
+              </td>
+            </tr>
+            <tr>
+              <td class="setting-title">ProtocolFee:</td>
+              <td>
+                <el-input v-model="currentPair.protocolFee" style="width:500px;"></el-input>
+              </td>
+              <td>
+                <el-button type="primary" :loading="protocolFeeLoading" @click="setProtocolFee">SetProtocolFee</el-button>
+                &nbsp;&nbsp;
+                <a :href="goToEtherscan" target="_blank" :class="['btn', 'btn-primary', protocolFeeEtherscanDisable ? 'disabled' : '']" role="button">View on etherscan</a>
+              </td>
+            </tr>
+            <tr>
+              <td class="setting-title">Governance:</td>
+              <td>
+                <el-input v-model="currentPair.governanceAddress" style="width:500px;"></el-input>
+                &nbsp;&nbsp;
+                <a :href="'https://goerli.etherscan.io/address/' + currentPair.governanceAddress" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
-            </td>
-            <td>
-              <el-button
-                type="primary"
-                :loading="governanceLoading"
-                @click="setGovernance"
-              >SetGovernance</el-button>
-              <el-button
-                type="primary"
-                :loading="acceptGovernanceLoading"
-                @click="acceptGovernance"
-              >AccecptGovernance</el-button>&nbsp;&nbsp;
-              <a
-                :href="goToEtherscan"
-                target="_blank"
-                :class="['btn','btn-primary',governanceEtherscanDisable?'disabled':'']"
-                role="button"
-              >View on etherscan</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="setting-title">Team:</td>
-            <td>
-              <el-input v-model="currentPair.teamAddress" style="width:500px;"></el-input>&nbsp;&nbsp;
-              <a
-                  :href="'https://goerli.etherscan.io/address/'+currentPair.teamAddress"
-                  style="cursor:hand"
-                  target="_black"
-                >
+              </td>
+              <td>
+                <el-button type="primary" :loading="governanceLoading" @click="setGovernance">SetGovernance</el-button>
+                <el-button type="primary" :loading="acceptGovernanceLoading" @click="acceptGovernance">AccecptGovernance</el-button>
+                &nbsp;&nbsp;
+                <a :href="goToEtherscan" target="_blank" :class="['btn', 'btn-primary', governanceEtherscanDisable ? 'disabled' : '']" role="button">View on etherscan</a>
+              </td>
+            </tr>
+            <tr>
+              <td class="setting-title">Team:</td>
+              <td>
+                <el-input v-model="currentPair.teamAddress" style="width:500px;"></el-input>
+                &nbsp;&nbsp;
+                <a :href="'https://goerli.etherscan.io/address/' + currentPair.teamAddress" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
-            </td>
-            <td>
-              <el-button type="primary" :loading="teamLoading" @click="setTeam" size="medium">SetTeam</el-button>&nbsp;&nbsp;
-              <a
-                :href="goToEtherscan"
-                target="_blank"
-                :class="['btn','btn-primary',teamEtherscanDisable?'disabled':'']"
-                role="button"
-              >View on etherscan</a>
-            </td>
-          </tr>
-        </table>
+              </td>
+              <td>
+                <el-button type="primary" :loading="teamLoading" @click="setTeam" size="medium">SetTeam</el-button>
+                &nbsp;&nbsp;
+                <a :href="goToEtherscan" target="_blank" :class="['btn', 'btn-primary', teamEtherscanDisable ? 'disabled' : '']" role="button">View on etherscan</a>
+              </td>
+            </tr>
+          </table>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -470,20 +386,17 @@ export default class extends Vue {
       console.log('this.rangeForm.tickUpper=', Math.round(parseInt(this.currentPair.tickUpper.toString()) / 60) * 60)
 
       keeperContract.methods
-        .strategy1(
-          BigInt(Math.round(parseInt(this.currentPair.tickLower.toString()) / 60) * 60),
-          BigInt(Math.round(parseInt(this.currentPair.tickUpper.toString()) / 60) * 60)
-        )
+        .strategy1(BigInt(Math.round(parseInt(this.currentPair.tickLower.toString()) / 60) * 60), BigInt(Math.round(parseInt(this.currentPair.tickUpper.toString()) / 60) * 60))
         .send({
           from: ethereum.selectedAddress,
           // gasPrice: '1000000000',
           // gas: 900000,
           value: 0
         })
-        .on('confirmation', function(confirmationNumber:number, receipt:any) {
-          console.log((new Date()).toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
+        .on('confirmation', function(confirmationNumber: number, receipt: any) {
+          console.log(new Date().toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
         })
-        .on('receipt', function(receipt:any) {
+        .on('receipt', function(receipt: any) {
           if (_this.rebalanceLoading) {
             _this.rebalanceLoading = false
           }
@@ -492,9 +405,11 @@ export default class extends Vue {
             _this.doRebalanceEtherscanDisable = false
             _this.$message('Rebalance submitted!')
             // _this.loadTokensBalance()
-          } else { _this.$message('Rebalance failed!') }
+          } else {
+            _this.$message('Rebalance failed!')
+          }
         })
-        .on('error', function(error:any) {
+        .on('error', function(error: any) {
           _this.rebalanceLoading = false
           _this.$message.error(error)
         })
@@ -518,10 +433,10 @@ export default class extends Vue {
           // gas: 900000,
           value: 0
         })
-        .on('confirmation', function(confirmationNumber:number, receipt:any) {
-          console.log((new Date()).toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
+        .on('confirmation', function(confirmationNumber: number, receipt: any) {
+          console.log(new Date().toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
         })
-        .on('receipt', function(receipt:any) {
+        .on('receipt', function(receipt: any) {
           if (_this.removePositionsLoading) {
             _this.removePositionsLoading = false
           }
@@ -530,9 +445,11 @@ export default class extends Vue {
             _this.removePositionsEtherscanDisable = false
             _this.$message('RemovePositions submitted!')
             // _this.loadTokensBalance()
-          } else { _this.$message('RemovePositions failed!') }
+          } else {
+            _this.$message('RemovePositions failed!')
+          }
         })
-        .on('error', function(error:any) {
+        .on('error', function(error: any) {
           _this.removePositionsLoading = false
           _this.$message.error(error)
         })
@@ -571,30 +488,12 @@ export default class extends Vue {
     if (pair.tickLower !== 0 && pair.tickUpper !== 0) {
       const leftMargin = pair.tickLower - 10000
       const rightMargin = pair.tickUpper + 10000
-      const leftPercent = parseInt(
-        (
-          ((pair.tickLower - leftMargin) / (rightMargin - leftMargin)) *
-          100
-        ).toString()
-      )
-      const rightPercent = parseInt(
-        (
-          ((pair.tickUpper - leftMargin) / (rightMargin - leftMargin)) *
-          100
-        ).toString()
-      )
-      this.currentPercent = parseInt(
-        (
-          ((pair.currentTick - leftMargin) / (rightMargin - leftMargin)) *
-          100
-        ).toString()
-      )
+      const leftPercent = parseInt((((pair.tickLower - leftMargin) / (rightMargin - leftMargin)) * 100).toString())
+      const rightPercent = parseInt((((pair.tickUpper - leftMargin) / (rightMargin - leftMargin)) * 100).toString())
+      this.currentPercent = parseInt((((pair.currentTick - leftMargin) / (rightMargin - leftMargin)) * 100).toString())
       this.tickRange = [leftPercent, rightPercent]
       console.log('currentPercent=', this.currentPercent)
-      if (
-        pair.tickLower > pair.currentTick ||
-        pair.tickUpper < pair.currentTick
-      ) {
+      if (pair.tickLower > pair.currentTick || pair.tickUpper < pair.currentTick) {
         this.rangeStatusStyle = 'outOfRange'
         this.rangeStatus = 'Out of range'
       } else {
@@ -624,10 +523,7 @@ export default class extends Vue {
   @Watch('pairSelectedIndex')
   async watchPairSelectedIndex(newVal: number, oldVal: number) {
     console.log('pairSelectedIndex:', newVal, ',old value:', oldVal)
-    console.log(
-      'pairsData.pairsList.get(pairSelectedIndex).token1.balanceInWallet=',
-      this.pairsData.pairsList.get(0).token1.balanceInWallet
-    )
+    console.log('pairsData.pairsList.get(pairSelectedIndex).token1.balanceInWallet=', this.pairsData.pairsList.get(0).token1.balanceInWallet)
     this.currentPair = this.pairsData.pairsList.get(newVal)
     this.pairsData.getTokensBalance(this.currentPair)
     this.loadPriceRange(this.currentPair)
@@ -650,7 +546,9 @@ export default class extends Vue {
     if (!isNaN(newVal)) {
       this.currentPair.tickLower = priceToTick(newVal, this.currentPair.token0.decimals, this.currentPair.token1.decimals)
       console.log('watchNewMinPrice->tickLower:', this.currentPair.tickLower)
-    } else { this.currentPair.tickLower = 0 }
+    } else {
+      this.currentPair.tickLower = 0
+    }
     this.calculateRangeStatus()
   }
 
@@ -660,18 +558,20 @@ export default class extends Vue {
     if (!isNaN(newVal)) {
       console.log('tickUpper->price:', newVal)
       this.currentPair.tickUpper = priceToTick(newVal, this.currentPair.token0.decimals, this.currentPair.token1.decimals)
-    } else { this.currentPair.tickUpper = 0 }
+    } else {
+      this.currentPair.tickUpper = 0
+    }
     this.calculateRangeStatus()
   }
 
   @Watch('$store.state.priceRangeFrom')
-  watchPriceRangeSliderFrom(newVal:number, oldVal:number) {
+  watchPriceRangeSliderFrom(newVal: number, oldVal: number) {
     console.log('priceRangeSlider.from = ', newVal, 'old = ', oldVal)
     this.rangeForm.minPrice = newVal
   }
 
   @Watch('$store.state.priceRangeTo')
-  watchPriceRangeSliderTo(newVal:number, oldVal:number) {
+  watchPriceRangeSliderTo(newVal: number, oldVal: number) {
     console.log('priceRangeSlider.to = ', newVal, 'old = ', oldVal)
     this.rangeForm.maxPrice = newVal
   }
@@ -696,22 +596,9 @@ export default class extends Vue {
   }
 
   loadPriceRange(pair: Pairs) {
-    this.rangeForm.minPrice = tickToPrice(
-      pair.tickLower,
-      pair.token0.decimals,
-      pair.token1.decimals
-    )
-    this.rangeForm.maxPrice = tickToPrice(
-      pair.tickUpper,
-      pair.token0.decimals,
-      pair.token1.decimals
-    )
-    console.log(
-      'rangeForm.minPrice=',
-      this.rangeForm.minPrice,
-      'rangeForm.maxPrice=',
-      this.rangeForm.maxPrice
-    )
+    this.rangeForm.minPrice = tickToPrice(pair.tickLower, pair.token0.decimals, pair.token1.decimals)
+    this.rangeForm.maxPrice = tickToPrice(pair.tickUpper, pair.token0.decimals, pair.token1.decimals)
+    console.log('rangeForm.minPrice=', this.rangeForm.minPrice, 'rangeForm.maxPrice=', this.rangeForm.maxPrice)
     // const _this = this;
     // (<any>$('.js-range-slider')).ionRangeSlider({
     //   skin: 'big',
@@ -726,7 +613,6 @@ export default class extends Vue {
     //   }
     // })
     // this.priceRangeSlider = $('.js-range-slider').data('ionRangeSlider');
-
     ;(this.$refs.priceRangeSlider as any).sayHello()
     // (this.$refs.priceRangeSlider as any).doUpdate(
     //   20,
@@ -735,9 +621,7 @@ export default class extends Vue {
     //   200
     // )
     ;(this.$refs.priceRangeSlider as any).doUpdate(
-      parseFloat(this.rangeForm.minPrice.toString()) - 230 < 0
-        ? 0
-        : (parseFloat(this.rangeForm.minPrice.toString()) - 230).toFixed(1),
+      parseFloat(this.rangeForm.minPrice.toString()) - 230 < 0 ? 0 : (parseFloat(this.rangeForm.minPrice.toString()) - 230).toFixed(1),
       (parseFloat(this.rangeForm.maxPrice.toString()) + 230).toFixed(1),
       this.rangeForm.minPrice,
       this.rangeForm.maxPrice
@@ -766,14 +650,8 @@ export default class extends Vue {
   watchCurrentAccount(newVal: string, oldVal: string) {
     console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
     if (newVal !== '' && this.$store.state.validNetwork) {
-      console.log(
-        'currentAccount changed,pairlist size:',
-        this.pairsData.pairsList.size()
-      )
-      if (
-        this.pairsData.pairsList.size() === 0 &&
-        !this.pairsData.pairsBaseInfoLoading
-      ) {
+      console.log('currentAccount changed,pairlist size:', this.pairsData.pairsList.size())
+      if (this.pairsData.pairsList.size() === 0 && !this.pairsData.pairsBaseInfoLoading) {
         this.pairsData.loadPairsInfo()
       } else {
         // this.pairsData.pairsListComplete = false
@@ -784,12 +662,7 @@ export default class extends Vue {
 
   @Watch('$store.state.isConnected')
   watchConnectionStatus(newVal: boolean) {
-    console.log(
-      'Dashboard $store.state.isConnected:',
-      this.$store.state.isConnected,
-      'this.$store.state.validNetwork=',
-      this.$store.state.validNetwork
-    )
+    console.log('Dashboard $store.state.isConnected:', this.$store.state.isConnected, 'this.$store.state.validNetwork=', this.$store.state.validNetwork)
     // if (newVal && this.$store.state.validNetwork && this.pairsData.pairsLoadComplete && !this.myPairsListLoading) {
     // // this.isConnected = this.$store.state.isConnected
     //   // this.pairsListComplete = false
@@ -804,14 +677,8 @@ export default class extends Vue {
   watchNetworkChainId(newVal: number, oldVal: number) {
     console.log('chainid newVal=', newVal, 'oldVal=', oldVal)
     if (oldVal > 0 && this.$store.state.validNetwork) {
-      console.log(
-        'network chainId changed,pairlist size:',
-        this.pairsData.pairsList.size()
-      )
-      if (
-        this.pairsData.pairsList.size() === 0 &&
-        !this.pairsData.pairsBaseInfoLoading
-      ) {
+      console.log('network chainId changed,pairlist size:', this.pairsData.pairsList.size())
+      if (this.pairsData.pairsList.size() === 0 && !this.pairsData.pairsBaseInfoLoading) {
         this.pairsData.loadPairsInfo()
       }
     } else if (!this.$store.state.validNetwork) {
@@ -821,8 +688,8 @@ export default class extends Vue {
 
   minPriceChange(from: number) {
     // console.log('min price:', val)
-    (this.$refs.priceRangeSlider as any).doUpdate(
-      (parseFloat(this.rangeForm.minPrice.toString()) - 230 < 0) ? 0 : (parseFloat(this.rangeForm.minPrice.toString()) - 230).toFixed(1),
+    ;(this.$refs.priceRangeSlider as any).doUpdate(
+      parseFloat(this.rangeForm.minPrice.toString()) - 230 < 0 ? 0 : (parseFloat(this.rangeForm.minPrice.toString()) - 230).toFixed(1),
       (parseFloat(this.rangeForm.maxPrice.toString()) + 230).toFixed(1),
       from,
       this.rangeForm.maxPrice
@@ -832,8 +699,8 @@ export default class extends Vue {
   maxPriceChange(to: number) {
     // console.log('max price:', val)
     // $('.js-range-slider').data('ionRangeSlider').update({ to: val })
-    (this.$refs.priceRangeSlider as any).doUpdate(
-      (parseFloat(this.rangeForm.minPrice.toString()) - 230 < 0) ? 0 : (parseFloat(this.rangeForm.minPrice.toString()) - 230).toFixed(1),
+    ;(this.$refs.priceRangeSlider as any).doUpdate(
+      parseFloat(this.rangeForm.minPrice.toString()) - 230 < 0 ? 0 : (parseFloat(this.rangeForm.minPrice.toString()) - 230).toFixed(1),
       (parseFloat(this.rangeForm.maxPrice.toString()) + 230).toFixed(1),
       this.rangeForm.minPrice,
       to
@@ -862,58 +729,58 @@ export default class extends Vue {
 }
 </script>
 <style scoped>
-.rebalance_action{
-  font-family: monospace,'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-  width:100%;
-  margin:0 auto;
+.rebalance_action {
+  font-family: monospace, 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  width: 100%;
+  margin: 0 auto;
   text-align: center;
-
 }
 
-.remove_position_action{
-  width:180px;
-    font-family: monospace,'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    border: 1px solid #1890ff;
-    background-color: #409eff;
-    color:#ffffff;
-    font-size:16px;
-    margin-top:10px;
-    padding-left: 10px;
-    border-radius: 4px;
+.remove_position_action {
+  width: 180px;
+  font-family: monospace, 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  border: 1px solid #1890ff;
+  background-color: #409eff;
+  color: #ffffff;
+  font-size: 16px;
+  margin-top: 10px;
+  padding-left: 10px;
+  border-radius: 4px;
 }
 
-.godetail{
-  padding:10px 10px !important;
+.godetail {
+  padding: 10px 10px !important;
 }
-.godetail a{
-  color:#ffffff;
+.godetail a {
+  color: #ffffff;
 }
-.el-select-dropdown__wrap{
+.el-select-dropdown__wrap {
   margin-bottom: 0px !important;
   margin-right: 0px !important;
 }
-.table>tbody{
-  border:none !important;
-}
-.table>:not(caption)>*>*{
+.table > tbody {
   border: none !important;
 }
-.el-link.el-link--default{
-  color:#ffffff !important;
+.table > :not(caption) > * > * {
+  border: none !important;
+  font-size: 12px;
 }
-.rebalance_action a{
-  color:#ffffff;
+.el-link.el-link--default {
+  color: #ffffff !important;
 }
-.range-text{
-  float:left;
+.rebalance_action a {
+  color: #ffffff;
 }
-.range-status{
-  float:left;
-  margin-left:10px;
+.range-text {
+  float: left;
 }
-.ranger-slider{
-width:100%;
-padding:30px;
+.range-status {
+  float: left;
+  margin-left: 10px;
+}
+.ranger-slider {
+  width: 100%;
+  padding: 30px;
 }
 .security-col {
   border-radius: 4px;
@@ -929,7 +796,7 @@ padding:30px;
 }
 .security-col .sec-title {
   font-family: Georgia, 'Times New Roman', Times, serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
 }
 .security-col .sec-val {
@@ -947,20 +814,20 @@ padding:30px;
   border: 1px solid #e7e7e7;
   background-color: #f8f8f8;
 }
-.el-input-number--medium{
-  width:300px !important;
+.el-input-number--medium {
+  width: 300px !important;
 }
 
-.table-setting{
-    width:100%;
+.table-setting {
+  width: 100%;
 }
-.table-setting tr{
-    height:80px;
-    border-bottom: 1px dashed #ddd;
+.table-setting tr {
+  height: 80px;
+  border-bottom: 1px dashed #ddd;
 }
 .table-setting .setting-title {
   font-family: Georgia, 'Times New Roman', Times, serif;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: bold;
 }
 .el-select {
@@ -986,15 +853,15 @@ padding:30px;
 .block {
   float: left;
 }
-/deep/.el-tabs .el-tabs__item{
-   font-size: 16px;
+.el-tabs .el-tabs__item {
+  font-size: 14px;
 }
 .el-divider--horizontal {
   margin: 0px !important;
 }
 .range-title {
   display: inline;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   color: black;
 }
@@ -1063,8 +930,7 @@ padding:30px;
 .item {
   margin-bottom: 18px;
 }
-.range-text
-.clearfix:before,
+.range-text .clearfix:before,
 .clearfix:after {
   display: table;
   content: '';
@@ -1075,7 +941,7 @@ padding:30px;
 
 .box-card {
   width: 100%;
-  border-radius: 16px;
+  border-radius: 14px;
 }
 .box-card:hover {
   border-style: solid;
@@ -1095,9 +961,9 @@ padding:30px;
   padding-top: 50px;
   text-align: center;
 }
-.el-form-item__label {
+/* .el-form-item__label {
   line-height: 20px !important;
-}
+} */
 html,
 body {
   margin: 0;

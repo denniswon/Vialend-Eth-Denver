@@ -9,7 +9,7 @@ export default new Vuex.Store({
   state: {
     name: 'Vialend',
     availableChainId: [5],
-    pairsData: undefined,    
+    pairsData: undefined,
     factoryAddress: '',
     validNetwork: false,
     isAdmin: false,
@@ -138,20 +138,20 @@ export default new Vuex.Store({
     getChainID() {
       const web3 = getWeb3Instance()
       return web3.eth.getChainId()
-    },
-    async checkChain() {
-      const web3 = getWeb3Instance()
-      this.state.chainId = await web3.eth.getChainId()
-      console.log('check chain id=', this.state.chainId)
-      if (this.state.availableChainId.includes(this.state.chainId)) {
-        this.state.validNetwork = true
-        return true
-      } else {
-        this.state.isAdmin = false
-        this.state.isConnected = false
-        this.state.validNetwork = false
-        return false
-      }
     }
+    // async checkChain() {
+    //   const web3 = getWeb3Instance()
+    //   this.state.chainId = await web3.eth.getChainId()
+    //   console.log('check chain id=', this.state.chainId)
+    //   if (this.state.availableChainId.includes(this.state.chainId)) {
+    //     this.state.validNetwork = true
+    //     return true
+    //   } else {
+    //     this.state.isAdmin = false
+    //     this.state.isConnected = false
+    //     this.state.validNetwork = false
+    //     return false
+    //   }
+    // }
   }
 })
