@@ -11,13 +11,19 @@
       </router-link>
     </div>
     <div class="right-menu">
-      <div class="newmsgicon">
-        <el-button type="text">Unerified</el-button>
+      <div class="btnnetwork">
+        <div v-if="$store.state.isConnected === false">
+          <span class="unerified">Unerified</span>
+        </div>
+        <div v-else-if="$store.state.isConnected && $store.state.validNetwork">
+          <el-select class="selectNetwork" v-model="selectedNetworkId" placeholder="Please select">
+            <el-option v-for="item in supportedChainList._getData()" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </div>
       </div>
       <div class="newmsgicon">
         <svg-icon name="newmsg" width="26px" height="26px"></svg-icon>
       </div>
-      <!-- <button @click="logout">Logout</button> -->
       <div class="btnnetwork">
         <div v-if="$store.state.isConnected === false" :class="[walletButtonClass, disConnectClass]">
           <a href="#" @click="connectWallet">Connect Wallet</a>
@@ -53,8 +59,11 @@ import { getWeb3Instance, contractInstance } from '../../../common/Web3'
 import { AppModule } from '@/store/modules/app'
 import { UserModule } from '@/store/modules/user'
 import Hamburger from '@/components/Hamburger/index.vue'
-import { CHAININFO, checkChain } from '@/constants/chains'
+import { checkChain, SupportedChainId } from '@/constants/chains'
 import { changeAccount, checkValidAdmin } from '@/common/Account'
+import ArrayList from '@/common/ArrayList'
+import ChainInfo from '@/model/ChainInfo'
+import { log } from 'console'
 // import Clipboard from 'clipboard'
 // import { AbiItem } from 'web3-utils'
 const VaultBridgeABI = require('../../../abi/VaultBridge.json')
@@ -67,6 +76,8 @@ const VaultBridgeABI = require('../../../abi/VaultBridge.json')
 })
 export default class extends Vue {
   web3 = getWeb3Instance()
+  supportedChainList = new ArrayList<ChainInfo>()
+  selectedNetworkId = 0
   isAdmin = '0'
   validNetwork = false
   isConnected = this.$store.state.isConnected
@@ -108,6 +119,25 @@ export default class extends Vue {
     console.log('this. header isConnected watch=', this.$store.state.isConnected)
   }
 
+  @Watch('$store.state.chainId')
+  async watchNetworkChainId(newVal: number, oldVal: number) {
+    console.log('navbar ->chainid newVal=', newVal, 'oldVal=', oldVal)
+    this.selectedNetworkId = newVal
+  }
+
+  @Watch('selectedNetworkId')
+  async watchSelectedNetworkId(newVal: number, oldVal: number) {
+    console.log('navbar ->selectedNetworkId newVal=', newVal, ',hexVal=0x' + newVal.toString(16))
+    try {
+      await (window as any).ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + newVal.toString(16) }]
+      })
+    } catch (switchError) {
+      console.log('switch Chain error:', switchError)
+    }
+  }
+
   showWalletMenu(): void {
     this.walletMenuVisible = true
   }
@@ -129,34 +159,6 @@ export default class extends Vue {
 
   mounted() {
     ;(window as any).connectWallet = this.connectWallet
-    this.fn()
-  }
-
-  fn() {
-    // ;(window as any).ethereum.autoRefreshOnNetworkChange = false
-    // ;(window as any).ethereum.on('accountsChanged', async () => {
-    //   console.log('accountsChanged')
-    //   if (await checkChain()) {
-    //     this.changeAccount()
-    //     this.checkValidAdmin()
-    //   }
-    // })
-    // ;(window as any).ethereum.on('networkChanged', async () => {
-    //   console.log('networkChanged')
-    //   this.clearSessionData()
-    //   if (await checkChain()) {
-    //     this.changeAccount()
-    //     this.checkValidAdmin()
-    //   } else {
-    //     this.disconnectWallet()
-    //   }
-    // })
-    // ;(window as any).ethereum.on('disconnect', () => {
-    //   console.log('metamask disconnect')
-    //   this.$store.state.currentAccount = ''
-    //   this.$store.state.isConnected = false
-    //   this.isConnected = false
-    // })
   }
 
   handleCommand(command: any) {
@@ -224,7 +226,28 @@ export default class extends Vue {
       })
   }
 
-  // async created() {}
+  loadSupportedNetworkList() {
+    for (const item in SupportedChainId) {
+      if (isNaN(Number(item))) {
+        // this.supportedChainList.push(item)
+      }
+    }
+  }
+
+  created() {
+    // this.loadSupportedNetworkList()
+    if (this.supportedChainList.size() === 0) {
+      Object.entries(SupportedChainId).forEach(([key, value]) => {
+        if (isNaN(Number(key))) {
+          console.log(key, value)
+          const chainInfo = new ChainInfo()
+          chainInfo.id = Number(value)
+          chainInfo.name = key
+          this.supportedChainList.add(chainInfo)
+        }
+      })
+    }
+  }
 }
 </script>
 
@@ -239,6 +262,12 @@ export default class extends Vue {
 </style>
 
 <style lang="scss" scoped>
+.unerified {
+  color: #1890ff;
+}
+.selectNetwork {
+  width: 120px;
+}
 .navbar-container {
   height: 50px;
   overflow: hidden;
