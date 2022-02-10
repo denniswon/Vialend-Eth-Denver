@@ -158,7 +158,7 @@ export default class extends Vue {
   }
 
   mounted() {
-    ;(window as any).connectWallet = this.connectWallet
+    (window as any).connectWallet = this.connectWallet
   }
 
   handleCommand(command: any) {
