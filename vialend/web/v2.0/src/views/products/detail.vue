@@ -73,11 +73,11 @@
                 </el-input>
               </span>
             </div>
-            <div class="action_list" :style="{ display: pairInfo.token0.tokenApproved ? 'none' : '' }">
-              <el-button type="primary" :loading="pairInfo.token0.approveLoading" @click="approveToken(pairInfo.token0)" :style="{ width: '100%' }">Approve {{ pairInfo.token0.symbol }}</el-button>
+            <div class="action_list" :style="{display: pairInfo.token0.tokenApproved || pairInfo.id === 0 ? 'none' : ''}">
+              <el-button type="primary" :loading="pairInfo.token0.approveLoading" @click="approveToken(pairInfo.token0)" :style="{width: '100%'}">Approve {{ pairInfo.token0.symbol }}</el-button>
             </div>
-            <div class="action_list" :style="{ display: pairInfo.token1.tokenApproved ? 'none' : '' }">
-              <el-button type="primary" :loading="pairInfo.token1.approveLoading" @click="approveToken(pairInfo.token1)" :style="{ width: '100%' }">Approve {{ pairInfo.token1.symbol }}</el-button>
+            <div class="action_list" :style="{display: pairInfo.token1.tokenApproved || pairInfo.id === 0 ? 'none' : ''}">
+              <el-button type="primary" :loading="pairInfo.token1.approveLoading" @click="approveToken(pairInfo.token1)" :style="{width: '100%'}">Approve {{ pairInfo.token1.symbol }}</el-button>
             </div>
             <div class="action_list deposit_class">
               <el-button
@@ -85,12 +85,12 @@
                 @click="deposit"
                 :loading="depositLoading"
                 :disabled="pairInfo.token0.tokenApproved || pairInfo.token1.tokenApproved ? false : true"
-                :style="{ width: '100%', display: $store.state.isConnected ? '' : 'none' }"
+                :style="{width: '100%', display: $store.state.isConnected ? '' : 'none'}"
               >
                 Deposit
               </el-button>
             </div>
-            <div class="action_list deposit_class" :style="{ display: $store.state.isConnected ? 'none' : '' }">
+            <div class="action_list deposit_class" :style="{display: $store.state.isConnected ? 'none' : ''}">
               <el-button type="primary" style="width:100%;" @click="connectWallet">Connect Wallet</el-button>
             </div>
             <div class="contract_address">
@@ -165,6 +165,7 @@ const ethereum = (window as any).ethereum
   components: {}
 })
 export default class extends Vue {
+  pairObj = new PairsData()
   pairInfo = new Pairs()
   maxCapacity = 60
   pairsymbol = ''
@@ -196,11 +197,14 @@ export default class extends Vue {
   @Watch('$store.state.currentAccount')
   async watchCurrentAccount(newVal: string, oldVal: string) {
     console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
-    if (newVal !== '' && this.$store.state.validNetwork) {
+    if (newVal !== '' && this.$store.state.validNetwork && this.pairInfo.id > 0) {
       this.updateLoading = true
-      const pair = new PairsData()
-      pair.calculateAPY = true
-      this.pairInfo = await pair.getPairPublicData(this.pairInfo)
+      // const pair = new PairsData()
+      this.pairObj.calculateAPY = true
+      console.log('pairsLoadComplete=', this.pairObj.pairsLoadComplete)
+      console.log('this.pairInfo=', this.pairInfo)
+      this.pairInfo = await this.pairObj.getPairPublicData(this.pairInfo)
+      this.getShares(this.sharePercent)
       this.$store.dispatch('setSessionData', { key: this.pairsymbol, value: this.pairInfo })
       this.updateLoading = false
     }
@@ -220,11 +224,6 @@ export default class extends Vue {
   connectWallet() {
     // this.$parent.connectWallet()
     console.log('wallet connection status:', this.$store.state.isConnected)
-  }
-
-  async updatePageData() {
-    //   await this.getPairPublicInfo(this.pairsList.get(this.selectedPairIndex))
-    //   await this.loadMyData()
   }
 
   async approveToken(token: Token) {
@@ -352,7 +351,7 @@ export default class extends Vue {
               _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
               _this.depositedEtherscanDisable = false
               _this.$message('Deposit submitted!')
-              _this.updatePageData()
+              _this.reloadPairsBalance()
             } else {
               _this.$message('Deposit failed!')
             }
@@ -402,10 +401,10 @@ export default class extends Vue {
                 } else {
                   _this.$message('Withdraw successful!')
                 }
+                _this.reloadPairsBalance()
               } catch {
                 _this.$message('Withdraw submitted!')
               }
-              // _this.updatePageData()
             } else {
               _this.$message('Withdraw failed!')
             }
@@ -431,10 +430,19 @@ export default class extends Vue {
     else this.btnWithdrawDisabled = true
   }
 
+  async reloadPairsBalance() {
+    this.updateLoading = true
+    console.log('pairsLoadComplete=', this.pairObj.pairsLoadComplete)
+    console.log('this.pairInfo=', this.pairInfo)
+    this.pairInfo = await this.pairObj.getTokensBalance(this.pairInfo)
+    this.$store.dispatch('setSessionData', { key: this.pairsymbol, value: this.pairInfo })
+    this.updateLoading = false
+  }
+
   async created() {
     this.pairsymbol = this.$route.params && this.$route.params.pair
-    const jsonPairInfo: string | null = await this.$store.dispatch('getSessionData', { key: this.pairsymbol })
-    // console.log('jsonPairInfo=', jsonPairInfo)
+    const jsonPairInfo: any = await this.$store.dispatch('getSessionData', { key: this.pairsymbol })
+    console.log('jsonPairInfo=', jsonPairInfo)
 
     if (jsonPairInfo !== null) {
       this.pairInfo = JSON.parse(jsonPairInfo)

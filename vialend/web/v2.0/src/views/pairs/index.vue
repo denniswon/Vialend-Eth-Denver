@@ -137,7 +137,7 @@
                 <span class="sec-title">Pool Address:</span>
                 &nbsp;&nbsp;
                 <span class="sec-val">{{ currentPair.poolAddress }}</span>
-                <a :href="'https://goerli.etherscan.io/address/' + currentPair.poolAddress" style="cursor:hand" target="_black">
+                <a :href="poolAddressLink" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
@@ -147,7 +147,7 @@
                 <span class="sec-title">Vault Address:</span>
                 &nbsp;&nbsp;
                 <span class="sec-val">{{ currentPair.vaultAddress }}</span>
-                <a :href="'https://goerli.etherscan.io/address/' + currentPair.vaultAddress" style="cursor:hand" target="_black">
+                <a :href="vaultAddressLink" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
@@ -157,7 +157,7 @@
                 <span class="sec-title">Factory Address:</span>
                 &nbsp;&nbsp;
                 <span class="sec-val">{{ factoryAddress }}</span>
-                <a :href="'https://goerli.etherscan.io/address/' + factoryAddress" style="cursor:hand" target="_black">
+                <a :href="factoryAddressLink" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
@@ -167,7 +167,7 @@
                 <span class="sec-title">Strategy Address:</span>
                 &nbsp;&nbsp;
                 <span class="sec-val">{{ currentPair.strategyAddress }}</span>
-                <a :href="'https://goerli.etherscan.io/address/' + currentPair.strategyAddress" style="cursor:hand" target="_black">
+                <a :href="strategyAddressLink" style="cursor:hand" target="_black">
                   <svg-icon name="goto-detail" width="30" height="30" />
                 </a>
               </div>
@@ -330,6 +330,10 @@ export default class extends Vue {
     maxPrice: 0.0
   }
 
+  poolAddressLink = ''
+  vaultAddressLink = ''
+  factoryAddressLink = ''
+  strategyAddressLink = ''
   rebalanceTransHashLink = ''
   removePositionTransHashLink = ''
 
@@ -404,7 +408,7 @@ export default class extends Vue {
             _this.rebalanceTransHashLink = getEtherscanTx(receipt.transactionHash)
             _this.doRebalanceEtherscanDisable = false
             _this.$message('Rebalance submitted!')
-            // _this.loadTokensBalance()
+            _this.reloadPairsBalance()
           } else {
             _this.$message('Rebalance failed!')
           }
@@ -512,6 +516,7 @@ export default class extends Vue {
       await this.pairsData.loadPairsInfo()
     }
     this.factoryAddress = await this.$store.dispatch('getSessionData', { key: 'factoryAddress' })
+    this.factoryAddressLink = getEtherscanAddress(this.factoryAddress)
     console.log('factory address = ', this.factoryAddress)
     console.log('strategy address = ', this.currentPair.strategyAddress)
     console.log('vault address = ', this.currentPair.vaultAddress)
@@ -525,6 +530,9 @@ export default class extends Vue {
     console.log('pairSelectedIndex:', newVal, ',old value:', oldVal)
     console.log('pairsData.pairsList.get(pairSelectedIndex).token1.balanceInWallet=', this.pairsData.pairsList.get(0).token1.balanceInWallet)
     this.currentPair = this.pairsData.pairsList.get(newVal)
+    this.poolAddressLink = getEtherscanAddress(this.currentPair.poolAddress)
+    this.vaultAddressLink = getEtherscanAddress(this.currentPair.vaultAddress)
+    this.strategyAddressLink = getEtherscanAddress(this.currentPair.strategyAddress)
     this.pairsData.getTokensBalance(this.currentPair)
     this.loadPriceRange(this.currentPair)
     this.calculateRangeStatus()
@@ -574,6 +582,12 @@ export default class extends Vue {
   watchPriceRangeSliderTo(newVal: number, oldVal: number) {
     console.log('priceRangeSlider.to = ', newVal, 'old = ', oldVal)
     this.rangeForm.maxPrice = newVal
+  }
+
+  reloadPairsBalance() {
+    this.pairsData.getTokensBalance(this.currentPair)
+    this.loadPriceRange(this.currentPair)
+    this.calculateRangeStatus()
   }
 
   calculateRangeStatus() {

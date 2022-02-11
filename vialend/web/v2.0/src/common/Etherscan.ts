@@ -8,7 +8,10 @@ export function getEtherscanTx(txHash:string) {
 
 export function getEtherscanAddress(address:string) {
   console.log('Etherscan store.state.chainId:', store.state.chainId)
-
-  const link = CHAININFO[store.state.chainId].etherscanAddressLink
-  return link.concat(address)
+  if (store.state.chainId > 0) {
+    const link = CHAININFO[store.state.chainId].etherscanAddressLink
+    return link.concat(address)
+  } else {
+    return ''
+  }
 }
