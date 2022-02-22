@@ -19,7 +19,7 @@ import (
 
 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby, 7: ROPSTEN or ROPSTENLOCAL
 var _useGETH = false
-var Networkid = 0
+var Networkid = 6
 var Account = 0
 var ProviderSortId = 0
 

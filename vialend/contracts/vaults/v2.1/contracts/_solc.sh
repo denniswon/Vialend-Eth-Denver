@@ -48,3 +48,8 @@ solc --optimize --overwrite --bin test.sol -o ../build
 // WARNING *** suspect this to be run on linux caused problem that deposit and withdraw display name on etherscan changed to transfer*
 //go run "/mnt/c/Users/xdotk/torukmakto/vialend/contracts/vaults/v2.0/scripts/index.go"
 //go run ../scripts/auto/event/main.event.go -l Deposit
+
+
+solc --optimize --overwrite --abi WPowerPerp.sol -o ../../build
+solc --optimize --overwrite --bin WPowerPerp.sol -o ../../build
+/usr/bin/abigen --abi=../../build/WPowerPerp.abi --bin=../../build/WPowerPerp.bin --pkg=api --out=../../deploy/Squeeth/WPowerPerp.go
