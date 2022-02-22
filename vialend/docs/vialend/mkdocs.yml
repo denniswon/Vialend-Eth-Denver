@@ -16,5 +16,7 @@ nav:
    
     - <p><b>Frontend</b></p>: Frontend.md
 
+    - <p><b>Dev-Note</b></p>: dev-note.md
+
     - <p><b>Use mkDocs</b></p>: _note.md
   

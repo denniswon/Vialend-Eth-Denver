@@ -148,8 +148,6 @@ elef (goerli ): 0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a
 1. Change token name and symbol C:\Users\xdotk\go\src\goblockchain\Practice\Tokens\erc20\contracts\token.sol
 
 2. wsl  
- /// solc-select use 0.7.6
- /// cd /mnt/c/Users/xdotk/go/src/goblockchain/Practice/tokens/erc20/contracts 
 	
   solc solc --optimize --overwrite --bin token.sol -o ../build
   solc solc --optimize --overwrite --bin token.sol -o ../build
@@ -263,8 +261,6 @@ weth: 0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6
 
 //use wsl 
 
-solc-select use 0.7.5 
-// or /home/eric/.local/bin/solc-select use 0.7.5\
 
 solc --optimize --overwrite --abi FundKeeper.sol -o ../build
 solc --optimize --overwrite --bin FundKeeper.sol -o ../build
@@ -421,14 +417,14 @@ source ~/.profile
 https://geth.ethereum.org/docs/install-and-build/installing-geth
 
 >>>>>>>>>>>>>>>>>>>>>> solc version select >>>>>>>>>>>>>>>>>>>
-install solc
+#install solc
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-#windows 
+#on windows 
 downlowd solc package https://github.com/ethereum/solidity/releases
 
 
-#linux 
+#on linux 
 solc-select use 0.8.10
 solc-select use 0.8.6
 solc-select use 0.7.6
@@ -441,14 +437,16 @@ solc-select versions
 Display the currently installed versions:
 
 
+## Check Available versions to install:
 solc-select install
-Available versions to install:
+
 0.3.6
 0.4.0
 ...
 0.8.0
 0.8.1
 
+## install solc + version 
 solc-select install 0.8.10
 solc-select install 0.5.16
 solc-select install 0.4.18
@@ -456,9 +454,14 @@ Installing '0.5.16'...
 Version '0.5.16' installed.
 
 
+python
+
+### install tkinter
+	sudo apt-get install python3-tk
+	
 
 
-ERRORS TROUBLESHOOTING:
+TROUBLESHOOTING  ERRORS:
 
 Fail with error 'SafeERC20: low-level call failed'
 查看转出账号中的余额是否不足
@@ -505,7 +508,165 @@ OUT OF GAS. check gas limit and gas in GetSignature()
 	calling TxConfirm(tx.Hash())
 	goerli tx : 0x4d432c2ef310242b004c5b3fe0955b66e0d53782eccf1d2bc2107d9f5dba4266
 	
+	`troubleshooting` 
+		check the error line in each file
 	`cause: 	` -  
+		有可能是ropsten 网络的问题。 
 	
 	`solution: 	` - 
+		加个Sleep 再试一次
 	
+	
+### ERROR  eth client -
+	
+	getEthClient err:websocket: bad handshake (HTTP status 200 OK)
+	
+	`WHEN` 
+		change network nodes to GETH. 
+		
+	`troubleshooting` 
+		
+	`cause: 	` -  
+		wrong host name. 
+	
+	`solution: 	` - 
+		change the http://localhost:8546 -> http://GETH SERVER IP:8546
+
+
+### ERROR 
+	panic: Returned error: getDeleteStateObject (a0df350d2637096571f7a701cbc1c5fde30df76a) error: no suitable peers available
+
+	`WHEN` 
+		fork geth nodes from ganache. 
+		
+	`troubleshooting` 
+		
+	`cause: 	` -  
+		geth light mode 
+	
+	`solution: 	` - 
+		add --maxpeers 0 to run geth command
+		e.g.: geth --syncmode "light" --maxpeers 0 
+
+### ERROR 
+	getEthClient err:dial tcp 192.168.0.223:8546: connectex: No connection could be made because the target machine actively refused it.
+	
+		
+	`troubleshooting` 
+		To find out what port it’s listening on, and just as importantly which network interface, run:
+
+			sudo netstat -plutn
+			
+		If it’s running on 127.0.0.1 or ::1, it won’t be accessible outside of the Droplet.
+
+		check the GETH console screen and notice the http server started at 127.0.0.l
+		
+	`cause: 	` -  
+		wrong geth command usage. 
+	
+	`solution: 	` - 
+		wrong: geth --http --ws --http.addr 192.168.0.223 --http.port 8546
+		correct: geth --http --http.addr 192.168.0.223 --http.port 8546 --ws --ws.addr 192.168.0.223 --ws.port 8546 
+
+
+### ERROR liteide go
+	bal0 err no contract code at given address
+	
+	`cause: 	` -  
+		wrong geth NETWORK 
+	
+	`solution: 	` - 
+		check GETH nodes srever
+		
+### ERROR ganache
+	Error: Returned error: missing trie node 		
+		
+	`cause: 	` -  
+		connect ganache forked rpc 
+		when previously crashed in ganache-cli, and the --db foldername was given
+		
+	
+	`solution: 	` - 
+		clear --db /mnt/ganache-cli/db/mainnet  
+			cd /mnt/ganache-cli/db/mainnet  
+			rm -r *
+			
+		restart ganache-cli service
+		
+		NOTE:  lost previous env
+		
+	
+### ERROR ganache
+(node:1002251) UnhandledPromiseRejectionWarning: Error: The nonce generation function failed, or the private key was invalid
+    at Object.ecdsaSign (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:42:21465)
+    at Object.t.sign (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:12:107586)
+    at Object.t.ecsign (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:55:192358)
+    at e.sign (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:42:35612)
+    at e.sign (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:12:112393)
+    at e.t.hash (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:55:250934)
+    at e.u [as hash] (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:12:109246)
+    at c.combine (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:4:191603)
+    at new c (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:4:191270)
+    at Function.c.fromResults (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:4:192416)
+    at readyCall (/usr/local/lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:42:50402)
+(node:1002251) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This error originated either by throwing inside
+mise which was not handled with .catch(). (rejection id: 329)
+(node:1002251) [DEP0018] DeprecationWarning: Unhandled promise rejections are deprecated. In the future, promise rejections th
+zero exit code.
+
+	`when` - 		
+		run insdex.go  batch commands
+
+	`WHERE` 
+	
+		centos ssh
+		
+		ganache-cli fork mainnet 
+
+	`cause: 	` - 
+		  run batch commands
+	
+	`solution: 	` - 
+		. restart  ganache-cli fork
+		*note: lost previsou env and data
+		
+	`Reported by others:` - 
+		https://gitter.im/ConsenSys/truffle?at=62129d16d1b64840db2f67df#
+		https://github.com/trufflesuite/ganache/issues/948
+
+		
+### ERROR mkdocs
+Traceback (most recent call last):
+  File "c:\python39\lib\runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "c:\python39\lib\runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "C:\Python39\Scripts\mkdocs.exe\__main__.py", line 4, in <module>
+  File "c:\python39\lib\site-packages\mkdocs\__main__.py", line 13, in <module>
+    from mkdocs.commands import build, gh_deploy, new, serve
+  File "c:\python39\lib\site-packages\mkdocs\commands\build.py", line 12, in <module>
+    from mkdocs.structure.nav import get_navigation
+  File "c:\python39\lib\site-packages\mkdocs\structure\nav.py", line 4, in <module>
+    from mkdocs.structure.pages import Page
+  File "c:\python39\lib\site-packages\mkdocs\structure\pages.py", line 6, in <module>
+    import markdown
+  File "c:\python39\lib\site-packages\markdown\__init__.py", line 29, in <module>
+    from .core import Markdown, markdown, markdownFromFile  # noqa: E402
+  File "c:\python39\lib\site-packages\markdown\core.py", line 26, in <module>
+    from . import util
+  File "c:\python39\lib\site-packages\markdown\util.py", line 88, in <module>
+    INSTALLED_EXTENSIONS = metadata.entry_points(group='markdown.extensions')
+TypeError: entry_points() got an unexpected keyword argument 'group'
+
+
+	
+	`when: 	` -  mkdocs serve
+	
+	`cause: 	` -  unknown
+	
+	`where: 	` -  windows cmd
+	
+	`solution: 	` 
+		- reinstall markdown
+			- pip install git+https://github.com/Python-Markdown/markdown.git
+			

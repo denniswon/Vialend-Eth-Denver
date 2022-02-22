@@ -121,14 +121,14 @@ func main() {
 	// project.Init(-1, -1)
 
 	// // return
-	// s := project.Network.VaultStrat
-	// v := project.Network.Vault
+	s := project.Network.VaultStrat
+	v := project.Network.Vault
 	// project.ChangeStat(s, v, 1)
-	// project.GetStat(s, v)
+	project.GetStat(s, v)
 
 	// project.CheckActive("0x2a8179A7893d00B33D2d9DBe9F0e4bBf2Cb97DE7")
 	// project.Rebalance(400, 0)
-	// return
+	return
 
 	// project.FactoryPublicList()
 	// project.ViewVaults()

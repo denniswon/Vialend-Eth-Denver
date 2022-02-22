@@ -1,24 +1,4 @@
 # v2.0
-## ----- Quick Note ---- 
-
-Changes from old methods and properties:
-	
-	`maxTotalSupply`  - public `vaultCap`   - ViaVault
-	`governance`   	- function getAdmin()  - VaultFactory 
-	`team`		- function  getTeam()  - VaultFactory  
-	`uniPortion`	- public uniPortion  - VaultStrategy 
-	`protocolFee`     - protocolFeeRate - VaultStrategy 
-	
-	new：
-	
-	public compPortion  - VaultStrategy  
-	     compound potion rate， 可以从0 - 100
-	
-	uint256 public individualCap;   - ViaVault  
-		用户个人最大可存入的数额 
-	
-	function getPrice() public method.   -- VaultStrategy 
-		得到 两个token 之间的价格， 比如 weth/ usdc ，  getPrice() 返回4000，  即为 1 weth = 4000 usdc 
 
 ## ----- Pseudo Scripts ----- 
 
@@ -28,37 +8,41 @@ Changes from old methods and properties:
 	price = strategy.getPrice()
 	amount0 = weth . balanceOf(user address)
 	amount1= usdc.balanceOf(user address)
-	totalInUSDC = amount0 * price + amount1
+	totalInUSDC = amount0 * price / 1e18 + amount1
 	current deposit display = totalInUSDC / 10^usdc.decimals
 
 ### GetTVL  
-	get balanceOf vault
-	get balanceOf strategy
-	get position in uni v3   
-	get position in lending
-	get position in squeeth
-	get position in dydx
+	*  get balanceOf vault
+	*  get balanceOf strategy
+	*  get position in uni v3   
+	*  get position in lending
+	*  get position in squeeth
+	*  get position in dydx
 	
-	GetTVL = accumulate above 
+*  GetTVL = accumulate above 
 	
-	referal: func GetTVL() in testVault.go
+`referal: func GetTVL() in testVault.go`
 	
 		
 ## ----- Contracts ----- 
 ### ViaVault.sol
-	. funds vault. 
-	. manage funds deposit/withdraw and calculate shares
+
+* Holds token funds. 
+* To be authorized ONLY to transfer funds to it's VaultStrategy which registered in VaultFactory. 
+* 10% funds reserved in the vault for fast withdrawal.
 	 
 ### VaultStrategy.sol
-	. manage strategies
-	. manage rebalance 
+* Manipulate token pairs in Uniswap, Compound, Options/futures protocols (such as Opyn/Squeeth, dydx, 0x,, etc) 
+* Funds taken from related vault
+* vault can call all funds back to vault in case there is emergency.
+* rebalance is implemented in this contract.
 	 
 ### VaultFactory.sol
-	. administration of vaults and strategies
-	. vault and strategy registration
-	. set/get admin and team 
-	. change vault status
-	. call deployer to create vault in air
+* administration of vaults and strategies
+* vault and strategy registration
+* set/get admin and team 
+* change vault status
+* call deployer to create vault in air
 	
 ## ----- Public features ----- 
 ### VaultFactory
@@ -80,7 +64,7 @@ Changes from old methods and properties:
     function setTeam(address _team) external;
   	function changeStat(address _strategy, address _vault, uint _stat) external;   // change status of vault and strategy
 	function getCount() external; 	 // get stored vaults array size
-	function getStat(address) external view returns(uint);		// get status of vault and strategy. 1 = active
+	function getStat(address) external view returns(uint);		// get status of vault and strategy1 = active
 	function getPair0(address _addr) external view returns(address);		// get vault or strategy address by given strategy or vault address
 
 

@@ -374,6 +374,39 @@ var Networks = [...]Params{
 		},
 		[]AccountStruct{},
 	},
+	{ ///7  ropsten
+		[]string{}, ///  provider url
+
+		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
+		"", //callee
+		[11]string{},
+
+		"0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a", //tokenA Weth
+		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
+		"0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e", //ctoken0
+		"0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1", //ctoken1
+		"",   //VaultFactory
+		50,   //time pending interval
+		"",   //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
+		"",   // swap router
+		"",   // tto  token
+		"",   //vault address
+		3000, // fee
+		"",   // VaultBridge
+		"",   //VaultStrat
+
+		LendingStruct{
+			WETH:  "0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a",
+			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C",
+			CUSDC: "0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1",
+			CWBTC: "0x0014F450B8Ae7708593F4A46F8fa6E5D50620F96",
+			WBTC:  "0x577D296678535e4903D59A4C929B718e1D575e0A",
+			CDAI:  "0x6D7F0754FFeb405d23C51CE938289d4835bE3b14",
+			DAI:   "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
+			CETH:  "0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e",
+		},
+		[]AccountStruct{},
+	},
 }
 
 func ChangeAccount(account int) {
@@ -555,7 +588,7 @@ func Init(nid int, acc int) {
 
 func loadEnv() {
 
-	networkName := map[int]string{0: "MAINNET", 1: "LOCAL", 2: "LOCAL", 3: "GOERLI", 4: "GOERLI", 5: "GOERLI", 6: "RINKEBY"}
+	networkName := map[int]string{0: "MAINNET", 1: "LOCAL", 2: "LOCAL", 3: "GOERLI", 4: "GOERLI", 5: "GOERLI", 6: "RINKEBY", 7: "ROPSTEN"}
 
 	i := 0
 
