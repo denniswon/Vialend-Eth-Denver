@@ -33,15 +33,17 @@ export default {
       max_postfix: '+',
       extra_classes: '',
       onFinish: (data) => {
-        console.log(data)
-        // this.$emit('slideFinish', { from: data.from, to: data.to })
+        // console.log('ionRangeSlider data = ', data)
+        this.$store.state.priceRangeFrom = data.from
+        this.$store.state.priceRangeTo = data.to
+        this.$emit('slideFinish', { from: data.from, to: data.to })
       }
     })
     this.rangeSliderObject = jQuery(this.$refs.range_input).data('ionRangeSlider')
   },
   methods: {
     sayHello() {
-      console.log('hi')
+      console.log('hi , from :', this.from)
     },
     doUpdate(min, max, from, to) {
       console.log('min=', min)

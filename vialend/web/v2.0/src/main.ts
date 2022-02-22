@@ -22,6 +22,10 @@ import * as filters from '@/filters'
 import Cryptoicon from 'vue-cryptoicon'
 import icons from 'vue-cryptoicon/src/icons'
 import VueApexCharts from 'vue-apexcharts'
+import VueClipboard from 'vue-clipboard2'
+
+VueClipboard.config.autoSetContainer = true
+Vue.use(VueClipboard)
 
 Vue.use(VueApexCharts)
 

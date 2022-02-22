@@ -1,65 +1,52 @@
 <template>
   <div class="navbar-container">
-    <hamburger id="hamburger-container"
-               :is-active="sidebar.opened"
-               class="hamburger-container"
-               @toggle-click="toggleSideBar" />
+    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container" @toggle-click="toggleSideBar" />
     <div class="btn-nav">
       <router-link to="/">
-        <el-button :type="$route.meta.title === 'products' ? 'primary' : ''"
-                   size="small">Products</el-button>
-      </router-link>&nbsp;&nbsp;
+        <el-button :type="$route.meta.title === 'products' ? 'primary' : ''" size="small">Products</el-button>
+      </router-link>
+      &nbsp;&nbsp;
       <router-link to="/portfolio">
-        <el-button :type="$route.meta.title === 'portfolio' ? 'primary' : ''"
-                   size="small">Portfolio</el-button>
+        <el-button :type="$route.meta.title === 'portfolio' ? 'primary' : ''" size="small">Portfolio</el-button>
       </router-link>
     </div>
     <div class="right-menu">
-      <div class="newmsgicon">
-        <el-button type="text">Unerified</el-button>
-      </div>
-      <div class="newmsgicon">
-        <svg-icon name="newmsg"
-                  width="26px"
-                  height="26px"></svg-icon>
-      </div>
-      <!-- <button @click="logout">Logout</button> -->
       <div class="btnnetwork">
-        <div v-if="$store.state.isConnected === false"
-             :class="[walletButtonClass, disConnectClass]">
-          <a href="#"
-             @click="connectWallet">Connect Wallet</a>
+        <div v-if="$store.state.isConnected === false">
+          <span class="unerified">Unerified</span>
         </div>
-        <div v-else-if="$store.state.isConnected && $store.state.validNetwork"
-             :class="[walletButtonClass, connectClass]">
+        <div v-else-if="$store.state.isConnected && $store.state.validNetwork">
+          <el-select class="selectNetwork" v-model="selectedNetworkId" placeholder="Please select">
+            <el-option v-for="item in supportedChainList._getData()" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </div>
+      </div>
+      <div class="newmsgicon">
+        <svg-icon name="newmsg" width="26px" height="26px"></svg-icon>
+      </div>
+      <div class="btnnetwork">
+        <div v-if="$store.state.isConnected === false" :class="[walletButtonClass, disConnectClass]">
+          <a href="#" @click="connectWallet">Connect Wallet</a>
+        </div>
+        <div v-else-if="$store.state.isConnected && $store.state.validNetwork" :class="[walletButtonClass, connectClass]">
           <!-- <a href="#" @click="disconnectWallet">{{ $store.state.currentAccount }}</a> -->
-
-          <el-popover placement="bottom"
-                      width="180"
-                      @show="showWalletMenu"
-                      @hide="hideWalletMenu"
-                      trigger="click">
+          <el-popover placement="bottom" width="180" @show="showWalletMenu" @hide="hideWalletMenu" trigger="click">
             <div class="connect-menu">
               <ul>
                 <li>CHANGE WALLET</li>
-                <li>COPY ADDRESS</li>
-                <li>OPEN IN ETHERSCAN</li>
+                <li id="copyaddr" @click="copyAddress()">COPY ADDRESS</li>
+                <li><a :href="'https://goerli.etherscan.io/address/' + $store.state.currentAccount" target="_blank">OPEN IN ETHERSCAN</a></li>
                 <li @click="disconnectWallet">DISCONNECT</li>
               </ul>
             </div>
-            <el-link slot="reference"
-                     :underline="false">{{ formatWalletAddress($store.state.currentAccount)
-              }}<i :class="[
-                  'el-select__caret',
-                  'el-icon-arrow-up',
-                  walletMenuVisible ? 'is-reverse' : ''
-                ]"></i></el-link>
+            <el-link slot="reference" :underline="false">
+              {{ formatWalletAddress($store.state.currentAccount) }}
+              <i :class="['el-select__caret', 'el-icon-arrow-up', walletMenuVisible ? 'is-reverse' : '']"></i>
+            </el-link>
           </el-popover>
         </div>
-        <div v-else
-             :class="[walletButtonClass, disConnectClass]">
-          <a href="#"
-             @click="connectWallet">Wrong network</a>
+        <div v-else :class="[walletButtonClass, disConnectClass]">
+          <a href="#" @click="connectWallet">Wrong network</a>
         </div>
       </div>
     </div>
@@ -72,8 +59,14 @@ import { getWeb3Instance, contractInstance } from '../../../common/Web3'
 import { AppModule } from '@/store/modules/app'
 import { UserModule } from '@/store/modules/user'
 import Hamburger from '@/components/Hamburger/index.vue'
+import { checkChain, SupportedChainId } from '@/constants/chains'
+import { changeAccount, checkValidAdmin } from '@/common/Account'
+import ArrayList from '@/common/ArrayList'
+import ChainInfo from '@/model/ChainInfo'
+import { log } from 'console'
+// import Clipboard from 'clipboard'
 // import { AbiItem } from 'web3-utils'
-const VaultAdminABI = require('../../../abi/VaultAdmin.json')
+const VaultBridgeABI = require('../../../abi/VaultBridge.json')
 
 @Component({
   name: 'Navbar',
@@ -83,7 +76,9 @@ const VaultAdminABI = require('../../../abi/VaultAdmin.json')
 })
 export default class extends Vue {
   web3 = getWeb3Instance()
-  isAdmin = false
+  supportedChainList = new ArrayList<ChainInfo>()
+  selectedNetworkId = 0
+  isAdmin = '0'
   validNetwork = false
   isConnected = this.$store.state.isConnected
   walletButtonClass = 'walletButton'
@@ -92,6 +87,7 @@ export default class extends Vue {
   containerClass = 'container'
   centerDialogVisible = false
   walletMenuVisible = false
+  doDisconnect = false
 
   get sidebar() {
     return AppModule.sidebar
@@ -111,26 +107,35 @@ export default class extends Vue {
 
   logout() {
     UserModule.LogOut()
-    this.$router
-      .push(`/login?redirect=${this.$route.fullPath}`)
-      .catch((err) => {
-        console.warn(err)
-      })
+    this.$router.push(`/login?redirect=${this.$route.fullPath}`).catch(err => {
+      console.warn(err)
+    })
   }
 
   @Watch('$store.state.isConnected')
   walletConnected(newStatus: boolean, oldStatus: boolean) {
-    console.log(
-      '$store.state.isConnected newStatus=',
-      newStatus,
-      ';oldStatus=',
-      oldStatus
-    )
+    console.log('$store.state.isConnected newStatus=', newStatus, ';oldStatus=', oldStatus)
     this.$store.state.isConnected = newStatus
-    console.log(
-      'this. header isConnected watch=',
-      this.$store.state.isConnected
-    )
+    console.log('this. header isConnected watch=', this.$store.state.isConnected)
+  }
+
+  @Watch('$store.state.chainId')
+  async watchNetworkChainId(newVal: number, oldVal: number) {
+    console.log('navbar ->chainid newVal=', newVal, 'oldVal=', oldVal)
+    this.selectedNetworkId = newVal
+  }
+
+  @Watch('selectedNetworkId')
+  async watchSelectedNetworkId(newVal: number, oldVal: number) {
+    console.log('navbar ->selectedNetworkId newVal=', newVal, ',hexVal=0x' + newVal.toString(16))
+    try {
+      await (window as any).ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + newVal.toString(16) }]
+      })
+    } catch (switchError) {
+      console.log('switch Chain error:', switchError)
+    }
   }
 
   showWalletMenu(): void {
@@ -154,95 +159,23 @@ export default class extends Vue {
 
   mounted() {
     (window as any).connectWallet = this.connectWallet
-    this.fn()
-  }
-
-  async checkValidAdmin() {
-    console.log('(window as any).ethereum.selectedAddress =', (window as any).ethereum.selectedAddress)
-    if (
-      (window as any).ethereum.selectedAddress !== null &&
-      (window as any).ethereum.selectedAddress !== undefined
-    ) {
-      const vaultAdminContract = await contractInstance(
-        VaultAdminABI,
-        '0xb6F0049e37D32dED0ED2FAEeE7b69930FA49A879'
-      )
-      this.isAdmin = await vaultAdminContract.methods
-        .authAdmin((window as any).ethereum.selectedAddress)
-        .call()
-      console.log('isAdmin=', this.isAdmin)
-      // this.$store.state.isAdmin = this.isAdmin
-      this.$store.state.isAdmin = true
-      UserModule.ChangeRoles(this.isAdmin ? 'admin' : 'user').then(() => {
-        this.$emit('role changed')
-      })
-      localStorage.setItem('isAdmin', this.isAdmin.toString())
-      // var vaultAdminList = await vaultAdminContract.methods.getAdmin().call()
-      // console.log('admin list=', vaultAdminList)
-    }
-  }
-
-  fn() {
-    (window as any).ethereum.autoRefreshOnNetworkChange = false;
-    (window as any).ethereum.on('accountsChanged', async() => {
-      console.log('accountsChanged')
-      if (await this.checkChain()) {
-        this.changeAccount()
-        this.checkValidAdmin()
-      }
-    });
-    (window as any).ethereum.on('networkChanged', async() => {
-      console.log('networkChanged')
-      if (await this.checkChain()) {
-        this.changeAccount()
-        this.checkValidAdmin()
-      }
-    })
-    ;(window as any).ethereum.on('disconnect', () => {
-      console.log('metamask disconnect')
-      this.$store.state.currentAccount = ''
-      this.$store.state.isConnected = false
-      this.isConnected = false
-    })
   }
 
   handleCommand(command: any) {
     this.$message('click on item ' + command)
   }
 
-  async checkChain() {
-    this.$store.state.chainId = await this.web3.eth.getChainId()
-    console.log('check chain id=', this.$store.state.chainId)
-    if (
-      this.$store.state.availableChainId.includes(this.$store.state.chainId)
-    ) {
-      // this.$store.state.isConnected = true
-      this.$store.state.validNetwork = true
-      return true
-    } else {
-      this.isAdmin = false
-      this.$store.state.isConnected = false
-      this.$store.state.validNetwork = false
-      return false
-    }
-  }
-
-  connectWallet() {
-    if (
-      (window as any).ethereum.selectedAddress !== null &&
-      (window as any).ethereum.selectedAddress !== undefined
-    ) {
-      if (!this.$store.state.validNetwork) {
+  async connectWallet() {
+    this.$store.state.doDisconnect = false
+    if ((window as any).ethereum.selectedAddress !== null && (window as any).ethereum.selectedAddress !== undefined) {
+      if (await checkChain()) {
+        changeAccount()
+        checkValidAdmin()
+      } else {
         this.$message({
-          message: 'Please select Goerli Test Network.',
+          message: 'Wrong Network!',
           type: 'warning'
         })
-      } else {
-        this.$store.state.currentAccount = (
-          window as any
-        ).ethereum.selectedAddress
-        this.$store.state.isConnected = true
-        this.$store.state.validNetwork = true
       }
     } else {
       console.log('call connectWallet')
@@ -250,7 +183,6 @@ export default class extends Vue {
         .request({ method: 'eth_requestAccounts' })
         .then(this.requestAccountsCallBack)
         .catch((err: any) => {
-          // Some unexpected error.
           // For backwards compatibility reasons, if no accounts are available,
           // eth_accounts will return an empty array.
           console.error(err)
@@ -272,53 +204,48 @@ export default class extends Vue {
     }
   }
 
-  changeAccount() {
-    if (
-      (window as any).ethereum.selectedAddress !== null &&
-      (window as any).ethereum.selectedAddress !== undefined
-    ) {
-      this.$store.state.isConnected = true
-      this.$store.state.currentAccount = (
-        window as any
-      ).ethereum.selectedAddress
-    } else {
-      this.$store.state.currentAccount = ''
-      this.$store.state.isConnected = false
-      this.isConnected = false
-      this.isAdmin = false
-    }
-  }
-
   disconnectWallet() {
     this.$store.state.isConnected = false
     this.$store.state.currentAccount = ''
+    this.$store.state.isAdmin = false
+    this.$store.state.doDisconnect = true
+    UserModule.ChangeRoles('user').then(() => {
+      this.$emit('role changed')
+    })
     console.log('Disconnect wallet!')
   }
 
-  async created() {
-    if (await this.checkChain()) {
-      if (
-        (window as any).ethereum.selectedAddress !== null &&
-        (window as any).ethereum.selectedAddress !== undefined
-      ) {
-        console.log('currentAccount is connected.')
-        this.$store.state.currentAccount = (
-          window as any
-        ).ethereum.selectedAddress
-        this.$store.state.isConnected = true
-        this.isConnected = true
-        this.checkValidAdmin()
-      } else {
-        console.log('ethereum.selectedAddress is null.')
-        this.$store.state.currentAccount = ''
-        this.$store.state.isConnected = false
-        this.isConnected = false
+  copyAddress() {
+    const _this = this
+    this.$copyText(this.$store.state.currentAccount)
+      .then(() => {
+        _this.$message.success('Address copied.')
+      })
+      .catch(() => {
+        _this.$message.success('Copy failed.')
+      })
+  }
+
+  loadSupportedNetworkList() {
+    for (const item in SupportedChainId) {
+      if (isNaN(Number(item))) {
+        // this.supportedChainList.push(item)
       }
-    } else {
-      console.log('there is invalid network.')
-      this.$store.state.currentAccount = ''
-      this.$store.state.isConnected = false
-      this.isConnected = false
+    }
+  }
+
+  created() {
+    // this.loadSupportedNetworkList()
+    if (this.supportedChainList.size() === 0) {
+      Object.entries(SupportedChainId).forEach(([key, value]) => {
+        if (isNaN(Number(key))) {
+          console.log(key, value)
+          const chainInfo = new ChainInfo()
+          chainInfo.id = Number(value)
+          chainInfo.name = key
+          this.supportedChainList.add(chainInfo)
+        }
+      })
     }
   }
 }
@@ -335,6 +262,12 @@ export default class extends Vue {
 </style>
 
 <style lang="scss" scoped>
+.unerified {
+  color: #1890ff;
+}
+.selectNetwork {
+  width: 120px;
+}
 .navbar-container {
   height: 50px;
   overflow: hidden;
@@ -533,11 +466,6 @@ export default class extends Vue {
   vertical-align: middle;
   margin-right: 10px;
 }
-.svg-icon {
-  vertical-align: 0px !important;
-}
-.connect-menu {
-}
 .connect-menu ul {
   margin-block-start: 0.5em !important;
   margin-block-end: 0.5em !important;
@@ -551,7 +479,18 @@ export default class extends Vue {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
   line-height: 36px;
+  cursor: pointer;
 }
+.connect-menu li:hover {
+  color: #f56c6c;
+}
+.connect-menu li a {
+  color: #ffffff;
+}
+.connect-menu li a:hover {
+  color: #f56c6c;
+}
+
 .el-select__caret {
   transition: transform 0.3s;
   transform: rotate(180deg);

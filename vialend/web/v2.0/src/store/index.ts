@@ -1,22 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { IAppState } from './modules/app'
-import { IUserState } from './modules/user'
-import { ITagsViewState } from './modules/tags-view'
-import { IErrorLogState } from './modules/error-log'
-import { IPermissionState } from './modules/permission'
-import { ISettingsState } from './modules/settings'
+import { getWeb3Instance } from '../common/Web3'
 
 Vue.use(Vuex)
-
-// export interface IRootState {
-//   app: IAppState
-//   user: IUserState
-//   tagsView: ITagsViewState
-//   errorLog: IErrorLogState
-//   permission: IPermissionState
-//   settings: ISettingsState
-// }
 
 // Declare empty store first, dynamically register all modules later.
 export default new Vuex.Store({
@@ -24,8 +10,12 @@ export default new Vuex.Store({
     name: 'Vialend',
     availableChainId: [5],
     pairsData: undefined,
+    factoryAddress: '',
     validNetwork: false,
     isAdmin: false,
+    doDisconnect: false,
+    priceRangeFrom: 0,
+    priceRangeTo: 0,
     tokenExchangeTable: [
       {
         id: '32610',
@@ -136,11 +126,32 @@ export default new Vuex.Store({
         return value
       }
     },
-    setPairInfo(state, dt) {
+    setSessionData(state, dt) {
       sessionStorage.setItem(dt.key, dt.value)
     },
-    getPairInfo(state, dt) {
+    getSessionData(state, dt) {
       return sessionStorage.getItem(dt.key)
+    },
+    removeSessionData(state, dt) {
+      sessionStorage.removeItem(dt.key)
+    },
+    getChainID() {
+      const web3 = getWeb3Instance()
+      return web3.eth.getChainId()
     }
+    // async checkChain() {
+    //   const web3 = getWeb3Instance()
+    //   this.state.chainId = await web3.eth.getChainId()
+    //   console.log('check chain id=', this.state.chainId)
+    //   if (this.state.availableChainId.includes(this.state.chainId)) {
+    //     this.state.validNetwork = true
+    //     return true
+    //   } else {
+    //     this.state.isAdmin = false
+    //     this.state.isConnected = false
+    //     this.state.validNetwork = false
+    //     return false
+    //   }
+    // }
   }
 })

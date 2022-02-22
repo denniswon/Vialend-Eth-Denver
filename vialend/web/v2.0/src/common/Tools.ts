@@ -9,7 +9,7 @@ export function formatWalletAddress(addr:string) {
 export function priceToTick(price:number, decimal0:number, decimal1:number) {
   console.log('price=', price, 'decimal0=', decimal0, 'decimal1=', decimal1)
   // return parseInt(Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001))
-  return Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001)
+  return parseInt((Math.log(price / Math.pow(10, (decimal0 - decimal1))) / Math.log(1.0001)).toString())
 }
 
 export function tickToPrice(tick:number, decimal0:number, decimal1:number) {

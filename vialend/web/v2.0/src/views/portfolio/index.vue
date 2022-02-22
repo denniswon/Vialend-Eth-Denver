@@ -42,29 +42,29 @@
       <div style="clear:both;height:30px;"></div>
       <div class="pf-title">Positions</div>
       <div class="part2">
-        <table class="table" v-loading="pairsData.pairsBaseInfoLoading"
-            element-loading-text="Loading"
-            element-loading-spinner="el-icon-loading"
-            element-loading-background="rgba(0, 0, 0, 0.8)">
-          <tr v-for="pair in pairsList._getData()"
-        :key="pair.id"
-        >
-            <td class="symbol">
-              <cryptoicon :symbol="pair.token1.symbol" size="60" />
-            </td>
-            <td>
-              <span class="token-title">{{ pair.token0.symbol }}-{{ pair.token1.symbol }}</span>
-              <br />
-              <span class="token-desc">Uniswap V3 Compound Yield Generator</span>
-            </td>
-            <td>
-              <span class="perc">{{Number(Number(pair.currentAPR).toFixed(2))}}%</span>
-            </td>
-            <td>
-              <span class="amount">{{Number(pair.tvlTotal0).toFixed(2)}} / {{Number(pair.tvlTotal1).toFixed(2)}}<br>
-                          ${{(Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2)}}</span>
-            </td>
-          </tr>
+        <table class="table" v-loading="pairsData.pairsBaseInfoLoading" element-loading-text="Loading" element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
+          <tbody v-for="pair in pairsList._getData()" :key="pair.id">
+            <tr v-if="pair.disabled === false">
+              <td class="symbol">
+                <cryptoicon :symbol="pair.token1.symbol" size="60" />
+              </td>
+              <td>
+                <span class="token-title">{{ pair.token0.symbol }}-{{ pair.token1.symbol }}</span>
+                <br />
+                <span class="token-desc">Uniswap V3 Compound Yield Generator</span>
+              </td>
+              <td>
+                <span class="perc">{{ Number(Number(pair.currentAPR).toFixed(2)) }}%</span>
+              </td>
+              <td>
+                <span class="amount">
+                  {{ Number(pair.tvlTotal0).toFixed(2) }} / {{ Number(pair.tvlTotal1).toFixed(2) }}
+                  <br />
+                  ${{ (Number(pair.tvlTotal0USD) + Number(pair.tvlTotal1USD)).toFixed(2) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -80,9 +80,9 @@ import PairsData from '../../common/PairsData'
   components: {}
 })
 export default class extends Vue {
-  exchangeTimer:any;
-  pairsData = new PairsData();
-  pairsList = this.pairsData.pairsList;
+  exchangeTimer: any
+  pairsData = new PairsData()
+  pairsList = this.pairsData.pairsList
 
   chartOptions = {
     chart: {
@@ -123,7 +123,7 @@ export default class extends Vue {
     return this.pairsData.pairsList.size()
   }
 
-    @Watch('pairsListCount')
+  @Watch('pairsListCount')
   watchPairsListChange(newVal: number, oldVal: number) {
     console.log('Change of PairsList:', newVal, ',old value:', oldVal)
     this.pairsData.calculateAPR = true
@@ -136,91 +136,91 @@ export default class extends Vue {
     }
   }
 
-   @Watch('$store.state.currentAccount')
-    watchCurrentAccount(newVal:string, oldVal:string) {
-      console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
-      if (newVal !== '' && this.$store.state.validNetwork) {
-        console.log('currentAccount changed,pairlist size:', this.pairsData.pairsList.size())
-        if (this.pairsData.pairsList.size() === 0 && !this.pairsData.pairsBaseInfoLoading) {
-          this.pairsData.loadPairsInfo()
-        } else {
-          // this.pairsData.pairsListComplete = false
-          // this.loadMyPairsList()
-        }
+  @Watch('$store.state.currentAccount')
+  watchCurrentAccount(newVal: string, oldVal: string) {
+    console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
+    if (newVal !== '' && this.$store.state.validNetwork) {
+      console.log('currentAccount changed,pairlist size:', this.pairsData.pairsList.size())
+      if (this.pairsData.pairsList.size() === 0 && !this.pairsData.pairsBaseInfoLoading) {
+        this.pairsData.loadPairsInfo()
+      } else {
+        // this.pairsData.pairsListComplete = false
+        // this.loadMyPairsList()
       }
     }
+  }
 
-   getTokenRateOfUSD(symbol:string) {
-     // console.log('symbol=', symbol)
-     if (this.$store.getters.getPriceUSDBySymbol(symbol) !== undefined) {
-       // console.log('eth exchange table of ETH:', this.$store.getters.getPriceUSDBySymbol(symbol).price_usd)
-       return this.$store.getters.getPriceUSDBySymbol(symbol).price_usd
-     } else {
-       return -1
-     }
-   }
+  getTokenRateOfUSD(symbol: string) {
+    // console.log('symbol=', symbol)
+    if (this.$store.getters.getPriceUSDBySymbol(symbol) !== undefined) {
+      // console.log('eth exchange table of ETH:', this.$store.getters.getPriceUSDBySymbol(symbol).price_usd)
+      return this.$store.getters.getPriceUSDBySymbol(symbol).price_usd
+    } else {
+      return -1
+    }
+  }
 
-   exchangeTokensIntoUSD() {
-     if (this.$store.state.tokenExchangeRateLoaded) {
-       // this.myValueLocked_Token0Sum = 0
-       // this.myValueLocked_Token1Sum = 0
-       let token0RateOfUSD = 0
-       let token1RateOfUSD = 0
-       for (let i = 0; i < this.pairsList.size(); i++) {
-         token0RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token0.symbol)
-         token1RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token1.symbol)
-         console.log('token0 RateOfUSD=', token0RateOfUSD)
-         console.log('token1 RateOfUSD=', token1RateOfUSD)
-         if (this.pairsList.get(i).tvlTotal0 >= 0) this.pairsList.get(i).tvlTotal0USD = Number(this.pairsList.get(i).tvlTotal0) * Number(token0RateOfUSD)
-         if (this.pairsList.get(i).tvlTotal1 >= 0) this.pairsList.get(i).tvlTotal1USD = Number(this.pairsList.get(i).tvlTotal1) * Number(token1RateOfUSD)
-         this.pairsList.get(i).tvl = this.pairsList.get(i).tvlTotal0USD + this.pairsList.get(i).tvlTotal1USD
-         //  if (this.pairsList.get(i).myValueToken0Locked >= 0) {
-         //    this.myValueLocked_Token0Sum += this.pairsList.get(i).myValueToken0Locked
-         //    this.pairsList.get(i).myValueToken0USDLocked = Number(this.pairsList.get(i).myValueToken0Locked) * Number(token0RateOfUSD)
-         //  }
-         //  if (this.pairsList.get(i).myValueToken1Locked >= 0) {
-         //    this.myValueLocked_Token1Sum += this.pairsList.get(i).myValueToken1Locked
-         //    this.pairsList.get(i).myValueToken1USDLocked = Number(this.pairsList.get(i).myValueToken1Locked) * Number(token1RateOfUSD)
-         //  }
-       }
-       //    if (this.myValueLocked_Token0Sum >= 0 && this.myValueLocked_Token1Sum >= 0) {
-       //      this.myValueLocked = this.myValueLocked_Token0Sum * Number(token0RateOfUSD) + this.myValueLocked_Token1Sum * Number(token1RateOfUSD)
-       //    }
-       // console.log('myValueLocked_Token0Sum=', this.myValueLocked_Token0Sum, 'myValueLocked_Token1Sum=', this.myValueLocked_Token1Sum)
-       // this.myEarnedValue = this.fees0Total * Number(this.$store.state.token0RateOfUSD) + this.fees1Total * Number(this.$store.state.token1RateOfUSD)
-       // this.myEarnedValue = Number(this.userFee0Total) * Number(token0RateOfUSD) + Number(this.userFee1Total) * Number(token1RateOfUSD)
-     }
-     console.log('tokenExchangeRateLoaded1:', this.$store.state.tokenExchangeRateLoaded, 'this.pairsList.size()=', this.pairsList.size())
-   }
+  exchangeTokensIntoUSD() {
+    if (this.$store.state.tokenExchangeRateLoaded) {
+      // this.myValueLocked_Token0Sum = 0
+      // this.myValueLocked_Token1Sum = 0
+      let token0RateOfUSD = 0
+      let token1RateOfUSD = 0
+      for (let i = 0; i < this.pairsList.size(); i++) {
+        token0RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token0.symbol)
+        token1RateOfUSD = this.getTokenRateOfUSD(this.pairsList.get(i).token1.symbol)
+        console.log('token0 RateOfUSD=', token0RateOfUSD)
+        console.log('token1 RateOfUSD=', token1RateOfUSD)
+        if (this.pairsList.get(i).tvlTotal0 >= 0) this.pairsList.get(i).tvlTotal0USD = Number(this.pairsList.get(i).tvlTotal0) * Number(token0RateOfUSD)
+        if (this.pairsList.get(i).tvlTotal1 >= 0) this.pairsList.get(i).tvlTotal1USD = Number(this.pairsList.get(i).tvlTotal1) * Number(token1RateOfUSD)
+        this.pairsList.get(i).tvl = this.pairsList.get(i).tvlTotal0USD + this.pairsList.get(i).tvlTotal1USD
+        //  if (this.pairsList.get(i).myValueToken0Locked >= 0) {
+        //    this.myValueLocked_Token0Sum += this.pairsList.get(i).myValueToken0Locked
+        //    this.pairsList.get(i).myValueToken0USDLocked = Number(this.pairsList.get(i).myValueToken0Locked) * Number(token0RateOfUSD)
+        //  }
+        //  if (this.pairsList.get(i).myValueToken1Locked >= 0) {
+        //    this.myValueLocked_Token1Sum += this.pairsList.get(i).myValueToken1Locked
+        //    this.pairsList.get(i).myValueToken1USDLocked = Number(this.pairsList.get(i).myValueToken1Locked) * Number(token1RateOfUSD)
+        //  }
+      }
+      //    if (this.myValueLocked_Token0Sum >= 0 && this.myValueLocked_Token1Sum >= 0) {
+      //      this.myValueLocked = this.myValueLocked_Token0Sum * Number(token0RateOfUSD) + this.myValueLocked_Token1Sum * Number(token1RateOfUSD)
+      //    }
+      // console.log('myValueLocked_Token0Sum=', this.myValueLocked_Token0Sum, 'myValueLocked_Token1Sum=', this.myValueLocked_Token1Sum)
+      // this.myEarnedValue = this.fees0Total * Number(this.$store.state.token0RateOfUSD) + this.fees1Total * Number(this.$store.state.token1RateOfUSD)
+      // this.myEarnedValue = Number(this.userFee0Total) * Number(token0RateOfUSD) + Number(this.userFee1Total) * Number(token1RateOfUSD)
+    }
+    console.log('tokenExchangeRateLoaded1:', this.$store.state.tokenExchangeRateLoaded, 'this.pairsList.size()=', this.pairsList.size())
+  }
 
-   created() {
-     this.showDebugLog()
-     if (this.$store.state.validNetwork && this.$store.state.isConnected) {
-       if (this.pairsData.pairsList.size() > 0) {
-         for (let i = 0; i < this.pairsList.size(); i++) {
-           this.pairsData.pairsList.get(i).gettingData = true
-           this.pairsData.calculateAPR = true
-           this.pairsData.getPairPublicData(this.pairsData.pairsList.get(i))
-         }
-       } else {
-         this.pairsData.loadPairsInfo()
-       }
-     }
-   }
+  created() {
+    this.showDebugLog()
+    if (this.$store.state.validNetwork && this.$store.state.isConnected) {
+      if (this.pairsData.pairsList.size() > 0) {
+        for (let i = 0; i < this.pairsList.size(); i++) {
+          this.pairsData.pairsList.get(i).gettingData = true
+          this.pairsData.calculateAPR = true
+          this.pairsData.getPairPublicData(this.pairsData.pairsList.get(i))
+        }
+      } else {
+        this.pairsData.loadPairsInfo()
+      }
+    }
+  }
 
-   mounted() {
-     this.exchangeTimer = setInterval(this.exchangeTokensIntoUSD, 1000)
-   }
+  mounted() {
+    // this.exchangeTimer = setInterval(this.exchangeTokensIntoUSD, 1000)
+  }
 
-   beforeDestroy() {
-     clearInterval(this.exchangeTimer)
-   }
+  beforeDestroy() {
+    clearInterval(this.exchangeTimer)
+  }
 
-   showDebugLog() {
-     console.log('this.$store.state.validNetwork=', this.$store.state.validNetwork)
-     console.log('this.$store.state.isConnected=', this.$store.state.isConnected)
-     console.log('this.pairsData.pairsList.size()=', this.pairsData.pairsList.size())
-   }
+  showDebugLog() {
+    console.log('this.$store.state.validNetwork=', this.$store.state.validNetwork)
+    console.log('this.$store.state.isConnected=', this.$store.state.isConnected)
+    console.log('this.pairsData.pairsList.size()=', this.pairsData.pairsList.size())
+  }
 
   // mounted() {
   //   const ctx = document.getElementById('myChart')
@@ -320,13 +320,16 @@ export default class extends Vue {
   font-size: 16px;
   font-family: Arial, Helvetica, sans-serif;
 }
+.table > :not(:first-child) {
+  border-top: none;
+}
 .part2 {
   height: auto;
-  border: 2px solid #000000;
+  border: 0px solid #000000;
   border-radius: 16px;
 }
-.part2 /deep/ .el-loading-mask{
-    border-radius: 16px !important;
+.part2 /deep/ .el-loading-mask {
+  border-radius: 16px !important;
 }
 .part2 .table {
   width: 100%;

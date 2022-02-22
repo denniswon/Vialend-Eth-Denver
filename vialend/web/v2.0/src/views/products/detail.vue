@@ -1,10 +1,11 @@
 <template>
-   <div class="pairs-container">
+  <div class="pairs-container" v-loading="updateLoading">
     <div class="pair-intro">
       <div class="pair-title-left">
         <div slot="header" class="clearfix card-title">
           <div class="block">
-            <el-tag size="small" hit>UNI-COMP</el-tag>&nbsp;&nbsp;
+            <el-tag size="small" hit>UNI-COMP</el-tag>
+            &nbsp;&nbsp;
             <el-tag class="tag-item" type="info" effect="plain" size="small">V1</el-tag>
           </div>
         </div>
@@ -15,11 +16,7 @@
             </div>
             <div class="text item">
               <span class="pair-current-deposits">Current Deposits</span>
-              <span class="pair-deposits-val">
-                {{ Number(pairInfo.currentDeposits / Math.pow(10, Number(pairInfo.token1.decimals))).toExponential(5) }}&nbsp;{{
-                pairInfo.token1.symbol
-                }}
-              </span>
+              <span class="pair-deposits-val">{{ Number(pairInfo.currentDeposits / Math.pow(10, Number(pairInfo.token1.decimals))).toExponential(5) }}&nbsp;{{ pairInfo.token1.symbol }}</span>
             </div>
             <div style="clear:both;"></div>
             <div class="text item">
@@ -43,9 +40,11 @@
     <div class="vault-info">
       <div class="vault-title">Vault Strategy</div>
       <div class="vault-info-left">
-        <div
-          class="vault-intro"
-        >Lorem ipsum dolor sit amet,consectetur adipiscing elit.Praesent tellus leo,accumsan ut enim sed,aliquam aliquam nibh.In ultrices ex eget odio facilisis,vitae laoreet dui efficitur.Nam fringilla enim ac tincidunt facilisis.Nam sagittis mi ligula,in posuere arcu interdum in.Quisque sodales eros elit, a ultrices sapien dapibus vitae.Donec tempor,magna eget pharetra sodales,nisi libero</div>
+        <div class="vault-intro">
+          Lorem ipsum dolor sit amet,consectetur adipiscing elit.Praesent tellus leo,accumsan ut enim sed,aliquam aliquam nibh.In ultrices ex eget odio facilisis,vitae laoreet dui efficitur.Nam
+          fringilla enim ac tincidunt facilisis.Nam sagittis mi ligula,in posuere arcu interdum in.Quisque sodales eros elit, a ultrices sapien dapibus vitae.Donec tempor,magna eget pharetra
+          sodales,nisi libero
+        </div>
         <div class="slidershow">
           <el-carousel :interval="4000" type="card" height="200px">
             <el-carousel-item v-for="item in 6" :key="item">
@@ -58,129 +57,87 @@
         <el-tabs type="border-card" :stretch="true">
           <el-tab-pane label="Deposit">
             <div class="step_token">
-                <span class="token_balance">
-                  Amount:({{pairInfo.token0.symbol}})
-                </span>
-                <span class="token_textbox">
-                  <el-input
-                    v-model="newLiqudityToken0"
-                    placeholder="0.00"
-                    type="text"
-                    class="tokeninput"
-                    onkeypress="return /^[0-9]*[.,]?[0-9]*$/.test(this.value.concat(event.key))"
-                  >
-                  <i slot="suffix" class="el-input__icon"  @click="newLiqudityToken0 = pairInfo.token0.balanceInWallet">Max</i>
-                  </el-input>
-                </span>
+              <span class="token_balance">Amount:({{ pairInfo.token0.symbol }})</span>
+              <span class="token_textbox">
+                <el-input v-model="newLiqudityToken0" placeholder="0.00" type="text" class="tokeninput" onkeypress="return /^[0-9]*[.,]?[0-9]*$/.test(this.value.concat(event.key))">
+                  <i slot="suffix" class="el-input__icon" @click="newLiqudityToken0 = pairInfo.token0.balanceInWallet">Max</i>
+                </el-input>
+              </span>
             </div>
 
             <div class="step_token">
-                <span class="token_balance">
-                  Amount:({{pairInfo.token1.symbol}})
-                </span>
-                <span class="token_textbox">
-                  <el-input
-                    v-model="newLiqudityToken1"
-                    placeholder="0.00"
-                    type="text"
-                    class="tokeninput"
-                    onkeypress="return /^[0-9]*[.,]?[0-9]*$/.test(this.value.concat(event.key))"
-                  >
-                  <i slot="suffix" class="el-input__icon"  @click="newLiqudityToken1 = pairInfo.token1.balanceInWallet">Max</i>
-                  </el-input>
-                </span>
+              <span class="token_balance">Amount:({{ pairInfo.token1.symbol }})</span>
+              <span class="token_textbox">
+                <el-input v-model="newLiqudityToken1" placeholder="0.00" type="text" class="tokeninput" onkeypress="return /^[0-9]*[.,]?[0-9]*$/.test(this.value.concat(event.key))">
+                  <i slot="suffix" class="el-input__icon" @click="newLiqudityToken1 = pairInfo.token1.balanceInWallet">Max</i>
+                </el-input>
+              </span>
             </div>
-            <div class="action_list" :style="{display: (pairInfo.token0.tokenApproved ? 'none':'')}">
-              <el-button
-                type="primary"
-                :loading="pairInfo.token0.approveLoading"
-                @click="approveToken(pairInfo.token0)"
-                :style="{width: '100%'}"
-              >Approve {{pairInfo.token0.symbol}}</el-button>
+            <div class="action_list" :style="{display: pairInfo.token0.tokenApproved || pairInfo.id === 0 ? 'none' : ''}">
+              <el-button type="primary" :loading="pairInfo.token0.approveLoading" @click="approveToken(pairInfo.token0)" :style="{width: '100%'}">Approve {{ pairInfo.token0.symbol }}</el-button>
             </div>
-            <div class="action_list" :style="{display: (pairInfo.token1.tokenApproved ? 'none':'')}">
-              <el-button
-                type="primary"
-                :loading="pairInfo.token1.approveLoading"
-                @click="approveToken(pairInfo.token1)"
-                :style="{width: '100%'}"
-              >Approve {{pairInfo.token1.symbol}}</el-button>
+            <div class="action_list" :style="{display: pairInfo.token1.tokenApproved || pairInfo.id === 0 ? 'none' : ''}">
+              <el-button type="primary" :loading="pairInfo.token1.approveLoading" @click="approveToken(pairInfo.token1)" :style="{width: '100%'}">Approve {{ pairInfo.token1.symbol }}</el-button>
             </div>
             <div class="action_list deposit_class">
-              <el-button type="primary"
-                       @click="deposit"
-                       :loading="depositLoading"
-                       :disabled="(pairInfo.token0.tokenApproved || pairInfo.token1.tokenApproved) ? false:true"
-                       :style="{width: '100%',display: $store.state.isConnected?'':'none'}">Deposit</el-button>
-            </div>
-            <div class="action_list deposit_class" :style="{display: $store.state.isConnected?'none':''}">
               <el-button
                 type="primary"
-                style="width:100%;"
-                @click="connectWallet"
-              >Connect Wallet</el-button>
+                @click="deposit"
+                :loading="depositLoading"
+                :disabled="pairInfo.token0.tokenApproved || pairInfo.token1.tokenApproved ? false : true"
+                :style="{width: '100%', display: $store.state.isConnected ? '' : 'none'}"
+              >
+                Deposit
+              </el-button>
+            </div>
+            <div class="action_list deposit_class" :style="{display: $store.state.isConnected ? 'none' : ''}">
+              <el-button type="primary" style="width:100%;" @click="connectWallet">Connect Wallet</el-button>
             </div>
             <div class="contract_address">
-                CONTRACT:{{walletAddress}}
-                <a :href="'https://goerli.etherscan.io/address/'+pairInfo.vaultAddress" style="cursor:hand" target="_black"><svg-icon
-                    name="goto-detail"
-                    width="30"
-                    height="30"
-                /></a>
-                </div>
+              CONTRACT:{{ walletAddress }}
+              <a :href="contractEtherscanLink" style="cursor:hand" target="_black"><svg-icon name="goto-detail" width="30" height="30" /></a>
+            </div>
           </el-tab-pane>
           <el-tab-pane label="Withdraw">
-              <table class="withdraw-table">
-          <tr>
-            <td><span class="vault_title">Vault shares:</span>{{shareValue}}
-            </td>
-          </tr>
-          <tr>
-            <td style="text-align:right;">
-              <el-button type="danger"
-                         size="mini"
-                         @click="setSharePercent(25)">25%</el-button>
-              <el-button type="danger"
-                         size="mini"
-                         @click="setSharePercent(50)">50%</el-button>
-              <el-button type="danger"
-                         size="mini"
-                         @click="setSharePercent(75)">75%</el-button>
-              <el-button type="danger"
-                         size="mini"
-                         @click="setSharePercent(100)">Max</el-button>
-            </td>
-          </tr>
-          <tr>
-            <td><span class="share_percent">{{sharePercent}}%</span></td>
-          </tr>
-          <tr>
-            <td>
-              <el-slider v-model="sharePercent"></el-slider>
-            </td>
-          </tr>
-          <tr>
-            <td class="withdraw_class">
-              <el-button type="primary"
-                         :disabled="btnWithdrawDisabled"
-                         @click="withdraw"
-                         :loading="withdrawLoading"
-                         style="width:100%;">Withdraw</el-button>
-            </td>
-          </tr>
-          <tr>
-              <td>
-              <div class="contract_address">
-                CONTRACT:{{walletAddress}}
-                <a :href="'https://goerli.etherscan.io/address/'+pairInfo.vaultAddress" style="cursor:hand" target="_black"><svg-icon
-                    name="goto-detail"
-                    width="30"
-                    height="30"
-                /></a>
-                </div>
-              </td>
+            <table class="withdraw-table">
+              <tr>
+                <td>
+                  <span class="vault_title">Vault shares:</span>
+                  {{ shareValue }}
+                </td>
               </tr>
-        </table>
+              <tr>
+                <td style="text-align:right;">
+                  <el-button type="danger" size="mini" @click="setSharePercent(25)">25%</el-button>
+                  <el-button type="danger" size="mini" @click="setSharePercent(50)">50%</el-button>
+                  <el-button type="danger" size="mini" @click="setSharePercent(75)">75%</el-button>
+                  <el-button type="danger" size="mini" @click="setSharePercent(100)">Max</el-button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="share_percent">{{ sharePercent }}%</span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <el-slider v-model="sharePercent"></el-slider>
+                </td>
+              </tr>
+              <tr>
+                <td class="withdraw_class">
+                  <el-button type="primary" :disabled="btnWithdrawDisabled" @click="withdraw" :loading="withdrawLoading" style="width:100%;">Withdraw</el-button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="contract_address">
+                    CONTRACT:{{ walletAddress }}
+                    <a :href="contractEtherscanLink" style="cursor:hand" target="_black"><svg-icon name="goto-detail" width="30" height="30" /></a>
+                  </div>
+                </td>
+              </tr>
+            </table>
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -194,7 +151,9 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import { contractInstance } from '../../common/Web3'
 import Pairs from '../../model/Pairs'
 import Token from '../../model/Token'
+import PairsData from '@/common/PairsData'
 import { formatWalletAddress } from '../../common/Tools'
+import { getEtherscanTx, getEtherscanAddress } from '@/common/Etherscan'
 
 const ViaLendTokenABI = require('../../abi/VialendTokenABI.json')
 const ViaLendFeeMakerABI = require('../../abi/ViaLendFeeMakerABI.json')
@@ -206,11 +165,13 @@ const ethereum = (window as any).ethereum
   components: {}
 })
 export default class extends Vue {
+  pairObj = new PairsData()
   pairInfo = new Pairs()
   maxCapacity = 60
   pairsymbol = ''
   newLiqudityToken0: null | number = null
   newLiqudityToken1: null | number = null
+  updateLoading = false
   withdrawLoading = false
   approve0Loading = false
   approve1Loading = false
@@ -222,9 +183,42 @@ export default class extends Vue {
   sharePercent = 25
   btnWithdrawDisabled = false
   withdrawedEtherscanDisable = true
+  contractEtherscanLink = ''
 
   get walletAddress() {
     return formatWalletAddress((this.pairInfo as any).vaultAddress)
+  }
+
+  @Watch('sharePercent')
+  watchSharePercent(newVal: number) {
+    this.getShares(newVal)
+  }
+
+  @Watch('$store.state.currentAccount')
+  async watchCurrentAccount(newVal: string, oldVal: string) {
+    console.log('currentAccount:', newVal, ';previousAccount:', oldVal)
+    if (newVal !== '' && this.$store.state.validNetwork && this.pairInfo.id > 0) {
+      this.updateLoading = true
+      // const pair = new PairsData()
+      this.pairObj.calculateAPY = true
+      console.log('pairsLoadComplete=', this.pairObj.pairsLoadComplete)
+      console.log('this.pairInfo=', this.pairInfo)
+      this.pairInfo = await this.pairObj.getPairPublicData(this.pairInfo)
+      this.getShares(this.sharePercent)
+      this.$store.dispatch('setSessionData', { key: this.pairsymbol, value: this.pairInfo })
+      this.updateLoading = false
+    }
+  }
+
+  @Watch('$store.state.chainId')
+  async watchNetworkChainId(newVal: number, oldVal: number) {
+    console.log('chainid newVal=', newVal, 'oldVal=', oldVal)
+    console.log('this.$store.state.validNetwork=', this.$store.state.validNetwork)
+    if (oldVal > 0 && this.$store.state.validNetwork) {
+      this.$router.push('/')
+    } else if (!this.$store.state.validNetwork) {
+      this.$router.push('/')
+    }
   }
 
   connectWallet() {
@@ -232,12 +226,7 @@ export default class extends Vue {
     console.log('wallet connection status:', this.$store.state.isConnected)
   }
 
-  async updatePageData() {
-    //   await this.getPairPublicInfo(this.pairsList.get(this.selectedPairIndex))
-    //   await this.loadMyData()
-  }
-
-  async approveToken(token:Token) {
+  async approveToken(token: Token) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this
     const tokenContract = await contractInstance(ViaLendTokenABI, token.tokenAddress)
@@ -258,22 +247,29 @@ export default class extends Vue {
           //   gas: 200000,
           value: 0
         })
-        .on('confirmation', function(confirmationNumber:number, receipt:any) {
-          console.log((new Date()).toLocaleString(), ':{approve confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
+        .on('confirmation', function(confirmationNumber: number, receipt: any) {
+          console.log(new Date().toLocaleString(), ':{approve confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
         })
-        .on('receipt', (receipt:any) => {
+        .on('receipt', (receipt: any) => {
           if (receipt.status) {
             _this.$store.dispatch('setApproveStatus', {
-              token: tokenAddress, status: true
+              token: tokenAddress,
+              status: true
             })
             token.tokenApproved = true
             if (token.approveLoading) {
               token.approveLoading = false
               _this.$message(tokenName + ' approved!')
             }
-            _this.$store.dispatch('setPairInfo', {
-              key: _this.pairsymbol, value: JSON.stringify(_this.pairInfo)
+
+            // _this.$store.dispatch('removeSessionData', { key: 'pairBaseInfo' })
+
+            _this.$store.dispatch('setSessionData', {
+              key: _this.pairsymbol,
+              value: JSON.stringify(_this.pairInfo)
             })
+            console.log('After approval,the approval status is token1->', _this.pairInfo.token0.tokenApproved, ',token1->', _this.pairInfo.token1.tokenApproved)
+
             if ((this.pairInfo as any).token0.tokenApproved || (this.pairInfo as any).token1.tokenApproved) {
               _this.btnDepositDisabled = false
             }
@@ -281,7 +277,7 @@ export default class extends Vue {
             _this.$message(tokenName.concat(' Approve failed!'))
           }
         })
-        .on('error', function(error:any) {
+        .on('error', function(error: any) {
           token.tokenApproved = false
           token.approveLoading = false
           _this.$message.error(error.message === undefined ? error : error.message)
@@ -291,8 +287,16 @@ export default class extends Vue {
   }
 
   async deposit() {
-    const pair:Pairs = this.pairInfo as any
-    if (this.newLiqudityToken0 === null || this.newLiqudityToken1 === null || isNaN(this.newLiqudityToken0) || isNaN(this.newLiqudityToken1) || Number(this.newLiqudityToken0) < 0 || Number(this.newLiqudityToken1) < 0 || (Number(this.newLiqudityToken0) === 0 && Number(this.newLiqudityToken1) === 0)) {
+    const pair: Pairs = this.pairInfo as any
+    if (
+      this.newLiqudityToken0 === null ||
+      this.newLiqudityToken1 === null ||
+      isNaN(this.newLiqudityToken0) ||
+      isNaN(this.newLiqudityToken1) ||
+      Number(this.newLiqudityToken0) < 0 ||
+      Number(this.newLiqudityToken1) < 0 ||
+      (Number(this.newLiqudityToken0) === 0 && Number(this.newLiqudityToken1) === 0)
+    ) {
       this.$message('Please enter a positive number greater than 0!')
       return
     } else if (Number(this.newLiqudityToken0) > 0 && !pair.token0.tokenApproved) {
@@ -302,9 +306,18 @@ export default class extends Vue {
       this.$message('Please approve token1 first!')
       return
     }
-    let token0Amount = 0; let token1Amount = 0
-    if (this.newLiqudityToken0 === null) { token0Amount = 0 } else { token0Amount = this.newLiqudityToken0 }
-    if (this.newLiqudityToken1 === null) { token1Amount = 0 } else { token1Amount = this.newLiqudityToken1 }
+    let token0Amount = 0
+    let token1Amount = 0
+    if (this.newLiqudityToken0 === null) {
+      token0Amount = 0
+    } else {
+      token0Amount = this.newLiqudityToken0
+    }
+    if (this.newLiqudityToken1 === null) {
+      token1Amount = 0
+    } else {
+      token1Amount = this.newLiqudityToken1
+    }
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this
     const keeperContract = await contractInstance(ViaLendFeeMakerABI, pair.vaultAddress)
@@ -317,20 +330,17 @@ export default class extends Vue {
     if (keeperContract !== null) {
       this.depositLoading = true
       keeperContract.methods
-        .deposit(
-          BigInt(token0Amount * Math.pow(10, pair.token0.decimals)),
-          BigInt(token1Amount * Math.pow(10, pair.token1.decimals))
-        )
+        .deposit(BigInt(token0Amount * Math.pow(10, pair.token0.decimals)), BigInt(token1Amount * Math.pow(10, pair.token1.decimals)))
         .send({
           from: ethereum.selectedAddress,
           // gasPrice: '80000000000',
           // gas: 600000,
           value: 0
         })
-        .on('confirmation', function(confirmationNumber:number, receipt:any) {
-          console.log((new Date()).toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
+        .on('confirmation', function(confirmationNumber: number, receipt: any) {
+          console.log(new Date().toLocaleString(), ':{deposit confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
         })
-        .on('receipt', function(receipt:any) {
+        .on('receipt', function(receipt: any) {
           console.log('receipt:', receipt)
 
           if (_this.depositLoading === true) {
@@ -341,14 +351,14 @@ export default class extends Vue {
               _this.goToEtherscan = 'https://goerli.etherscan.io/tx/' + receipt.transactionHash
               _this.depositedEtherscanDisable = false
               _this.$message('Deposit submitted!')
-              _this.updatePageData()
+              _this.reloadPairsBalance()
             } else {
               _this.$message('Deposit failed!')
             }
           }
-          console.log((new Date()).toLocaleString(), 'deposit receipt status:', receipt.status)
+          console.log(new Date().toLocaleString(), 'deposit receipt status:', receipt.status)
         })
-        .on('error', function(error:any) {
+        .on('error', function(error: any) {
           _this.$message.error(error)
           _this.depositLoading = false
           console.log('Deposit error:', error)
@@ -357,7 +367,7 @@ export default class extends Vue {
   }
 
   withdraw() {
-    const pair:Pairs = this.pairInfo as any
+    const pair: Pairs = this.pairInfo as any
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this
     const keeperContract = contractInstance(ViaVaultABI, pair.vaultAddress)
@@ -366,19 +376,17 @@ export default class extends Vue {
     if (keeperContract !== null) {
       this.withdrawLoading = true
       keeperContract.methods
-        .withdraw(
-          BigInt(this.sharePercent)
-        )
+        .withdraw(BigInt(this.sharePercent))
         .send({
           from: ethereum.selectedAddress,
           // gasPrice: '80000000000',
           // gas: 600000,
           value: 0
         })
-        .on('confirmation', function(confirmationNumber:number, receipt:any) {
-          console.log((new Date()).toLocaleString(), ':{withdraw confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
+        .on('confirmation', function(confirmationNumber: number, receipt: any) {
+          console.log(new Date().toLocaleString(), ':{withdraw confirm number:', confirmationNumber, ',receipt:', receipt.status, '}')
         })
-        .on('receipt', function(receipt:any) {
+        .on('receipt', function(receipt: any) {
           if (_this.withdrawLoading === true) {
             _this.withdrawLoading = false
             if (receipt.status) {
@@ -393,17 +401,17 @@ export default class extends Vue {
                 } else {
                   _this.$message('Withdraw successful!')
                 }
+                _this.reloadPairsBalance()
               } catch {
                 _this.$message('Withdraw submitted!')
               }
-              // _this.updatePageData()
             } else {
               _this.$message('Withdraw failed!')
             }
-            console.log((new Date()).toLocaleString(), 'withdraw receipt status:', receipt)
+            console.log(new Date().toLocaleString(), 'withdraw receipt status:', receipt)
           }
         })
-        .on('error', function(error:any) {
+        .on('error', function(error: any) {
           _this.$message.error(error)
           _this.withdrawLoading = false
           console.log('Withdraw error:', error)
@@ -411,30 +419,35 @@ export default class extends Vue {
     }
   }
 
-  @Watch('sharePercent')
-  watchSharePercent(newVal:number) {
-    this.getShares(newVal)
-  }
-
-  setSharePercent(percent:number) {
+  setSharePercent(percent: number) {
     this.sharePercent = percent
   }
 
-  getShares(percent:number) {
-    this.shareValue = BigInt(parseInt(((this.pairInfo as any).myShare * percent / 100).toString()))
+  getShares(percent: number) {
+    this.shareValue = BigInt(parseInt((((this.pairInfo as any).myShare * percent) / 100).toString()))
     console.log('myShare=', (this.pairInfo as any).myShare, 'shares=', this.shareValue)
     if (this.shareValue > 0) this.btnWithdrawDisabled = false
     else this.btnWithdrawDisabled = true
   }
 
+  async reloadPairsBalance() {
+    this.updateLoading = true
+    console.log('pairsLoadComplete=', this.pairObj.pairsLoadComplete)
+    console.log('this.pairInfo=', this.pairInfo)
+    this.pairInfo = await this.pairObj.getTokensBalance(this.pairInfo)
+    this.$store.dispatch('setSessionData', { key: this.pairsymbol, value: this.pairInfo })
+    this.updateLoading = false
+  }
+
   async created() {
     this.pairsymbol = this.$route.params && this.$route.params.pair
-    const jsonPairInfo: string | null = await this.$store.dispatch('getPairInfo', { key: this.pairsymbol })
+    const jsonPairInfo: any = await this.$store.dispatch('getSessionData', { key: this.pairsymbol })
     console.log('jsonPairInfo=', jsonPairInfo)
 
     if (jsonPairInfo !== null) {
       this.pairInfo = JSON.parse(jsonPairInfo)
       if (this.pairInfo !== null) {
+        this.contractEtherscanLink = getEtherscanAddress(this.pairInfo.vaultAddress)
         this.getShares(this.sharePercent)
         console.log('pair vaultAddress=', (this.pairInfo as any).vaultAddress)
         console.log('pairInfo.token0BalanceInWallet=', (this.pairInfo as any).token0.balanceInWallet)
@@ -446,8 +459,7 @@ export default class extends Vue {
 }
 </script>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>
 
 <style scoped>
 .pairs-container {
@@ -465,29 +477,29 @@ export default class extends Vue {
   text-align: center;
 }
 .vault-info-left {
-    float: left;
+  float: left;
   width: 60%;
 }
 .vault-info-right {
-    float:right;
+  float: right;
   width: 30%;
-  height:100%;
+  height: 100%;
 }
-.el-input /deep/ .el-input__inner{
-  height:50px !important;
+.el-input /deep/ .el-input__inner {
+  height: 50px !important;
   font-size: 26px !important;
 }
-.el-input__icon{
-    cursor: pointer;
-    margin:5px;
+.el-input__icon {
+  cursor: pointer;
+  margin: 5px;
 }
-.el-tabs--card{
-    height:360px;
+.el-tabs--card {
+  height: 360px;
 }
-.el-tab-pane{
-    min-height:310px;
-    overflow-x: hidden;
-    overflow-y:hidden;
+.el-tab-pane {
+  min-height: 310px;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 .vault-title {
   width: 100%;
@@ -495,12 +507,12 @@ export default class extends Vue {
   font-size: 20px;
   font-weight: bold;
 }
-.vault-intro{
-    font-family: 'Times New Roman', Times, serif;
-    font-size:16px;
-    padding-top:10px;
-    padding-bottom: 10px;
-    line-height: 20px;
+.vault-intro {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 16px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  line-height: 20px;
 }
 .card-panel-col {
   height: 515px;
@@ -530,8 +542,8 @@ body {
   padding: 38px 20px 10px 20px;
   border-radius: 16px;
 }
-.slidershow{
-    padding-top: 20px;
+.slidershow {
+  padding-top: 20px;
 }
 .f12 {
   color: #000000;
@@ -597,41 +609,41 @@ body {
 }
 
 .el-input__inner {
-  height:50px !important;
+  height: 50px !important;
   font-size: 26px !important;
 }
 
-.step_token{
-    padding:5px;
-    margin-top: 10px;
+.step_token {
+  padding: 5px;
+  margin-top: 10px;
 }
-.step_token .token_balance{
-    display: block;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    padding-bottom:10px;
-    margin:0px;
+.step_token .token_balance {
+  display: block;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  padding-bottom: 10px;
+  margin: 0px;
 }
-.action_list{
-    padding-top: 10px;
+.action_list {
+  padding-top: 10px;
 }
-.vault_title{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    font-weight: bold;
+.vault_title {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
 }
 .deposit_class /deep/ .el-button,
-.withdraw_class /deep/ .el-button{
-    width: 100%;
-    height: 50px !important;
-    font-size:21px !important;
+.withdraw_class /deep/ .el-button {
+  width: 100%;
+  height: 50px !important;
+  font-size: 21px !important;
 }
 .withdraw-table {
-    width:100%;
+  width: 100%;
   margin-top: 20px;
   border-spacing: 0px !important;
-  padding:0px !important;
+  padding: 0px !important;
 }
 .withdraw-table td,
 .withdraw-table th {
@@ -642,15 +654,15 @@ body {
   height: 45px;
 }
 
-.contract_address{
-    font-family: monospace,'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    border: 1px solid #475669;
-    background-color: #2e3f61;
-    color:#ffffff;
-    font-size:16px;
-    margin-top:10px;
-    padding-left: 10px;
-    border-radius: 4px;
+.contract_address {
+  font-family: monospace, 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  border: 1px solid #475669;
+  background-color: #2e3f61;
+  color: #ffffff;
+  font-size: 16px;
+  margin-top: 10px;
+  padding-left: 10px;
+  border-radius: 4px;
 }
 @media only screen and (max-width: 767px) {
   .pairs-container {

@@ -1,33 +1,11 @@
 <template>
-  <div
-    class="sidebar-logo-container"
-    :class="{'collapse1': collapse}"
-  >
+  <div class="sidebar-logo-container" :class="{collapse1: collapse}">
     <transition name="sidebarLogoFade">
-      <router-link
-        v-if="collapse"
-        key="collapse"
-        class="sidebar-logo-link"
-        to="/"
-      >
-        <img
-          src="/images/logo.png"
-          class="sidebar-logo"
-        >
+      <router-link v-if="collapse" key="collapse" class="sidebar-logo-link" to="/">
+        <img :src="`${publicPath}images/logo0.png`" class="sidebar-logo0" />
       </router-link>
-      <router-link
-        v-else
-        key="expand"
-        class="sidebar-logo-link"
-        to="/"
-      >
-        <img
-          src="/images/logo.png"
-          class="sidebar-logo"
-        >
-        <h1 class="sidebar-title">
-          {{ title }}
-        </h1>
+      <router-link v-else key="expand" class="sidebar-logo-link" to="/">
+        <img :src="`${publicPath}images/logo1.png`" class="sidebar-logo1" />
       </router-link>
     </transition>
   </div>
@@ -44,6 +22,7 @@ export default class extends Vue {
   @Prop({ required: true }) private collapse!: boolean
 
   private title = settings.title
+  private publicPath = process.env.BASE_URL
 }
 </script>
 
@@ -69,13 +48,21 @@ export default class extends Vue {
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
-    margin-left:10px;
+    margin-left: 10px;
 
-    & .sidebar-logo {
-      width: 32px;
+    & .sidebar-logo0 {
+      width: 42px;
       height: 32px;
       vertical-align: middle;
       margin-right: 12px;
+    }
+
+    & .sidebar-logo1 {
+      width: 109px;
+      height: 32px;
+      vertical-align: middle;
+      margin-right: 12px;
+      margin-left: 15px;
     }
 
     & .sidebar-title {
