@@ -102,9 +102,9 @@ func main() {
 	// fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
 	// fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
 
-	//project.MyAccountInfo(0)
-	//project.GetTVL()
-	//project.Rebalance(400, 0)
+	project.MyAccountInfo(0)
+	project.GetTVL()
+	project.Rebalance(400, 0)
 
 	// // project.Sleep(15000)
 
