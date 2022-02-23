@@ -615,20 +615,33 @@ mise which was not handled with .catch(). (rejection id: 329)
 zero exit code.
 
 	`when` - 		
-		run insdex.go  batch commands
-
+	
+		calling GetPair0() in  testStratUniComp.go 
+	
 	`WHERE` 
 	
 		centos ssh
 		
 		ganache-cli fork mainnet 
 
+
+
 	`cause: 	` - 
-		  run batch commands
+
+		 in   VaultFactory.sol:
+
+		function getPair0(address _addr) public view returns(address) {
+			require(pairs[_addr] != address(0), 'is0');  <-- caused error when there is not a paired address stored.
+	    	return(pairs[_addr]);
+	    }
 	
 	`solution: 	` - 
-		. restart  ganache-cli fork
-		*note: lost previsou env and data
+	
+		remove this line  require(pairs[_addr] != address(0), 'is0'); 
+		and compile and deploy  VaultFactory.sol 
+		
+		further research: continue to check when and where this error happens
+		
 		
 	`Reported by others:` - 
 		https://gitter.im/ConsenSys/truffle?at=62129d16d1b64840db2f67df#
@@ -670,3 +683,15 @@ TypeError: entry_points() got an unexpected keyword argument 'group'
 		- reinstall markdown
 			- pip install git+https://github.com/Python-Markdown/markdown.git
 			
+
+
+### ERROR  go 
+ 	invalid length, need 256 bits
+	
+	`when: 	` -  ChangeAccount() <- Rebalance()
+	
+	`cause: 	` -  wrong account number or invalid account number
+	
+	`where: 	` -  liteide
+	
+	`solution: 	`  use another accountId 

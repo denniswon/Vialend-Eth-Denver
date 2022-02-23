@@ -468,7 +468,7 @@ func Rebalance(_range int, acc int) {
 	tickUpper = new(big.Int).Add(tick, hrange)
 
 	tickSpacing := Network.FeeTier / 50 // ie 3000/50= 60, 500/50 = 10, 10000/50 = 200
-	myPrintln("tickspacing:", tickSpacing)
+	myPrintln("rebalance - tickspacing:", tickSpacing)
 
 	if tickSpacing < 10 {
 		log.Fatal("wrong tickSpacing = ", tickSpacing)

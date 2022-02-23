@@ -19,7 +19,8 @@ import (
 
 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby, 7: ROPSTEN or ROPSTENLOCAL
 var _useGETH = false
-var Networkid = 6
+var useEnv = true
+var Networkid = 0
 var Account = 0
 var ProviderSortId = 0
 
@@ -144,8 +145,8 @@ var Networks = [...]Params{
 		//[]string{},
 		//[]string{"http://192.168.0.12:8546"}, /// direct main
 
-		[]string{"http://127.0.0.1:7545", "ws://127.0.0.1:7545"}, // fork throu geth 192.168.0.12:8546
-		//[]string{"http://192.168.0.223:8545"}, // ganache-cli in centos
+		//[]string{"http://127.0.0.1:7545", "ws://127.0.0.1:7545"}, // fork throu geth 192.168.0.12:8546
+		[]string{"http://192.168.0.223:8545"}, // ganache-cli in centos
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b", //callee
@@ -561,7 +562,9 @@ func Init(nid int, acc int) {
 	}
 	myPrintln("............loading env...............")
 
-	//loadEnv(_useGETH)
+	if useEnv {
+		loadEnv(_useGETH)
+	}
 
 	myPrintln("............initial ethereum clients...............")
 	EthClient = GetEthClient(nid, 0)

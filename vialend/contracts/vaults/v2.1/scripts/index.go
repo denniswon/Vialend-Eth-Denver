@@ -77,41 +77,36 @@ func main() {
 	//project.PoolInfo("0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
 
 	///#### Forked environment  new ganache-cli ####
+	// InitialForkEnv()
+	// return
 
-	project.DeployCallee()
-	// project.Sleep(15000)
-	// // // // return
+	//project.ViaVaultPublicList()
+	//project.ViaStratUniCompPublicList()
 
-	// project.DeployVaultFactory()
-	// // return
-	// project.Sleep(15000)
-	// newStratAddr := project.DeployStratByGoStruct()
-	// // // //newStratAddr := project.DeployStrat2ByGoStruct()
-	// project.Sleep(15000)
+	//project.FactoryPublicList()
 
-	// newVaultAddr := project.DeployVaultByGo()
-	// //		project.DeployVaultByGo()
-	// project.Sleep(15000)
+	//project.GetPair0(project.Network.Vault)
 
-	// project.ConfigWrite()
-	// project.Sleep(25000)
-	// _, _ = newStratAddr, newVaultAddr
-	// // project.Register(newStratAddr, newVaultAddr)
+	//project.FactoryPairs("0x91642Ba015065822fc4e530C222f2492B5B97420")
+
+	// project.TokenSwap(0, WETH, OSQTH, 3000, big.NewInt(2))
+	// project.Sleep(5000)
+	//	project.Deposit(0, 0, 0)
+	//project.Withdraw(100, 0)
+	//project.Rebalance(500, 0)
+
+	//project.GetTwap()
+	project.GetPriceStratCall()
+
+	// fmt.Println(project.GetBalance(USDC, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	// fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	// fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+
+	//project.MyAccountInfo(0)
+	//project.GetTVL()
+	//project.Rebalance(400, 0)
+
 	// // project.Sleep(15000)
-	// // project.ChangeStat(newStratAddr, newVaultAddr, 1)
-	// // project.Sleep(15000)
-	// // project.Register(project.Network.VaultStrat, project.Network.Vault)
-	// // return
-	// // project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	// // return
-
-	// project.Wrap(WETH, 0, 10)
-	// project.Sleep(15000)
-	// project.TokenSwap(0, WETH, USDC, big.NewInt(2))
-	// project.Sleep(15000)
-	// ////project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, big.NewInt(1))
-
-	project.MyAccountInfo(0)
 
 	return
 
@@ -220,8 +215,10 @@ func main() {
 	// return
 
 	// project.GetPair0("0xcD0E0765dBCFB556089E07781cA6E7A2e1Eab055")
-	project.FactoryPublicList()
-	project.ViewVaults()
+	//project.ViaVaultPublicList()
+	//project.ViaStratUniCompPublicList()
+	// project.FactoryPublicList()
+	// project.ViewVaults()
 	//project.CheckStatus(project.Network.Vault, 1) // CheckVaultStatus()
 	//project.ViaVaultPublicList()
 	//project.ViaStratUniCompPublicList()
@@ -229,7 +226,7 @@ func main() {
 	// // // project.GetTwap()
 	// // // project.GetPriceStratCall()
 
-	return
+	//return
 
 	//	project.SetTwapduration(0)
 	// project.GetPriceStratCall()
@@ -289,7 +286,7 @@ func main() {
 	///0
 	if project.Networkid == 0 {
 		//#### WETH/USDC Test
-		project.Deposit(100e6, 1e18, 0)
+		project.Deposit(4000e6, 1e18, 0)
 		//project.Withdraw(100, 0)
 		//	project.Deposit(1e16, 1e5, 0)
 		//	project.Deposit(2e16, 2e5, 1)
@@ -930,4 +927,55 @@ func BuildAll() {
 	project.CheckPrice(false, 3)
 	project.Equation(false, false)
 
+}
+
+func InitialForkEnv() {
+	project.DeployCallee()
+	project.Sleep(9000)
+	// // // // return
+
+	project.DeployVaultFactory()
+	// // return
+	project.Sleep(9000)
+	newStratAddr := project.DeployStratByGoStruct()
+	// // // //newStratAddr := project.DeployStrat2ByGoStruct()
+	project.Sleep(9000)
+
+	newVaultAddr := project.DeployVaultByGo()
+	// //		project.DeployVaultByGo()
+	project.Sleep(9000)
+
+	project.ConfigWrite()
+	// project.Sleep(25000)
+	_, _ = newStratAddr, newVaultAddr
+	project.Register(newStratAddr, newVaultAddr)
+	project.Sleep(5000)
+	project.ChangeStat(newStratAddr, newVaultAddr, 1)
+	project.Sleep(5000)
+	// // project.Register(project.Network.VaultStrat, project.Network.Vault)
+	// // return
+	// // project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	// // return
+
+	//project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+
+	project.Wrap(WETH, 0, 10)
+	project.Sleep(5000)
+
+	project.TokenSwap(0, WETH, USDC, 500, big.NewInt(2))
+	project.Sleep(5000)
+	project.TokenSwap(0, WETH, OSQTH, 3000, big.NewInt(2))
+	project.Sleep(5000)
+
+	project.Deposit(4000e6, 1e18, 0)
+	project.Sleep(5000)
+	project.GetTVL()
+	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	project.Sleep(5000)
+
+	fmt.Println(project.GetBalance(USDC, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+
+	// ////project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, big.NewInt(1))
 }

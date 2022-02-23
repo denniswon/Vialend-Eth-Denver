@@ -77,9 +77,9 @@ func CreatePool(do int) common.Address {
 }
 
 func checkBalance(amt *big.Int, _token string, _owner string) bool {
-	symbol, bal := getBalance(_token, _owner)
+	symbol, bal := GetBalance(_token, _owner)
 	if amt.Cmp(bal) > 0 {
-		fmt.Println("*Warning* There is not enough fund for ", symbol, ".  fund in address:", bal, ", fund required: ", amt)
+		fmt.Println("*Warning* There is not enough fund for ", symbol, ".  balance in wallet:", bal, ", fund required: ", amt)
 		return false
 	}
 
@@ -112,6 +112,9 @@ func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string) {
 	TokenA, _ := poolInstance.Token0(&bind.CallOpts{})
 	TokenB, _ := poolInstance.Token1(&bind.CallOpts{})
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+
+	// myPrintln("TokenA address:", TokenA.String())
+	// myPrintln("TokenB address:", TokenB.String())
 
 	accountAddrss := GetAddress(accountId).String()
 	myPrintln("acccount address:", accountAddrss)

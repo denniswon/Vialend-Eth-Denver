@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 
 	weth "viaroot/deploy/Tokens/erc20/deploy/WETH9"
 	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
@@ -211,7 +212,7 @@ func TransferEth(_fromKey string, value *big.Int, _toAddress string) {
 
 }
 
-func getBalance(tokenAddress string, tokenHolder string) (string, *big.Int) {
+func GetBalance(tokenAddress string, tokenHolder string) (string, *big.Int) {
 
 	//cInstance := GetCTokenInstance(cTokenAddress)
 	instance, _, symbol, _, _ := GetTokenInstance(tokenAddress)
@@ -472,22 +473,36 @@ func TokenTransferAmount(_key string, _from string, _toAddress string, _tokenAdd
 
 }
 
-func TokenSwap(accountId int, sellToken string, buyToken string, amount *big.Int) {
+func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, amount *big.Int) {
 	// func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
 	// func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
 
-	_pool := GetPool(sellToken, buyToken, int64(500))
+	_pool := GetPool(sellToken, buyToken, int64(feetier))
 
 	poolInstance, err := pool.NewApi(_pool, EthClient)
+	if err != nil {
+		log.Fatal("pool instance:", err)
+	}
+	Sleep(5000)
+
+	liquidity, err := poolInstance.Liquidity(&bind.CallOpts{})
+	//myPrintln("liquidity in pool:", Pricef(liquidity, int(1e18)))
+	myPrintln(sellToken, "/", buyToken, " pool liquidity:", liquidity)
+
+	myPrintln("liquidity in pool:", liquidity)
 
 	if err != nil {
 		log.Fatal("pool instance:", err)
 	}
 
 	token0, _ := poolInstance.Token0(&bind.CallOpts{})
-	//	token1, _ := poolInstance.Token1(&bind.CallOpts{})
+	//token1, _ := poolInstance.Token1(&bind.CallOpts{})
 
-	if sellToken != token0.Hex() {
+	// myPrintln("token0:", token0)
+	// myPrintln("sellToken:", sellToken)
+	// myPrintln("token1:", token1)
+
+	if strings.ToLower(sellToken) != strings.ToLower(token0.Hex()) {
 		zeroForOne := false
 		Swap1(accountId, amount, zeroForOne, _pool.Hex())
 	} else {

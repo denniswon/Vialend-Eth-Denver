@@ -155,7 +155,6 @@ contract VaultFactory {
     }
     
     function getPair0(address _addr) public view returns(address) {
-    	require(pairs[_addr] != address(0), 'is0' );
     	return(pairs[_addr]);
     }
 	  

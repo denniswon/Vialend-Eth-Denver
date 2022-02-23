@@ -107,11 +107,11 @@ func TradeSqth(amount int, zeroForOne bool) {
 
 func Register(_strategy string, _vault string) {
 
-	if GetPair0(_strategy).Hex() == _vault {
+	// if GetPair0(_strategy).Hex() == _vault {
 
-		myPrintln("ERROR: already registered")
-		return
-	}
+	// 	myPrintln("ERROR: already registered")
+	// 	return
+	// }
 
 	factoryInst, _, _ := GetInstance3()
 
@@ -132,6 +132,17 @@ func Register(_strategy string, _vault string) {
 
 }
 
+func FactoryPairs(addr string) {
+	factoryInstance, _, _ := GetInstance3()
+
+	addr2, err := factoryInstance.Pairs(&bind.CallOpts{}, common.HexToAddress(addr))
+	if err != nil {
+		log.Fatal("pairs[a] err-> ", err)
+	}
+	myPrintln("pair source:", addr)
+	myPrintln("pair target:", addr2)
+
+}
 func FactoryPublicList() {
 
 	factoryInstance, _, _ := GetInstance3()
@@ -150,6 +161,7 @@ func FactoryPublicList() {
 	vaultCounts := int(p3.Int64())
 	for i := 0; i < vaultCounts; i++ {
 		v, _ := factoryInstance.Vaults(&bind.CallOpts{}, big.NewInt(int64(i)))
+		//Sleep(5000)
 
 		myPrintln(i, ":", v)
 	}
@@ -159,7 +171,11 @@ func FactoryPublicList() {
 func GetPair0(addr string) common.Address {
 
 	factoryInstance, _, _ := GetInstance3()
-	theOther, _ := factoryInstance.GetPair0(&bind.CallOpts{}, common.HexToAddress(addr))
+
+	theOther, err := factoryInstance.GetPair0(&bind.CallOpts{}, common.HexToAddress(addr))
+	if err != nil {
+		log.Fatal("getpair0 err-> ", err)
+	}
 
 	myPrintln("getpair0:", theOther)
 
@@ -404,18 +420,19 @@ func GetCompAmounts() {
 	myPrintln("GetCompAmount :", total0, total1)
 
 }
-func GetTickPrice() {
 
-	_, viaStratInstance, _ := GetInstance3()
+// func GetTickPrice() {
 
-	NonceGen()
-	price, err := viaStratInstance.GetTickPrice(&bind.CallOpts{})
-	if err != nil {
-		log.Println("gettickprice err: ", err)
-	}
-	myPrintln("fun gettickPrice:", price)
+// 	_, viaStratInstance, _ := GetInstance3()
 
-}
+// 	NonceGen()
+// 	price, err := viaStratInstance.GetTickPrice(&bind.CallOpts{})
+// 	if err != nil {
+// 		log.Println("gettickprice err: ", err)
+// 	}
+// 	myPrintln("fun gettickPrice:", price)
+
+// }
 
 // func GetPriceX96FromSqrtPriceX96(pool string, twapInterval int) {
 
