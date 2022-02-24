@@ -6,46 +6,50 @@ import "@aave/interfaces/Ipool.sol";
 import "@aave/flashloan/base/FlashLoanReceiverBase.sol";
 import "@uniswap/smart-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import "interfaces/IAaveShorter.sol";
+import "interfaces/IAaveUnwinder.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 
 /**
  * @notice Contract for creating a short position using Aave for borrowing and Uniswap for swap.
  */
-contract AaveShorter is FlashLoanReceiverBase, IAaveShorter {
+contract AaveUnwinder is FlashLoanReceiverBase, IAaveUnwinder {
     address SWAP_ROUTER = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45";
 
     address colateral;
-    address shorting;
+    address unwinding;
     address sender;
     uint256 amount;
     IPool aavePool;
     
-    function short(
+    function unwind(
         address _aavePool,
 		address _colateral,
-        address _shorting,
+        address _unwinding,
 		uint256 _amount,
-        unit256 _shortSize
+        unit256 _unwindSize
 
     ) external returns(bool) {
         colateral = _colateral;
-        shorting = _shorting;
+        unwinding = _unwinding;
         amount = _amount;
         aavePool = IPool(_aavePool);
         sender = msg.sender;
 
         bytes params;
 
-        // flash loan the amount times the size of the short, swap for more colateral and deposit.
+        // flash loan the amount, swap to pay back debt.
         aavePool.flashLoan(
             address(this),
-            [shorting],
-            [_ammount * _shortSize],     // for a 2x short the borrowed asset must be doubled with respect to the colateral ammount size
-            [1],                         // 1 stable, 2 variable
+            [colateral],
+            [_unwindSize],      // unwind by the amount specified 
+            [0],                // 0 needs to be repaied
             sender,
             params,
             0
         );
+
+        return true;
     }
     
     /**
@@ -69,13 +73,13 @@ contract AaveShorter is FlashLoanReceiverBase, IAaveShorter {
         ISwapRouter02 router = ISwapRouter02(SWAP_ROUTER);
         
         // approve
-        TransferHelper.safeApprove(shorting, address(SWAP_ROUTER), amounts[0]);
+        TransferHelper.safeApprove(shorting, address(SWAP_ROUTER), amounts);
 
         // swap
         ISwapRouter02.ExactInputSingleParams memory params =
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: assets[0],
-                tokenOut: colateral,
+                tokenOut: unwinding,
                 fee: 3000,
                 recipient: initiator,
                 deadline: block.timestamp,
@@ -86,8 +90,16 @@ contract AaveShorter is FlashLoanReceiverBase, IAaveShorter {
 
         uint256 out = router.exactInputSingle(params);
 
-        // deposit
-        aavePool.deposit(colateral, amount + out, sender, 0);
+        // repay debts 
+        uint256 rateMode = 2;          // Stable: 1, Variable: 2
+        aavePool.repay(unwinding, out, rateMode, sender);
+
+        // withdraw colateral to repay flash
+        uint flashRepay = ammount[0].add(premiums[0]);
+        aavePool.withdraw(colateral, flashRepay, sender);
+
+        // approve contract to pull funds to repay flash
+        IERC20(assets[0]).approve(address(aavePool), flashRepay);
 
         return true;
     } 
