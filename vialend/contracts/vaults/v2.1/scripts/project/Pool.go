@@ -585,17 +585,6 @@ func PrintPrice() {
 
 }
 
-func GetPoolInstance() *pool.Api {
-
-	instance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
-
-	if err != nil {
-		log.Fatal("poolInstance err:", err)
-	}
-	return instance
-
-}
-
 // func Observe(secondsAgo int) {
 // 	poolInstance := GetPoolInstance()
 

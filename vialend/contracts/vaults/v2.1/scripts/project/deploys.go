@@ -8,6 +8,7 @@ import (
 
 	AB "viaroot/deploy/AB"
 	vault "viaroot/deploy/FeeMaker"
+	Squeeth "viaroot/deploy/Squeeth"
 	StratDeployer "viaroot/deploy/StratDeployer"
 	callee "viaroot/deploy/TestUniswapV3Callee"
 	mocktoken "viaroot/deploy/Tokens/erc20/deploy/ERC20fixedSupply"
@@ -519,8 +520,9 @@ func DeployVaultByGo() string {
 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	factory := common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
+	baseToken := common.HexToAddress(Network.LendingContracts.WETH)
 
-	address, tx, instance, err := ViaVault.DeployApi(Auth, EthClient, factory, token0, token1, vaultCap, individualCap)
+	address, tx, instance, err := ViaVault.DeployApi(Auth, EthClient, factory, token0, token1, baseToken, vaultCap, individualCap)
 
 	if err != nil {
 		log.Fatal("vault deploy by go err:", err)
@@ -714,35 +716,32 @@ func DeployStratByGoStruct() string {
 func DeployStrat2ByGoStruct() string {
 
 	fmt.Println("----------------------------------------------")
-	fmt.Println(".......................Deploy Strat by Go struct. ..................")
+	fmt.Println(".......................Deploy Strat2 by Go struct. ..................")
 	fmt.Println("----------------------------------------------")
 
 	NonceGen()
 
-	var params VaultStrategy2.UniCompParam
+	var params VaultStrategy2.UniSqueethParam
 	params.Uni3Factory = common.HexToAddress(Network.Factory)
 	params.VaultFactory = common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
+	params.HedgeVault = common.HexToAddress(Network.VaultHedge)
 	params.Protocol = FromAddress
 	params.Creator = FromAddress
-	params.WETH = common.HexToAddress(Network.LendingContracts.WETH)
-	params.CETH = common.HexToAddress(Network.LendingContracts.CETH)
-	params.CToken0 = common.HexToAddress(Network.CTOKEN0)
-	params.CToken1 = common.HexToAddress(Network.CTOKEN1)
 	params.Token0 = common.HexToAddress(Network.TokenA)
 	params.Token1 = common.HexToAddress(Network.TokenB)
-	params.SqthEthPool = common.HexToAddress("0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68")
-
+	params.WETH = common.HexToAddress(Network.LendingContracts.WETH)
+	params.SqthEthPool = common.HexToAddress(Network.LendingContracts.OSQTHWETHPOOL)
+	params.ChainLinkProxy = common.HexToAddress(Network.LendingContracts.ChainLinkProxy)
 	params.Token0Decimals = Token[0].Decimals
 	params.Token1Decimals = Token[1].Decimals
-	params.VaultCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	params.IndividualCap, _ = new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-	params.UniPortionRate = uint8(100)
-	params.CompPortionRate = uint8(0)
-	params.FeeTier = big.NewInt(Network.FeeTier)
-	params.TwapDuration = uint32(5)
-	params.MaxTwapDeviation = big.NewInt(2000)
 	params.ProtocolFeeRate = uint8(10)
 	params.MotivatorFeeRate = uint8(5)
+	params.FeeTier = big.NewInt(Network.FeeTier)
+	params.MaxTwapDeviation = big.NewInt(2000)
+	params.TwapDuration = uint32(35)
+
+	myPrintln(params)
+	//	log.Fatal("here")
 
 	address, tx, _, err := VaultStrategy2.DeployApi(Auth, EthClient, params)
 	if err != nil {
@@ -860,6 +859,29 @@ func DeployStratDeployer() {
 
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
+}
+
+func DeploySqueeth() {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy Squeeth osqth. ..................")
+	fmt.Println("----------------------------------------------")
+
+	NonceGen()
+
+	address, tx, instance, err := Squeeth.DeployApi(Auth, EthClient, "xSqueeth", "xSqth")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, _, _ = address, instance, tx
+
+	myPrintln("address:", address)
+
+	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
+	TxConfirm(tx.Hash())
+
 }
 
 // func DeployVaultStrategy() {

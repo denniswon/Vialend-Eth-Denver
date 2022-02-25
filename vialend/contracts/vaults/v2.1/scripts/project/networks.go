@@ -18,9 +18,9 @@ import (
 )
 
 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby, 7: ROPSTEN or ROPSTENLOCAL
-var _useGETH = false
-var useEnv = true
-var Networkid = 0
+var _USE_GETH = false
+var _LOAD_ENV = true
+var Networkid = 6
 var Account = 0
 var ProviderSortId = 0
 
@@ -36,17 +36,20 @@ type TokenStruct struct {
 }
 
 type LendingStruct struct {
-	WETH  string
-	CETH  string
-	DAI   string
-	CDAI  string
-	ETH   string
-	WBTC  string
-	CWBTC string
-	USDC  string
-	CUSDC string
-	USDT  string
-	CUSDT string
+	WETH           string
+	CETH           string
+	DAI            string
+	CDAI           string
+	ETH            string
+	WBTC           string
+	CWBTC          string
+	USDC           string
+	CUSDC          string
+	USDT           string
+	CUSDT          string
+	OSQTH          string
+	OSQTHWETHPOOL  string
+	ChainLinkProxy string
 }
 type AccountStruct struct {
 	Address    string
@@ -71,6 +74,7 @@ type Params struct {
 	FeeTier          int64
 	VaultBridge      string
 	VaultStrat       string
+	VaultHedge       string
 	LendingContracts LendingStruct
 	Accounts         []AccountStruct
 }
@@ -107,41 +111,8 @@ type Info struct {
 var InfoString []Info
 
 var Networks = [...]Params{
-	// { // 0 mainnet
-	// 	//[]string{},
-	// 	[]string{"http://127.0.0.1:7545"},
-	// 	//[]string{"http://192.168.0.12:8545"},
-	// 	"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
-	// 	"0x4aF84E4bcCcFfF5dB4c23771F90C631eFb5260b3", //callee
-	// 	[]string{},
-	// 	"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
-	// 	"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // weth  tokenA
-	// 	"0x39AA39c021dfbaE8faC545936693aC917d5E7563", //cusdc
-	// 	"0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5", //cweth
-	// 	"", //VaultFactory
-	// 	10, //pendingtime  local fork
-	// 	"0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8", // pool
-	// 	"", // swap router
-	// 	"", // bonus token
-	// 	"0xa4c851ABb88353F5271E63BD43429e659f566885", //vault address  -> ganache-cli forked main
-	// 	3000,
-	// 	"", // VaultBridge
-	// 	"", //VaultStrat
-	// 	LendingStruct{
-	// 		WETH:  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-	// 		WBTC:  "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
-	// 		CWBTC: "0xC11b1268C1A384e55C48c2391d8d480264A3A7F4",
-	// 		USDC:  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-	// 		CUSDC: "0x39AA39c021dfbaE8faC545936693aC917d5E7563",
-	// 		CETH:  "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",
-	// 		DAI:   "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-	// 		CDAI:  "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
-	// 		USDT:  "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-	// 		CUSDT: "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
-	// 	},
-	// },
 
-	{ /// 0 mainnet
+	{ ///0 mainnet
 		//[]string{},
 		//[]string{"http://192.168.0.12:8546"}, /// direct main
 
@@ -168,6 +139,7 @@ var Networks = [...]Params{
 		3000,
 		"", // VaultBridge
 		"", //VaultStrat
+		"", //VaultHedge
 		LendingStruct{
 			WETH:  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
 			WBTC:  "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
@@ -179,6 +151,10 @@ var Networks = [...]Params{
 			CDAI:  "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
 			USDT:  "0xdAC17F958D2ee523a2206206994597C13D831ec7",
 			CUSDT: "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
+			//OSQTH:          "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68",
+			OSQTH:          "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b",
+			OSQTHWETHPOOL:  "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // osqth/weth uni pool
+			ChainLinkProxy: "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4", // usdc / eth chain link
 		},
 		[]AccountStruct{},
 	},
@@ -201,6 +177,7 @@ var Networks = [...]Params{
 		3000, // fee
 		"",   // VaultBridge
 		"0xdB11518974087276048364aef0596637527ddDBd", //VaultStrat
+		"", //VaultHedge
 
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 		[]AccountStruct{},
@@ -224,6 +201,7 @@ var Networks = [...]Params{
 		3000, // fee
 		"",   // VaultBridge
 		"",   //VaultStrat
+		"",   //VaultHedge
 
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 		[]AccountStruct{},
@@ -254,6 +232,7 @@ var Networks = [...]Params{
 		"0x601D3992aB70ffEe3858730b12d94AAB35A4a60E", // VaultBridge
 
 		"READ FROM FILE", //VaultStrat
+		"",               //VaultHedge
 
 		LendingStruct{
 			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
@@ -295,6 +274,7 @@ var Networks = [...]Params{
 		"0x601D3992aB70ffEe3858730b12d94AAB35A4a60E", // VaultBridge
 
 		"", //VaultStrategy
+		"", //VaultHedge
 
 		LendingStruct{
 			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
@@ -334,6 +314,7 @@ var Networks = [...]Params{
 		10000, // fee
 		"0x033F3C5eAd18496BA462783fe9396CFE751a2342", // VaultBridge
 		"", //VaultStrat
+		"", //VaultHedge
 
 		LendingStruct{
 			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
@@ -355,29 +336,34 @@ var Networks = [...]Params{
 		"", //callee
 		[11]string{},
 
-		"0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a", //tokenA Weth
-		"0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", //tokenB  usdc
+		"0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b", //tokenA  usdc
+		"0xc778417E063141139Fce010982780140Aa0cD5Ab", //tokenB Weth
 		"0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e", //ctoken0
 		"0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1", //ctoken1
-		"",   //VaultFactory
-		50,   //time pending interval
-		"",   //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
-		"",   // swap router
-		"",   // tto  token
-		"",   //vault address
-		3000, // fee
-		"",   // VaultBridge
-		"",   //VaultStrat
+		"",  //VaultFactory
+		50,  //time pending interval
+		"",  //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
+		"",  // swap router
+		"",  // tto  token
+		"",  //vault address
+		500, // fee
+		"",  // VaultBridge
+		"",  //VaultStrat
+		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //VaultHedge   to do
 
 		LendingStruct{
-			WETH:  "0xd606ddFA13914F274CBa3B4B22120eCc8Ba1C67a",
-			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C",
-			CUSDC: "0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1",
-			CWBTC: "0x0014F450B8Ae7708593F4A46F8fa6E5D50620F96",
-			WBTC:  "0x577D296678535e4903D59A4C929B718e1D575e0A",
-			CDAI:  "0x6D7F0754FFeb405d23C51CE938289d4835bE3b14",
-			DAI:   "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
-			CETH:  "0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e",
+			WETH:           "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+			USDC:           "0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b",
+			CUSDC:          "0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1",
+			CWBTC:          "0x0014F450B8Ae7708593F4A46F8fa6E5D50620F96",
+			WBTC:           "0x577D296678535e4903D59A4C929B718e1D575e0A",
+			CDAI:           "0x6D7F0754FFeb405d23C51CE938289d4835bE3b14",
+			DAI:            "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
+			CETH:           "0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e",
+			OSQTH:          "0xb5b01bb5a34bcbeccc881ee217ada81a29dd2d6d", // deployed squeeth contract on rinkeby
+			OSQTHWETHPOOL:  "0x51B5Ac5c8df5e982B2eb4Eb3823e774485b0e2fb", // created through uniswap v3 UI
+			ChainLinkProxy: "0xdCA36F27cbC4E38aE16C4E9f99D39b42337F6dcf", // usdc/eth
+
 		},
 		[]AccountStruct{},
 	},
@@ -401,6 +387,7 @@ var Networks = [...]Params{
 		3000, // fee tier
 		"",   // VaultBridge
 		"",   //VaultStrat
+		"",   //VaultHedge
 
 		LendingStruct{
 			WETH:  "0xc778417e063141139fce010982780140aa0cd5ab",
@@ -562,8 +549,8 @@ func Init(nid int, acc int) {
 	}
 	myPrintln("............loading env...............")
 
-	if useEnv {
-		loadEnv(_useGETH)
+	if _LOAD_ENV {
+		loadEnv(_USE_GETH)
 	}
 
 	myPrintln("............initial ethereum clients...............")
@@ -651,14 +638,15 @@ func TxConfirm(tx common.Hash) {
 	myPrintln("tx: ", tx.Hex())
 
 	tr, err := EthClient.TransactionReceipt(context.Background(), tx)
-	// if err != nil {
-	// 	log.Fatal("transactionReceipt failed:  ", err)
-	// }
+	if err != nil {
+		log.Println("TxConfirm transactionReceipt failed:  ", err)
+	}
 
 	delay := time.Duration(5)
 
 	for i := 0; i < 100; i++ {
 		if err != nil {
+			//log.Println("TxConfirm transactionReceipt Failed :  ", err)
 			log.Println("tx ", err, ".. trying in ", delay, " seconds")
 			time.Sleep(delay * time.Second)
 		} else {

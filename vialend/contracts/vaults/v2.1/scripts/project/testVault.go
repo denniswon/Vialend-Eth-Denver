@@ -455,15 +455,20 @@ func Rebalance(_range int, acc int) {
 	myPrintln(".........Rebalance New.........  ")
 	myPrintln("----------------------------------------------")
 
-	_, stratInstance, _ := GetInstance3()
+	_, stratInstance, _ := GetInstance4()
 
 	//init ticklow and tickupp
 	//GetSwapInfo(param[0])
 	poolInstance := GetPoolInstance()
-	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
+	slot0, err := poolInstance.Slot0(&bind.CallOpts{})
+	if err != nil {
+		myPrintln(Network.Pool)
+		log.Fatal("poo slot0 : ", err)
+	}
 	tick := slot0.Tick
 
 	hrange := new(big.Int).Div(big.NewInt(int64(_range)), big.NewInt(2))
+
 	tickLower = new(big.Int).Sub(tick, hrange)
 	tickUpper = new(big.Int).Add(tick, hrange)
 
@@ -1363,5 +1368,31 @@ func ERC20Balance(_erc20 string, _owner string) {
 	_ = decimals
 	balance, _ := erc20Instance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(_owner))
 	myPrintln(symbol, " in Wallet ", balance)
+
+}
+
+func InitSqueeth() {
+
+	squeethInstance := GetSqueethInstance(Network.LendingContracts.OSQTH)
+
+	tx, err := squeethInstance.Init(Auth, FromAddress)
+	if err != nil {
+		log.Fatal("squeeth init ", err)
+	}
+
+	TxConfirm(tx.Hash())
+
+}
+
+func MintSqueeth(to string, amount *big.Int) {
+
+	squeethInstance := GetSqueethInstance(Network.LendingContracts.OSQTH)
+
+	tx, err := squeethInstance.Mint(Auth, common.HexToAddress(to), amount)
+	if err != nil {
+		log.Fatal("squeeth mint ", err)
+	}
+
+	TxConfirm(tx.Hash())
 
 }

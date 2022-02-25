@@ -13,7 +13,7 @@ import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
 import "./@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
 import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import  { ICErc20, ICEth,IWETH9 }  from "./interfaces/IViaProtocols.sol";
+import  { IWETH9 }  from "./interfaces/IViaProtocols.sol";
 
 import "./UniCompFees.sol";
 import "./TwapGetter.sol";
@@ -22,6 +22,7 @@ import "./libraries/Debugger.sol";
 
 import "./interfaces/IViaVault.sol";
 import "./interfaces/IVaultFactory.sol";
+import "./interfaces/AggregatorV3Interface.sol";
 
 /*
 Error code:
@@ -32,32 +33,28 @@ Error code:
 */
 
 /// @author  ViaLend
-/// @title   strategy Uni + Compound
+/// @title   strategy Uni + oSqth  + HedgeVault ( AAve Flashloan)
 /// @notice  A Smart Contract that helps liquidity providers managing their funds on Uniswap V3 .
 
-struct UniCompParam {
+struct UniSqueethParam {
 	address Uni3Factory;
 	address VaultFactory;
-	address Protocol; 
-	address Creator;
+	address HedgeVault;
+	address Protocol; 			// protocol fee collector address 
+	address Creator;			// who created this strategy when used as template
 	address Token0;
 	address Token1;
-	address CToken0;
-	address CToken1;
 	address WETH;
-	address CETH;
 	address SqthEthPool;
+	address ChainLinkProxy;
 	uint8 Token0Decimals;
 	uint8 Token1Decimals;
-	uint8 UniPortionRate;  
-	uint8 CompPortionRate;  
 	uint8 ProtocolFeeRate;  
 	uint8 MotivatorFeeRate; 
 	uint24 FeeTier;
-	uint32 TwapDuration;
 	int24 MaxTwapDeviation;
-	uint256 VaultCap;  //to be removed
-	uint256 IndividualCap; //to be removed
+	uint32 TwapDuration;	// initial twap durantion
+
 }
 
 contract VaultStrategy2 
@@ -69,8 +66,11 @@ contract VaultStrategy2
 	
 	using SafeERC20 for IERC20;
 
+	AggregatorV3Interface internal priceFeed;
+
 
 	address constant public UNIV3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+	
 	address public creator;
 	address public immutable factory;
 	address payable public immutable 	_WETH;
@@ -79,7 +79,6 @@ contract VaultStrategy2
 	address public protocol;			// where fee cuts to protocol 
 	address public oSqth;
 
-	ICEth public immutable _CETH;
     IUniswapV3Pool public immutable pool;        // get by uni factory, token0, token1, feetier
 	IUniswapV3Pool public immutable sqth_eth_pool;
 
@@ -87,8 +86,6 @@ contract VaultStrategy2
    
 // 	uint8 public decimal0;
 //    uint8 public decimal1;
-    uint8 public uniPortion;       // uniswap portion ratio
-    uint8 public compPortion;       // compound portion ratio
     uint8 public protocolFeeRate;		// 0 - 20% of profit
 	uint8 public motivatorFeeRate;		// 0- 10% from profit for keeping system running by press buttons
 	uint32 public twapDuration;        // oracle twap durantion
@@ -99,7 +96,6 @@ contract VaultStrategy2
     int24 public cHigh;
     int24 public maxTwapDeviation;     // for twap     
 
-    mapping (address => address) public _CTOKEN;
 
     bool private isEmergency = false;  // only canbe changed within emergency
 
@@ -110,8 +106,10 @@ contract VaultStrategy2
 	address[] public motivators;
 	mapping(address => uint) motivatorCounter;
 
-    constructor( UniCompParam memory params) {
+    constructor( UniSqueethParam memory params) {
 		factory = params.VaultFactory; 
+		
+        priceFeed = AggregatorV3Interface(params.ChainLinkProxy); 
 
 		protocol =  params.Protocol;
 		creator = params.Creator;
@@ -127,22 +125,11 @@ contract VaultStrategy2
         token0 = pool.token0();  
         token1 = pool.token1();
         
-        if ( token0 == params.Token1 ) { 	
-        	// tokens order changed , the ctokens order must change accordingly.
-			_CTOKEN[token0] = params.CToken1;	
-			_CTOKEN[token1] = params.CToken0; 
-        } else {
-			_CTOKEN[token0] = params.CToken0;	
-			_CTOKEN[token1] = params.CToken1; 
-        }
 
 		_WETH = payable (params.WETH);	
-        _CETH = ICEth(params.CETH);	
         
 		
 		tickSpacing = pool.tickSpacing();
-		uniPortion =  params.UniPortionRate;
-        compPortion =  params.CompPortionRate;
         
         protocolFeeRate = params.ProtocolFeeRate;
 
@@ -310,6 +297,18 @@ contract VaultStrategy2
 
 	// make sure all position has been removed before doing rebalance. 
 	// when newLow and newHigh is 0, calc new range with current cLow and cHigh
+   /*
+	rebalance creteria :
+    	new deposit
+		value in uniswap + squeeth + aave  (when hedging and price in squeeth is not perfect)
+		fees out
+		fees in
+		
+		-> calculate the best situation to do the rebalance
+		
+		
+    */
+
 	function _rebalance(int24 newLow, int24 newHigh ) 
 		internal 
 	{
@@ -335,10 +334,11 @@ contract VaultStrategy2
 		if (currentBalance0 == 0 && currentBalance1 == 0 ) return;
 
 		uint256 p = getPrice();
+		
         //#calculate the amounts to supply into uniswap
         (uint256 u0, uint256 u1) = calcUniPortionAmounts(currentBalance0, currentBalance1, p);
 		
-        if ( uniPortion > 0 ) {
+        if ( u0 >0 || u1 > 0 ) {
 			(uint256 minted0, uint256 minted1) = mintUniV3( newLow, newHigh, u0, u1 );
             (cLow, cHigh) = (newLow, newHigh);    
 
@@ -347,14 +347,6 @@ contract VaultStrategy2
 			currentBalance1 -= minted1;
 		}
 	
-		if (compPortion > 0 ) {
-			compIn0 = currentBalance0 * compPortion / 100 ;
-			compIn1 = currentBalance1 * compPortion / 100 ;
-
-	        mintCompound(token0,compIn0);
-	        mintCompound(token1,compIn1);
-			
-		}	
 		
 		// todo if ( hedging > 0) {}
 		// todo if (aavePortion> 0 ) {}
@@ -370,15 +362,23 @@ contract VaultStrategy2
 	
     function getPrice() public view returns(uint256) {
     	
-    	// Check price has not moved a lot recently. This mitigates price
-        // manipulation during rebalance and also prevents placing orders
-        // when it's too volatile.
+    	// old method: uniswap Twap oracle 
+		// new method: use chainlink price feed 
+       
+        //int24 tick = getTwap(address(pool), twapDuration);
+    	//return( getQuoteAtTick(tick, uint128(quoteamount), token0, token1) );
+		
+        ( uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
 
-        int24 tick = getTwap(address(pool), twapDuration);
-
-    	return( getQuoteAtTick(tick, uint128(quoteamount), token0, token1) );
+		return uint256( price );
 
     }
+
+    
+    function changeChainlinkProxy(address newProxy) external onlyAdmin {
+        priceFeed = AggregatorV3Interface(newProxy); 
+    }
+    
     
 /*    
     function getTickPrice() public view returns(uint256) {
@@ -398,10 +398,7 @@ contract VaultStrategy2
         twapDuration = _twapDuration;
     }
     
-    function setPortionRatio(uint8 uni, uint8 comp) external onlyCreator {
-    	require(uni <=100 && comp <=100,'100');
-		(uniPortion, compPortion ) =  ( uni, comp );
-    }
+  
 
 	///@notice set protocol address to collect fees
 	function setProtocol(address _protocol) external onlyAdmin {
@@ -449,59 +446,9 @@ contract VaultStrategy2
     }
     
     
-    function redeemCEth(uint256 amount, bool redeemType) internal {
-		uint r;
-        if (redeemType == true) {
-            // amount=cETH的数量
-            r = _CETH.redeem(amount);
-			if (r==0) _wrap(address(this).balance);
-        } else {
-            // amount=要赎回的ETH的数量
-            r = _CETH.redeemUnderlying(amount);
-			if (r==0) _wrap(amount);
-        }
-
-		
-        if (r != 0) {	//something wrong. Ctoken may be stuck in Comp
-			if (!isEmergency) {
-				revert("Ceth not 0");  
-			} else {
-				// emergency 
-			}
-        }	
-	}
-
-	function redeemCErc20(address underlying, uint256 amount, bool redeemType) internal {
-	
-		
-		if (underlying == _WETH) {
-			redeemCEth(amount, redeemType);
-			return;
-		}
-		
-        uint256 r;
-        if (redeemType == true) {
-            // amount=归还cERC20的数量
-            r = ICErc20(_CTOKEN[underlying]).redeem(amount);
-        } else {
-            // amount=要赎回的ERC20的数量
-            r = ICErc20(_CTOKEN[underlying]).redeemUnderlying(amount);
-        }
-        
-        if (r != 0) {	//something wrong. Ctoken may be stuck in Comp
-			if (!isEmergency) {
-				revert('Ct');  
-			} else {
-				// emergency 
-			}
-        }	
-        
-	}	
-
     /// remove all positions from protocols, if any failed, an emergency maybe required.
     function removePositions() internal  {
 	    removeUniswap();
-		removeLending();
 	}
 	
 	function removeUniswap() internal {
@@ -520,22 +467,7 @@ contract VaultStrategy2
 	}
 
         	
-	/// remove lending position; gether fees
-	function removeLending() internal {
-	
-		uint256 b0 = getBalance(token0);
-		uint256 b1 = getBalance(token1);
 
-        (uint256 c0, uint256 c1 ) = getCAmounts();
-        if(c0>0) redeemCErc20(token0, c0, true);
-        if(c1>0) redeemCErc20(token1, c1, true);
-        
-        compOut0 = getBalance(token0);
-        compOut1 = getBalance(token1);
-        compOut0 = (compOut0 > b0 )? compOut0 - b0 : compIn0;
-        compOut1 = (compOut1 > b1 )? compOut1 - b1 : compIn1;
-        
-	}
 	
 	function _position(int24 tickLower, int24 tickUpper)
         internal
@@ -572,13 +504,16 @@ contract VaultStrategy2
     }   
 
 	///@notice calculate best portion to put into uniswap
-	function calcUniPortionAmounts(uint256 total0, uint256 total1, uint256 price) internal view returns(uint256 amount0, uint256 amount1){
+	/// todo: formula of parts in uniswap, squeeth, and hedging
+	function calcUniPortionAmounts(uint256 total0, uint256 total1, uint256 price) internal pure returns(uint256 amount0, uint256 amount1){
 
 		//uint256 p = getPrice();
 		//uint256 p = getTickPrice();
 		 uint256  p = price;
 		
 		uint256 total0In1 = total0 * p;   // to have same quantity of token0 as token1 upon current price
+		
+		uint256 uniPortion = 100;  // #todo
 		
 		if (total0In1 > total1)  {    
 			// amount of token0 > amount of token 1, then use token0 to calculate the larger part of supply  
@@ -592,20 +527,6 @@ contract VaultStrategy2
 		
 	}
 
-
-	function mintCompound(address _underlying, uint256 amount) internal {
-        if (_underlying == _WETH ) {
-   	        _unwrap(amount);  
-			_CETH.mint{gas:250000,value:amount}();
-        } else {
-
-			IERC20(_underlying).approve(_CTOKEN[_underlying], amount);
-			uint mintResult = ICErc20(_CTOKEN[_underlying]).mint(amount);
-			if (mintResult != 0) {
-				emit MyLog("mintResult is not 0, there was an error", mintResult);
-			}
-        }
-	}
 
 	function _wrap(uint256 amount) internal {
 	    if (amount > 0) {
@@ -699,44 +620,17 @@ contract VaultStrategy2
 		lastCount++;
 	}
 
-	function getCAmounts() public view returns (uint256 amount0, uint256 amount1) {
-		amount0 = ICErc20(_CTOKEN[token0]).balanceOf( address(this) );
-		amount1 = ICErc20(_CTOKEN[token1]).balanceOf( address(this) );
-	}
-
-	function getCtokenUnderlyingAmounts() internal returns (uint256 amount0, uint256 amount1) {
-		amount0 = ICErc20(_CTOKEN[token0]).balanceOfUnderlying( address(this) );
-		amount1 = ICErc20(_CTOKEN[token1]).balanceOfUnderlying( address(this) );
-	}
-	
 	function getTotalAmounts() public view returns(uint256 , uint256) {
 		
 		uint256 b0 = IERC20(token0).balanceOf(address(this));
 		uint256 b1 = IERC20(token1).balanceOf(address(this));
 
 		(uint256 a0, uint256 a1) = getUniAmounts(cLow, cHigh);
-		(uint256 c0, uint256 c1 ) = getAmountsInComp();
 		
-		return (a0+b0+c0, a1+b1+c1);
+		return (a0+b0, a1+b1);
 	}
 	
- 	function getAmountsInComp() public view returns(uint256 , uint256 ){
-
-    	(uint256 cAmount0, uint256 cAmount1) = getCAmounts();
-		
-		if (cAmount0 == 0 && cAmount1 == 1 ) {return (0,0);	}
-
-    	ICErc20 ctoken0 = ICErc20(_CTOKEN[token0]);
-		ICErc20 ctoken1 = ICErc20(_CTOKEN[token1]);
-		
-		uint256 exchangeRate0 = ctoken0.exchangeRateStored();  // (1* 10 ** 18 + Decimals[token0] -8 )));   // the sampled calculation get a wrong result
-		uint256 exchangeRate1 = ctoken1.exchangeRateStored();  // (1* 10 ** 18 + Decimals[token1] -8 ))); 
-				
-        uint256 amount0 = cAmount0 * exchangeRate0 / 1e18;
-        uint256 amount1 = cAmount1 * exchangeRate1 / 1e18;
-
-		return(amount0,amount1);
-    }	
+ 	
 	
   	function _validRange(int24 _lower, int24 _upper, int24 _tick) internal view {
         require(_lower < _upper, "V1");

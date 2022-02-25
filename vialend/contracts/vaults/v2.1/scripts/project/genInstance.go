@@ -7,7 +7,9 @@ import (
 	//	"time"
 
 	//	factory "../../../../../../../uniswap/v3/deploy/UniswapV3Factory"
+	Squeeth "viaroot/deploy/Squeeth"
 	token "viaroot/deploy/Tokens/erc20/deploy/Token"
+	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
 
 	//vault "viaroot/deploy/FeeMaker"
 	callee "viaroot/deploy/TestUniswapV3Callee"
@@ -124,4 +126,27 @@ func GetCTokenInstance(Address string) *cErc20.Api {
 	}
 
 	return instance
+}
+
+func GetSqueethInstance(Address string) *Squeeth.Api {
+
+	instance, err := Squeeth.NewApi(common.HexToAddress(Address), EthClient)
+	if err != nil {
+		log.Fatal("get Squeeth Instance,", err)
+	}
+
+	return instance
+}
+
+func GetPoolInstance() *pool.Api {
+
+	_pool := GetPool(Network.TokenA, Network.TokenB, Network.FeeTier)
+	//instance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
+	instance, err := pool.NewApi(_pool, EthClient)
+
+	if err != nil {
+		log.Fatal("poolInstance err:", err)
+	}
+	return instance
+
 }

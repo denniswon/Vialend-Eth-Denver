@@ -1,6 +1,15 @@
-#v2.1
+#v2.1 Changes made in this version:
 
+	. New strategy file: VaultStrategy2.sol to work on uni-squeeth-aave model
 
+	. removed compound related code from VaultStrategy2.sol
+	
+	. deployed squeeth contract on Rinkeby  -- token symbol: xSqth, 
+	
+	. use Chainlink price feed for getPrice() method
+	
+			More price feed addresses: https://docs.chain.link/docs/ethereum-addresses/
+	  
 
 #v2.0
 -2021/12/05

@@ -23,6 +23,7 @@ contract ViaVault is
     address public immutable factory;  
     address public immutable token0;   // token0
 	address public immutable token1;   // token1
+	address public immutable baseToken;   // token1 or token0 for different network
 
 	uint256 public vaultCap;
 	uint256 public individualCap;
@@ -38,15 +39,21 @@ contract ViaVault is
     	address _factory,
         address _token0,
 		address _token1,
+		address _baseToken,
 		uint256 _vaultCap,
 		uint256 _individualCap
     ) ERC20("ViaLend Uni Compound Token","VUC0") {
     	
+		require(_baseToken == _token0 || _baseToken == _token1, "b0");
+
 		factory = _factory;
         token0 = _token0;
         token1 = _token1;
+		baseToken = _baseToken;
         vaultCap = _vaultCap;
 		individualCap = _individualCap;
+
+
     }
 
 	event Deposit(
@@ -139,6 +146,8 @@ contract ViaVault is
         if (amount1 > 0) IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
         
         emit Deposit(msg.sender, shares, amount0, amount1);
+        
+        
         
     }     
     
@@ -282,7 +291,8 @@ contract ViaVault is
 		
 		require(p>0,'p0');
 		
-		return(a0 + a1/p); 
+		// (weth + usdc/price)
+		return   (baseToken  == token0 ) ? (a0 + a1/p) : (a1 + a0/p); 
 	}
 	
     

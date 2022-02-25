@@ -71,8 +71,27 @@ func main() {
 
 	project.Init(-1, -1)
 
+	//project.Wrap(project.Network.LendingContracts.WETH, 0, 2)
+	//fmt.Println(project.GetBalance(project.Network.LendingContracts.WETH, project.FromAddress.Hex()))
+
+	//## FORCE TO WITHDRAW ALL FUNDS
+	// project.CallFunds()
+	// project.Withdraw(100, 0)
 	// project.MyAccountInfo(0)
 	// return
+
+	//InitialVaults2()
+	//project.DeployVaultByGo()
+	//return
+
+	//# squeeth deploy, init, mint
+	//project.DeploySqueeth()
+	//project.InitSqueeth()
+	//project.MintSqueeth(project.FromAddress.Hex(), project.PowX(50000, 18))
+
+	// project.DeployStrat2ByGoStruct()
+	// return
+
 	//project.GetPool(project.Network.TokenA, project.Network.TokenB, 3000)
 	//project.PoolInfo("0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
 
@@ -80,7 +99,7 @@ func main() {
 	// InitialForkEnv()
 	// return
 
-	//project.ViaVaultPublicList()
+	//	project.ViaVaultPublicList()
 	//project.ViaStratUniCompPublicList()
 
 	//project.FactoryPublicList()
@@ -89,26 +108,36 @@ func main() {
 
 	//project.FactoryPairs("0x91642Ba015065822fc4e530C222f2492B5B97420")
 
+	//project.Wrap(project.Network.LendingContracts.WETH, 0, 1)
+	// project.Sleep(5000)
+	//project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1))
+	//project.MyAccountInfo(0)
+
 	// project.TokenSwap(0, WETH, OSQTH, 3000, big.NewInt(2))
+	//	project.TokenSwap(0, WETH, DAI, 500, big.NewInt(2))
 	// project.Sleep(5000)
 	//	project.Deposit(0, 0, 0)
 	//project.Withdraw(100, 0)
+	// project.SetTwapduration(5)
+	// return
 	//project.Rebalance(500, 0)
-
+	//return
 	//project.GetTwap()
-	project.GetPriceStratCall()
+	//project.GetPriceStratCall()
 
-	// fmt.Println(project.GetBalance(USDC, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-	// fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-	// fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-
-	project.MyAccountInfo(0)
-	project.GetTVL()
-	project.Rebalance(400, 0)
+	//project.MyAccountInfo(0)
+	//project.GetTVL()
+	//project.Rebalance(500, 0)
 
 	// // project.Sleep(15000)
 
-	return
+	// fmt.Println(project.GetBalance(DAI, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	// fmt.Println(project.GetBalance(USDC, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	// fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	// fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+	// fmt.Println(project.GetBalance(project.Network.Vault, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+
+	//	return
 
 	// project.PoolInfo("0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68")
 	// return
@@ -148,15 +177,15 @@ func main() {
 	// // //newStratAddr := project.DeployStrat2ByGoStruct()
 	// newVaultAddr := project.DeployVaultByGo()
 	// project.ConfigWrite()
-	// // //project.Register(project.Network.VaultStrat, project.Network.Vault)
+	//project.Register(project.Network.VaultStrat, project.Network.Vault)
 	// project.Register(newStratAddr, newVaultAddr)
-	// project.ChangeStat(newStratAddr, newVaultAddr, 1)
-	// return
+	//project.ChangeStat(newStratAddr, newVaultAddr, 1)
+	//return
 
 	//# Just Register/Register strategy & vault
-	//project.Register(project.Network.VaultStrat, project.Network.Vault)
-	//project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	//return
+	// project.Register(project.Network.VaultStrat, project.Network.Vault)
+	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	// return
 
 	//# emergency
 	// project.CallFunds()
@@ -338,6 +367,7 @@ func main() {
 		return
 
 	} else if project.Networkid == 3 {
+		///3
 		//#### WETH/USDC Test
 		project.Deposit(1e14, 1e5, 0)
 		//project.Withdraw(100, 0)
@@ -440,6 +470,64 @@ func main() {
 		// project.GetCompAmounts()
 
 		return
+	} else if project.Networkid == 6 {
+		///6
+		//#### WETH/USDC Test
+		//project.GetPriceStratCall()
+		//return
+		project.Deposit(3000e6, 1e18, 0)
+		//project.CallFunds()
+		//project.GetTVL()
+		//return
+		//project.Withdraw(100, 0)
+		project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+		//return
+		//	project.Deposit(1e16, 1e5, 0)
+		//	project.Deposit(2e16, 2e5, 1)
+
+		project.GetTVL()
+		// return
+		// // project.GetTotalAmounts()
+		// // project.GetCompAmounts()
+
+		// //project.MoveFunds()
+		//project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+		//project.GetTVL()
+		// // project.GetTotalAmounts()
+		// // project.GetCompAmounts()
+		// //project.LendingInfo()
+
+		// // //project.Rebalance(400, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+		// // //project.Rebalance(600, 2) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+		// // project.Deposit(1e17, 1e6, 0)
+		// // // //project.Alloc(0)
+		// // //project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+		// // project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+		// // project.Deposit(2e17, 2e6, 1)
+		// // project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+		// // // project.EmergencyBurn() // vault calls strategy.callFunds...alloc/removepositions/transferfunds
+		// // // project.EmergencyWithdraw(0)
+		// // // project.EmergencyWithdraw(1)
+
+		project.Withdraw(100, 0)
+		// project.Withdraw(100, 1)
+		// project.Withdraw(100, 2)
+		// project.Withdraw(100, 3)
+		project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+		// // // //project.VaultInfo()
+		// // // project.MyAccountInfo(0)
+		// // // project.MyAccountInfo(1)
+		project.GetTVL()
+		// // project.GetTotalSupply()
+		// // project.GetTotalAmounts()
+		// // project.GetCompAmounts()
+
+		return
+
 	} else if project.Networkid == 7 {
 		///7
 		//project.DeployVaultBridge()
@@ -929,6 +1017,36 @@ func BuildAll() {
 
 }
 
+func InitialVaults2() {
+
+	//project.DeployCallee()
+	//	project.Sleep(9000)
+	// // // // return
+
+	//project.DeployVaultFactory()
+	// // return
+	//project.Sleep(9000)
+	//newStratAddr := project.DeployStratByGoStruct()
+	newStratAddr := project.DeployStrat2ByGoStruct()
+	//project.Sleep(9000)
+
+	newVaultAddr := project.DeployVaultByGo()
+	// //		project.DeployVaultByGo()
+	//project.Sleep(9000)
+
+	project.ConfigWrite()
+	// project.Sleep(25000)
+	_, _ = newStratAddr, newVaultAddr
+	project.Register(newStratAddr, newVaultAddr)
+	//project.Sleep(5000)
+	project.ChangeStat(newStratAddr, newVaultAddr, 1)
+	//project.Sleep(5000)
+	// // project.Register(project.Network.VaultStrat, project.Network.Vault)
+	// // return
+	// // project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	// // return
+}
+
 func InitialForkEnv() {
 	project.DeployCallee()
 	project.Sleep(9000)
@@ -959,23 +1077,33 @@ func InitialForkEnv() {
 
 	//project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
 
-	project.Wrap(WETH, 0, 10)
+	project.Wrap(WETH, 0, 20)
 	project.Sleep(5000)
-
 	project.TokenSwap(0, WETH, USDC, 500, big.NewInt(2))
+	project.Sleep(5000)
+	project.TokenSwap(0, WETH, DAI, 500, big.NewInt(2))
 	project.Sleep(5000)
 	project.TokenSwap(0, WETH, OSQTH, 3000, big.NewInt(2))
 	project.Sleep(5000)
 
+	//FOR USDC/WETH
 	project.Deposit(4000e6, 1e18, 0)
-	project.Sleep(5000)
-	project.GetTVL()
-	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	//FOR DAI/WETH
+	//project.Deposit(1e18, 1e18, 0)
+
 	project.Sleep(5000)
 
+	fmt.Println(project.GetBalance(DAI, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
 	fmt.Println(project.GetBalance(USDC, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
 	fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
 	fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
+
+	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	project.Sleep(5000)
+
+	project.GetTVL()
 
 	// ////project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, big.NewInt(1))
 }
