@@ -1,51 +1,23 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.8;
+pragma solidity 0.8.10;
 
-import "@aave/interfaces/Ipool.sol";
-import "@aave/flashloan/base/FlashLoanReceiverBase.sol";
-import "@uniswap/smart-router-contracts/contracts/interfaces/ISwapRouter02.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/flashloan/base/FlashLoanReceiverBase.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import "interfaces/IAaveShorter.sol";
+import "https://github.com/Uniswap/swap-router-contracts/blob/main/contracts/interfaces/IV3SwapRouter.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @notice Contract for creating a short position using Aave for borrowing and Uniswap for swap.
  */
-contract AaveShorter is FlashLoanReceiverBase, IAaveShorter {
-    address SWAP_ROUTER = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45";
+contract AaveShorterCallback is FlashLoanReceiverBase {
+    address public constant SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address public aavePool;
 
-    address colateral;
-    address shorting;
-    address sender;
-    uint256 amount;
-    IPool aavePool;
-    
-    function short(
-        address _aavePool,
-		address _colateral,
-        address _shorting,
-		uint256 _amount,
-        unit256 _shortSize
-
-    ) external returns(bool) {
-        colateral = _colateral;
-        shorting = _shorting;
-        amount = _amount;
-        aavePool = IPool(_aavePool);
-        sender = msg.sender;
-
-        bytes params;
-
-        // flash loan the amount times the size of the short, swap for more colateral and deposit.
-        aavePool.flashLoan(
-            address(this),
-            [shorting],
-            [_ammount * _shortSize],     // for a 2x short the borrowed asset must be doubled with respect to the colateral ammount size
-            [1],                         // 1 stable, 2 variable
-            sender,
-            params,
-            0
-        );
+    constructor(IPoolAddressesProvider _addressProvider) public FlashLoanReceiverBase(_addressProvider) {
+        // noop
     }
     
     /**
@@ -54,7 +26,6 @@ contract AaveShorter is FlashLoanReceiverBase, IAaveShorter {
     *      enough funds to repay and has approved the Pool to pull the total amount
     * @param assets The addresses of the flash-borrowed assets
     * @param amounts The amounts of the flash-borrowed assets
-    * @param premiums The fee of each flash-borrowed asset
     * @param initiator The address of the flashloan initiator
     * @param params The byte-encoded params passed when initiating the flashloan
     * @return True if the execution of the operation succeeds, false otherwise
@@ -62,33 +33,39 @@ contract AaveShorter is FlashLoanReceiverBase, IAaveShorter {
     function executeOperation(
         address[] calldata assets,
         uint256[] calldata amounts,
-        uint256[] calldata premiums,
+        uint256[] calldata,
         address initiator,
         bytes calldata params
-    ) external returns (bool) {
-        ISwapRouter02 router = ISwapRouter02(SWAP_ROUTER);
+    ) external override returns (bool) {
         
+        require(msg.sender == ADDRESSES_PROVIDER.getPool(), "Only allow aave to call");
+
+        (address _colateral, uint256 _colateralSize) = abi.decode(params, (address, uint256));
+
+
+        // transfer from requires approval prior
+        TransferHelper.safeTransferFrom(_colateral, initiator, address(this), _colateralSize);
+
         // approve
-        TransferHelper.safeApprove(shorting, address(SWAP_ROUTER), amounts[0]);
+        TransferHelper.safeApprove(assets[0], address(SWAP_ROUTER), amounts[0]);
 
         // swap
-        ISwapRouter02.ExactInputSingleParams memory params =
-            ISwapRouter.ExactInputSingleParams({
+        IV3SwapRouter.ExactInputSingleParams memory swapParams = IV3SwapRouter.ExactInputSingleParams({
                 tokenIn: assets[0],
-                tokenOut: colateral,
+                tokenOut: _colateral,
                 fee: 3000,
-                recipient: initiator,
-                deadline: block.timestamp,
+                recipient: address(this),
                 amountIn: amounts[0],
                 amountOutMinimum: 0,   // TODO: Does this value need to be set.
                 sqrtPriceLimitX96: 0
             });
-
-        uint256 out = router.exactInputSingle(params);
+        uint256 out = IV3SwapRouter(SWAP_ROUTER).exactInputSingle(swapParams);
+            
+        require(false, string(abi.encodePacked(_colateral, _colateralSize)));
 
         // deposit
-        aavePool.deposit(colateral, amount + out, sender, 0);
+        POOL.supply(_colateral, _colateralSize + out, initiator, 0);
 
         return true;
-    } 
+    }
 }
