@@ -7,6 +7,7 @@ import "https://github.com/aave/aave-v3-core/blob/master/contracts/flashloan/bas
 import "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "https://github.com/Uniswap/swap-router-contracts/blob/main/contracts/interfaces/IV3SwapRouter.sol";
+import "https://github.com/Uniswap/swap-router-contracts/blob/main/contracts/interfaces/ISwapRouter02.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -38,7 +39,7 @@ contract AaveShorterCallback is FlashLoanReceiverBase {
         bytes calldata params
     ) external override returns (bool) {
         
-        require(msg.sender == ADDRESSES_PROVIDER.getPool(), "Only allow aave to call");
+        // require(msg.sender == ADDRESSES_PROVIDER.getPool(), "Only allow aave to call");
 
         (address _colateral, uint256 _colateralSize) = abi.decode(params, (address, uint256));
 
@@ -47,10 +48,10 @@ contract AaveShorterCallback is FlashLoanReceiverBase {
         TransferHelper.safeTransferFrom(_colateral, initiator, address(this), _colateralSize);
 
         // approve
-        TransferHelper.safeApprove(assets[0], address(SWAP_ROUTER), amounts[0]);
+        TransferHelper.safeApprove(assets[0], SWAP_ROUTER, amounts[0]);
 
         // swap
-        IV3SwapRouter.ExactInputSingleParams memory swapParams = IV3SwapRouter.ExactInputSingleParams({
+        ISwapRouter02.ExactInputSingleParams memory swapParams = IV3SwapRouter.ExactInputSingleParams({
                 tokenIn: assets[0],
                 tokenOut: _colateral,
                 fee: 3000,
@@ -59,11 +60,10 @@ contract AaveShorterCallback is FlashLoanReceiverBase {
                 amountOutMinimum: 0,   // TODO: Does this value need to be set.
                 sqrtPriceLimitX96: 0
             });
-        uint256 out = IV3SwapRouter(SWAP_ROUTER).exactInputSingle(swapParams);
-            
-        require(false, string(abi.encodePacked(_colateral, _colateralSize)));
+        uint256 out = ISwapRouter02(SWAP_ROUTER).exactInputSingle(swapParams);
 
         // deposit
+        TransferHelper.safeApprove(_colateral, address(POOL), _colateralSize + out);
         POOL.supply(_colateral, _colateralSize + out, initiator, 0);
 
         return true;

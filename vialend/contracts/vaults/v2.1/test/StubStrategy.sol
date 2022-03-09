@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract StubStrategy is AaveHelper {
 
     address public aavePoolProvider = 0xA55125A90d75a95EC00130E8E8C197dB5641Eb19;
-    address public shortCallback = 0xBA9410f84791A185Ee7088e0B2486BDa38c6515F;
+    address public shortCallback = 0x2162c3051f3801c3f9fB45D33a054cD10399e1e2;
     address public aaveUSDC = 0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8;
     address public aaveEth = 0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed;
     uint256 public usdcPerEth = 2600;

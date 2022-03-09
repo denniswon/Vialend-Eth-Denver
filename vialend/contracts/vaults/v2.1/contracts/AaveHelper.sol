@@ -30,8 +30,8 @@ contract AaveHelper {
             _callback,          // pass call back contract address
             assets,
             sizes,
-            modes,                // 0 repay, 1 stable, 2 variable
-            msg.sender,
+            modes,              // 0 repay, 1 stable, 2 variable
+            address(this),      // assumes this is inherited by startegy and stategy will give access.
             params,
             0
         );
