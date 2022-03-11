@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	//	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func SetProtocolFee(rate *big.Int) {
@@ -23,30 +22,32 @@ func SetProtocolFee(rate *big.Int) {
 	TxConfirm(tx.Hash())
 
 }
-func SetPortionRatio(uni uint8, comp uint8) {
 
-	fmt.Println("setPortion Ratio uni=", uni, "% compound= ", comp, "%")
+// func SetPortionRatio(uni uint8, comp uint8) {
 
-	_, stratIns, _ := GetInstance3()
+// 	fmt.Println("setPortion Ratio uni=", uni, "% compound= ", comp, "%")
 
-	if uni > 100 || comp > 100 {
-		log.Fatal("portion ratio > 100", uni, comp)
-	}
-	NonceGen()
-	tx, err := stratIns.SetPortionRatio(Auth, uni, comp)
+// 	_, stratIns, _ := GetInstance3()
 
-	if err != nil {
-		log.Fatal("SetPortionRatio err ", err)
-	}
+// 	if uni > 100 || comp > 100 {
+// 		log.Fatal("portion ratio > 100", uni, comp)
+// 	}
 
-	TxConfirm(tx.Hash())
+// 	NonceGen()
+// 	tx, err := stratIns.SetPortionRatio(Auth, uni, comp)
 
-	checkuni, _ := stratIns.UniPortion(&bind.CallOpts{})
-	checkcomp, _ := stratIns.CompPortion(&bind.CallOpts{})
+// 	if err != nil {
+// 		log.Fatal("SetPortionRatio err ", err)
+// 	}
 
-	myPrintln("check uni, com :", checkuni, checkcomp)
+// 	TxConfirm(tx.Hash())
 
-}
+// 	checkuni, _ := stratIns.UniPortion(&bind.CallOpts{})
+// 	checkcomp, _ := stratIns.CompPortion(&bind.CallOpts{})
+
+// 	myPrintln("check uni, com :", checkuni, checkcomp)
+
+// }
 
 func SetTwapduration(period int) {
 

@@ -11,6 +11,14 @@ import (
 var Quiet = false
 var Auto = true //auto check pending status
 
+func myTitle(title string) {
+
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................", title, "...................")
+	fmt.Println("----------------------------------------------")
+
+}
+
 func myPrintln(a ...interface{}) {
 	if !Quiet {
 		fmt.Println(a)

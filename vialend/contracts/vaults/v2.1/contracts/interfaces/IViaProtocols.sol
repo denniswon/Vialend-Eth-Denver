@@ -3,6 +3,16 @@ pragma solidity >=0.8.8;
 
 // -- interfaces -- //
 
+//aave
+interface IPriceOracleGetter {
+    function getAssetPrice(address _asset) external view returns (uint256);
+}
+
+// squeeth
+interface IController {
+  function getExpectedNormalizationFactor() external view returns (uint256);
+}
+
 interface IWETH9 {
     function deposit() external payable;
     function withdraw(uint256 wad) external;

@@ -43,21 +43,21 @@ type Switcher struct {
 
 var sw = new(Switcher)
 
-const (
-	WETH  string = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-	WBTC         = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
-	CWBTC        = "0xC11b1268C1A384e55C48c2391d8d480264A3A7F4"
-	USDC         = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-	CUSDC        = "0x39AA39c021dfbaE8faC545936693aC917d5E7563"
-	CETH         = "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5"
-	DAI          = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
-	CDAI         = "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643"
-	USDT         = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-	CUSDT        = "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9"
+// const (
+// 	WETH  string = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+// 	WBTC         = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+// 	CWBTC        = "0xC11b1268C1A384e55C48c2391d8d480264A3A7F4"
+// 	USDC         = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+// 	CUSDC        = "0x39AA39c021dfbaE8faC545936693aC917d5E7563"
+// 	CETH         = "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5"
+// 	DAI          = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+// 	CDAI         = "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643"
+// 	USDT         = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+// 	CUSDT        = "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9"
 
-	OSQTH             = "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B"
-	UniswapV2Router02 = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
-)
+// 	OSQTH             = "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B"
+// 	UniswapV2Router02 = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+// )
 
 func main() {
 
@@ -71,13 +71,127 @@ func main() {
 
 	project.Init(-1, -1)
 
-	//project.Wrap(project.Network.LendingContracts.WETH, 0, 2)
-	//fmt.Println(project.GetBalance(project.Network.LendingContracts.WETH, project.FromAddress.Hex()))
+	//project.TokenSwap(0, project.Network.LendingContracts.OSWETH, project.Network.LendingContracts.OSQTH, 500, big.NewInt(2))
+	// project.Sleep(5000)
+	// project.GetPrice()
+
+	//# deploy vaultBridge
+	project.DeployVaultBridge()
+	project.ConfigWrite()
+
+	project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
+	project.SetVaultAddress(project.Network.Vault, 1)        //vault
+	//project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
+	//project.SetPermit("0x511Ed5FC53CCCf5c4239487381fcE287B02119Fa", 1) // daniel
+
+	return
+
+	// # test network
+	///rinkeby
+	// # aave eth and usdc pool
+	//	project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 10000)
+	//project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 500)
+	// project.GetPrice()
+	// project.ViaVaultPublicList()
+	// project.ViaStratUniCompPublicList()
+
+	// project.FactoryPublicList()
+	// project.Deposit(1e6, 1e11, 0)
+	// project.MoveFunds()
+
+	//# sweep other tokens from vault
+	// project.Sweep(project.Network.LendingContracts.OSQTH, big.NewInt(5982302))
+	// return
+	// project.GetTVL()
+	// return
+
+	//# call funds, deploy strat2, register, move funds
+
+	project.CallFunds()
+	project.GetTVL()
+	project.DeployStrat2ByGoStruct()
+	//project.DeployVaultByGo()
+	project.ConfigWrite()
+	project.Init(-1, -1)
+	project.Register(project.Network.VaultStrat, project.Network.Vault)
+	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	project.MoveFunds()
+	project.GetTVL()
+	//	return
+
+	//project.GetPair0(project.Network.Vault)
+	// project.GetPrice()
+	//return
+
+	//## deposit
+	// project.Deposit(1000e6, 1e18, 0)
+	// project.MoveFunds()
+	// // project.MyAccountInfo(0)
+	// project.GetTVL()
+	// return
+
+	//project.GetPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000)
+	//project.SwapDirectPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(10000))
+	//project.SwapDirectPool(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, big.NewInt(598210))
+	// //project.MyAccountInfo(0)
+
+	project.Rebalance(600, 0) //
+
+	project.GetTVL()
+	return
+
+	//## check vaultinfo
+	//project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1))
+	//	project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(1e10))
+	// project.SwapTest(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 10000, big.NewInt(125347146798))
+	// //	project.SwapTest(project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, big.NewInt(100e6))
+	// project.Sleep(5000)
+
+	// project.VaultInfo()
+	// return
 
 	//## FORCE TO WITHDRAW ALL FUNDS
-	// project.CallFunds()
 	// project.Withdraw(100, 0)
+	//project.MoveFunds()
+	//project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.CallFunds()
+	// project.GetTVL()
+	// return
+
+	// project.TokenSwap(0, WETH, USDC, 500, big.NewInt(2))
 	// project.MyAccountInfo(0)
+	// return
+
+	///#### Forked environment  new ganache-cli ####
+	//project.Deposit(0, 2e18, 0)
+	//project.MoveFunds()
+
+	//project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e18))
+	//project.SwapTest(project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, big.NewInt(100e6))
+
+	//	project.Sleep(5000)
+	//project.MyAccountInfo(0)
+
+	//project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(1e15))
+	//osqth to weth worked with fee tier 3000 or  10000  with fresh forked mainnet
+	//project.SwapTest(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 10000, big.NewInt(440587665102262493))
+	//project.SwapTest(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, big.NewInt(4405795610439833))
+
+	//project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.DAI, 3000, big.NewInt(1e12))
+	//project.SwapTest(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, big.NewInt(1296748104017))
+
+	// project.GetTVL()
+	// return
+
+	//project.VaultInfo()
+
+	//project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+
+	//# test squeeth
+	// project.GetExpectedNormalizationFactor()
+	// return
+
+	// InitialForkEnv()
 	// return
 
 	//InitialVaults2()
@@ -89,15 +203,19 @@ func main() {
 	//project.InitSqueeth()
 	//project.MintSqueeth(project.FromAddress.Hex(), project.PowX(50000, 18))
 
+	//# deploy and register strat2
 	// project.DeployStrat2ByGoStruct()
+	// project.ConfigWrite()
+	// project.Init(-1, -1)
+	// project.Register(project.Network.VaultStrat, project.Network.Vault)
+	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	// return
+
+	// project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e13))
 	// return
 
 	//project.GetPool(project.Network.TokenA, project.Network.TokenB, 3000)
 	//project.PoolInfo("0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
-
-	///#### Forked environment  new ganache-cli ####
-	// InitialForkEnv()
-	// return
 
 	//	project.ViaVaultPublicList()
 	//project.ViaStratUniCompPublicList()
@@ -471,16 +589,16 @@ func main() {
 
 		return
 	} else if project.Networkid == 6 {
-		///6
+		///6 rinkeby
 		//#### WETH/USDC Test
 		//project.GetPriceStratCall()
 		//return
-		project.Deposit(3000e6, 1e18, 0)
+		project.Deposit(3e6, 1e14, 0)
 		//project.CallFunds()
 		//project.GetTVL()
 		//return
 		//project.Withdraw(100, 0)
-		project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+		//project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 		//return
 		//	project.Deposit(1e16, 1e5, 0)
 		//	project.Deposit(2e16, 2e5, 1)
@@ -490,7 +608,7 @@ func main() {
 		// // project.GetTotalAmounts()
 		// // project.GetCompAmounts()
 
-		// //project.MoveFunds()
+		project.MoveFunds()
 		//project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
 		//project.GetTVL()
@@ -512,16 +630,16 @@ func main() {
 		// // // project.EmergencyWithdraw(0)
 		// // // project.EmergencyWithdraw(1)
 
-		project.Withdraw(100, 0)
+		//project.Withdraw(100, 0)
 		// project.Withdraw(100, 1)
 		// project.Withdraw(100, 2)
 		// project.Withdraw(100, 3)
-		project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+		//project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
 		// // // //project.VaultInfo()
 		// // // project.MyAccountInfo(0)
 		// // // project.MyAccountInfo(1)
-		project.GetTVL()
+		//project.GetTVL()
 		// // project.GetTotalSupply()
 		// // project.GetTotalAmounts()
 		// // project.GetCompAmounts()
@@ -530,19 +648,9 @@ func main() {
 
 	} else if project.Networkid == 7 {
 		///7
-		//project.DeployVaultBridge()
-		//project.ConfigWrite()
 
 		project.Init(-1, -1)
 		project.Quiet = false
-
-		//project.SetVaultAddress("0x99dFF7fab52CB4D02de012829953966FD4afD5F3", 0) //factory
-		project.SetVaultAddress("0x90D92250DB48d975B3BbCAAbdF8D453ed53ADF72", 1) // weth/usdc
-		// project.SetVaultAddress("0x45aE8C6868F068d2e4AC774106aA86C8489E6E60", 2) // weth/dai
-		//project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
-		//project.SetPermit("0x511Ed5FC53CCCf5c4239487381fcE287B02119Fa", 1) // daniel
-
-		return
 
 		//#### USDC/WETH Test
 		//project.SetTwapduration(10)
@@ -876,10 +984,19 @@ func newVault() {
 
 }
 
+func InitVaultBridge() {
+	//# auto set
+	project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
+	project.SetVaultAddress(project.Network.Vault, 1)        // weth/usdc
+	project.SetPermit(project.FromAddress.Hex(), 1)          //
+}
+
 func setVaultBridge() {
 
 	// vault bridge v1 on goreli 0x033F3C5eAd18496BA462783fe9396CFE751a2342
 	// vault bridge v2.x on goreli 0x428EeA0B87f8E0f5653155057f58aaaBb667A3ec
+
+	// project.SetPermit("0x8ee95fe2DB1e3f7FAACCdEd1cbCc237267EB4a00", 1) //
 
 	//	project.DeployVaultBridge()
 
@@ -1023,7 +1140,7 @@ func InitialVaults2() {
 	//	project.Sleep(9000)
 	// // // // return
 
-	//project.DeployVaultFactory()
+	project.DeployVaultFactory()
 	// // return
 	//project.Sleep(9000)
 	//newStratAddr := project.DeployStratByGoStruct()
@@ -1048,57 +1165,75 @@ func InitialVaults2() {
 }
 
 func InitialForkEnv() {
+
 	project.DeployCallee()
 	project.Sleep(9000)
 	// // // // return
+	project.DeployVaultBridge()
+	project.Sleep(9000)
 
 	project.DeployVaultFactory()
 	// // return
 	project.Sleep(9000)
-	newStratAddr := project.DeployStratByGoStruct()
-	// // // //newStratAddr := project.DeployStrat2ByGoStruct()
+	// project.DeployStratByGoStruct()
+	project.DeployStrat2ByGoStruct()
 	project.Sleep(9000)
 
-	newVaultAddr := project.DeployVaultByGo()
-	// //		project.DeployVaultByGo()
+	project.DeployVaultByGo()
 	project.Sleep(9000)
 
 	project.ConfigWrite()
-	// project.Sleep(25000)
-	_, _ = newStratAddr, newVaultAddr
-	project.Register(newStratAddr, newVaultAddr)
+	project.Init(-1, -1)
+
+	project.Register(project.Network.VaultStrat, project.Network.Vault)
 	project.Sleep(5000)
-	project.ChangeStat(newStratAddr, newVaultAddr, 1)
+	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
 	project.Sleep(5000)
-	// // project.Register(project.Network.VaultStrat, project.Network.Vault)
-	// // return
-	// // project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	// // return
 
 	//project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
 
-	project.Wrap(WETH, 0, 20)
-	project.Sleep(5000)
-	project.TokenSwap(0, WETH, USDC, 500, big.NewInt(2))
-	project.Sleep(5000)
-	project.TokenSwap(0, WETH, DAI, 500, big.NewInt(2))
-	project.Sleep(5000)
-	project.TokenSwap(0, WETH, OSQTH, 3000, big.NewInt(2))
+	InitVaultBridge()
 	project.Sleep(5000)
 
+	project.Wrap(project.Network.LendingContracts.WETH, 0, 20)
+	project.Sleep(5000)
+	//return
+
+	// swap within wallet , error when forking infura mainnet,  ERROR pool instance:Post "http://127.0.0.1:8545": EOF
+	// project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(2))
+	// project.Sleep(5000)
+	// return
+
+	project.Deposit(0, 2e18, 0)
+	project.Sleep(5000)
+
+	project.MoveFunds() // move funds to stratgy
+	project.Sleep(9000)
+
+	project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e17))
+	project.Sleep(9000)
+	project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(1e17))
+	project.Sleep(9000)
+	// project.SwapTest(project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, big.NewInt(1000e6))
+	// project.Sleep(9000)
+	project.MyAccountInfo(0)
+
+	//	return
+
+	// //project.TokenSwap(0, WETH, DAI, 500, big.NewInt(2))
+	// project.Sleep(5000)
+	// //project.TokenSwap(0, WETH, OSQTH, 3000, big.NewInt(2))
+	//	project.Sleep(5000)
+
 	//FOR USDC/WETH
-	project.Deposit(4000e6, 1e18, 0)
+	//project.Deposit(4000e6, 1e18, 0)
 
 	//FOR DAI/WETH
 	//project.Deposit(1e18, 1e18, 0)
 
-	project.Sleep(5000)
+	//project.Sleep(5000)
 
-	fmt.Println(project.GetBalance(DAI, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-	fmt.Println(project.GetBalance(USDC, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-	fmt.Println(project.GetBalance(WETH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-	fmt.Println(project.GetBalance(OSQTH, "0xa0df350d2637096571F7A701CBc1C5fdE30dF76A"))
-
+	//project.MoveFunds() // move funds to strategy
 	project.Rebalance(400, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
 
 	project.Sleep(5000)

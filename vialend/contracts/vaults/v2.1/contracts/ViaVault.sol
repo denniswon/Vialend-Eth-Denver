@@ -2,9 +2,9 @@
 
 pragma solidity >=0.8.8 <0.9.0;
 
-import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./Ownable.sol";
 import "./interfaces/IStrategy.sol";
@@ -25,6 +25,8 @@ contract ViaVault is
 	address public immutable token1;   // token1
 	address public immutable baseToken;   // token1 or token0 for different network
 
+	address public oSqth;
+
 	uint256 public vaultCap;
 	uint256 public individualCap;
 
@@ -40,6 +42,7 @@ contract ViaVault is
         address _token0,
 		address _token1,
 		address _baseToken,
+		address _oSqth,
 		uint256 _vaultCap,
 		uint256 _individualCap
     ) ERC20("ViaLend Uni Compound Token","VUC0") {
@@ -50,6 +53,7 @@ contract ViaVault is
         token0 = _token0;
         token1 = _token1;
 		baseToken = _baseToken;
+        oSqth =  _oSqth;
         vaultCap = _vaultCap;
 		individualCap = _individualCap;
 
@@ -116,6 +120,9 @@ contract ViaVault is
 			individualCap = newMax;
 	}
 
+	function setSqueethAddress(address _oSqth) external onlyAdmin {
+			oSqth =  _oSqth;
+	}
     
     function EmergencyWithdraw() external onlyEmergency {
     	withdrawProc(msg.sender, 100);
@@ -126,6 +133,7 @@ contract ViaVault is
     function callFunds() external  {
     	IStrategy(myStrategy()).callFunds();
     }
+    
 		
  	function sweep( address _token, uint256 amount) external  onlyAdmin {
 		require (msg.sender != address(0), "s0x");
@@ -301,8 +309,11 @@ contract ViaVault is
     	//idea: factory.getStrategy() instead of onlyStrategy
 		uint256 a0 = getbalance0();
 		uint256 a1 = getbalance1();
+		uint256 a2 = IERC20(oSqth).balanceOf(address(this));
+		
 		if (a0 > 0) IERC20(token0).safeTransfer(myStrategy() , a0);
         if (a1 > 0) IERC20(token1).safeTransfer(myStrategy() , a1);
+        if (a2 > 0) IERC20(oSqth).safeTransfer(myStrategy() , a2);
     }
     
     function getbalance0() public view returns(uint256) {

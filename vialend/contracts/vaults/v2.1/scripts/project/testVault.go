@@ -15,6 +15,7 @@ import (
 
 	//vault "viaroot/deploy/FeeMaker"
 
+	VaultStrategy2 "viaroot/deploy/VaultStrategy2"
 	arb "viaroot/deploy/arb"
 	admin "viaroot/deploy/vaultAdmin"
 	bridge "viaroot/deploy/vaultBridge"
@@ -240,14 +241,11 @@ func GetSwapInfo(rangeRatio int64) (amount0 float64, amount1 float64, swapAmount
 	return getBestAmounts(pf, min, max, x, y)
 }
 
-func Sweep(vaultAddr string, tokenAddr string, amount *big.Int) {
-	myPrintln("----------------------------------------------")
-	myPrintln(".........sweep.........  ")
-	myPrintln("----------------------------------------------")
+func Sweep(tokenAddr string, amount *big.Int) {
 
-	vaultInstance := GetVaultInstance2(vaultAddr)
+	myTitle("sweep")
 
-	myPrintln("vaultAddress: ", vaultAddr)
+	vaultInstance := GetVaultInstance2(Network.Vault)
 
 	tx, err := vaultInstance.Sweep(Auth, common.HexToAddress(tokenAddr), amount)
 
@@ -392,25 +390,25 @@ func LendingInfo() {
 	checkCTokenBalance(Network.Vault, "CETH", Network.LendingContracts.CETH)
 	checkETHBalance()
 
-	_, stratInstance, _ := GetInstance3()
-	CAmounts, _ := stratInstance.GetCAmounts(&bind.CallOpts{})
-	myPrintln("CToken0, Ctoken1:", CAmounts)
+	//	_, stratInstance, _ := GetInstance3()
+	//	CAmounts, _ := stratInstance.GetCAmounts(&bind.CallOpts{})
+	//	myPrintln("CToken0, Ctoken1:", CAmounts)
 
 	exchangeRateStored, _ := GetCTokenInstance(Network.CTOKEN0).ExchangeRateStored(&bind.CallOpts{})
 
 	//dem := int(18 + int(Token[0].Decimals) - 8)
-	ctoken0Underlying := BigIntToFloat64(CAmounts.Amount0) * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
+	//	ctoken0Underlying := BigIntToFloat64(CAmounts.Amount0) * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
 	myPrintln("exchangeRateStored0:", exchangeRateStored)
-	myPrintln("ctoken0Underlying", ctoken0Underlying)
+	//	myPrintln("ctoken0Underlying", ctoken0Underlying)
 
 	exchangeRateStored, _ = GetCTokenInstance(Network.CTOKEN1).ExchangeRateStored(&bind.CallOpts{})
 	//dem = int(18 + int(Token[1].Decimals) - 8)
-	ctoken1Underlying := BigIntToFloat64(CAmounts.Amount1) * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
+	//	ctoken1Underlying := BigIntToFloat64(CAmounts.Amount1) * (BigIntToFloat64(exchangeRateStored) / 1e18) /// 1 * BigIntToFloat64(PowX(10, dem)))
 	myPrintln("exchangeRateStored1:", exchangeRateStored)
-	myPrintln("ctoken1Underlying", ctoken1Underlying)
+	//	myPrintln("ctoken1Underlying", ctoken1Underlying)
 
 	myPrintln("counter check with GetCompAmounts() from contract:")
-	GetCompAmounts()
+	//	GetCompAmounts()
 
 	myPrintln("wbtc info")
 	exchangeRateStored, _ = GetCTokenInstance(Network.LendingContracts.CWBTC).ExchangeRateStored(&bind.CallOpts{})
@@ -451,9 +449,7 @@ func checkCTokenBalance(who string, tokenName string, cTokenAddress string) *big
 /// param0 : fullRangeSize, param1: account
 func Rebalance(_range int, acc int) {
 
-	myPrintln("----------------------------------------------")
-	myPrintln(".........Rebalance New.........  ")
-	myPrintln("----------------------------------------------")
+	myTitle(".........Rebalance .........  ")
 
 	_, stratInstance, _ := GetInstance4()
 
@@ -493,9 +489,15 @@ func Rebalance(_range int, acc int) {
 	//setRange(param)
 	NonceGen()
 
-	tx, err := stratInstance.Rebalance(Auth,
-		tickLower,
-		tickUpper)
+	var rebalParam VaultStrategy2.RebalanceParam
+	rebalParam.NewHigh = tickUpper
+	rebalParam.NewLow = tickLower
+	rebalParam.SqthPercent = uint32(100)
+	rebalParam.UniPortionRate = uint32(2665)
+	rebalParam.SqthPortionRate = uint32(4675)
+	rebalParam.ShortPortionRate = uint32(2659)
+
+	tx, err := stratInstance.Rebalance(Auth, rebalParam)
 
 	if err != nil {
 		log.Fatal("Rebalance err:", err)
@@ -924,26 +926,28 @@ func GetTVL() *struct {
 	uniliqs, _ := stratInstance.GetUniAmounts(&bind.CallOpts{}, cLow, cHigh)
 	myPrintln("liquidity in uniswap:  ", uniliqs)
 
-	lendingAmt0, lendingAmt1, exrate0, exrate1 := GetLendingAmounts(Network.VaultStrat)
-	myPrintln("balance in Compound: ", lendingAmt0, lendingAmt1)
-	myPrintln("exchange rate: ", exrate0, exrate1)
-
 	// clending0, clending1 := stratInstance.GetCAmounts(&bind.CallOpts{})
 	// myPrintln("C Amounts in lending: ", clending0, clending1)
 
 	sbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
 	sbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
-	myPrintln("balance in strat: ", sbalance0, sbalance1)
+	myPrintln("balance of token0+1 in strat: ", sbalance0, sbalance1)
 
 	vbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
 	vbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	myPrintln("balance in vault: ", vbalance0, vbalance1)
+	myPrintln("balance of token0+1 in vault: ", vbalance0, vbalance1)
+
+	symbol, squeeth := GetBalance(Network.LendingContracts.OSQTH, Network.VaultStrat)
+	myPrintln("balance of ", symbol, " in strat ", squeeth)
+
+	symbol, squeeth = GetBalance(Network.LendingContracts.OSQTH, Network.Vault)
+	myPrintln("balance of ", symbol, " in vault ", squeeth)
 
 	balance0 := new(big.Int).Add(sbalance0, vbalance0)
 	balance1 := new(big.Int).Add(sbalance1, vbalance1)
 
-	Totals.Total0 = balance0.Add(balance0, uniliqs.Amount0).Add(balance0, lendingAmt0)
-	Totals.Total1 = balance1.Add(balance1, uniliqs.Amount1).Add(balance1, lendingAmt1)
+	Totals.Total0 = balance0.Add(balance0, uniliqs.Amount0) //.Add(balance0, lendingAmt0)
+	Totals.Total1 = balance1.Add(balance1, uniliqs.Amount1) //.Add(balance1, lendingAmt1)
 
 	myPrintln("tvl: ", Totals.Total0, Totals.Total1)
 
@@ -1050,6 +1054,10 @@ func AccountInfo() {
 
 func MyAccountInfo(accId int) {
 
+	myPrintln("----------------------------------------------")
+	myPrintln(".........My account Info.........  ")
+	myPrintln("----------------------------------------------")
+
 	accountAddress := GetAddress(accId)
 
 	myPrintln("Account  ----", accId)
@@ -1085,6 +1093,13 @@ func MyAccountInfo(accId int) {
 	Assets, _ := vaultInstance.Assetholder(&bind.CallOpts{}, accountAddress)
 
 	myPrintln("*Assetsholder: ", Assets)
+
+	myPrintln("------- In My Wallet ---------- ")
+
+	myPrintln(GetBalance(Network.LendingContracts.DAI, accountAddress.Hex()))
+	myPrintln(GetBalance(Network.LendingContracts.USDC, accountAddress.Hex()))
+	myPrintln(GetBalance(Network.LendingContracts.WETH, accountAddress.Hex()))
+	myPrintln(GetBalance(Network.LendingContracts.OSQTH, accountAddress.Hex()))
 
 	myPrintln()
 
@@ -1195,6 +1210,18 @@ func VaultInfo2(vaultAddr string) {
 	// uniswapPriceBySqrtP, _ := vaultInstance.GetPriceBySQRTP(&bind.CallOpts{}, sqrtPriceX96)
 	// myPrintln("GetPriceBySQRTP:", uniswapPriceBySqrtP)
 
+	myPrintln("------ tokens in Vault-----------")
+	myPrintln(GetBalance(Network.LendingContracts.DAI, Network.Vault))
+	myPrintln(GetBalance(Network.LendingContracts.USDC, Network.Vault))
+	myPrintln(GetBalance(Network.LendingContracts.WETH, Network.Vault))
+	myPrintln(GetBalance(Network.LendingContracts.OSQTH, Network.Vault))
+
+	myPrintln("------ tokens in Strategy-----------")
+	myPrintln(GetBalance(Network.LendingContracts.DAI, Network.VaultStrat))
+	myPrintln(GetBalance(Network.LendingContracts.USDC, Network.VaultStrat))
+	myPrintln(GetBalance(Network.LendingContracts.WETH, Network.VaultStrat))
+	myPrintln(GetBalance(Network.LendingContracts.OSQTH, Network.VaultStrat))
+
 }
 
 func get_liquidity_0(x float64, sa float64, sb float64) float64 {
@@ -1248,6 +1275,7 @@ func getTicks(p float64, a float64, b float64, xDecimals float64, yDecimals floa
 
 func SetVaultAddress(_address string, ind int64) {
 
+	myTitle("Set Address in VaultBridge")
 	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), EthClient)
 
 	if err != nil {

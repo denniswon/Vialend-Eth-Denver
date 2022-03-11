@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
 
-import './@uniswap/v3-core/contracts/interfaces/IERC20Minimal.sol';
+import '@uniswap/v3-core/contracts/interfaces/IERC20Minimal.sol';
 
-import './@uniswap/v3-core/contracts/libraries/SafeCast.sol';
-import './@uniswap/v3-core/contracts/libraries/TickMath.sol';
-import './@uniswap/lib/contracts/libraries/FullMath.sol';
+import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import '@uniswap/lib/contracts/libraries/FullMath.sol';
 
-import './@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
-import './@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
-import './@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol';
 
-import './@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 contract TestUniswapV3Callee is IUniswapV3MintCallback, IUniswapV3SwapCallback, IUniswapV3FlashCallback {
     using SafeCast for uint256;

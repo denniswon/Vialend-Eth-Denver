@@ -517,12 +517,13 @@ func DeployVaultByGo() string {
 
 	token0 := common.HexToAddress(Network.TokenA)
 	token1 := common.HexToAddress(Network.TokenB)
+	osqth := common.HexToAddress(Network.LendingContracts.OSQTH)
 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
 	factory := common.HexToAddress(Cfg.Contracts.VAULT_FACTORY)
 	baseToken := common.HexToAddress(Network.LendingContracts.WETH)
 
-	address, tx, instance, err := ViaVault.DeployApi(Auth, EthClient, factory, token0, token1, baseToken, vaultCap, individualCap)
+	address, tx, instance, err := ViaVault.DeployApi(Auth, EthClient, factory, token0, token1, baseToken, osqth, vaultCap, individualCap)
 
 	if err != nil {
 		log.Fatal("vault deploy by go err:", err)
@@ -730,7 +731,7 @@ func DeployStrat2ByGoStruct() string {
 	params.Token0 = common.HexToAddress(Network.TokenA)
 	params.Token1 = common.HexToAddress(Network.TokenB)
 	params.WETH = common.HexToAddress(Network.LendingContracts.WETH)
-	params.SqthEthPool = common.HexToAddress(Network.LendingContracts.OSQTHWETHPOOL)
+	params.OSqth = common.HexToAddress(Network.LendingContracts.OSQTH)
 	params.ChainLinkProxy = common.HexToAddress(Network.LendingContracts.ChainLinkProxy)
 	params.Token0Decimals = Token[0].Decimals
 	params.Token1Decimals = Token[1].Decimals
@@ -869,7 +870,7 @@ func DeploySqueeth() {
 
 	NonceGen()
 
-	address, tx, instance, err := Squeeth.DeployApi(Auth, EthClient, "xSqueeth", "xSqth")
+	address, tx, instance, err := Squeeth.DeployApi(Auth, EthClient, "oSqueeth", "oSqth")
 
 	if err != nil {
 		log.Fatal(err)

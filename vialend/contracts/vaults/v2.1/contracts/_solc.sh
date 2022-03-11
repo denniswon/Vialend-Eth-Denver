@@ -11,6 +11,7 @@ solc --optimize --overwrite --bin VaultFactory.sol -o ../build
 solc --optimize --overwrite --abi VaultStrategy2.sol -o ../build
 solc --optimize --overwrite --bin VaultStrategy2.sol -o ../build
 /usr/bin/abigen --abi=../build/VaultStrategy2.abi --bin=../build/VaultStrategy2.bin --pkg=api --out=../deploy/VaultStrategy2/VaultStrategy2.go
+
 solc --optimize --overwrite --abi ViaVault.sol -o ../build
 solc --optimize --overwrite --bin ViaVault.sol -o ../build
 /usr/bin/abigen --abi=../build/ViaVault.abi --bin=../build/ViaVault.bin --pkg=api --out=../deploy/ViaVault/ViaVault.go
@@ -60,3 +61,6 @@ solc --optimize --overwrite --bin test.sol -o ../build
 solc --optimize --overwrite --abi WPowerPerp.sol -o ../../build
 solc --optimize --overwrite --bin WPowerPerp.sol -o ../../build
 /usr/bin/abigen --abi=../../build/WPowerPerp.abi --bin=../../build/WPowerPerp.bin --pkg=api --out=../../deploy/Squeeth/WPowerPerp.go
+
+
+solc --optimize --overwrite --abi TestUniswapV3Callee.sol -o ../../build

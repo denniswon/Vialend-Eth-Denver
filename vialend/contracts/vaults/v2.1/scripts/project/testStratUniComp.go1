@@ -12,7 +12,7 @@ import (
 	"time"
 
 	VaultFactory "viaroot/deploy/VaultFactory"
-	VaultStrat "viaroot/deploy/VaultStrategy2"
+	VaultStrat "viaroot/deploy/VaultStrategy"
 	ViaVault "viaroot/deploy/ViaVault"
 
 	"github.com/ethereum/go-ethereum"
@@ -39,7 +39,7 @@ func ViewVaults() {
 
 	facotryInstance, _, _ := GetInstance3()
 
-	myTitle("Check Vault Status")
+	myPrintln("View Vault Restry")
 
 	myPrintln("VaultFactory Address:", Network.VaultFactory)
 
@@ -62,7 +62,7 @@ func ViewVaults() {
 func GetStat(s string, v string) {
 	facotryInstance, _, _ := GetInstance3()
 
-	myTitle("Check Vault Status")
+	myPrintln(".... Check Vault Status.....")
 
 	stat, _ := facotryInstance.GetStat2(&bind.CallOpts{}, common.HexToAddress(s), common.HexToAddress(v))
 	myPrintln("stat:", s)
@@ -75,7 +75,7 @@ func ChangeStat(_strategy string, _vault string, _stat int) {
 
 	factoryInst, _, _ := GetInstance3()
 
-	myTitle("Change Stat")
+	myPrintln(">>>>>>>> Change Stat <<<<<<<<<<<<< ")
 
 	NonceGen()
 	if tx, err := factoryInst.ChangeStat(Auth,
@@ -115,7 +115,7 @@ func Register(_strategy string, _vault string) {
 
 	factoryInst, _, _ := GetInstance3()
 
-	myTitle("Register")
+	myPrintln(">>>>>>>> Register <<<<<<<<<<<<< ")
 
 	NonceGen()
 
@@ -152,8 +152,7 @@ func FactoryPublicList() {
 	p3, _ := factoryInstance.GetCount(&bind.CallOpts{})
 	p4, _ := factoryInstance.GetStat(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
 
-	myTitle("factory public attributes")
-
+	myPrintln("\n", ">>>>>>factory public attributes <<<<<<<<<<<", "\n")
 	myPrintln("TEAM", p1)
 	myPrintln("ADMIN", p2)
 	myPrintln("VAULTS COUNT", p3)
@@ -185,7 +184,6 @@ func GetPair0(addr string) common.Address {
 
 func ViaVaultPublicList() {
 
-	myTitle("Vault public methods")
 	factoryInstance, _, viaVaultInstance := GetInstance3()
 
 	p1, _ := factoryInstance.GetPair0(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
@@ -230,7 +228,7 @@ func ApproveStrategy() {
 func ViaStratUniCompPublicList() {
 	_, viaStratInstance, _ := GetInstance3()
 
-	myTitle("ViaStratUniCompPublicList")
+	myPrintln()
 	myPrintln("--Strat Uni Comp address:", Network.VaultStrat)
 
 	p2, _ := viaStratInstance.Protocol(&bind.CallOpts{})
@@ -240,11 +238,11 @@ func ViaStratUniCompPublicList() {
 	p7, _ := viaStratInstance.TickSpacing(&bind.CallOpts{})
 	p8, _ := viaStratInstance.CLow(&bind.CallOpts{})
 	p9, _ := viaStratInstance.CHigh(&bind.CallOpts{})
-	//	p10, _ := viaStratInstance.UniPortion(&bind.CallOpts{})
-	//	p11, _ := viaStratInstance.CompPortion(&bind.CallOpts{})
+	p10, _ := viaStratInstance.UniPortion(&bind.CallOpts{})
+	p11, _ := viaStratInstance.CompPortion(&bind.CallOpts{})
 	p15, _ := viaStratInstance.ProtocolFeeRate(&bind.CallOpts{})
-	//	p6, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenA))
-	//	p17, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenB))
+	p6, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenA))
+	p17, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenB))
 	p18, _ := viaStratInstance.MotivatorFeeRate(&bind.CallOpts{})
 	p19, _ := viaStratInstance.Quoteamount(&bind.CallOpts{})
 	//	p20, _ := viaStratInstance.GetQuoteAtTick(&bind.CallOpts{}, big.NewInt(82894), p19, common.HexToAddress(Network.TokenA), common.HexToAddress(Network.TokenB))
@@ -260,13 +258,13 @@ func ViaStratUniCompPublicList() {
 	myPrintln("Token0", p4)
 	myPrintln("Token1", p5)
 	myPrintln("WETH", p21)
-	//	myPrintln("Ctoken0", p6)
-	//	myPrintln("Ctoken1", p17)
+	myPrintln("Ctoken0", p6)
+	myPrintln("Ctoken1", p17)
 	myPrintln("TickSpacing", p7)
 	myPrintln("CLow", p8)
 	myPrintln("CHigh", p9)
-	//	myPrintln("UniPortion", p10)
-	//	myPrintln("CompPortion", p11)
+	myPrintln("UniPortion", p10)
+	myPrintln("CompPortion", p11)
 	myPrintln("ProtocolFeeRAte", p15)
 	myPrintln("DecenterFeeRates", p18)
 	myPrintln("Quoteamount", p19)
@@ -409,19 +407,19 @@ func GetTotalAmounts() {
 
 }
 
-// func GetCompAmounts() {
+func GetCompAmounts() {
 
-// 	_, viaStratInstance, _ := GetInstance3()
+	_, viaStratInstance, _ := GetInstance3()
 
-// 	NonceGen()
-// 	total0, total1, err := viaStratInstance.GetAmountsInComp(&bind.CallOpts{})
-// 	if err != nil {
-// 		log.Println("GetCompAmount err: ", err)
-// 	}
+	NonceGen()
+	total0, total1, err := viaStratInstance.GetAmountsInComp(&bind.CallOpts{})
+	if err != nil {
+		log.Println("GetCompAmount err: ", err)
+	}
 
-// 	myPrintln("GetCompAmount :", total0, total1)
+	myPrintln("GetCompAmount :", total0, total1)
 
-// }
+}
 
 // func GetTickPrice() {
 
@@ -522,14 +520,14 @@ func IsContract(_contract string) {
 
 func MoveFunds() {
 
-	_, stratInstance, _ := GetInstance3()
+	_, _, vaultInstance := GetInstance3()
 
-	myTitle(">>>>>>>> MoveFunds to strat<<<<<<<<<<<<< ")
+	myPrintln(">>>>>>>> MoveFunds <<<<<<<<<<<<< ")
 
-	if tx, err := stratInstance.MoveFunds(Auth); err == nil {
+	if tx, err := vaultInstance.MoveFunds(Auth); err == nil {
 		TxConfirm(tx.Hash())
 	} else {
-		log.Fatal("movefunds caller=strat", err)
+		log.Fatal("movefunds", err)
 	}
 
 }
@@ -538,7 +536,7 @@ func CallFunds() {
 
 	_, _, vaultInstance := GetInstance3()
 
-	myTitle(">>>>>>>> Call Funds <<<<<<<<<<<<< ")
+	myPrintln(">>>>>>>> Call Funds <<<<<<<<<<<<< ")
 
 	if tx, err := vaultInstance.CallFunds(Auth); err == nil {
 		TxConfirm(tx.Hash())

@@ -2,18 +2,21 @@
 
 pragma solidity >=0.8.8 <0.9.0;
 
-import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./@openzeppelin/contracts/math/Math.sol";
-import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "./@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
-import "./@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import  { IWETH9 }  from "./interfaces/IViaProtocols.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import  { IWETH9 , IController, IPriceOracleGetter}  from "./interfaces/IViaProtocols.sol";
 
 import "./UniCompFees.sol";
 import "./TwapGetter.sol";
@@ -29,6 +32,7 @@ Error code:
 'OLD' getTwap error. rebalance cannot proceed. solution: setTwapDuratio = 0
 'E5' not creator or admin
 'E6' amount <= 0 
+'E7' invalid tokenIn
 
 */
 
@@ -45,7 +49,7 @@ struct UniSqueethParam {
 	address Token0;
 	address Token1;
 	address WETH;
-	address SqthEthPool;
+	address OSqth;
 	address ChainLinkProxy;
 	uint8 Token0Decimals;
 	uint8 Token1Decimals;
@@ -55,6 +59,15 @@ struct UniSqueethParam {
 	int24 MaxTwapDeviation;
 	uint32 TwapDuration;	// initial twap durantion
 
+}
+
+struct RebalanceParam {
+	int24 newLow;
+    int24 newHigh;
+    uint32 sqthPercent; 
+	uint32 uniPortionRate;
+	uint32 sqthPortionRate;
+	uint32 shortPortionRate;    
 }
 
 contract VaultStrategy2 
@@ -70,6 +83,8 @@ contract VaultStrategy2
 
 
 	address constant public UNIV3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+	address constant public SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;   //ISwapRouter02
+	address constant public aWETH = 0x1E2192C406c6a53056E923A1aCe9e05b0090a531;  // rinkeby aweth
 	
 	address public creator;
 	address public immutable factory;
@@ -77,10 +92,13 @@ contract VaultStrategy2
     address public immutable token0;         // underlying token0
     address public immutable token1;         // underlying token1
 	address public protocol;			// where fee cuts to protocol 
-	address public oSqth;
+	address public immutable oSqth;
+	address public _USDC;
+
 
     IUniswapV3Pool public immutable pool;        // get by uni factory, token0, token1, feetier
-	IUniswapV3Pool public immutable sqth_eth_pool;
+
+	IUniswapV3Pool internal swapPool;
 
     uint128 public immutable quoteamount;  		// for calc price, based on token0 decimal, ie: 1e18 for eth, 1e8 for wbtc
    
@@ -105,6 +123,8 @@ contract VaultStrategy2
 	uint256 public lastCount;
 	address[] public motivators;
 	mapping(address => uint) motivatorCounter;
+	
+	uint256 public baseTokenId; 
 
     constructor( UniSqueethParam memory params) {
 		factory = params.VaultFactory; 
@@ -115,10 +135,9 @@ contract VaultStrategy2
 		creator = params.Creator;
 		pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( params.Token0, params.Token1, params.FeeTier)); 
 
-		sqth_eth_pool = IUniswapV3Pool(params.SqthEthPool);
 		
 		// compare swap methods (direct pool , router , 3rd protocols 1inch/para swap/ )
-        oSqth = sqth_eth_pool.token0();	// get oSqth address from squeeth/weth pool 
+        oSqth =  params.OSqth;
 
 
         // token0 & token1 sort could be changed by the uni v3 pool 
@@ -127,7 +146,11 @@ contract VaultStrategy2
         
 
 		_WETH = payable (params.WETH);	
-        
+		
+		//todo
+		_USDC = token0; 
+		
+		baseTokenId = ( _WETH == token0 ) ? 0 : 1 ;
 		
 		tickSpacing = pool.tickSpacing();
         
@@ -201,76 +224,243 @@ contract VaultStrategy2
         int256 amount1Delta,
         bytes calldata data
     ) external  {
-        require(msg.sender == address(pool),"PS2");
-        
-        IERC20(token0).safeTransfer(msg.sender, uint256(amount0Delta));
-        IERC20(token1).safeTransfer(msg.sender, uint256(amount1Delta));
+		
+        //(address _token0, address _token1) = abi.decode(data, (address,address));
+        address _caller = abi.decode(data, (address));
 
-        assert(data.length == 0);
+		// make sure the callback is from the predefined pool 
+        require(_caller == address(this) && msg.sender == address(swapPool), 'PS2');    
+        
+        
+		if (amount0Delta > 0) {
+	        IERC20(swapPool.token0()).safeTransfer(msg.sender, uint256(amount0Delta));
+        } else {
+            assert(amount1Delta > 0);
+	        IERC20(swapPool.token1()).safeTransfer(msg.sender, uint256(amount1Delta));
+        }        
+
     }
-	
-	/// buy or sell oSqth
-	/// amount of eth or oSqth
-	/// zeroForOne== false: buy oSqth 
-	/// zeroForOne==true: sell oSqth
-	function tradeSqth(uint256 amount, bool zeroForOne) public {
+
+
+
+	function swapDirectPool(
+		address _tokenIn, 
+		address _tokenOut, 
+		uint24 fee, 
+		uint160 sqrtPriceLimitX96Shift, // >=1
+		uint256 amount
+	) public nonReentrant {  
 		
-		uint160 sqrtPriceLimitX96 = 0;
+
+		//require (amount > 0, 'E6');
+		if (amount ==0) return;
+
+		require (_tokenIn == token0 || _tokenIn == token1 || _tokenIn == oSqth || _tokenIn == aWETH, 'E7');
 		
-		require (amount > 0, 'E6');
-		
-		//zeroForOne == false: swapExact1For0  buy oSqth with weth
-		//zeroForOne == true: swapExact0For1  sell oSqth for weth
+		swapPool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( _tokenIn, _tokenOut,fee)); 
+		address _token0 = swapPool.token0();  
+//        address _token1 = swapPool.token1();  
+
+		bool zeroForOne;
+		uint160 sqrtPriceLimitX96;
+
+		if (_token0 == _tokenIn) {
+			//swapExact0For1  
+			zeroForOne = true;		
+			sqrtPriceLimitX96 = TickMath.MIN_SQRT_RATIO + sqrtPriceLimitX96Shift;
+		} else {
+			// swapExact1For0  
+			zeroForOne = false;	
+			sqrtPriceLimitX96 = TickMath.MAX_SQRT_RATIO - sqrtPriceLimitX96Shift;
+		}
+
 	    if (amount != 0) {
-            sqth_eth_pool.swap(
+            swapPool.swap(
                 address(this),
                 zeroForOne,
                 int256(amount),
                 sqrtPriceLimitX96,
-                ""
+                abi.encode(address(this))   // to authenticate it only strategy from the callback.
             );
         }
 	}
 	
 	
-	///@notice send funds back to vault
+        
+	//## debugging function, will be remvoed on product
+	function swapTest (
+		address	_tokenIn,
+        address _tokenOut,
+        uint24 _fee,
+        uint256 _amountIn
+    ) external onlyAdmin nonReentrant returns (uint256)  {
+	     return swap(_tokenIn, _tokenOut, _fee, _amountIn );
+    }
+    
+    
+
+    function swap(
+        address	_tokenIn,
+        address _tokenOut,
+        uint24 _fee,
+        uint256 _amountIn
+    ) internal returns (uint256) {
+    	
+        ISwapRouter02 router = ISwapRouter02(SWAP_ROUTER);
+        
+        // approve
+        TransferHelper.safeApprove(_tokenIn, SWAP_ROUTER, _amountIn);
+        
+		ISwapRouter02.ExactInputSingleParams memory params =  IV3SwapRouter.ExactInputSingleParams(
+                _tokenIn,
+                _tokenOut,
+                _fee,
+                address(this),		//recipient
+	            //block.timestamp + 20,	//deadline  **  this attribute has been removed from V3 swaprouter
+                _amountIn,
+                0,   				//amountOutMinimum:  TODO: Does this value need to be set.
+                0 					// sqrtPriceLimitX96:
+            );
+            
+        // do swap and return
+        return router.exactInputSingle(params);
+    } 
+	
+
+	function getSqueethNorm(address _controller  ) external view returns (uint256){
+		
+		uint256 norm =  IController(_controller).getExpectedNormalizationFactor(); // 813118587869342996; 
+		return ( norm );
+	}
+	
+	///@notice called by viaVault. send funds back to visaVault
 	function callFunds() external onlyVault {
 		
-		alloc();
+		removeUniswap();
 		
 		uint256 a0 =IERC20(token0).balanceOf(address(this));
 		uint256 a1 =IERC20(token1).balanceOf(address(this));
+		uint256 a2 =IERC20(oSqth).balanceOf(address(this)); 
+		uint256 a3 =IERC20(aWETH).balanceOf(address(this)); 
 		
         if(a0>0) IERC20(token0).safeTransfer(myVault(), a0);
         if(a1>0) IERC20(token1).safeTransfer(myVault(), a1);
+        if(a2>0) IERC20(oSqth).safeTransfer(myVault(), a2);
+		if(a3>0) IERC20(aWETH).safeTransfer(myVault(), a3);
 	}
 
 	function myVault() internal view returns(address){
        return IVaultFactory(factory).getPair0(address(this));
     }
 
-/*	struct RebalanceParam {
-		uint8 uniPortion,
-		uint8 lendPortion,
-		uint8 lendingPool,
-		int24 baseLow,
-		int24 baseHigh,
-		int24 limitLow,
-		int24 limitHigh,
-		int24 hedging, 
-		int24 options
-	}
+/*	
+
+	** off chain calculation:
+	1. check uni portion : amount0, amount1
+	2. check vault's squeeth portion: oSquth Amount
+	3. calculate short hedging amount with eth price. 
+		( e.g. 
+				@eth price = $3000
+				uni portion: $700k usdc :$700k eth (333 eth) = $1.4M usdc
+
+				squeeth portion (5.5x uni eth portion -- based on carlos data):  566 eth (333 *1.7) = 566*3000 = $1.7M usdc 
+				 
+				.85x * uni portion = .85 * 333eth   = 283 eth swap to buy osth  -> funding fee paid -> 111% apy
+				
+				  => does it fully cover uni portion 700k  impermant loss   ???
+				
+				.85 * uni portion = .85 * 333eth   = 283 eth -> sqth/eth pool -> earned fees 0.3% based on volume unfixed fees -> earned ~60% apy 
+				
+				net loss apy = 111-60 = -51% 
+				
+				
+				for hedging, suppose the borrowing power is 75%, the amount needs to short is 333+566=899 eth. the collateral =  899 * 1.25 = 1123 eth * 3000 = $3.37M usdc 
+				flash loan 3.37M and borrow 899 eth. sold 899 eth for 2.7M usdc. the capital for repay flashloan = 3.37M-2.7M = $670k usdc
+				
+				the total capital assets required in vault: 
+					$700k usdc + (899eth)*3000 + $670k usdc = 700k + 2.7M + $670k = $3.4M usdc 
+				
+				@rebalance:
+				@eth price fell to $2000, uni portion is out of range , all usdc is converted to eth. 
+				uni portion before rebalance: $0 usdc: 341 eth +   333 eth = 675 eth  (roughly calc) = 1.35M   , il = 1.4m-1.35m= 50k usdc
+				squeeth portion value: (roughly pnl = -40%)  = 566*3000*60% = $1M usdc   (pnl = 1M - 1.7M = -$700k in usdc)
+				hedge portion value: eth price down 33% , profit = 899 $2.7M* 33% = $891k usdc  (sold 2.7M at 3000, unrealized pl = 2.7M*33%)
+				
+				net pnl = 891k - 700k (squeeth loss) - 50k(uni loss) = $141k  
+				
+				rebalance position status:
+					uni: 0 usdc, 675 eth
+					squeeth:  ~= $1M usdc  (before $1.7M)
+					hedge: (payoff debt  899eth by flash loan -> take out $3.37M usdc collateral -> buy 899 eth with 1.8m usdc -> 1.57M usdc left in hedge vault.
+					
+					total value: = 657 * 2000 + 1.7M + 1.57M = 4.5M
+
+				Monitor: 
+					1. uni position  ( or just uni position for now)
+					2. squeeth position 
+					3. hedge position
+					
+				rebalance Steps:
+					1. remove hedging, 
+						. flash loan X eth
+						. pay debt X eth and redeem Y usdc collateral
+						. swap Yx usdc for X eth 
+						. repay flash loan X eth
+						
+						+usdc or -usdc
+						
+					2 calc uni portion
+					3 calc squeth portion
+					4 calc hedge portion
+					
+					5 allocate assets 
+						squeeth - 
+							sell or buy more squeeth (swap)
+							get funds from hedge vault
+						hedge - 
+							send / receive funds
+							flash loan, 
+							borrow
+							swap, 
+							repay
+						uni - 
+							swap, 
+							transfer, 
+							mint position
+							
+	
+				
+				initial fees:
+				1. flashloan 0.09%   * $3.37M = $3033
+				2. borrowing apy 6% / 365 * 7 (7days) = 899 eth * 6% /365 * 7 = 1.03 eth ~= $3000 usdc
+				3. swap fee (eth): 0.05% * 899 = 0.45 eth ~= 1348  
+				4. swap fee (squeeth): 0.3% * 566 = 1.7 eth ~= 5094 ( one time )
+				5. tx gas ~= 600 
+				
+				total init fees:  $7381 + $5094 ~= $12k
+				
+				rebalance fees:
+				
+				1. flashloan 0.09%   * $3.37M = $3033
+				2. 
+				2. borrowing apy 6% / 365 * 7 (7days) = 899 eth * 6% /365 * 7 = 1.03 eth ~= $3000 usdc
+				3. swap fee (eth): 0.05% * 899 = 0.45 eth ~= 1348  
+				4. swap fee (squeeth): 0.3% * 566 = 1.7 eth ~= 5094 ( one time )
+				5. tx gas ~= 600 
+				
+				total init fees:  $7381 + $5094 ~= $12k
+					
+				
+				Please note: this is just an example on how to calc the values in each portion. the sqth portion and pnl will need to be adjusted in this example to reflect a closer net pnl. 
+				
+		)
+				
 	
 	
-	function rebalanceReady() public view {
-		
-		
-	}
 */	
-	function rebalance(
-		int24 newLow,
-        int24 newHigh
-		) external onlyActive
+
+	function rebalance(RebalanceParam memory rebalParam) 
+		external onlyActive
 	{
 		
 		alloc();
@@ -285,16 +475,19 @@ contract VaultStrategy2
 			IViaVault(myVault()).withdrawLoop();
 		}
 		
-		// move funds back from vault
+		// move all funds back to strat from vault
 		if ( IERC20(token0).balanceOf(myVault()) > 0 ||  IERC20(token1).balanceOf(myVault()) > 0 ) {
 			IViaVault(myVault()).moveFunds();
 		}
-
-        _rebalance(newLow, newHigh); 
+		
+        _rebalance(  rebalParam); 
         
 	}
 	
-
+	function moveFunds() external onlyAdmin {
+		IViaVault(myVault()).moveFunds();
+	}
+	
 	// make sure all position has been removed before doing rebalance. 
 	// when newLow and newHigh is 0, calc new range with current cLow and cHigh
    /*
@@ -309,52 +502,124 @@ contract VaultStrategy2
 		
     */
 
-	function _rebalance(int24 newLow, int24 newHigh ) 
+	function _rebalance( RebalanceParam memory rebalParam) 
 		internal 
 	{
 
 		(	,int24 tick, , , , , ) 	= pool.slot0();
-		
-    	if (newLow==0 && newHigh==0) {
 
-			if (cHigh == 0 && cLow ==0) {
-                return;  // cannot do rebalance if cLow and cHigh is 0
-            }
-			int24 hRange = ( cHigh - cLow ) / 2;
-			newHigh = (tick + hRange) / tickSpacing * tickSpacing;
-			newLow  = (tick - hRange) / tickSpacing * tickSpacing;
-		}
-
-  		_validRange(newLow, newHigh, tick);  // passed 1200 , 2100, 18382
+  		_validRange(rebalParam.newLow, rebalParam.newHigh, tick);  
 
 		uint256 currentBalance0 = getBalance(token0);
 		uint256 currentBalance1 = getBalance(token1);
 
 		// since all assets should be now available, if balance is 0, no need to continue
 		if (currentBalance0 == 0 && currentBalance1 == 0 ) return;
-
-		uint256 p = getPrice();
 		
         //#calculate the amounts to supply into uniswap
-        (uint256 u0, uint256 u1) = calcUniPortionAmounts(currentBalance0, currentBalance1, p);
-		
-        if ( u0 >0 || u1 > 0 ) {
-			(uint256 minted0, uint256 minted1) = mintUniV3( newLow, newHigh, u0, u1 );
-            (cLow, cHigh) = (newLow, newHigh);    
+        (uint256 u0, uint256 u1, uint256 sqthPortionEth, uint256 shortPortionEth, uint256 ethSwap, uint256 usdcSwap) 
+        	= calcPortionSize(
+					rebalParam, 
+					currentBalance0, 
+					currentBalance1 );
 
-			// update the current balances should there be minted amounts on uniswap 
-			currentBalance0 -= minted0;
-			currentBalance1 -= minted1;
+		if (ethSwap > 0 ) {
+			swapDirectPool(_WETH, _USDC, 500, 1, ethSwap);
+		} 
+		
+		if (usdcSwap > 0 ) { 
+			swapDirectPool(_USDC, _WETH, 500, 1, usdcSwap);
 		}
 	
+		// mint uni portion 
+        (cLow, cHigh) = (rebalParam.newLow, rebalParam.newHigh);    
+		(uint256 minted0, uint256 minted1) = mintUniV3( cLow, cHigh, u0, u1 );
+	
 		
-		// todo if ( hedging > 0) {}
-		// todo if (aavePortion> 0 ) {}
+		//require(false, Debugger.uint2str(sqthPortionEth));
+
+		// swap for squeeth
+		swapDirectPool(_WETH, oSqth, 3000, 1, sqthPortionEth);
+		
+				
+		// call aave short 
+		// AaveHelper.short( shortPortionEth );
 
 		
-		emit Rebalance(address(this), u0,u1,compIn0,compIn1);
+		emit Rebalance(address(this), minted0,minted1,sqthPortionEth, shortPortionEth);
 
 	}
+	
+	
+	///@notice calculate best portion to put into uniswap
+	/// todo: formula of parts in uniswap, squeeth, and hedging
+	function calcPortionSize(
+			RebalanceParam memory rebalParam,
+			uint256 usdcBalance, 
+			uint256 ethBalance
+		) 
+			internal 
+			view 
+			returns(
+				uint256 uniAmount0, 
+				uint256 uniAmount1, 
+				uint256 sqthAmount,
+				uint256 shortAmount,
+				uint256 ethSwap,
+				uint256 usdcSwap
+			)
+	{
+
+	/* count 
+			default portion rate:
+			26.65% uni   2665 / 10000
+			46.75% sqth	4675 / 10000
+			26.59% short  2659 / 10000
+
+			uint256 uniPortionRate =  2665 ; 
+			uint256 sqthPortionRate =  4675;
+			uint256 shortPortionRate= 2659; 
+	*/ 
+
+
+		// todo: more efficiently, by assigning _USDC 
+		uint256 ethPrice = getPricePer(_USDC);
+
+//		sqthPrice = getPricePer(oSqth);
+//		aWethPrice = getPricePer(aWETH) ;
+
+
+		uint256 totalEth = ethBalance + usdcBalance * ethPrice / 1e6;
+		uint256 uniPortionEth = totalEth * rebalParam.uniPortionRate / 10000;
+	
+		uniAmount1 = uniPortionEth / 2; 			// eth for uni
+		uniAmount0 = uniAmount1 * 1e6 / ethPrice ; 	// usdc for uni
+		sqthAmount = totalEth  * rebalParam.sqthPortionRate / 10000  *  rebalParam.sqthPercent / 100 ;
+		shortAmount = totalEth * rebalParam.shortPortionRate / 10000;
+
+		if (usdcBalance < uniAmount0 ) {
+			ethSwap = uniAmount1 - (usdcBalance *  ethPrice / 1e6 );
+		} else if (ethBalance < uniAmount1) {
+			usdcSwap = uniAmount0 - (ethBalance * 1e6 / ethPrice );
+		} else {
+			usdcSwap = usdcBalance - uniAmount0;
+		}
+			
+
+	}
+	
+	function getPricePer(address _token) public view returns(uint256 price) {
+		
+		uint256 ethPrice = getPrice();
+		uint256 osqthPrice = 6e20;   // $600 getOSqthPrice();
+		
+		if (_token == _USDC || _token == aWETH ) {
+			price = ethPrice;
+		} else if (_token == oSqth) {
+			price = osqthPrice * ethPrice / 1e18; 
+		}
+	}
+	
 	
 	function getBalance(address _token) internal view returns(uint256){
 		return (IERC20(_token).balanceOf(address(this)));
@@ -364,18 +629,18 @@ contract VaultStrategy2
     	
     	// old method: uniswap Twap oracle 
 		// new method: use chainlink price feed 
-       
         //int24 tick = getTwap(address(pool), twapDuration);
     	//return( getQuoteAtTick(tick, uint128(quoteamount), token0, token1) );
 		
-        ( uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
+        //( uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
+        ( , int price,,,) = priceFeed.latestRoundData();
 
 		return uint256( price );
 
     }
 
     
-    function changeChainlinkProxy(address newProxy) external onlyAdmin {
+    function setChainlinkProxy(address newProxy) external onlyAdmin {
         priceFeed = AggregatorV3Interface(newProxy); 
     }
     
@@ -445,10 +710,16 @@ contract VaultStrategy2
         amount1 = amount1 + uint256(tokensOwed1);
     }
     
-    
-    /// remove all positions from protocols, if any failed, an emergency maybe required.
-    function removePositions() internal  {
-	    removeUniswap();
+	
+	function removeSqueeth() internal {
+		// remove osqth portion
+		uint256 sqthAmount = IERC20(oSqth).balanceOf(address(this));
+		swapDirectPool(oSqth, _WETH, 3000, 1, sqthAmount);
+	}
+	
+	function removeShort() internal {
+		// call aave unwind , may need wrap
+		// AaveHelper.short( shortPortionEth );
 	}
 	
 	function removeUniswap() internal {
@@ -503,29 +774,6 @@ contract VaultStrategy2
             );
     }   
 
-	///@notice calculate best portion to put into uniswap
-	/// todo: formula of parts in uniswap, squeeth, and hedging
-	function calcUniPortionAmounts(uint256 total0, uint256 total1, uint256 price) internal pure returns(uint256 amount0, uint256 amount1){
-
-		//uint256 p = getPrice();
-		//uint256 p = getTickPrice();
-		 uint256  p = price;
-		
-		uint256 total0In1 = total0 * p;   // to have same quantity of token0 as token1 upon current price
-		
-		uint256 uniPortion = 100;  // #todo
-		
-		if (total0In1 > total1)  {    
-			// amount of token0 > amount of token 1, then use token0 to calculate the larger part of supply  
-			amount0 = total0 * uniPortion / 100;
-			amount1 = Math.min( total1 * uniPortion /100, amount0 * p );
-		} else {
-			// amount of token1 > amount of token 0, then use token1 to calculate the larger part of supply  
-			amount1 = total1 * uniPortion / 100;	
-			amount0 = Math.min( total0 * uniPortion/100, amount1/p );
-		}
-		
-	}
 
 
 	function _wrap(uint256 amount) internal {
@@ -591,10 +839,10 @@ contract VaultStrategy2
 		
     }
 
-    function alloc() internal returns ( bool ){
-    	
-		removePositions();		// get all assets back to vault
-		return(true);  // fees are allocated
+    function alloc() internal {
+		removeUniswap();		// get all assets back to vault
+		removeSqueeth() ;
+		removeShort() ;
     }
 
 

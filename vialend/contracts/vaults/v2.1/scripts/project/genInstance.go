@@ -14,7 +14,8 @@ import (
 	//vault "viaroot/deploy/FeeMaker"
 	callee "viaroot/deploy/TestUniswapV3Callee"
 	VaultFactory "viaroot/deploy/VaultFactory"
-	VaultStrategy "viaroot/deploy/VaultStrategy"
+	VaultStrategy "viaroot/deploy/VaultStrategy2"
+
 	VaultStrategy2 "viaroot/deploy/VaultStrategy2"
 
 	ViaVault "viaroot/deploy/ViaVault"
@@ -26,6 +27,9 @@ import (
 )
 
 func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
+
+	myPrintln(Network.VaultStrat)
+	myPrintln(Network.Vault)
 
 	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), EthClient)
 	if err != nil {
@@ -46,6 +50,9 @@ func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
 }
 
 func GetInstance4() (*VaultFactory.Api, *VaultStrategy2.Api, *ViaVault.Api) {
+
+	myPrintln(Network.VaultStrat)
+	myPrintln(Network.Vault)
 
 	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), EthClient)
 	if err != nil {
@@ -101,6 +108,7 @@ func GetTokenInstance(TokenAddress string) (*token.Api, string, string, uint8, *
 
 	name, err := instance.Name(&bind.CallOpts{})
 	if err != nil {
+		log.Println("token address:", TokenAddress)
 		log.Fatal("get token name,", err)
 	}
 	symbol, err := instance.Symbol(&bind.CallOpts{})
@@ -143,6 +151,18 @@ func GetPoolInstance() *pool.Api {
 	_pool := GetPool(Network.TokenA, Network.TokenB, Network.FeeTier)
 	//instance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
 	instance, err := pool.NewApi(_pool, EthClient)
+
+	if err != nil {
+		log.Fatal("poolInstance err:", err)
+	}
+	return instance
+
+}
+
+func GetPoolInstance1(_pool string) *pool.Api {
+
+	//instance, err := pool.NewApi(common.HexToAddress(Network.Pool), EthClient)
+	instance, err := pool.NewApi(common.HexToAddress(_pool), EthClient)
 
 	if err != nil {
 		log.Fatal("poolInstance err:", err)

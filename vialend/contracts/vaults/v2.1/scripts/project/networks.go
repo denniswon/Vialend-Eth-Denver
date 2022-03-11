@@ -18,8 +18,8 @@ import (
 )
 
 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby, 7: ROPSTEN or ROPSTENLOCAL
-var _USE_GETH = false
-var _LOAD_ENV = true
+var _USE_GETH = false // use geth directly without forking from ganache
+var _LOAD_ENV = true  // if false, using hard coded data in network.
 var Networkid = 6
 var Account = 0
 var ProviderSortId = 0
@@ -50,6 +50,8 @@ type LendingStruct struct {
 	OSQTH          string
 	OSQTHWETHPOOL  string
 	ChainLinkProxy string
+	SqthController string
+	AWETH          string
 }
 type AccountStruct struct {
 	Address    string
@@ -116,14 +118,14 @@ var Networks = [...]Params{
 		//[]string{},
 		//[]string{"http://192.168.0.12:8546"}, /// direct main
 
-		//[]string{"http://127.0.0.1:7545", "ws://127.0.0.1:7545"}, // fork throu geth 192.168.0.12:8546
-		[]string{"http://192.168.0.223:8545"}, // ganache-cli in centos
+		[]string{"http://127.0.0.1:8545", "ws://127.0.0.1:8545"}, // fork throu geth 192.168.0.12:8546
+		//[]string{"http://192.168.0.223:8545"}, // ganache-cli in centos
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b", //callee
 		[11]string{
-			"eaa62c0f8fd388de2ac074a5510f0a16ae341312fc29ee4e43b7295eea73d91a",
-			"ce96018daec7a4493fddd9bee7dcf7b2dcaa533f4f57bd25c24fca4f5b6f4b3d",
+			"b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329",
+			"5c2313d8a6b81a83ad1df1bf12a193cbc51d5de84a000db734fd7a05aa63e5a2",
 		}, //privatekeys
 
 		"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // usdc 	tokenB
@@ -155,6 +157,7 @@ var Networks = [...]Params{
 			OSQTH:          "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b",
 			OSQTHWETHPOOL:  "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // osqth/weth uni pool
 			ChainLinkProxy: "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4", // usdc / eth chain link
+			SqthController: "0x64187ae08781B09368e6253F9E94951243A493D5",
 		},
 		[]AccountStruct{},
 	},
@@ -207,7 +210,7 @@ var Networks = [...]Params{
 		[]AccountStruct{},
 	},
 	{ ///3  goerli admin test 1
-		[]string{},
+		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6", "wss://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
@@ -235,14 +238,16 @@ var Networks = [...]Params{
 		"",               //VaultHedge
 
 		LendingStruct{
-			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
-			CETH:  "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
-			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C",
-			CUSDC: "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
-			CWBTC: "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
-			WBTC:  "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
-			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
-			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+			WETH:           "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+			CETH:           "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
+			USDC:           "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C",
+			CUSDC:          "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
+			CWBTC:          "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
+			WBTC:           "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
+			CDAI:           "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
+			DAI:            "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+			ChainLinkProxy: "0x326c977e6efc84e512bb9c30f76e30c160ed06fb", // usdc/eth
+
 		},
 		[]AccountStruct{},
 	},
@@ -277,14 +282,15 @@ var Networks = [...]Params{
 		"", //VaultHedge
 
 		LendingStruct{
-			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
-			CETH:  "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
-			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", // REFERENCE BELOW
-			CUSDC: "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
-			CWBTC: "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
-			WBTC:  "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
-			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
-			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+			WETH:           "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
+			CETH:           "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
+			USDC:           "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", // REFERENCE BELOW
+			CUSDC:          "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
+			CWBTC:          "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
+			WBTC:           "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
+			CDAI:           "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
+			DAI:            "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+			ChainLinkProxy: "0x326c977e6efc84e512bb9c30f76e30c160ed06fb", // usdc/eth
 		},
 		[]AccountStruct{},
 	},
@@ -317,14 +323,15 @@ var Networks = [...]Params{
 		"", //VaultHedge
 
 		LendingStruct{
-			WETH:  "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
-			CETH:  "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
-			USDC:  "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", // REFERENCE BELOW
-			CUSDC: "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
-			CWBTC: "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
-			WBTC:  "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
-			CDAI:  "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
-			DAI:   "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+			WETH:           "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", ///on remix solc0.4.12,  injected web3 deployed by 0x2ee9... test admin,
+			CETH:           "0x20572e4c090f15667cF7378e16FaD2eA0e2f3EfF",
+			USDC:           "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C", // REFERENCE BELOW
+			CUSDC:          "0xCEC4a43eBB02f9B80916F1c718338169d6d5C1F0",
+			CWBTC:          "0x6CE27497A64fFFb5517AA4aeE908b1E7EB63B9fF",
+			WBTC:           "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05",
+			CDAI:           "0x822397d9a55d0fefd20F5c4bCaB33C5F65bd28Eb",
+			DAI:            "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+			ChainLinkProxy: "0x326c977e6efc84e512bb9c30f76e30c160ed06fb", // usdc/eth
 		},
 		[]AccountStruct{},
 	},
@@ -360,10 +367,11 @@ var Networks = [...]Params{
 			CDAI:           "0x6D7F0754FFeb405d23C51CE938289d4835bE3b14",
 			DAI:            "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
 			CETH:           "0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e",
-			OSQTH:          "0xb5b01bb5a34bcbeccc881ee217ada81a29dd2d6d", // deployed squeeth contract on rinkeby
-			OSQTHWETHPOOL:  "0x51B5Ac5c8df5e982B2eb4Eb3823e774485b0e2fb", // created through uniswap v3 UI
+			OSQTH:          "0xb5b01bb5a34bcbeccc881ee217ada81a29dd2d6d", // xSqth - deployed squeeth contract on rinkeby, xSqth
+			OSQTHWETHPOOL:  "0x51B5Ac5c8df5e982B2eb4Eb3823e774485b0e2fb", // xSqth/Weth pool created through uniswap v3 UI,
 			ChainLinkProxy: "0xdCA36F27cbC4E38aE16C4E9f99D39b42337F6dcf", // usdc/eth
-
+			SqthController: "0x64187ae08781B09368e6253F9E94951243A493D5", // fake for now
+			AWETH:          "0x1E2192C406c6a53056E923A1aCe9e05b0090a531", // aWETH
 		},
 		[]AccountStruct{},
 	},
@@ -390,14 +398,16 @@ var Networks = [...]Params{
 		"",   //VaultHedge
 
 		LendingStruct{
-			WETH:  "0xc778417e063141139fce010982780140aa0cd5ab",
-			USDC:  "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
-			CUSDC: "0x2973e69b20563bcc66dC63Bde153072c33eF37fe",
-			CWBTC: "0x541c9cB0E97b77F142684cc33E8AC9aC17B1990F",
-			WBTC:  "0x442Be68395613bDCD19778e761f03261ec46C06D",
-			CDAI:  "0xbc689667C13FB2a04f09272753760E38a95B998C",
-			DAI:   "0x31F42841c2db5173425b5223809CF3A38FEde360",
-			CETH:  "0x859e9d8a4edadfEDb5A2fF311243af80F85A91b8",
+			WETH:           "0xc778417e063141139fce010982780140aa0cd5ab",
+			USDC:           "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
+			CUSDC:          "0x2973e69b20563bcc66dC63Bde153072c33eF37fe",
+			CWBTC:          "0x541c9cB0E97b77F142684cc33E8AC9aC17B1990F",
+			WBTC:           "0x442Be68395613bDCD19778e761f03261ec46C06D",
+			CDAI:           "0xbc689667C13FB2a04f09272753760E38a95B998C",
+			DAI:            "0x31F42841c2db5173425b5223809CF3A38FEde360",
+			CETH:           "0x859e9d8a4edadfEDb5A2fF311243af80F85A91b8",
+			ChainLinkProxy: "0x0", // usdc/eth
+
 		},
 		[]AccountStruct{},
 	},
@@ -639,7 +649,7 @@ func TxConfirm(tx common.Hash) {
 
 	tr, err := EthClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
-		log.Println("TxConfirm transactionReceipt failed:  ", err)
+		log.Println("TransactionReceipt :  ", err)
 	}
 
 	delay := time.Duration(5)
@@ -647,7 +657,7 @@ func TxConfirm(tx common.Hash) {
 	for i := 0; i < 100; i++ {
 		if err != nil {
 			//log.Println("TxConfirm transactionReceipt Failed :  ", err)
-			log.Println("tx ", err, ".. trying in ", delay, " seconds")
+			log.Println("tx receipt", err, ".. trying in ", delay, " seconds")
 			time.Sleep(delay * time.Second)
 		} else {
 			break

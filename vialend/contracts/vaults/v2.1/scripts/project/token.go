@@ -473,6 +473,32 @@ func TokenTransferAmount(_key string, _from string, _toAddress string, _tokenAdd
 
 }
 
+func SwapDirectPool(tokenIn string, tokenOut string, fee int, amount *big.Int) {
+
+	myPrintln("----------------------------------------------")
+	myPrintln(".........Swap Direct Pool.........  ")
+	myPrintln("----------------------------------------------")
+
+	_, stratInstance, _ := GetInstance4()
+
+	sqrtPriceLimitX96 := big.NewInt(1)
+
+	tx, err := stratInstance.SwapDirectPool(Auth,
+		common.HexToAddress(tokenIn),
+		common.HexToAddress(tokenOut),
+		big.NewInt(int64(fee)),
+		sqrtPriceLimitX96,
+		amount,
+	)
+
+	if err != nil {
+		log.Fatal("swapDirectPool ", err)
+	}
+
+	TxConfirm(tx.Hash())
+
+}
+
 func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, amount *big.Int) {
 	// func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
 	// func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)

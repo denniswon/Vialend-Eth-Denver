@@ -2,17 +2,17 @@
 
 pragma solidity >=0.8.8 <0.9.0;
 
-import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./@openzeppelin/contracts/math/Math.sol";
-import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "./@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "./@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import "./@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
-import "./@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-import "./@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
+import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import  { ICErc20, ICEth,IWETH9 }  from "./interfaces/IViaProtocols.sol";
 
 import "./UniCompFees.sol";

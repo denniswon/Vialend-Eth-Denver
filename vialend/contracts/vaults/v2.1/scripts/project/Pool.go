@@ -401,15 +401,21 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 		log.Fatal("getpool ", err)
 	}
 
+	myPrintln("pool address getpool :", poolAddress)
+
 	Network.Pool = poolAddress.String()
 
-	_, _, token0symbol, _, _ := GetTokenInstance(token0)
-	_, _, token1symbol, _, _ := GetTokenInstance(token1)
+	poolInstance := GetPoolInstance1(poolAddress.Hex())
 
-	myPrintln("token0 - ", token0symbol, "  ", tokenA)
-	myPrintln("token1 - ", token1symbol, "  ", tokenB)
+	pooltoken0, _ := poolInstance.Token0(&bind.CallOpts{})
+	pooltoken1, _ := poolInstance.Token1(&bind.CallOpts{})
+
+	_, _, token0symbol, _, _ := GetTokenInstance(pooltoken0.Hex())
+	_, _, token1symbol, _, _ := GetTokenInstance(pooltoken1.Hex())
+
+	myPrintln("pool token0 - ", token0symbol, "  ", pooltoken0.Hex())
+	myPrintln("pool token1 - ", token1symbol, "  ", pooltoken1.Hex())
 	myPrintln("fee tier:", fee)
-	myPrintln("pool address calc:", poolAddress)
 
 	return poolAddress
 
@@ -453,7 +459,10 @@ func PoolInfo(_pool string) {
 	_, tickPrice := getPrice(slot0.SqrtPriceX96, slot0.Tick)
 	myPrintln("spot Price by tick : ", tickPrice)
 
-	liquidity, _ := poolInstance.Liquidity(&bind.CallOpts{})
+	liquidity, err := poolInstance.Liquidity(&bind.CallOpts{})
+	if err != nil {
+		log.Fatal("liquidity : ", err)
+	}
 	//myPrintln("liquidity in pool:", Pricef(liquidity, int(1e18)))
 	myPrintln("liquidity in pool:", liquidity)
 
