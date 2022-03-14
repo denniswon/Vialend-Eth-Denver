@@ -28,6 +28,24 @@ func GetPrice() {
 
 }
 
+func GetPricePer(_token string, fee int) {
+
+	myPrintln("----------------------------------------------")
+	myPrintln(".........GetPrice strat2 .........  ")
+	myPrintln("----------------------------------------------")
+
+	_, stratInstance, _ := GetInstance4()
+
+	price, err := stratInstance.GetEthPriceFromPool(&bind.CallOpts{}, common.HexToAddress(_token), big.NewInt(int64(fee)))
+
+	if err != nil {
+		log.Fatal("getprice err:", err)
+	}
+
+	myPrintln("price per :", price)
+
+}
+
 func GetExpectedNormalizationFactor() {
 
 	_, stratInstance, _ := GetInstance4()

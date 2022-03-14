@@ -32,7 +32,7 @@ func DeployWETH() {
 	DeployWrappedEther()
 }
 
-func Wrap(WETH string, accId int, amt int64) {
+func Wrap(WETH string, accId int, amount *big.Int) {
 
 	fmt.Println("Env: NetworkId=", Networkid, ",EthClient=", Network.ProviderUrl[ProviderSortId])
 
@@ -46,7 +46,7 @@ func Wrap(WETH string, accId int, amt int64) {
 	instance := GetWethInstance(common.HexToAddress(WETH))
 
 	//weth deposit
-	ethAmount := X1E18(amt)
+	ethAmount := amount // X1E18(amt)
 
 	Auth.Value = ethAmount
 	NonceGen()
@@ -56,7 +56,7 @@ func Wrap(WETH string, accId int, amt int64) {
 		log.Fatal("weth deposit err ", err)
 	}
 
-	fmt.Println("wrapped eth amount:", amt, " to: ", FromAddress)
+	fmt.Println("wrapped eth amount:", amount, " to: ", FromAddress)
 
 	TxConfirm(tx.Hash())
 

@@ -74,6 +74,19 @@ func Deposit(_amount0 int, _amount1 int, acc int) {
 
 	bal1, err := tokenBInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
 	myPrintln("tokenB in Wallet ", bal1)
+
+	//  amount0 * 10^decimals
+	amount0 := big.NewInt(int64(_amount0))
+	amount1 := big.NewInt(int64(_amount1))
+
+	if bal1.Cmp(amount1) < 0 {
+		log.Fatal("there is not enough tokenB: required:", amount1, ", available:", bal1)
+	}
+
+	if bal0.Cmp(amount0) < 0 {
+		log.Fatal("there is not enough tokenA: required: ", amount0, ", available:", bal0)
+	}
+
 	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 
@@ -82,10 +95,6 @@ func Deposit(_amount0 int, _amount1 int, acc int) {
 
 	ApproveToken(common.HexToAddress(Network.TokenA), maxToken0, Network.Vault)
 	ApproveToken(common.HexToAddress(Network.TokenB), maxToken1, Network.Vault)
-
-	//  amount0 * 10^decimals
-	amount0 := big.NewInt(int64(_amount0))
-	amount1 := big.NewInt(int64(_amount1))
 
 	// not multi 10^decimals
 	amountToken0 := amount0
@@ -871,32 +880,26 @@ func SetVaults() {
 
 }
 
-// func Alloc(accId int) {
+func Alloc(accId int) {
 
-// 	myPrintln("----------------------------------------------")
-// 	myPrintln(".........alloc .........  ")
-// 	myPrintln("----------------------------------------------")
+	myTitle(" alloc  ")
 
-// 	//vaultInstance := GetVaultInstance()
-// 	_, vaultInstance, _ := GetInstance3()
+	_, stratInstance, _ := GetInstance4()
 
-// 	ChangeAccount(accId)
-// 	NonceGen()
+	NonceGen()
 
-// 	tx, err := vaultInstance.Alloc(Auth)
+	tx, err := stratInstance.Alloc(Auth)
 
-// 	if err != nil {
-// 		log.Fatal("alloc err: ", err)
-// 	}
+	if err != nil {
+		log.Fatal("alloc err: ", err)
+	}
 
-// 	myPrintln("alloc tx: %s", tx.Hash().Hex())
+	myPrintln("alloc tx: %s", tx.Hash().Hex())
 
-// 	ChangeAccount(Account)
+	//Readstring("alloc sent...wait for pending..next .. ")
+	TxConfirm(tx.Hash())
 
-// 	//Readstring("alloc sent...wait for pending..next .. ")
-// 	TxConfirm(tx.Hash())
-
-// }
+}
 func GetTotalSupply() {
 	_, _, vaultInstance := GetInstance3()
 
@@ -910,12 +913,9 @@ func GetTVL() *struct {
 	Total1 *big.Int
 } {
 
-	Totals := new(struct {
-		Total0 *big.Int
-		Total1 *big.Int
-	})
+	myTitle("GetTVL")
 
-	_, stratInstance, _ := GetInstance3()
+	_, stratInstance, _ := GetInstance4()
 	token0Ins, _, _, _, _ := GetTokenInstance(Network.TokenA)
 	token1Ins, _, _, _, _ := GetTokenInstance(Network.TokenB)
 
@@ -923,19 +923,13 @@ func GetTVL() *struct {
 	cHigh, _ := stratInstance.CHigh(&bind.CallOpts{})
 	cLow, _ := stratInstance.CLow(&bind.CallOpts{})
 
-	uniliqs, _ := stratInstance.GetUniAmounts(&bind.CallOpts{}, cLow, cHigh)
-	myPrintln("liquidity in uniswap:  ", uniliqs)
+	myPrintln("cHigh, cLow:", cHigh, cLow)
+
+	uniLnA, _ := stratInstance.GetUniAmounts(&bind.CallOpts{}, cLow, cHigh)
+	myPrintln("Uniswap LP (Amount0, Amount1, Liquidity):  ", uniLnA)
 
 	// clending0, clending1 := stratInstance.GetCAmounts(&bind.CallOpts{})
 	// myPrintln("C Amounts in lending: ", clending0, clending1)
-
-	sbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
-	sbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
-	myPrintln("balance of token0+1 in strat: ", sbalance0, sbalance1)
-
-	vbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	vbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	myPrintln("balance of token0+1 in vault: ", vbalance0, vbalance1)
 
 	symbol, squeeth := GetBalance(Network.LendingContracts.OSQTH, Network.VaultStrat)
 	myPrintln("balance of ", symbol, " in strat ", squeeth)
@@ -943,14 +937,30 @@ func GetTVL() *struct {
 	symbol, squeeth = GetBalance(Network.LendingContracts.OSQTH, Network.Vault)
 	myPrintln("balance of ", symbol, " in vault ", squeeth)
 
-	balance0 := new(big.Int).Add(sbalance0, vbalance0)
-	balance1 := new(big.Int).Add(sbalance1, vbalance1)
+	sbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
+	sbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
+	myPrintln("Strat balance (usdc , weth):  ", sbalance0, sbalance1)
 
-	Totals.Total0 = balance0.Add(balance0, uniliqs.Amount0) //.Add(balance0, lendingAmt0)
-	Totals.Total1 = balance1.Add(balance1, uniliqs.Amount1) //.Add(balance1, lendingAmt1)
+	vbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	vbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	myPrintln("Vault balance (usdc , weth):  ", vbalance0, vbalance1)
 
-	myPrintln("tvl: ", Totals.Total0, Totals.Total1)
+	Totals := new(struct {
+		Total0 *big.Int
+		Total1 *big.Int
+	})
 
+	amount0, amount1, err := stratInstance.GetTotalAmounts(&bind.CallOpts{})
+	if err != nil {
+
+	} else {
+		myPrintln("Total Amounts in Strat (usdc , weth):  ", amount0, amount1)
+
+		Totals.Total0 = amount0.Add(amount0, vbalance0)
+		Totals.Total1 = amount1.Add(amount1, vbalance1)
+
+		myPrintln("TVL (usdc , weth):  ", Totals.Total0, Totals.Total1)
+	}
 	return Totals
 }
 
@@ -1144,7 +1154,7 @@ func VaultInfo2(vaultAddr string) {
 	myPrintln("----------------------------------------------")
 
 	//vaultInstance := GetVaultInstance2(vaultAddr)
-	_, _, vaultInstance := GetInstance3()
+	_, vaultInstance, _ := GetInstance4()
 
 	myPrintln("Vault Address:  ", vaultAddr)
 
@@ -1155,12 +1165,12 @@ func VaultInfo2(vaultAddr string) {
 	// myPrintln("Ctoken0 address:", _CToken0Addr)
 	// myPrintln("Ctoken1 address:", _CToken1Addr)
 
-	totalSupply, err := vaultInstance.TotalSupply(&bind.CallOpts{})
+	// totalSupply, err := vaultInstance.TotalSupply(&bind.CallOpts{})
 
-	myPrintln("totalSupply (total shares in vault) :", totalSupply)
-	if err != nil {
-		log.Fatal("totalsupply ", err)
-	}
+	// myPrintln("totalSupply (total shares in vault) :", totalSupply)
+	// if err != nil {
+	// 	log.Fatal("totalsupply ", err)
+	// }
 
 	Sleep(100)
 	poolInstance := GetPoolInstance()
@@ -1169,11 +1179,11 @@ func VaultInfo2(vaultAddr string) {
 	Sleep(100)
 	tick := slot0.Tick
 
-	// qTickLower, err := vaultInstance.CLow(&bind.CallOpts{})
-	// Sleep(100)
-	// qTickUpper, err := vaultInstance.CHigh(&bind.CallOpts{})
-	// Sleep(100)
-	// myPrintln("cLow, tick, cHigh  :", qTickLower, tick, qTickUpper)
+	qTickLower, _ := vaultInstance.CLow(&bind.CallOpts{})
+	Sleep(100)
+	qTickUpper, _ := vaultInstance.CHigh(&bind.CallOpts{})
+	Sleep(100)
+	myPrintln("cLow, tick, cHigh  :", qTickLower, tick, qTickUpper)
 
 	fmt.Println("** in range? ", tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0)
 

@@ -70,21 +70,43 @@ func main() {
 	defer project.ConfigWrite()
 
 	project.Init(-1, -1)
+	//project.Quiet = true
 
-	//project.TokenSwap(0, project.Network.LendingContracts.OSWETH, project.Network.LendingContracts.OSQTH, 500, big.NewInt(2))
+	// # deploy own weth/usdc  tokens
+	//project.DeployWETH()
+	//project.DeployToken("x usdc 1", "xUSDC", 6, big.NewInt(500000000000000))
+	//project.Wrap(project.Network.LendingContracts.WETH, 0, big.NewInt(5e18))
+	// ## account 0 must have eth to wrap for weth
+	// ## now the account 0 has 7 weth and 500m usdc in wallet
+	//return
+
+	//InitialForkEnv()
+	// project.GetExpectedNormalizationFactor()
+	// return
+
+	//# wallet swap
+	//project.TokenSwap(0, project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("503453817677935236749"))
+
+	//# strat router02 swap
+	// project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(146400239374125503))
+	// project.SwapTest(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("397754930071024025044"))
+	// return
+
+	//# strat uniswap pool swap
+	//project.SwapDirectPool(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("103453817677935236749"))
 	// project.Sleep(5000)
 	// project.GetPrice()
+	// project.GetTVL()
+	// return
 
 	//# deploy vaultBridge
-	project.DeployVaultBridge()
-	project.ConfigWrite()
+	// project.DeployVaultBridge()
+	// project.ConfigWrite()
 
-	project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
-	project.SetVaultAddress(project.Network.Vault, 1)        //vault
+	// project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
+	// project.SetVaultAddress(project.Network.Vault, 1)        //vault
 	//project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
 	//project.SetPermit("0x511Ed5FC53CCCf5c4239487381fcE287B02119Fa", 1) // daniel
-
-	return
 
 	// # test network
 	///rinkeby
@@ -106,25 +128,31 @@ func main() {
 	// return
 
 	//# call funds, deploy strat2, register, move funds
-
-	project.CallFunds()
-	project.GetTVL()
-	project.DeployStrat2ByGoStruct()
-	//project.DeployVaultByGo()
-	project.ConfigWrite()
-	project.Init(-1, -1)
-	project.Register(project.Network.VaultStrat, project.Network.Vault)
-	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	project.MoveFunds()
-	project.GetTVL()
-	//	return
+	// project.Alloc(0)    // remove positions
+	// project.CallFunds() // call funds from vault
+	// project.GetTVL()    //
+	// // // // //project.VaultInfo()
+	//return
+	// project.DeployStrat2ByGoStruct()
+	// //	project.DeployVaultByGo()
+	// project.ConfigWrite()
+	// project.Init(-1, -1)
+	// project.Register(project.Network.VaultStrat, project.Network.Vault)
+	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	// //	project.Deposit(1000e6, 1e17, 0)
+	// project.MoveFunds()
+	// project.GetTVL()
+	// //project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
+	//project.GetTotalSupply()
+	//project.VaultInfo()
+	//return
 
 	//project.GetPair0(project.Network.Vault)
 	// project.GetPrice()
 	//return
 
 	//## deposit
-	// project.Deposit(1000e6, 1e18, 0)
+	//project.Deposit(2500e6, 1e17, 0)
 	// project.MoveFunds()
 	// // project.MyAccountInfo(0)
 	// project.GetTVL()
@@ -134,8 +162,23 @@ func main() {
 	//project.SwapDirectPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(10000))
 	//project.SwapDirectPool(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, big.NewInt(598210))
 	// //project.MyAccountInfo(0)
+	// project.VaultInfo()
+	//project.Alloc(0)
 
-	project.Rebalance(600, 0) //
+	//project.GetPool(project.Network.TokenA, project.Network.TokenB, 500)
+	//project.GetPricePer(project.Network.LendingContracts.USDT)
+	//project.VaultInfo()
+	//project.GetTVL()
+	//return
+
+	//project.GetPool(project.Network.TokenA, project.Network.TokenB, 500)
+	//project.GetPool(project.Network.LendingContracts.OSQTH, project.Network.TokenB, 3000)
+	// project.GetPricePer(project.Network.TokenA, 500)
+	// project.GetPricePer(project.Network.LendingContracts.OSQTH, 3000)
+	// return
+	//project.Alloc(0)
+
+	project.Rebalance(1500, 0) //
 
 	project.GetTVL()
 	return
@@ -151,11 +194,14 @@ func main() {
 	// return
 
 	//## FORCE TO WITHDRAW ALL FUNDS
+	// project.GetTVL()
 	// project.Withdraw(100, 0)
-	//project.MoveFunds()
-	//project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// //project.MoveFunds()
+	// project.Rebalance(600, 0) // strategy method. call alloc/removeposition/vault.movefunds/ rebalance
+	// project.Alloc(0)
 	// project.CallFunds()
 	// project.GetTVL()
+	// project.MyAccountInfo(0)
 	// return
 
 	// project.TokenSwap(0, WETH, USDC, 500, big.NewInt(2))
@@ -964,7 +1010,25 @@ func main() {
 	return
 
 }
+func resetStrat() {
 
+	project.Alloc(0)    // remove positions
+	project.CallFunds() // call funds from vault
+	project.GetTVL()    //
+	// // //project.VaultInfo()
+	//return
+	project.DeployStrat2ByGoStruct()
+	//	project.DeployVaultByGo()
+	project.ConfigWrite()
+	project.Init(-1, -1)
+	project.Register(project.Network.VaultStrat, project.Network.Vault)
+	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+
+	//project.Deposit(1000e6, 1e17, 0)
+	//project.MoveFunds()
+	//project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
+
+}
 func newVault() {
 
 	networkId := 3
@@ -1195,7 +1259,7 @@ func InitialForkEnv() {
 	InitVaultBridge()
 	project.Sleep(5000)
 
-	project.Wrap(project.Network.LendingContracts.WETH, 0, 20)
+	project.Wrap(project.Network.LendingContracts.WETH, 0, big.NewInt(2e18))
 	project.Sleep(5000)
 	//return
 

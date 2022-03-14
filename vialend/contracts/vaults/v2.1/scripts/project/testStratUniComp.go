@@ -246,7 +246,6 @@ func ViaStratUniCompPublicList() {
 	//	p6, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenA))
 	//	p17, _ := viaStratInstance.CTOKEN(&bind.CallOpts{}, common.HexToAddress(Network.TokenB))
 	p18, _ := viaStratInstance.MotivatorFeeRate(&bind.CallOpts{})
-	p19, _ := viaStratInstance.Quoteamount(&bind.CallOpts{})
 	//	p20, _ := viaStratInstance.GetQuoteAtTick(&bind.CallOpts{}, big.NewInt(82894), p19, common.HexToAddress(Network.TokenA), common.HexToAddress(Network.TokenB))
 
 	//p20, _ := viaStratInstance.GetQuoteAtTick(&bind.CallOpts{}, big.NewInt(-174770), big.NewInt(1e18), common.HexToAddress(Network.TokenA), common.HexToAddress(Network.TokenB))
@@ -269,7 +268,6 @@ func ViaStratUniCompPublicList() {
 	//	myPrintln("CompPortion", p11)
 	myPrintln("ProtocolFeeRAte", p15)
 	myPrintln("DecenterFeeRates", p18)
-	myPrintln("Quoteamount", p19)
 	//	myPrintln("GetQuoteAtTick", p20)
 
 	myPrintln("\n", ">>>>>>via Strat  public functions <<<<<<<<<<<", "\n")
@@ -538,7 +536,7 @@ func CallFunds() {
 
 	_, _, vaultInstance := GetInstance3()
 
-	myTitle(">>>>>>>> Call Funds <<<<<<<<<<<<< ")
+	myTitle(">>>>>>>> Call Funds from vault <<<<<<<<<<<<< ")
 
 	if tx, err := vaultInstance.CallFunds(Auth); err == nil {
 		TxConfirm(tx.Hash())

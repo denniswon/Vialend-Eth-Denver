@@ -454,14 +454,35 @@ Installing '0.5.16'...
 Version '0.5.16' installed.
 
 
-python
+## python
 
-### install tkinter
+ install tkinter
 	sudo apt-get install python3-tk
 	
+ update 
+		 sudo apt update 
+		 sudo apt install software-properties-common
+
+         sudo add-apt-repository ppa:deadsnakes/ppa
+
+ You can now update the apt cache and install the Python 3.9 package:
+
+        sudo apt update 
+        sudo apt install python3.9
+        
+        sudo update-alternatives --config python3   
+
+    // if error try this:  upgrade python3  to latest version 3.10
+     
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 3
+    
+	https://cloudbytes.dev/snippets/upgrade-python-to-latest-version-on-ubuntu-linux
 
 
-TROUBLESHOOTING  ERRORS:
+
+## TROUBLESHOOTING  ERRORS:
 
 ## ERROR solidity 
 Fail with error 'SafeERC20: low-level call failed'
@@ -696,3 +717,53 @@ TypeError: entry_points() got an unexpected keyword argument 'group'
 	`where: 	` -  liteide
 	
 	`solution: 	`  use another accountId 
+
+
+### ERROR PYTHON, wsl
+
+ Failed to establish a new connection: [Errno 111] Connection refused'))
+
+ 	'cause:'  - the WEB_PROVIDER_URL maybe shutdown
+	'solution:'  - re start the eht node, geth/infura/local fork etc.
+	
+	
+### ERROR, infura , fork
+	 project ID does not have access to archive state
+	'cause:'
+		ganache-cli fork infura issue 
+	'solution:' 
+		1): change ganache-cli forked network
+		2): restart ganache-cli fork command
+		
+		
+### ERROR (go,  liteide runtime)
+	[............initial ethereum clients...............]
+	panic: runtime error: index out of range [0] with length 0		
+	
+	'when:'
+		change networkid
+	'cause:'
+		the network provider is not provided
+		
+	'solution'	
+		1) _LOAD_ENV = true 
+		2) check network provider 
+		
+	
+### ERROR  (go, liteide, test eth connection, direct eth nodes connection )
+
+	panic: chain not synced beyond EIP-155 replay-protection fork block
+	
+	goroutine 1 [running]:
+	main.main()
+		C:/Users/xdotk/sandbox/crypto/lab/Go/ethers/main.go:117 +0xb14
+		
+	'cause:'
+		network provider setup
+	
+	'solution:'
+		check geth node command
+		Your node is still syncing, it will not process transactions until it is synced. 
+		Before it's synced, it can't really evalaute whether a given tx is valid
+		(has right nonce, has sufficient balance etc), so you need to wait that out.
+	

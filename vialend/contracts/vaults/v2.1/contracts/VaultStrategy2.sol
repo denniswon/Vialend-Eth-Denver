@@ -93,6 +93,7 @@ contract VaultStrategy2
     address public immutable token1;         // underlying token1
 	address public protocol;			// where fee cuts to protocol 
 	address public immutable oSqth;
+	address public oSqthEthPool;
 	address public _USDC;
 
 
@@ -100,7 +101,6 @@ contract VaultStrategy2
 
 	IUniswapV3Pool internal swapPool;
 
-    uint128 public immutable quoteamount;  		// for calc price, based on token0 decimal, ie: 1e18 for eth, 1e8 for wbtc
    
 // 	uint8 public decimal0;
 //    uint8 public decimal1;
@@ -134,11 +134,9 @@ contract VaultStrategy2
 		protocol =  params.Protocol;
 		creator = params.Creator;
 		pool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( params.Token0, params.Token1, params.FeeTier)); 
-
 		
 		// compare swap methods (direct pool , router , 3rd protocols 1inch/para swap/ )
         oSqth =  params.OSqth;
-
 
         // token0 & token1 sort could be changed by the uni v3 pool 
         token0 = pool.token0();  
@@ -146,6 +144,8 @@ contract VaultStrategy2
         
 
 		_WETH = payable (params.WETH);	
+
+        oSqthEthPool = IUniswapV3Factory(UNIV3_FACTORY).getPool(oSqth, _WETH, 3000); 
 		
 		//todo
 		_USDC = token0; 
@@ -161,7 +161,7 @@ contract VaultStrategy2
         motivatorFeeRate = params.MotivatorFeeRate;
 		Decimals[token0] = params.Token0Decimals;        
 		Decimals[token1] = params.Token1Decimals;
-		quoteamount = uint128(10 ** Decimals[token0]);
+		Decimals[oSqth] = 18;
 
     }
     
@@ -335,8 +335,6 @@ contract VaultStrategy2
 	
 	///@notice called by viaVault. send funds back to visaVault
 	function callFunds() external onlyVault {
-		
-		removeUniswap();
 		
 		uint256 a0 =IERC20(token0).balanceOf(address(this));
 		uint256 a1 =IERC20(token1).balanceOf(address(this));
@@ -518,30 +516,29 @@ contract VaultStrategy2
 		
         //#calculate the amounts to supply into uniswap
         (uint256 u0, uint256 u1, uint256 sqthPortionEth, uint256 shortPortionEth, uint256 ethSwap, uint256 usdcSwap) 
-        	= calcPortionSize(
+        	= makePortionSize(
 					rebalParam, 
 					currentBalance0, 
 					currentBalance1 );
 
-		if (ethSwap > 0 ) {
-			swapDirectPool(_WETH, _USDC, 500, 1, ethSwap);
-		} 
 		
-		if (usdcSwap > 0 ) { 
-			swapDirectPool(_USDC, _WETH, 500, 1, usdcSwap);
-		}
-	
-		// mint uni portion 
-        (cLow, cHigh) = (rebalParam.newLow, rebalParam.newHigh);    
-		(uint256 minted0, uint256 minted1) = mintUniV3( cLow, cHigh, u0, u1 );
-	
-		
-		//require(false, Debugger.uint2str(sqthPortionEth));
 
-		// swap for squeeth
+		// mint uni portion 
+
+        (cLow, cHigh) = (rebalParam.newLow, rebalParam.newHigh);    
+		(uint256 minted0, uint256 minted1) = mintUniV3( cLow, cHigh, u0, u1);
+
+		//require(false, Debugger.uint2str(u0));
+
+		// swap for squeeth; make sure there is enough balance of weth
+		currentBalance1 = getBalance(token1);
+
+		//require(currentBalance1 > sqthPortionEth ,  Debugger.uint2str(sqthPortionEth));
+		//require(currentBalance1 > sqthPortionEth ,  Debugger.uint2str(currentBalance1));
+		require(currentBalance1 > sqthPortionEth , 'C0');  // something wrong in the calculation
+
 		swapDirectPool(_WETH, oSqth, 3000, 1, sqthPortionEth);
-		
-				
+
 		// call aave short 
 		// AaveHelper.short( shortPortionEth );
 
@@ -553,13 +550,13 @@ contract VaultStrategy2
 	
 	///@notice calculate best portion to put into uniswap
 	/// todo: formula of parts in uniswap, squeeth, and hedging
-	function calcPortionSize(
+	function makePortionSize(
+		
 			RebalanceParam memory rebalParam,
 			uint256 usdcBalance, 
 			uint256 ethBalance
 		) 
 			internal 
-			view 
 			returns(
 				uint256 uniAmount0, 
 				uint256 uniAmount1, 
@@ -583,76 +580,70 @@ contract VaultStrategy2
 
 
 		// todo: more efficiently, by assigning _USDC 
-		uint256 ethPrice = getPricePer(_USDC);
-
+		uint256 ethPrice = getEthPriceFromPool(_USDC, 500);
 //		sqthPrice = getPricePer(oSqth);
 //		aWethPrice = getPricePer(aWETH) ;
 
-
-		uint256 totalEth = ethBalance + usdcBalance * ethPrice / 1e6;
+		uint256 totalEth = ethBalance + usdcBalance * 1e18 / ethPrice ;
 		uint256 uniPortionEth = totalEth * rebalParam.uniPortionRate / 10000;
 	
 		uniAmount1 = uniPortionEth / 2; 			// eth for uni
-		uniAmount0 = uniAmount1 * 1e6 / ethPrice ; 	// usdc for uni
+		uniAmount0 = uniAmount1 * ethPrice / 1e18; 	// usdc for uni 
 		sqthAmount = totalEth  * rebalParam.sqthPortionRate / 10000  *  rebalParam.sqthPercent / 100 ;
 		shortAmount = totalEth * rebalParam.shortPortionRate / 10000;
 
 		if (usdcBalance < uniAmount0 ) {
-			ethSwap = uniAmount1 - (usdcBalance *  ethPrice / 1e6 );
-		} else if (ethBalance < uniAmount1) {
-			usdcSwap = uniAmount0 - (ethBalance * 1e6 / ethPrice );
-		} else {
+			// not enough usdc, need to swap some eth for usdc
+			ethSwap = uniAmount1 - (usdcBalance * 1e18 / ethPrice );
+			require(ethSwap > 0, "C1");
+			swapDirectPool(_WETH, _USDC, 500, 1, ethSwap);
+
+		}  else {
+			//  if eth is enough, just swap all remaining usdc to eth. 
 			usdcSwap = usdcBalance - uniAmount0;
+			require(usdcSwap > 0, "C2");
+			swapDirectPool(_USDC, _WETH, 500, 1, usdcSwap);
 		}
-			
 
 	}
 	
-	function getPricePer(address _token) public view returns(uint256 price) {
+	function getEthPriceFromPool(address _token, uint24 _fee) public view returns(uint256 price) {
 		
-		uint256 ethPrice = getPrice();
-		uint256 osqthPrice = 6e20;   // $600 getOSqthPrice();
+		// uint256 ethPrice = getPrice(); 
 		
-		if (_token == _USDC || _token == aWETH ) {
-			price = ethPrice;
-		} else if (_token == oSqth) {
-			price = osqthPrice * ethPrice / 1e18; 
-		}
+		address _ethPool = IUniswapV3Factory(UNIV3_FACTORY).getPool( _token, _WETH, _fee);
+		
+    	// old method: uniswap Twap oracle 
+		// new method: use chainlink price feed 
+
+        //int24 twaptick =  getTwap(_ethPool, _twapDuration); // twap on testnet throw error 'OLD'  
+		(	,int24 twaptick, , , , , ) 	= IUniswapV3Pool(_ethPool).slot0();
+		
+        address _token0 = IUniswapV3Pool(_ethPool).token0();
+        address _token1 = IUniswapV3Pool(_ethPool).token1();
+        
+       	price =  (_token0 == _WETH)? getQuoteAtTick(twaptick, uint128(1e18), _token0, _token1) : getQuoteAtTick(twaptick, uint128(1e18), _token1, _token0 );
+
 	}
 	
 	
 	function getBalance(address _token) internal view returns(uint256){
 		return (IERC20(_token).balanceOf(address(this)));
+
 	}
-	
+
+	// get oracle price from ChainLink 	
     function getPrice() public view returns(uint256) {
-    	
-    	// old method: uniswap Twap oracle 
-		// new method: use chainlink price feed 
-        //int24 tick = getTwap(address(pool), twapDuration);
-    	//return( getQuoteAtTick(tick, uint128(quoteamount), token0, token1) );
-		
         //( uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
         ( , int price,,,) = priceFeed.latestRoundData();
-
 		return uint256( price );
-
     }
-
     
     function setChainlinkProxy(address newProxy) external onlyAdmin {
         priceFeed = AggregatorV3Interface(newProxy); 
     }
     
     
-/*    
-    function getTickPrice() public view returns(uint256) {
-    	
-        (uint160 sqrtPriceX96,,,,,,) =  pool.slot0();
-        uint256 p =  ( uint256(sqrtPriceX96) * uint256(sqrtPriceX96) >> (96 * 2) ) * quoteamount;
-        return p;
-    }
-*/
     
     function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyCreator {
          require(_maxTwapDeviation > 0, "maxTwapDeviation");
@@ -694,35 +685,25 @@ contract VaultStrategy2
 	}
 
 	
-
-	
 	function getUniAmounts(int24 tickLower, int24 tickUpper)
         public
         view
-        returns (uint256 amount0, uint256 amount1)
+        returns (uint256 amount0, uint256 amount1, uint256 myliquidity)
     {
-		if (cLow == 0 && cHigh == 0 ) { return (0,0); }
+		if (cLow == 0 && cHigh == 0 ) { return (0,0,0); }
 
         (uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) =
             _position(tickLower, tickUpper);
-        (amount0, amount1) = _amountsForLiquidity(tickLower, tickUpper, liquidity);
-        amount0 = amount0 + uint256(tokensOwed0);
-        amount1 = amount1 + uint256(tokensOwed1);
+        
+        if ( liquidity > 0 ) {
+	        (amount0, amount1) = _amountsForLiquidity(tickLower, tickUpper, liquidity);
+	        amount0 = amount0 + uint256(tokensOwed0);
+	        amount1 = amount1 + uint256(tokensOwed1);
+	        myliquidity = uint256(liquidity);
+        }
     }
-    
-	
-	function removeSqueeth() internal {
-		// remove osqth portion
-		uint256 sqthAmount = IERC20(oSqth).balanceOf(address(this));
-		swapDirectPool(oSqth, _WETH, 3000, 1, sqthAmount);
-	}
-	
-	function removeShort() internal {
-		// call aave unwind , may need wrap
-		// AaveHelper.short( shortPortionEth );
-	}
-	
-	function removeUniswap() internal {
+
+	function removeUniswap() public {
        
     	if (cLow == 0 && cHigh ==0)  return;
 		
@@ -736,6 +717,19 @@ contract VaultStrategy2
        }
 	   	(liquidity, , , , ) = _position(cLow, cHigh);	// should be 0 otherwise, there is problem
 	}
+    
+	
+	function removeSqueeth() public {
+		// remove osqth portion
+		uint256 sqthAmount = IERC20(oSqth).balanceOf(address(this));
+		swapDirectPool(oSqth, _WETH, 3000, 1, sqthAmount);
+	}
+	
+	function removeShort() public {
+		// call aave unwind , may need wrap
+		// AaveHelper.short( shortPortionEth );
+	}
+	
 
         	
 
@@ -839,7 +833,7 @@ contract VaultStrategy2
 		
     }
 
-    function alloc() internal {
+    function alloc() public {
 		removeUniswap();		// get all assets back to vault
 		removeSqueeth() ;
 		removeShort() ;
@@ -872,10 +866,14 @@ contract VaultStrategy2
 		
 		uint256 b0 = IERC20(token0).balanceOf(address(this));
 		uint256 b1 = IERC20(token1).balanceOf(address(this));
+		uint256 b2 = IERC20(aWETH).balanceOf(address(this));
+		uint256 ob3 = IERC20(oSqth).balanceOf(address(this)) ;
 
-		(uint256 a0, uint256 a1) = getUniAmounts(cLow, cHigh);
+		(uint256 u0, uint256 u1, ) = getUniAmounts(cLow, cHigh);
 		
-		return (a0+b0, a1+b1);
+		uint256 b3 = ob3 * 1e18 / getEthPriceFromPool(oSqth,3000);
+		
+		return (u0+b0, u1+b1+b2+b3);
 	}
 	
  	

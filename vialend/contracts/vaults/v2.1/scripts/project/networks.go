@@ -342,9 +342,10 @@ var Networks = [...]Params{
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"", //callee
 		[11]string{},
-
-		"0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b", //tokenA  usdc
-		"0xc778417E063141139Fce010982780140Aa0cD5Ab", //tokenB Weth
+		"0x6aFA9B0F44f125028573Da29c1f00A89C9C8AC99", // usdc self deployed
+		"0xaab1f2c9835cA4A15f6330967aBEfBa5Edf79F7d", // weth self deployed
+		//"0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b", //tokenA  usdc
+		//"0xc778417E063141139Fce010982780140Aa0cD5Ab", //tokenB Weth
 		"0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e", //ctoken0
 		"0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1", //ctoken1
 		"",  //VaultFactory
@@ -359,8 +360,8 @@ var Networks = [...]Params{
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //VaultHedge   to do
 
 		LendingStruct{
-			WETH:           "0xc778417E063141139Fce010982780140Aa0cD5Ab",
-			USDC:           "0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b",
+			WETH:           "0xaab1f2c9835cA4A15f6330967aBEfBa5Edf79F7d",
+			USDC:           "0x6aFA9B0F44f125028573Da29c1f00A89C9C8AC99",
 			CUSDC:          "0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1",
 			CWBTC:          "0x0014F450B8Ae7708593F4A46F8fa6E5D50620F96",
 			WBTC:           "0x577D296678535e4903D59A4C929B718e1D575e0A",

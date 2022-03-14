@@ -28,9 +28,6 @@ import (
 
 func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
 
-	myPrintln(Network.VaultStrat)
-	myPrintln(Network.Vault)
-
 	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), EthClient)
 	if err != nil {
 		log.Println("VaultFactory Instance err:", err)
@@ -50,9 +47,6 @@ func GetInstance3() (*VaultFactory.Api, *VaultStrategy.Api, *ViaVault.Api) {
 }
 
 func GetInstance4() (*VaultFactory.Api, *VaultStrategy2.Api, *ViaVault.Api) {
-
-	myPrintln(Network.VaultStrat)
-	myPrintln(Network.Vault)
 
 	A1, err := VaultFactory.NewApi(common.HexToAddress(Network.VaultFactory), EthClient)
 	if err != nil {

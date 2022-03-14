@@ -132,7 +132,8 @@ func DeployToken(name string, symbol string, decimals uint8, totalSupply *big.In
 	fmt.Println("token address:", address.Hex())
 	AddSettingString(symbol+" token address:", address.Hex())
 
-	Readstring("token deploy done, wait for pending ... next... ")
+	//Readstring("token deploy done, wait for pending ... next... ")
+	TxConfirm(tx.Hash())
 
 	return address.Hex()
 }
@@ -154,8 +155,9 @@ func DeployWrappedEther() *weth.Api {
 	_, _ = instance, tx
 
 	fmt.Println("WETH9 address:", address.Hex())
+	TxConfirm(tx.Hash())
 
-	Readstring("WETH deployed, wait for pending ... next... ")
+	//Readstring("WETH deployed, wait for pending ... next... ")
 
 	return instance
 }

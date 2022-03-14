@@ -53,6 +53,13 @@ func Pricef(priceInWei *big.Int, decimal int) *big.Float {
 	return value
 }
 
+func Str2BigInt(sn string) *big.Int {
+
+	bsn, _ := new(big.Int).SetString(sn, 10)
+	return bsn
+
+}
+
 func X1E18(x int64) *big.Int {
 
 	e18, _ := new(big.Int).SetString("1000000000000000000", 10)
@@ -61,6 +68,7 @@ func X1E18(x int64) *big.Int {
 	return bigx.Mul(bigx, e18)
 }
 
+// x ^ d
 func PowX(x int64, d int) *big.Int {
 
 	dd := strconv.Itoa(d)

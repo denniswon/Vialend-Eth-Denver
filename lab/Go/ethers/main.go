@@ -81,9 +81,9 @@ func main() { ///-----------
 			"f12e87b71f16f24f192941ecc3aff77e8ebcc7be01dd8d7d1245d7644ce8c93b", // 0x5D2Dd8F38a74294DD1FAF7B8c806446A3379f330 GOERLI
 		}, //
 		{ ///2  fork from ganache
-			//"http://127.0.0.1:8545", // ganache-cli windows
+			"http://127.0.0.1:8545", // ganache-cli windows
 			//"5a2777bc3f36b7bae5c23f30a476158b871a5e471cc9fdb8d050ada6cb65b07c"
-			"http://192.168.0.223:8545", // ganache-cli centos
+			//"http://192.168.0.223:8545", // ganache-cli centos
 			"b8c1b5c1d81f9475fdf2e334517d29f733bdfa40682207571b12fc1142cbf329",
 		},
 	}
@@ -182,7 +182,7 @@ func main() { ///-----------
 	fmt.Println("Creating raw tx:")
 
 	value := big.NewInt(0)    // in wei (1 eth)
-	gasLimit := uint64(31000) // in units
+	gasLimit := uint64(61000) // in units
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -194,16 +194,21 @@ func main() { ///-----------
 
 	//callee 0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b
 	// swap
-	contractAddress := common.HexToAddress(callee)
-	_pool := POOL
-	zeroForOne := false
-	amount := big.NewInt(1e18)
+	// osqth controller 0x64187ae08781B09368e6253F9E94951243A493D5
+
+	//_contract = "0xEcA3eDfD09435C2C7D2583124ca9a44f82aF1e8b"
+	_contract := "0x64187ae08781B09368e6253F9E94951243A493D5"
+	contractAddress := common.HexToAddress(_contract)
+
+	//	zeroForOne := false
+	//	amount := big.NewInt(1e18)
 	// path := WETH + "," + USDC //[2]string{WETH, USDC}
 	// to := accountAddress.Hex()
 	// timestamp := big.NewInt(time.Now().Unix())
 
 	//transferFnSignature := []byte("swapExactETHForTokens(uint, address[], address, uint)")
-	transferFnSignature := []byte("swap(address, bool, int256)")
+	//	transferFnSignature := []byte("swap(address, bool, int256)")
+	transferFnSignature := []byte("getExpectedNormalizationFactor()")
 	hash := sha3.NewLegacyKeccak256() //.NewKeccak256()
 	hash.Write(transferFnSignature)
 	methodID := hash.Sum(nil)[:4]
@@ -218,12 +223,12 @@ func main() { ///-----------
 	// paddedTimestamp := common.LeftPadBytes(timestamp.Bytes(), 32)
 	// fmt.Println("padded timestamp:", timestamp.Bytes())
 
-	paddedAddress := common.LeftPadBytes([]byte(_pool), 32)
-	fmt.Println("padded address:", hexutil.Encode(paddedAddress))
-	paddedBool := common.LeftPadBytes([]byte(FormatBool(zeroForOne)), 32)
-	fmt.Println("padded bool:", hexutil.Encode(paddedBool))
-	paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
-	fmt.Println("padded amount:", hexutil.Encode(paddedAmount))
+	// paddedAddress := common.LeftPadBytes([]byte(_pool), 32)
+	// fmt.Println("padded address:", hexutil.Encode(paddedAddress))
+	// paddedBool := common.LeftPadBytes([]byte(FormatBool(zeroForOne)), 32)
+	// fmt.Println("padded bool:", hexutil.Encode(paddedBool))
+	// paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+	// fmt.Println("padded amount:", hexutil.Encode(paddedAmount))
 
 	var data []byte
 	data = append(data, methodID...)
@@ -232,9 +237,9 @@ func main() { ///-----------
 	// data = append(data, paddedAddress...)
 	// data = append(data, paddedTimestamp...)
 
-	data = append(data, paddedAddress...)
-	data = append(data, paddedBool...)
-	data = append(data, paddedAmount...)
+	// data = append(data, paddedAddress...)
+	// data = append(data, paddedBool...)
+	// data = append(data, paddedAmount...)
 
 	tx := types.NewTransaction(nonce, contractAddress, value, gasLimit, gasPrice, data)
 
