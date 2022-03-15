@@ -100,13 +100,16 @@ func main() {
 	// return
 
 	//# deploy vaultBridge
-	// project.DeployVaultBridge()
-	// project.ConfigWrite()
+	//project.DeployVaultBridge()
+	//project.ConfigWrite()
 
-	// project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
-	// project.SetVaultAddress(project.Network.Vault, 1)        //vault
-	//project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
+	//project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
+	//project.SetVaultAddress(project.Network.Vault, 1) //vault
+	//	project.SetPermit("0x23E7A3F38a8834606bCC9F5d5485aA3EBD058Efa", 1) // daniel user1
+	//	project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
+	//project.SetPermit("0x8ee95fe2DB1e3f7FAACCdEd1cbCc237267EB4a00", 1) // vadmin0
 	//project.SetPermit("0x511Ed5FC53CCCf5c4239487381fcE287B02119Fa", 1) // daniel
+	//return
 
 	// # test network
 	///rinkeby
@@ -125,6 +128,7 @@ func main() {
 	// project.Sweep(project.Network.LendingContracts.OSQTH, big.NewInt(5982302))
 	// return
 	// project.GetTVL()
+	// //	project.MyAccountInfo(0)
 	// return
 
 	//# call funds, deploy strat2, register, move funds
@@ -154,9 +158,9 @@ func main() {
 	//## deposit
 	//project.Deposit(2500e6, 1e17, 0)
 	// project.MoveFunds()
-	// // project.MyAccountInfo(0)
+	project.MyAccountInfo(0)
 	// project.GetTVL()
-	// return
+	return
 
 	//project.GetPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000)
 	//project.SwapDirectPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(10000))
@@ -181,6 +185,7 @@ func main() {
 	project.Rebalance(1500, 0) //
 
 	project.GetTVL()
+
 	return
 
 	//## check vaultinfo
@@ -1050,9 +1055,9 @@ func newVault() {
 
 func InitVaultBridge() {
 	//# auto set
-	project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
-	project.SetVaultAddress(project.Network.Vault, 1)        // weth/usdc
-	project.SetPermit(project.FromAddress.Hex(), 1)          //
+	project.SetVaultAddress(project.Network.VaultFactory, 0)           //factory
+	project.SetVaultAddress(project.Network.Vault, 1)                  // weth/usdc
+	project.SetPermit("0x23E7A3F38a8834606bCC9F5d5485aA3EBD058Efa", 1) //
 }
 
 func setVaultBridge() {
