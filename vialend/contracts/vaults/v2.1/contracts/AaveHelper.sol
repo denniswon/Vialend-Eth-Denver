@@ -2,8 +2,11 @@
 
 pragma solidity 0.8.10;
 
-import {IPoolAddressesProvider} from 'https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IPool} from 'https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol';
+//import {IPoolAddressesProvider} from 'https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol';
+//import {IPool} from 'https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol';
+
+import {IPoolAddressesProvider} from './aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from './aave-v3-core/contracts/interfaces/IPool.sol';
 
 contract AaveHelper {
         // option 2 this method goes to vault. 

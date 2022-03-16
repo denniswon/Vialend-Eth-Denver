@@ -558,29 +558,32 @@ func Init(nid int, acc int) {
 		acc = Account
 
 	}
-	myPrintln("............loading env...............")
 
+	myTitle(" Current Network ")
 	if _LOAD_ENV {
+		myPrintln("loading from local env....")
 		loadEnv(_USE_GETH)
+	} else {
+
+		myPrintln("loading from code....")
+		fmt.Println("Env: NetworkId=", Networkid, ",EthClient=", Network.ProviderUrl)
 	}
 
-	myPrintln("............initial ethereum clients...............")
+	myTitle(" initial ethereum clients")
 	EthClient = GetEthClient(nid, 0)
-
 	EthClientWS = GetEthClient(nid, 1)
+	myPrintln("DONE")
 
-	myPrintln("............initial default signature...............")
+	myTitle("initial default signature")
 	Auth = GetSignature(nid, acc)
 
 	_, Token[0].Name, Token[0].Symbol, Token[0].Decimals, Token[0].MaxTotalSupply = GetTokenInstance(Network.TokenA)
 	_, Token[1].Name, Token[1].Symbol, Token[1].Decimals, Token[1].MaxTotalSupply = GetTokenInstance(Network.TokenB)
 
-	myPrintln("............initial token pairs...............")
+	myTitle("initial token pairs")
 	myPrintln(Token[0].Symbol, ":", common.HexToAddress(Network.TokenA), ", Decimals:", Token[0].Decimals)
 	myPrintln(Token[1].Symbol, ":", common.HexToAddress(Network.TokenB), ", Decimals:", Token[1].Decimals)
 
-	myPrintln("-")
-	fmt.Println("Env: NetworkId=", Networkid, ",EthClient=", Network.ProviderUrl)
 	fmt.Println(Cfg.Description)
 
 	Network.VaultFactory = Cfg.Contracts.VAULT_FACTORY
@@ -589,7 +592,7 @@ func Init(nid int, acc int) {
 	Network.VaultBridge = Cfg.Contracts.VAULT_BRIDGE
 	Network.Callee = Cfg.Contracts.CALLEE
 
-	myPrintln("............loading contracts ...............")
+	myTitle("Loading contracts ")
 	myPrintln("VaultFactory:", Network.VaultFactory)
 	myPrintln("Vault Strategy:", Network.VaultStrat)
 	myPrintln("Vault: ", Network.Vault)
@@ -620,8 +623,10 @@ func loadEnv(useGETH bool) {
 
 		j := 0
 
-		myPrintln("Print networks..... newworkid:", networkNames[i])
-		myPrintln(Networks[i].ProviderUrl)
+		//# print chosen network
+		if i == Networkid {
+			myPrintln(networkNames[i], Networks[i].ProviderUrl)
+		}
 
 		accounts := os.Getenv("VIALEND_" + accountNames[i] + "_ACCOUNT" + strconv.Itoa(j))
 

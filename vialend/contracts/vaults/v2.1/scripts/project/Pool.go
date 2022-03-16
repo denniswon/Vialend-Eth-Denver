@@ -456,8 +456,8 @@ func PoolInfo(_pool string) {
 	myPrintln("slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
 	myPrintln("slot0.Tick:", slot0.Tick)
 
-	_, tickPrice := getPrice(slot0.SqrtPriceX96, slot0.Tick)
-	myPrintln("spot Price by tick : ", tickPrice)
+	priceBigInt, priceReadable := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+	myPrintln("Price : ", priceBigInt, priceReadable)
 
 	liquidity, err := poolInstance.Liquidity(&bind.CallOpts{})
 	if err != nil {

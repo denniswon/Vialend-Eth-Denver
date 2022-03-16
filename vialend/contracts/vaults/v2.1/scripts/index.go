@@ -114,11 +114,12 @@ func main() {
 	// # test network
 	///rinkeby
 	// # aave eth and usdc pool
-	//	project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 10000)
 	//project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 500)
-	// project.GetPrice()
+	//project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 3000)
+	//project.PoolInfo("0x4d43654A8669f1B89ed75dEd048173F65c4047fa")
 	// project.ViaVaultPublicList()
 	// project.ViaStratUniCompPublicList()
+	//return
 
 	// project.FactoryPublicList()
 	// project.Deposit(1e6, 1e11, 0)
@@ -127,40 +128,40 @@ func main() {
 	//# sweep other tokens from vault
 	// project.Sweep(project.Network.LendingContracts.OSQTH, big.NewInt(5982302))
 	// return
-	// project.GetTVL()
+	//project.GetTVL()
 	// //	project.MyAccountInfo(0)
-	// return
+	//return
 
 	//# call funds, deploy strat2, register, move funds
 	// project.Alloc(0)    // remove positions
 	// project.CallFunds() // call funds from vault
 	// project.GetTVL()    //
-	// // // // //project.VaultInfo()
-	//return
-	// project.DeployStrat2ByGoStruct()
-	// //	project.DeployVaultByGo()
-	// project.ConfigWrite()
-	// project.Init(-1, -1)
-	// project.Register(project.Network.VaultStrat, project.Network.Vault)
-	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	// //	project.Deposit(1000e6, 1e17, 0)
-	// project.MoveFunds()
-	// project.GetTVL()
-	// //project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
-	//project.GetTotalSupply()
-	//project.VaultInfo()
-	//return
+	project.DeployStrat2ByGoStruct()
+	//	project.DeployVaultByGo()
+	project.ConfigWrite()
+	project.Init(-1, -1)
+	project.Register(project.Network.VaultStrat, project.Network.Vault)
+	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	//	project.Deposit(1000e6, 1e17, 0)
+	//project.MoveFunds()
+	project.GetTVL()
+	// // //project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
+	// //project.GetTotalSupply()
+	// //project.VaultInfo()
+	// return
 
 	//project.GetPair0(project.Network.Vault)
 	// project.GetPrice()
 	//return
 
-	//## deposit
+	//## deposit & withdraw
 	//project.Deposit(2500e6, 1e17, 0)
 	// project.MoveFunds()
-	project.MyAccountInfo(0)
-	// project.GetTVL()
-	return
+	//project.Withdraw(100, 0)
+
+	//project.MyAccountInfo(0)
+	//project.GetTVL()
+	//return
 
 	//project.GetPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000)
 	//project.SwapDirectPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, big.NewInt(10000))
@@ -264,9 +265,6 @@ func main() {
 
 	// project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e13))
 	// return
-
-	//project.GetPool(project.Network.TokenA, project.Network.TokenB, 3000)
-	//project.PoolInfo("0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
 
 	//	project.ViaVaultPublicList()
 	//project.ViaStratUniCompPublicList()

@@ -829,6 +829,7 @@ func CheckFees() {
 ///3.  (sqrtPricex96^2 * 1e(decimal0)/1e(decimal1) / 2^(96*2)
 // 4. javascript: JSBI.BigInt(sqrtPriceX96 *sqrtPriceX96* (1e(decimals_token_0))/(1e(decimals_token_1))/JSBI.BigInt(2) ** (JSBI.BigInt(192));
 ///5 solc: uint(sqrtPriceX96).mul(uint(sqrtPriceX96)).mul(1e(decimalsDiff)) >> (96 * 2);
+/// returns priceInBigInt, priceReadable
 func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 
 	myPrintln("decimals0:", Token[0].Decimals)
@@ -846,24 +847,17 @@ func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 
 	powTick := math.Pow(1.0001, tick24)
 
-	tickPrice := powTick * float64(math.Pow10(int(decimalDiff)))
-	PriceBigInt := Float64ToBigInt(tickPrice * math.Pow10(int(Token[1].Decimals)))
+	//pow(1.0001,197510)/pow(10,(18-6))
+
+	tickPrice := powTick / float64(math.Pow10(int(decimalDiff)))
+	tickPriceReadable := 1 / tickPrice
+
+	PriceBigInt := Float64ToBigInt(tickPriceReadable * math.Pow10(int(Token[1].Decimals)))
 	myPrintln("pricebigint", PriceBigInt)
-
-	sqrtPf := new(big.Float)
-	///convert big Int to big Float
-	sqrtPf.SetString(SqrtPriceX96.String())
-	///convert big float to float64
-	sp64, _ := sqrtPf.Float64()
-	// operate float64
-
-	sqrtPx962Price := (sp64 * sp64) * math.Pow10(int(decimalDiff)) / math.Pow(2, 192)
-	myPrintln("counter check by sqrtPrice: ", sqrtPx962Price)
-	myPrintln("sqrtPriceX96:", sp64)
-	myPrintln("pow10(dif)", math.Pow10(int(decimalDiff)))
+	myPrintln("price readable", tickPriceReadable)
 
 	//myPrintln("counter check price with sqrtPx96 ^ 2 >> 192 = ", sqrtPx962Price)
-	return PriceBigInt, tickPrice
+	return PriceBigInt, tickPriceReadable
 }
 
 func GetVaults(n int) {

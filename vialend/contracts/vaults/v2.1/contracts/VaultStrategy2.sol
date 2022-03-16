@@ -20,6 +20,7 @@ import  { IWETH9 , IController, IPriceOracleGetter}  from "./interfaces/IViaProt
 
 import "./UniCompFees.sol";
 import "./TwapGetter.sol";
+import "./AaveHelper.sol";
 //import "./libraries/UniCompHelper.sol"; 
 import "./libraries/Debugger.sol"; 
 
@@ -33,6 +34,7 @@ Error code:
 'E5' not creator or admin
 'E6' amount <= 0 
 'E7' invalid tokenIn
+'A0' Aave usdc amount is 0
 
 */
 
@@ -74,7 +76,8 @@ contract VaultStrategy2
 	is 
 	ReentrancyGuard , 
 	UniCompFees,   
-	TwapGetter
+	TwapGetter,
+	AaveHelper
 {
 	
 	using SafeERC20 for IERC20;
@@ -84,8 +87,15 @@ contract VaultStrategy2
 
 	address constant public UNIV3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
 	address constant public SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;   //ISwapRouter02
-	address constant public aWETH = 0x1E2192C406c6a53056E923A1aCe9e05b0090a531;  // rinkeby aweth
+
+ 
+	address public aavePoolProvider = 0xA55125A90d75a95EC00130E8E8C197dB5641Eb19; // rinkey 
+    address public shortCallback = 0x2162c3051f3801c3f9fB45D33a054cD10399e1e2; // rinkey 
+    address public aaveUSDC = 0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8; // rinkey 
+    address public aaveETH = 0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed ; // rinkey 
+	address public aWETH = 0x1E2192C406c6a53056E923A1aCe9e05b0090a531;  // rinkeby aweth
 	
+    	
 	address public creator;
 	address public immutable factory;
 	address payable public immutable 	_WETH;
@@ -168,7 +178,7 @@ contract VaultStrategy2
     event MintUniV3Liquidity(int24 indexed newLow, int24 indexed newHigh, uint128 indexed liquidity, uint256 minied0, uint256 minted1 );
     event BurnUniV3Liquidity(int24 indexed cLow, int24 indexed cHigh, uint128 indexed liquidity);
     event Rebalance(address indexed,uint256 u0,  uint256 u1, uint256 c0,  uint256 c1);
-    event AllocFees(address indexed, uint256 uFees0, uint256 uFees1,uint256 lFees0,uint256 lFees1);
+    event AllocFees(address indexed, uint256 Fees0, uint256 Fees1);
     event MyLog(string, uint256);
     
     
@@ -241,8 +251,6 @@ contract VaultStrategy2
 
     }
 
-
-
 	function swapDirectPool(
 		address _tokenIn, 
 		address _tokenOut, 
@@ -252,10 +260,9 @@ contract VaultStrategy2
 	) public nonReentrant {  
 		
 
-		//require (amount > 0, 'E6');
 		if (amount ==0) return;
 
-		require (_tokenIn == token0 || _tokenIn == token1 || _tokenIn == oSqth || _tokenIn == aWETH, 'E7');
+		//require (_tokenIn == token0 || _tokenIn == token1 || _tokenIn == oSqth || _tokenIn == aWETH, 'E7');
 		
 		swapPool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( _tokenIn, _tokenOut,fee)); 
 		address _token0 = swapPool.token0();  
@@ -521,32 +528,47 @@ contract VaultStrategy2
 					currentBalance0, 
 					currentBalance1 );
 
-		
-
 		// mint uni portion 
-
         (cLow, cHigh) = (rebalParam.newLow, rebalParam.newHigh);    
 		(uint256 minted0, uint256 minted1) = mintUniV3( cLow, cHigh, u0, u1);
 
 		//require(false, Debugger.uint2str(u0));
 
-		// swap for squeeth; make sure there is enough balance of weth
-		currentBalance1 = getBalance(token1);
-
-		//require(currentBalance1 > sqthPortionEth ,  Debugger.uint2str(sqthPortionEth));
-		//require(currentBalance1 > sqthPortionEth ,  Debugger.uint2str(currentBalance1));
-		require(currentBalance1 > sqthPortionEth , 'C0');  // something wrong in the calculation
-
+		// squeeth portion; 
+		currentBalance1 = getBalance(token1);  
+		require(currentBalance1 > sqthPortionEth , 'C0');  // make sure there is enough balance of weth
 		swapDirectPool(_WETH, oSqth, 3000, 1, sqthPortionEth);
 
-		// call aave short 
-		// AaveHelper.short( shortPortionEth );
+		// short portion; call aave short 
+		shortHelper( shortPortionEth );
 
 		
 		emit Rebalance(address(this), minted0,minted1,sqthPortionEth, shortPortionEth);
 
 	}
 	
+	function shortHelper(uint256 ausdcAmountInEth) internal {
+		
+    	uint256 usdcPerEth = 2600; // getEthPriceFromPool(_USDC, 500);
+		ausdcAmountInEth = 1e12 ; // todo
+
+		// my weth -> eth unwrap
+		_unwrap(_WETH, ausdcAmountInEth);
+		
+		// eth -> aaveETH wrap
+		_wrap(aaveETH, ausdcAmountInEth);
+		
+		// swap aaveETH for aaUsdc ? would it be traded in the pool you created? 
+		swapDirectPool(aaveETH, aaveUSDC, 3000, 1, ausdcAmountInEth);
+
+		uint256 amount  = IERC20(aaveUSDC).balanceOf(address(this));
+		
+		require(amount > 0, "A0");
+		
+		// call AaveHelper.short()
+        TransferHelper.safeApprove(aaveUSDC, shortCallback, amount + IERC20(aaveUSDC).allowance(address(this), shortCallback));
+        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amount, amount / usdcPerEth * 2);
+    }
 	
 	///@notice calculate best portion to put into uniswap
 	/// todo: formula of parts in uniswap, squeeth, and hedging
@@ -581,8 +603,6 @@ contract VaultStrategy2
 
 		// todo: more efficiently, by assigning _USDC 
 		uint256 ethPrice = getEthPriceFromPool(_USDC, 500);
-//		sqthPrice = getPricePer(oSqth);
-//		aWethPrice = getPricePer(aWETH) ;
 
 		uint256 totalEth = ethBalance + usdcBalance * 1e18 / ethPrice ;
 		uint256 uniPortionEth = totalEth * rebalParam.uniPortionRate / 10000;
@@ -727,12 +747,8 @@ contract VaultStrategy2
 	
 	function removeShort() public {
 		// call aave unwind , may need wrap
-		// AaveHelper.short( shortPortionEth );
+		// AaveHelper.unwind( shortPortionEth );
 	}
-	
-
-        	
-
 	
 	function _position(int24 tickLower, int24 tickUpper)
         internal
@@ -769,16 +785,15 @@ contract VaultStrategy2
     }   
 
 
-
-	function _wrap(uint256 amount) internal {
+	function _wrap(address _aweth, uint256 amount) internal {
 	    if (amount > 0) {
-	        IWETH9(_WETH).deposit{value:amount}();
+	        IWETH9(_aweth).deposit{value:amount}();
 	    }   
 	}
 
-	function _unwrap(uint256 amount) internal {
+	function _unwrap(address _aweth, uint256 amount) internal {
 	    if (amount > 0) {
-	        IWETH9(_WETH).withdraw(amount);
+	        IWETH9(_aweth).withdraw(amount);
 	    }
 	}   
   
@@ -798,13 +813,13 @@ contract VaultStrategy2
             );
     }
     
+    /// make fee cut before compounding
     function allocFees() internal {
     	
-		lFees0 = compOut0-compIn0;
-		lFees1 = compOut1-compIn1;
+		return;  //todo
 		
-		uint256 allfees0 = uFees0 +lFees0;
-		uint256 allfees1 = uFees1 +lFees1;
+		uint256 allfees0 = uFees0;
+		uint256 allfees1 = uFees1;
 
 		if ( protocolFeeRate > 0 ) {
 			uint256 feecut0 = allfees0 * protocolFeeRate /100;
@@ -819,18 +834,12 @@ contract VaultStrategy2
 				//allocMotivatorFees( feecut0, feecut1);
 			}
 		}
-		
-		emit AllocFees(address(this), uFees0,uFees1,lFees0,lFees1);
-		
-		compOut0 = 0;
-		compIn0 = 0;
-		compOut1=0;
-		compIn1=0;
+
+	    emit AllocFees( msg.sender,  allfees0,  allfees1);
+
 		uFees0 =0;
-		lFees0 =0;
 		uFees1 =0;
-		lFees1 =0;
-		
+
     }
 
     function alloc() public {
