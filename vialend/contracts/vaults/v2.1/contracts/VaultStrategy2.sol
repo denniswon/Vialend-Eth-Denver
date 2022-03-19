@@ -35,7 +35,7 @@ Error code:
 'E6' amount <= 0 
 'E7' invalid tokenIn
 'A0' Aave usdc amount is 0
-
+'L0' require(leverage > 0 && leverage < 6, );
 */
 
 /// @author  ViaLend
@@ -554,12 +554,11 @@ contract VaultStrategy2
 	/// do the aave v3 Shorting  
 	function shortHelper(uint256 ausdcAmountInEth, uint32 shortLever) internal {
 		
-    	uint256 usdcPerEth = getPriceFromAavePool();  // 3000000000;
-		
-		//ausdcAmountInEth = 1e12;  // temp
 		require( ausdcAmountInEth > 0, "AS0");
 		
-		uint32 leverage = shortLever / 100;   
+		uint32 leverage = shortLever; 
+		
+		require(leverage > 0 && leverage < 6, 'L0');
 
 		// my weth -> eth unwrap
 		_unwrap(_WETH, ausdcAmountInEth);
@@ -571,12 +570,12 @@ contract VaultStrategy2
 		// todo: swap in previous step to save this swap
 		swapDirectPool(aaveETH, aaveUSDC, 3000, 1, ausdcAmountInEth);
 
-		uint256 amount  = IERC20(aaveUSDC).balanceOf(address(this));
+		uint256 amountInUsdc  = IERC20(aaveUSDC).balanceOf(address(this));
 		
-		require(amount > 0, "A0");  // be sure there is enough funds
-		
-        TransferHelper.safeApprove(aaveUSDC, shortCallback, amount + IERC20(aaveUSDC).allowance(address(this), shortCallback));
-        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amount, amount / usdcPerEth * leverage );
+		require(amountInUsdc > 0, "A0");  // be sure there is enough funds
+
+        TransferHelper.safeApprove(aaveUSDC, shortCallback, amountInUsdc + IERC20(aaveUSDC).allowance(address(this), shortCallback));
+        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, amountInUsdc * leverage );
     }
 	
 	///@notice calculate best portion to put into uniswap

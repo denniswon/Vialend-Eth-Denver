@@ -380,7 +380,26 @@ https://geth.ethereum.org/docs/install-and-build/installing-geth#install-on-ubun
 	usage:
 	 /usr/bin/abigen --abi=../build/test.abi --bin=../build/test.bin --pkg=api --out=../deploy/test/test.go
 
+>>>>>>>>>>>>>>>>>> install / upgrade GETH on centos >>>>>>>>>>>>>>>>>
 
+ssh -> centos terminal
+
+## kill current geth process:
+sudo kill -INT $(pgrep geth)
+
+## install geth for linux 
+go get -d github.com/ethereum/go-ethereum
+go install github.com/ethereum/go-ethereum/cmd/geth@latest
+
+Here's how to rebuild using the latest:
+
+$ cd go-ethereum
+$ git fetch
+$ git pull
+$ make geth
+
+Go Ethereum is written in Go, so to build from source code you need the most recent version of Go. This guide doesn’t cover how to install Go itself, for details read the Go installation instructions and grab any needed bundles from the Go download page.
+https://golang.org/doc/install
 
 >>>>>>>>>>>>>>>>>>> install abigen on wsl2 >>>>>>>>>>>>>>>>>
 

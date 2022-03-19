@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"strconv"
 	"time"
 
 	//	"time"
@@ -505,7 +506,7 @@ func Rebalance(_range int, acc int) {
 	rebalParam.UniPortionRate = uint32(2665)
 	rebalParam.SqthPortionRate = uint32(4675)
 	rebalParam.ShortPortionRate = uint32(2659)
-	rebalParam.ShortLever = uint32(200)
+	rebalParam.ShortLever = uint32(2)
 
 	tx, err := stratInstance.Rebalance(Auth, rebalParam)
 
@@ -820,6 +821,15 @@ func CheckFees() {
 		myPrintln()
 
 	}
+
+}
+
+func GetPriceFromAavePool() {
+
+	_, stratInstance, _ := GetInstance4()
+
+	aavePrice, _ := stratInstance.GetPriceFromAavePool(&bind.CallOpts{})
+	myPrintln("aavePrice from aave eth/usdc Pool :", aavePrice)
 
 }
 
@@ -1279,11 +1289,11 @@ func VaultInfo2(vaultAddr string) {
 
 }
 
-func VaultInfo3() {
+func VaultInfo3(accId int) {
 	/*
 		prepare:
 
-			TotalValueLocked (amount0, amount1)
+			TotalValueLocked (tvl0, tvl1, tvlInUsdc )
 			_usdcPrice
 			_sqthPrice
 			myShare
@@ -1293,8 +1303,8 @@ func VaultInfo3() {
 
 
 		implementation:
-		   My Total Value: 			amount0, amount1 = strategyContract.GetTotalAmounts()
-			[$usdc]				<- ( amount0 + amount1 * _usdcPrice / 1e18 ) * myShare / totalSupply
+		   My Total Value:
+			[$usdc]				<- tvlInUSDC  * myShare / totalSupply
 
 		   Estimated Gains: [$usdc]		<-  todo
 		   APY: [%]						<-  34%  (hard coded for now)
@@ -1339,7 +1349,9 @@ func VaultInfo3() {
 	if err != nil {
 		log.Fatal("vaultinfo3-vaultTokenInstance,", err)
 	}
-	myShare, err := vaultTokenInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
+
+	_, myAddress := GetSignatureByKey(Network.PrivateKey[accId])
+	myShare, err := vaultTokenInstance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(myAddress))
 	if err != nil {
 		log.Fatal("vaultinfo3-myshare,", err)
 	}
@@ -1366,8 +1378,8 @@ func VaultInfo3() {
 	if err != nil {
 		log.Fatal("GetTotalAmounts Error:", err)
 	} else {
-		tvl0 := new(big.Int).Add(vbalance0, amount0)
-		tvl1 := new(big.Int).Add(vbalance1, amount1)
+		tvl0 = new(big.Int).Add(vbalance0, amount0)
+		tvl1 = new(big.Int).Add(vbalance1, amount1)
 		tvlInUSDC = CalcValue(1, tvl0, tvl1, usdcPrice, 6, 18)
 	}
 
@@ -1389,7 +1401,7 @@ func VaultInfo3() {
 
 	aTokenSymbol, aTokenAmount := GetBalance(Network.LendingContracts.ATOKEN_USDC, Network.VaultStrat)
 
-	//# 输出：
+	//# prepare 输出：
 	myTitle("Prepare ...")
 	myPrintln("usdc Price:", usdcPrice)
 	myPrintln("osqth Price:", osqthPrice)
@@ -1404,30 +1416,34 @@ func VaultInfo3() {
 	myPrintln(osqthSymbol, " value(usdc): ", osqthValueUSDC)
 	myPrintln(aTokenSymbol, "amount(ausdc): ", aTokenAmount)
 
+	//# calculation 输出：
+
 	myTitle("My Total Value ...")
 
 	MyTotalValue := Readable(CalcMyValue(tvlInUSDC, myShare, totalSupply), 6)
 	EstimatedGains := 0 // todo
 	APY := 34           // todo
+	myPrintln(uniTotalInUSDC, myShare, totalSupply)
+
 	MyLiquidity := Readable(CalcMyValue(uniTotalInUSDC, myShare, totalSupply), 6)
 
 	MyLiquidity_USDC := Readable(CalcMyValue(uniAmounts.Amount0, myShare, totalSupply), 6)
 	MyLiquidity_WETH := Readable(CalcMyValue(uniAmounts.Amount1, myShare, totalSupply), 18)
 
-	myPrintln("My Total Value:", MyTotalValue)
-	myPrintln("EstimatedGains:", EstimatedGains)
-	myPrintln("My APY:", APY)
+	myPrintln("My Total Value: $", MyTotalValue)
+	myPrintln("EstimatedGains: $", EstimatedGains)
+	myPrintln("My APY:", APY, "%")
 
 	myTitle("My Liquidity ...")
 
-	myPrintln("My Liquidity:", MyLiquidity)
+	myPrintln("My Liquidity: $", MyLiquidity)
 	myPrintln("My Liquidity USDC:", MyLiquidity_USDC)
 	myPrintln("My Liquidity WETH:", MyLiquidity_WETH)
 
 	myTitle("My Hedge")
 	TotalHedge := new(big.Int).Add(osqthValueUSDC, aTokenAmount)
 
-	myPrintln("Total:", Readable(CalcMyValue(TotalHedge, myShare, totalSupply), 6))
+	myPrintln("Total: $", Readable(CalcMyValue(TotalHedge, myShare, totalSupply), 6))
 	myPrintln("USDC:", Readable(CalcMyValue(aTokenAmount, myShare, totalSupply), 6))
 	myPrintln("ETH:", Readable(CalcMyValue(osqthValueETH, myShare, totalSupply), 18))
 
@@ -1440,9 +1456,9 @@ func VaultInfo3() {
 	// 	   	weth: [amount]				<- ufee1 * myShare/totalSupply
 
 	myTitle("Total Amounts(in middle bottom)")
-	myPrintln("Total Liquidity(USDC+ETH):", Readable(uniTotalInUSDC, 6))
-	myPrintln("Total Value of ETH ^2:", Readable(osqthValueUSDC, 6))
-	myPrintln("Total Value of Short:", Readable(aTokenAmount, 6))
+	myPrintln("Total Liquidity(USDC+ETH): $", Readable(uniTotalInUSDC, 6))
+	myPrintln("Total Value of ETH ^2: $", Readable(osqthValueUSDC, 6))
+	myPrintln("Total Value of Short: $", Readable(aTokenAmount, 6))
 	//projectedIncome := CalcValue(1, uFees0, uFees1, usdcPrice, 6, 18)
 	//myPrintln("Projected Income:", Readable(projectedIncome, 6))
 	//myPrintln("Projected APY", projectedIncome / MyLiquidity_USDC *365)
@@ -1456,7 +1472,7 @@ func GetFees() (*big.Int, *big.Int) {
 	return uFees0, uFees1
 }
 func CalcMyValue(value *big.Int, myShare *big.Int, totalSupply *big.Int) *big.Int {
-	return value.Mul(value, totalSupply).Div(value, myShare)
+	return value.Mul(value, myShare).Div(value, totalSupply)
 }
 func CalcValue(dir int, quoteAmount *big.Int, perAmount *big.Int, quotePrice *big.Int, quoteDecimal int, perDecimal int) *big.Int {
 
@@ -1464,8 +1480,8 @@ func CalcValue(dir int, quoteAmount *big.Int, perAmount *big.Int, quotePrice *bi
 	if dir < 0 {
 		// calc other for eth
 		// perAmount / quotePrice * 10 ^ perDecimal + quoteAmount
-		part1 := new(big.Int).Div(perAmount, quotePrice)
-		part2 := new(big.Int).Mul(part1, PowX(10, perDecimal))
+		part1 := new(big.Int).Mul(perAmount, PowX(10, perDecimal))
+		part2 := new(big.Int).Div(part1, quotePrice)
 		bigValue = new(big.Int).Add(part2, quoteAmount)
 	} else {
 		// calc eth for other
@@ -1481,7 +1497,11 @@ func Readable(bigv *big.Int, decimal int) float64 {
 
 	readableValue := BigIntToFloat64(bigv) / BigIntToFloat64(PowX(10, decimal))
 
-	return readableValue
+	//return readableValue
+	//return math.Ceil(readableValue*100) / 100  // 会出现科学计数
+	//return math.Trunc(readableValue*1e2+0.5) * 1e-2    //
+	value, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", readableValue), 64)
+	return value
 
 }
 

@@ -105,6 +105,15 @@ func GetWethInstance(WETH common.Address) *weth.Api {
 // AccountId, from and sign tx
 func TokenTransfer(AccountId int, amount *big.Int, _tokenAddress string, _toAddress string) {
 
+	myTitle("token transfer")
+	tokenInstance, _, symbol, decimals, _ := GetTokenInstance(_tokenAddress)
+
+	myPrintln("token Address:", _tokenAddress)
+	myPrintln("token info(symbol, decimals):", symbol, decimals)
+	myPrintln("from address:", FromAddress)
+	myPrintln("to address:", _toAddress)
+	myPrintln("AMOUNT:", amount)
+
 	transferFnSignature := []byte("transfer(address,uint256)")
 
 	tokenAddress := common.HexToAddress(_tokenAddress)
@@ -153,14 +162,20 @@ func TokenTransfer(AccountId int, amount *big.Int, _tokenAddress string, _toAddr
 		log.Fatal(err)
 	}
 
+	bal, err := tokenInstance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(_toAddress))
+	myPrintln("balance now:", bal)
+
 	fmt.Printf("sent tx: %s\n", signedTx.Hash().Hex()) // tx
 	//TxConfirm(signedTx.Hash())
 
 }
 
-func TransferEth(_fromKey string, value *big.Int, _toAddress string) {
+func EthTransfer(_fromKey string, value *big.Int, _toAddress string) {
+
+	myTitle("eth transfer")
 
 	EthClient := EthClient
+
 	privateKey, err := crypto.HexToECDSA(_fromKey)
 	//privateKey, err := crypto.HexToECDSA(Network.PrivateKey[1])
 
@@ -196,7 +211,7 @@ func TransferEth(_fromKey string, value *big.Int, _toAddress string) {
 		log.Fatal("chain error", err)
 	}
 
-	fmt.Println("chainID:", chainID)
+	//	fmt.Println("chainID:", chainID)
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
 	if err != nil {
 		log.Fatal("signed err:", err)
@@ -206,6 +221,10 @@ func TransferEth(_fromKey string, value *big.Int, _toAddress string) {
 	if err != nil {
 		log.Println("sendtransaction err:", err)
 	}
+
+	myPrintln("from address:", fromAddress)
+	myPrintln("to address:", toAddress)
+	myPrintln("AMOUNT:", value)
 
 	fmt.Println("eth for ", value, " has been sent. %s", signedTx.Hash().Hex())
 	//TxConfirm(signedTx.Hash())
@@ -298,6 +317,7 @@ func CollectTokens() {
 
 	for i, key := range froms {
 		_, publicAddress := GetSignatureByKey(key)
+
 		myPrintln(i, "--", publicAddress)
 
 		_ = collectorkey
@@ -310,7 +330,7 @@ func CollectTokens() {
 				//TokenTransferAll(key, publicAddress, collector, token)
 				balance, _ := EthClient.BalanceAt(context.Background(), common.HexToAddress(publicAddress), nil)
 				if balance.Cmp(big.NewInt(0)) > 0 {
-					TransferEth(key, balance, collector)
+					EthTransfer(key, balance, collector)
 					Sleep(3000)
 				}
 
