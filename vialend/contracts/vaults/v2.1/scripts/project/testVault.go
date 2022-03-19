@@ -505,6 +505,7 @@ func Rebalance(_range int, acc int) {
 	rebalParam.UniPortionRate = uint32(2665)
 	rebalParam.SqthPortionRate = uint32(4675)
 	rebalParam.ShortPortionRate = uint32(2659)
+	rebalParam.ShortLever = uint32(200)
 
 	tx, err := stratInstance.Rebalance(Auth, rebalParam)
 
@@ -860,6 +861,36 @@ func getPrice(SqrtPriceX96 *big.Int, tick *big.Int) (*big.Int, float64) {
 	return PriceBigInt, tickPriceReadable
 }
 
+func getPrice2(SqrtPriceX96 *big.Int, tick *big.Int, decimal0 int, decimal1 int) (*big.Int, float64) {
+
+	myPrintln("decimals0:", decimal0)
+	myPrintln("decimals1:", decimal1)
+
+	decimalDiff := decimal0 - decimal1
+
+	if decimalDiff < 0 {
+		decimalDiff = -decimalDiff
+	}
+	myPrintln("decimals diff:", decimalDiff)
+
+	tick24 := float64(tick.Int64())
+	//myPrintln("tick24 ", tick24)
+
+	powTick := math.Pow(1.0001, tick24)
+
+	//pow(1.0001,197510)/pow(10,(18-6))
+
+	tickPrice := powTick / float64(math.Pow10(int(decimalDiff)))
+	tickPriceReadable := 1 / tickPrice
+
+	PriceBigInt := Float64ToBigInt(tickPriceReadable * math.Pow10(int(Token[1].Decimals)))
+	myPrintln("pricebigint", PriceBigInt)
+	myPrintln("price readable", tickPriceReadable)
+
+	//myPrintln("counter check price with sqrtPx96 ^ 2 >> 192 = ", sqrtPx962Price)
+	return PriceBigInt, tickPriceReadable
+}
+
 func GetVaults(n int) {
 	fin, _, _ := GetInstance3()
 	vaults, _ := fin.Vaults(&bind.CallOpts{}, big.NewInt(int64(n)))
@@ -917,28 +948,41 @@ func GetTVL() *struct {
 	cHigh, _ := stratInstance.CHigh(&bind.CallOpts{})
 	cLow, _ := stratInstance.CLow(&bind.CallOpts{})
 
-	myPrintln("cHigh, cLow:", cHigh, cLow)
-
+	myTitle(" Uniswap ")
 	uniLnA, _ := stratInstance.GetUniAmounts(&bind.CallOpts{}, cLow, cHigh)
-	myPrintln("Uniswap LP (Amount0, Amount1, Liquidity):  ", uniLnA)
+	myPrintln("Token0: ", uniLnA.Amount0)
+	myPrintln("Token1: ", uniLnA.Amount1)
+	myPrintln("Liquidity: ", uniLnA.Myliquidity)
+	myPrintln("cHigh, cLow:", cHigh, cLow)
 
 	// clending0, clending1 := stratInstance.GetCAmounts(&bind.CallOpts{})
 	// myPrintln("C Amounts in lending: ", clending0, clending1)
 
+	myTitle("in strategy ")
 	symbol, squeeth := GetBalance(Network.LendingContracts.OSQTH, Network.VaultStrat)
-	myPrintln("balance of ", symbol, " in strat ", squeeth)
+	myPrintln(symbol, ": ", squeeth)
 
-	symbol, squeeth = GetBalance(Network.LendingContracts.OSQTH, Network.Vault)
-	myPrintln("balance of ", symbol, " in vault ", squeeth)
+	symbol, aToken := GetBalance(Network.LendingContracts.ATOKEN_USDC, Network.VaultStrat)
+	myPrintln(symbol, ": ", aToken)
+
+	// symbol, aaveWETH := GetBalance(Network.LendingContracts.AAVE_ETH, Network.VaultStrat)
+	// myPrintln(symbol, ": ", aaveWETH)
+	// symbol, aaveUSDC := GetBalance(Network.LendingContracts.AAVE_USDC, Network.VaultStrat)
+	// myPrintln(symbol, ": ", aaveUSDC)
 
 	sbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
 	sbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.VaultStrat))
-	myPrintln("Strat balance (usdc , weth):  ", sbalance0, sbalance1)
+	myPrintln("(usdc  weth):  ", sbalance0, sbalance1)
+
+	myTitle("in viaVault ")
+	symbol, squeeth = GetBalance(Network.LendingContracts.OSQTH, Network.Vault)
+	myPrintln(symbol, ": ", squeeth)
 
 	vbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
 	vbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
-	myPrintln("Vault balance (usdc , weth):  ", vbalance0, vbalance1)
+	myPrintln("(usdc  weth) :  ", vbalance0, vbalance1)
 
+	myTitle("Total")
 	Totals := new(struct {
 		Total0 *big.Int
 		Total1 *big.Int
@@ -948,12 +992,12 @@ func GetTVL() *struct {
 	if err != nil {
 
 	} else {
-		myPrintln("Total Amounts in Strat (usdc , weth):  ", amount0, amount1)
+		myPrintln("Total (usdc , weth) in Strat :  ", amount0, amount1)
 
 		Totals.Total0 = amount0.Add(amount0, vbalance0)
 		Totals.Total1 = amount1.Add(amount1, vbalance1)
 
-		myPrintln("TVL (usdc , weth):  ", Totals.Total0, Totals.Total1)
+		myPrintln("TVL (usdc , weth) in All:  ", Totals.Total0, Totals.Total1)
 	}
 	return Totals
 }
@@ -1143,14 +1187,12 @@ func VaultInfo() {
 
 func VaultInfo2(vaultAddr string) {
 
-	myPrintln("----------------------------------------------")
-	myPrintln(".........Vault Info.........  ")
-	myPrintln("----------------------------------------------")
+	myTitle(".........Vault Info.........  ")
 
 	//vaultInstance := GetVaultInstance2(vaultAddr)
 	_, vaultInstance, _ := GetInstance4()
 
-	myPrintln("Vault Address:  ", vaultAddr)
+	//myPrintln("Vault Address:  ", vaultAddr)
 
 	//poolAddress := Network.Pool
 	//get ctoken address
@@ -1177,9 +1219,14 @@ func VaultInfo2(vaultAddr string) {
 	Sleep(100)
 	qTickUpper, _ := vaultInstance.CHigh(&bind.CallOpts{})
 	Sleep(100)
+
+	myTitle("tick range: ")
 	myPrintln("cLow, tick, cHigh  :", qTickLower, tick, qTickUpper)
 
-	fmt.Println("** in range? ", tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0)
+	myTitle("in range?")
+	if qTickLower != nil && qTickUpper != nil {
+		fmt.Println(tick.Cmp(qTickLower) > 0 && tick.Cmp(qTickUpper) < 0)
+	}
 
 	// liquidity, err := vaultInstance.GetSSLiquidity(&bind.CallOpts{}, qTickLower, qTickUpper)
 	// Sleep(100)
@@ -1214,17 +1261,227 @@ func VaultInfo2(vaultAddr string) {
 	// uniswapPriceBySqrtP, _ := vaultInstance.GetPriceBySQRTP(&bind.CallOpts{}, sqrtPriceX96)
 	// myPrintln("GetPriceBySQRTP:", uniswapPriceBySqrtP)
 
-	myPrintln("------ tokens in Vault-----------")
+	myTitle("------ tokens in Vault-----------")
 	myPrintln(GetBalance(Network.LendingContracts.DAI, Network.Vault))
 	myPrintln(GetBalance(Network.LendingContracts.USDC, Network.Vault))
 	myPrintln(GetBalance(Network.LendingContracts.WETH, Network.Vault))
 	myPrintln(GetBalance(Network.LendingContracts.OSQTH, Network.Vault))
+	myPrintln(GetBalance(Network.LendingContracts.ATOKEN_USDC, Network.Vault))
 
-	myPrintln("------ tokens in Strategy-----------")
+	myTitle("------ tokens in Strategy-----------")
 	myPrintln(GetBalance(Network.LendingContracts.DAI, Network.VaultStrat))
 	myPrintln(GetBalance(Network.LendingContracts.USDC, Network.VaultStrat))
 	myPrintln(GetBalance(Network.LendingContracts.WETH, Network.VaultStrat))
 	myPrintln(GetBalance(Network.LendingContracts.OSQTH, Network.VaultStrat))
+	myPrintln(GetBalance(Network.LendingContracts.ATOKEN_USDC, Network.VaultStrat))
+
+	GetTVL()
+
+}
+
+func VaultInfo3() {
+	/*
+		prepare:
+
+			TotalValueLocked (amount0, amount1)
+			_usdcPrice
+			_sqthPrice
+			myShare
+			totalSupply
+			sqthAmount
+			aaUsdcAmount
+
+
+		implementation:
+		   My Total Value: 			amount0, amount1 = strategyContract.GetTotalAmounts()
+			[$usdc]				<- ( amount0 + amount1 * _usdcPrice / 1e18 ) * myShare / totalSupply
+
+		   Estimated Gains: [$usdc]		<-  todo
+		   APY: [%]						<-  34%  (hard coded for now)
+
+		   My Liquidity: 				<-  amount0, amount1, liquidity = GetUniAmounts(cLow, cHigh)
+			[$usdc]						<-  (amount0 + amount1 * _usdcPrice / 1e18) * myShare / totalSupply
+		   	usdc: [amount]				<-	 usdcAmount = amount0 *myShare / totalSupply / 1e6
+		   	weth:  [amount]				<-   ethAmount = amount1 *myShare / totalSupply / 1e18
+
+		   My Hedge : 				sqthBalance= sqth.balanceOf(stratContract),
+									aTokenBalance= aTokenUsdc.balanceOf(stratContract)
+			[$usdc]				<-	(sqthBalance * _sqthPrice /1e18 *_usdcPrice/1e18  + aTokenBalance) *myshare/totalSupply
+		   	squeeth position: [eth]	 <-sqthBalance * _sqthPrice /1e18 * myshare/totalSupply
+		   	short position:	[$eth]	 <- aTokenBalance *_usdcPrice/1e18  * myshare/totalSupply
+		   	squeeth factor:	[0.789]	 <-  0.789
+
+			My Income:					(ufees0, ufees1) = GetFees()
+			[$usdc]					 <- (ufees0 + ufees1 * _usdcPrice/ 1e18) * myShare/totalSupply
+		   	usdc: [amount]				<-	ufee0 * myShare/totalSupply
+		   	weth: [amount]				<- ufee1 * myShare/totalSupply
+
+		   Total Amounts in uni:  $usdc		uniAmount0 + (uniAmount1 * _usdcPrice /1e18)
+		   Total value of ETH^2:   $usdc	sqthBalance * _sqthPrice /1e18 *_usdcPrice/1e18
+		   Total Value of SHORT:   $usdc	aTokenBalance
+		   Projected Income(this epoch): 	$usdc		(amount0 + amount1 * _usdcPrice / 1e18) * APY / 52
+		   Projected APY(this epoch): X%				34%
+	*/
+	myTitle(".........Vault Info 3.........  ")
+
+	_, stratInstance, vaultInstance := GetInstance4()
+
+	//# prepare totalsupply
+	totalSupply, err := vaultInstance.TotalSupply(&bind.CallOpts{})
+
+	if err != nil {
+		log.Println("totalsupply ", err)
+	}
+
+	//# prepare  myshare
+
+	vaultTokenInstance, err := token.NewApi(common.HexToAddress(Network.Vault), EthClient)
+	if err != nil {
+		log.Fatal("vaultinfo3-vaultTokenInstance,", err)
+	}
+	myShare, err := vaultTokenInstance.BalanceOf(&bind.CallOpts{}, FromAddress)
+	if err != nil {
+		log.Fatal("vaultinfo3-myshare,", err)
+	}
+
+	//# prepare prices
+
+	osqthPrice := GetPricePer(Network.LendingContracts.OSQTH, 3000)
+	usdcPrice := GetPricePer(Network.LendingContracts.USDC, 500)
+
+	//# Prepare tvl
+
+	// tvl in vault
+	token0Ins, _, _, _, _ := GetTokenInstance(Network.TokenA)
+	token1Ins, _, _, _, _ := GetTokenInstance(Network.TokenB)
+	vbalance0, _ := token0Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	vbalance1, _ := token1Ins.BalanceOf(&bind.CallOpts{}, common.HexToAddress(Network.Vault))
+	// tvl in strategy
+	amount0, amount1, err := stratInstance.GetTotalAmounts(&bind.CallOpts{})
+
+	// calculate total tvl
+	var tvlInUSDC *big.Int
+	var tvl0 *big.Int
+	var tvl1 *big.Int
+	if err != nil {
+		log.Fatal("GetTotalAmounts Error:", err)
+	} else {
+		tvl0 := new(big.Int).Add(vbalance0, amount0)
+		tvl1 := new(big.Int).Add(vbalance1, amount1)
+		tvlInUSDC = CalcValue(1, tvl0, tvl1, usdcPrice, 6, 18)
+	}
+
+	//# prepare uniswap position:
+
+	cLow, _ := stratInstance.CLow(&bind.CallOpts{})
+	cHigh, _ := stratInstance.CHigh(&bind.CallOpts{})
+	uniAmounts, _ := stratInstance.GetUniAmounts(&bind.CallOpts{}, cLow, cHigh)
+	uniTotalInUSDC := CalcValue(1, uniAmounts.Amount0, uniAmounts.Amount1, usdcPrice, 6, 18)
+
+	//# prepare osqth amount:
+
+	osqthSymbol, osqthAmount := GetBalance(Network.LendingContracts.OSQTH, Network.VaultStrat)
+
+	osqthValueETH := CalcValue(-1, big.NewInt(0), osqthAmount, osqthPrice, 18, 18)
+	osqthValueUSDC := CalcValue(1, big.NewInt(0), osqthValueETH, usdcPrice, 6, 18)
+
+	//# prepare aToken amount:  1 aToken = 1 usdc
+
+	aTokenSymbol, aTokenAmount := GetBalance(Network.LendingContracts.ATOKEN_USDC, Network.VaultStrat)
+
+	//# 输出：
+	myTitle("Prepare ...")
+	myPrintln("usdc Price:", usdcPrice)
+	myPrintln("osqth Price:", osqthPrice)
+	myPrintln("totalSupply:", totalSupply)
+	myPrintln("myShare:", myShare)
+	myPrintln("TotalValueLocked(usdc, weth): ", tvl0, tvl1)
+	myPrintln("TVL in usdc:  ", tvlInUSDC, ", $", Readable(tvlInUSDC, 6))
+	myPrintln("uni USDC amount: ", uniAmounts.Amount0)
+	myPrintln("uni WETH amount: ", uniAmounts.Amount1)
+	myPrintln(osqthSymbol, " amount(osqth): ", osqthAmount)
+	myPrintln(osqthSymbol, " value(eth): ", osqthValueETH)
+	myPrintln(osqthSymbol, " value(usdc): ", osqthValueUSDC)
+	myPrintln(aTokenSymbol, "amount(ausdc): ", aTokenAmount)
+
+	myTitle("My Total Value ...")
+
+	MyTotalValue := Readable(CalcMyValue(tvlInUSDC, myShare, totalSupply), 6)
+	EstimatedGains := 0 // todo
+	APY := 34           // todo
+	MyLiquidity := Readable(CalcMyValue(uniTotalInUSDC, myShare, totalSupply), 6)
+
+	MyLiquidity_USDC := Readable(CalcMyValue(uniAmounts.Amount0, myShare, totalSupply), 6)
+	MyLiquidity_WETH := Readable(CalcMyValue(uniAmounts.Amount1, myShare, totalSupply), 18)
+
+	myPrintln("My Total Value:", MyTotalValue)
+	myPrintln("EstimatedGains:", EstimatedGains)
+	myPrintln("My APY:", APY)
+
+	myTitle("My Liquidity ...")
+
+	myPrintln("My Liquidity:", MyLiquidity)
+	myPrintln("My Liquidity USDC:", MyLiquidity_USDC)
+	myPrintln("My Liquidity WETH:", MyLiquidity_WETH)
+
+	myTitle("My Hedge")
+	TotalHedge := new(big.Int).Add(osqthValueUSDC, aTokenAmount)
+
+	myPrintln("Total:", Readable(CalcMyValue(TotalHedge, myShare, totalSupply), 6))
+	myPrintln("USDC:", Readable(CalcMyValue(aTokenAmount, myShare, totalSupply), 6))
+	myPrintln("ETH:", Readable(CalcMyValue(osqthValueETH, myShare, totalSupply), 18))
+
+	myTitle("My Income:")
+	ufees0, ufees1 := GetFees()
+	_ = ufees0
+	_ = ufees1
+	// 		[$usdc]					 <- (ufees0 + ufees1 * _usdcPrice/ 1e18) * myShare/totalSupply
+	// 	   	usdc: [amount]				<-	ufee0 * myShare/totalSupply
+	// 	   	weth: [amount]				<- ufee1 * myShare/totalSupply
+
+	myTitle("Total Amounts(in middle bottom)")
+	myPrintln("Total Liquidity(USDC+ETH):", Readable(uniTotalInUSDC, 6))
+	myPrintln("Total Value of ETH ^2:", Readable(osqthValueUSDC, 6))
+	myPrintln("Total Value of Short:", Readable(aTokenAmount, 6))
+	//projectedIncome := CalcValue(1, uFees0, uFees1, usdcPrice, 6, 18)
+	//myPrintln("Projected Income:", Readable(projectedIncome, 6))
+	//myPrintln("Projected APY", projectedIncome / MyLiquidity_USDC *365)
+
+}
+
+func GetFees() (*big.Int, *big.Int) {
+
+	var uFees0 *big.Int
+	var uFees1 *big.Int
+	return uFees0, uFees1
+}
+func CalcMyValue(value *big.Int, myShare *big.Int, totalSupply *big.Int) *big.Int {
+	return value.Mul(value, totalSupply).Div(value, myShare)
+}
+func CalcValue(dir int, quoteAmount *big.Int, perAmount *big.Int, quotePrice *big.Int, quoteDecimal int, perDecimal int) *big.Int {
+
+	var bigValue *big.Int
+	if dir < 0 {
+		// calc other for eth
+		// perAmount / quotePrice * 10 ^ perDecimal + quoteAmount
+		part1 := new(big.Int).Div(perAmount, quotePrice)
+		part2 := new(big.Int).Mul(part1, PowX(10, perDecimal))
+		bigValue = new(big.Int).Add(part2, quoteAmount)
+	} else {
+		// calc eth for other
+		// perAmount * quotePrice / 10 ^ perDecimal + quoteAmount
+		part1 := new(big.Int).Mul(perAmount, quotePrice)
+		part2 := new(big.Int).Div(part1, PowX(10, perDecimal))
+		bigValue = new(big.Int).Add(part2, quoteAmount)
+	}
+	return bigValue
+
+}
+func Readable(bigv *big.Int, decimal int) float64 {
+
+	readableValue := BigIntToFloat64(bigv) / BigIntToFloat64(PowX(10, decimal))
+
+	return readableValue
 
 }
 

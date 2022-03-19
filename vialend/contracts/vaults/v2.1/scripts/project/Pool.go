@@ -401,8 +401,6 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 		log.Fatal("getpool ", err)
 	}
 
-	myPrintln("pool address getpool :", poolAddress)
-
 	Network.Pool = poolAddress.String()
 
 	poolInstance := GetPoolInstance1(poolAddress.Hex())
@@ -416,6 +414,8 @@ func GetPool(token0 string, token1 string, feetier int64) common.Address {
 	myPrintln("pool token0 - ", token0symbol, "  ", pooltoken0.Hex())
 	myPrintln("pool token1 - ", token1symbol, "  ", pooltoken1.Hex())
 	myPrintln("fee tier:", fee)
+
+	myPrintln("pool address :", poolAddress)
 
 	return poolAddress
 
@@ -445,18 +445,18 @@ func PoolInfo(_pool string) {
 	myPrintln("Token1 address:", token1)
 	myPrintln("Fee tier:", feeRate)
 
-	_, name, symbol, decimals, _ := GetTokenInstance(token0.String())
-	myPrintln("Token0 info:", name, symbol, decimals)
+	_, name, symbol, decimals0, _ := GetTokenInstance(token0.String())
+	myPrintln("Token0 info:", name, symbol, decimals0)
 
-	_, name, symbol, decimals, _ = GetTokenInstance(token1.String())
-	myPrintln("Token1 info:", name, symbol, decimals)
+	_, name, symbol, decimals1, _ := GetTokenInstance(token1.String())
+	myPrintln("Token1 info:", name, symbol, decimals0)
 
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
 
 	myPrintln("slot0.SqrtPriceX96:", slot0.SqrtPriceX96)
 	myPrintln("slot0.Tick:", slot0.Tick)
 
-	priceBigInt, priceReadable := getPrice(slot0.SqrtPriceX96, slot0.Tick)
+	priceBigInt, priceReadable := getPrice2(slot0.SqrtPriceX96, slot0.Tick, int(decimals0), int(decimals1))
 	myPrintln("Price : ", priceBigInt, priceReadable)
 
 	liquidity, err := poolInstance.Liquidity(&bind.CallOpts{})
@@ -553,15 +553,15 @@ func MintPool(liquidity int64, amount0 int64, amount1 int64) {
 	PoolInfo(Network.Pool)
 }
 
-func TokenInfo(tokenAddress common.Address, owner common.Address) (*big.Int, string) {
+func TokenInfo(tokenAddress string, owner string) (*big.Int, string) {
 
-	tokenInstance, err := token.NewApi(tokenAddress, EthClient)
+	tokenInstance, err := token.NewApi(common.HexToAddress(tokenAddress), EthClient)
 
 	if err != nil {
 		log.Fatal("tokenInfo NewApi err ", err)
 	}
 
-	balance, _ := tokenInstance.BalanceOf(&bind.CallOpts{}, owner)
+	balance, _ := tokenInstance.BalanceOf(&bind.CallOpts{}, common.HexToAddress(owner))
 	symbol, _ := tokenInstance.Symbol(&bind.CallOpts{})
 
 	return balance, symbol

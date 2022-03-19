@@ -68,10 +68,10 @@ func X1E18(x int64) *big.Int {
 	return bigx.Mul(bigx, e18)
 }
 
-// x ^ d
+// x ^ d , e.g. x=10, d=18 = 10^18
 func PowX(x int64, d int) *big.Int {
 
-	dd := strconv.Itoa(d)
+	dd := strconv.Itoa(d - 1)
 
 	s := fmt.Sprintf("1%0"+dd+"d", 0)
 

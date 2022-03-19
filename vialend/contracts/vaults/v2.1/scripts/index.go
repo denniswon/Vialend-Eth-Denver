@@ -79,10 +79,25 @@ func main() {
 	// ## account 0 must have eth to wrap for weth
 	// ## now the account 0 has 7 weth and 500m usdc in wallet
 	//return
+	project.VaultInfo3()
+	return
+
+	//# squeeth deploy, init, mint
+	//project.DeploySqueeth()
+	//project.InitSqueeth()
+	//project.MintSqueeth(project.FromAddress.Hex(), project.PowX(50000, 18))
+	//return
 
 	//InitialForkEnv()
 	// project.GetExpectedNormalizationFactor()
 	// return
+
+	//project.ViaVaultPublicList()
+	//project.ViaStratUniCompPublicList()
+	//project.FactoryPublicList()
+	//project.VaultInfo()
+	// project.MyAccountInfo(0)
+	//return
 
 	//# wallet swap
 	//project.TokenSwap(0, project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("503453817677935236749"))
@@ -95,8 +110,10 @@ func main() {
 	//# strat uniswap pool swap
 	//project.SwapDirectPool(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("103453817677935236749"))
 	// project.Sleep(5000)
-	// project.GetPrice()
-	// project.GetTVL()
+	//project.GetPrice()
+	//project.VaultInfo()
+	//project.GetTVL()
+	// fmt.Println(project.GetBalance("0xD624c05a873B9906e5F1afD9c5d6B2dC625d36c3", project.Network.VaultStrat))
 	// return
 
 	//# deploy vaultBridge
@@ -115,8 +132,17 @@ func main() {
 	///rinkeby
 	// # aave eth and usdc pool
 	//project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 500)
-	//project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 3000)
-	//project.PoolInfo("0x4d43654A8669f1B89ed75dEd048173F65c4047fa")
+	// project.GetPool("0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", 3000)
+	// return
+	//_pool := project.GetPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000)
+	// _pool := project.GetPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500)
+	// project.PoolInfo(_pool.Hex())
+	// project.GetTVL()
+	//project.GetPricePer(project.Network.LendingContracts.OSQTH, 3000)
+	//project.VaultInfo()
+	//project.GetTVL()
+	//return
+
 	// project.ViaVaultPublicList()
 	// project.ViaStratUniCompPublicList()
 	//return
@@ -133,30 +159,34 @@ func main() {
 	//return
 
 	//# call funds, deploy strat2, register, move funds
-	// project.Alloc(0)    // remove positions
-	// project.CallFunds() // call funds from vault
-	// project.GetTVL()    //
+	project.Alloc(0)    // remove positions
+	project.CallFunds() // call funds from vault
+	project.GetTVL()    //
+	project.Withdraw(100, 0)
+	project.MyAccountInfo(0)
+	//project.VaultInfo3()
+	//return
 	project.DeployStrat2ByGoStruct()
-	//	project.DeployVaultByGo()
+	//project.DeployVaultByGo()
 	project.ConfigWrite()
 	project.Init(-1, -1)
 	project.Register(project.Network.VaultStrat, project.Network.Vault)
 	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	//	project.Deposit(1000e6, 1e17, 0)
+	project.Deposit(100e6, 1e16, 0)
 	//project.MoveFunds()
-	project.GetTVL()
-	// // //project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
-	// //project.GetTotalSupply()
-	// //project.VaultInfo()
+	//project.GetTVL()
+	//project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
+	//project.GetTotalSupply()
+	project.VaultInfo3()
 	// return
 
-	//project.GetPair0(project.Network.Vault)
+	// project.GetPair0(project.Network.Vault)
 	// project.GetPrice()
-	//return
+	// return
 
 	//## deposit & withdraw
-	//project.Deposit(2500e6, 1e17, 0)
-	// project.MoveFunds()
+	//project.Deposit(200e6, 1e17, 0)
+	//project.MoveFunds()
 	//project.Withdraw(100, 0)
 
 	//project.MyAccountInfo(0)
@@ -183,9 +213,12 @@ func main() {
 	// return
 	//project.Alloc(0)
 
-	project.Rebalance(1500, 0) //
+	// 重启geth
+	// 测试withdraw 、 rebalance
 
-	project.GetTVL()
+	project.Rebalance(1000, 0) //
+
+	project.VaultInfo3()
 
 	return
 
@@ -250,11 +283,6 @@ func main() {
 	//project.DeployVaultByGo()
 	//return
 
-	//# squeeth deploy, init, mint
-	//project.DeploySqueeth()
-	//project.InitSqueeth()
-	//project.MintSqueeth(project.FromAddress.Hex(), project.PowX(50000, 18))
-
 	//# deploy and register strat2
 	// project.DeployStrat2ByGoStruct()
 	// project.ConfigWrite()
@@ -265,13 +293,6 @@ func main() {
 
 	// project.SwapTest(project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e13))
 	// return
-
-	//	project.ViaVaultPublicList()
-	//project.ViaStratUniCompPublicList()
-
-	//project.FactoryPublicList()
-
-	//project.GetPair0(project.Network.Vault)
 
 	//project.FactoryPairs("0x91642Ba015065822fc4e530C222f2492B5B97420")
 

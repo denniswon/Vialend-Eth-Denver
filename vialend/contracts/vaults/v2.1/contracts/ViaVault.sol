@@ -273,7 +273,7 @@ contract ViaVault is
 
 		uint256 totalSupply = totalSupply();
 		if (totalSupply == 0 ) {
-			shares = calcShare( amount0, amount1);
+			shares = calcShare( amount0, amount1);  
 			
 		} else {
 			( uint256 total0, uint256 total1 ) = IStrategy(myStrategy()).getTotalAmounts();
@@ -299,8 +299,8 @@ contract ViaVault is
 		
 		require(p>0,'p0');
 		
-		// (weth + usdc/price)
-		return   (baseToken  == token0 ) ? (a0 + a1/p) : (a1 + a0/p); 
+		// share =(weth + usdc/price * 1e18)  //--> price = xxxx per weth
+		return   (baseToken  == token0 ) ? (a0 + a1/p*1e18) : (a1 + a0/p*1e18); 
 	}
 	
     

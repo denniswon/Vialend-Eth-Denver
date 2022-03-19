@@ -19,7 +19,7 @@ import (
 
 /// 0: mainnet (or forked local), 1: local, 2: local , 3: gorlie, 4: gorlie,  5: goreli , 6: rinkeby, 7: ROPSTEN or ROPSTENLOCAL
 var _USE_GETH = false // use geth directly without forking from ganache
-var _LOAD_ENV = true  // if false, using hard coded data in network.
+var _LOAD_ENV = false // if false, using hard coded data in network.
 var Networkid = 6
 var Account = 0
 var ProviderSortId = 0
@@ -51,7 +51,9 @@ type LendingStruct struct {
 	OSQTHWETHPOOL  string
 	ChainLinkProxy string
 	SqthController string
-	AWETH          string
+	ATOKEN_USDC    string
+	AAVE_USDC      string
+	AAVE_ETH       string
 }
 type AccountStruct struct {
 	Address    string
@@ -153,8 +155,8 @@ var Networks = [...]Params{
 			CDAI:  "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
 			USDT:  "0xdAC17F958D2ee523a2206206994597C13D831ec7",
 			CUSDT: "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
-			//OSQTH:          "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68",
-			OSQTH:          "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b",
+			//OSQTH:          "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68",	// ??
+			OSQTH:          "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b", // osqth on mainnet
 			OSQTHWETHPOOL:  "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C", // osqth/weth uni pool
 			ChainLinkProxy: "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4", // usdc / eth chain link
 			SqthController: "0x64187ae08781B09368e6253F9E94951243A493D5",
@@ -337,7 +339,7 @@ var Networks = [...]Params{
 	},
 
 	{ ///6  rinkeby tester admin
-		[]string{}, ///  provider url
+		[]string{"http://192.168.0.223:8546", "ws://192.168.0.223:8546"}, ///  provider url
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"", //callee
@@ -372,7 +374,10 @@ var Networks = [...]Params{
 			OSQTHWETHPOOL:  "0x51B5Ac5c8df5e982B2eb4Eb3823e774485b0e2fb", // xSqth/Weth pool created through uniswap v3 UI,
 			ChainLinkProxy: "0xdCA36F27cbC4E38aE16C4E9f99D39b42337F6dcf", // usdc/eth
 			SqthController: "0x64187ae08781B09368e6253F9E94951243A493D5", // fake for now
-			AWETH:          "0x1E2192C406c6a53056E923A1aCe9e05b0090a531", // aWETH
+			ATOKEN_USDC:    "0xD624c05a873B9906e5F1afD9c5d6B2dC625d36c3", // ATOKEN_USDC
+			AAVE_USDC:      "0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8", // aaveUSDC
+			AAVE_ETH:       "0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed", // aaveETH weth
+
 		},
 		[]AccountStruct{},
 	},

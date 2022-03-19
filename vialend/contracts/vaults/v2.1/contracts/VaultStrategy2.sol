@@ -69,7 +69,8 @@ struct RebalanceParam {
     uint32 sqthPercent; 
 	uint32 uniPortionRate;
 	uint32 sqthPortionRate;
-	uint32 shortPortionRate;    
+	uint32 shortPortionRate; 
+	uint32 shortLever;   
 }
 
 contract VaultStrategy2 
@@ -93,7 +94,8 @@ contract VaultStrategy2
     address public shortCallback = 0x2162c3051f3801c3f9fB45D33a054cD10399e1e2; // rinkey 
     address public aaveUSDC = 0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8; // rinkey 
     address public aaveETH = 0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed ; // rinkey 
-	address public aWETH = 0x1E2192C406c6a53056E923A1aCe9e05b0090a531;  // rinkeby aweth
+	address public aStableDebt = 0x1E2192C406c6a53056E923A1aCe9e05b0090a531;  // rinkeby aStableDebt 
+	address public aTokenUSDC = 0xD624c05a873B9906e5F1afD9c5d6B2dC625d36c3; // aToken USDC rinkeby
 	
     	
 	address public creator;
@@ -262,7 +264,7 @@ contract VaultStrategy2
 
 		if (amount ==0) return;
 
-		//require (_tokenIn == token0 || _tokenIn == token1 || _tokenIn == oSqth || _tokenIn == aWETH, 'E7');
+		//require (_tokenIn == token0 || _tokenIn == token1 || _tokenIn == oSqth || _tokenIn == aStableDebt, 'E7');
 		
 		swapPool = IUniswapV3Pool(IUniswapV3Factory(UNIV3_FACTORY).getPool( _tokenIn, _tokenOut,fee)); 
 		address _token0 = swapPool.token0();  
@@ -346,12 +348,14 @@ contract VaultStrategy2
 		uint256 a0 =IERC20(token0).balanceOf(address(this));
 		uint256 a1 =IERC20(token1).balanceOf(address(this));
 		uint256 a2 =IERC20(oSqth).balanceOf(address(this)); 
-		uint256 a3 =IERC20(aWETH).balanceOf(address(this)); 
+		uint256 a3 =IERC20(aTokenUSDC).balanceOf(address(this)); 
 		
         if(a0>0) IERC20(token0).safeTransfer(myVault(), a0);
         if(a1>0) IERC20(token1).safeTransfer(myVault(), a1);
         if(a2>0) IERC20(oSqth).safeTransfer(myVault(), a2);
-		if(a3>0) IERC20(aWETH).safeTransfer(myVault(), a3);
+
+   		// note: have to repay loan or this would fail.
+		//if(a3>0) IERC20(aTokenUSDC).safeTransfer(myVault(), a3);
 	}
 
 	function myVault() internal view returns(address){
@@ -535,22 +539,27 @@ contract VaultStrategy2
 		//require(false, Debugger.uint2str(u0));
 
 		// squeeth portion; 
-		currentBalance1 = getBalance(token1);  
+		currentBalance1 = getBalance(_WETH);  
 		require(currentBalance1 > sqthPortionEth , 'C0');  // make sure there is enough balance of weth
 		swapDirectPool(_WETH, oSqth, 3000, 1, sqthPortionEth);
 
 		// short portion; call aave short 
-		shortHelper( shortPortionEth );
+		shortHelper( shortPortionEth, rebalParam.shortLever );
 
 		
 		emit Rebalance(address(this), minted0,minted1,sqthPortionEth, shortPortionEth);
 
 	}
 	
-	function shortHelper(uint256 ausdcAmountInEth) internal {
+	/// do the aave v3 Shorting  
+	function shortHelper(uint256 ausdcAmountInEth, uint32 shortLever) internal {
 		
-    	uint256 usdcPerEth = 2600; // getEthPriceFromPool(_USDC, 500);
-		ausdcAmountInEth = 1e12 ; // todo
+    	uint256 usdcPerEth = getPriceFromAavePool();  // 3000000000;
+		
+		//ausdcAmountInEth = 1e12;  // temp
+		require( ausdcAmountInEth > 0, "AS0");
+		
+		uint32 leverage = shortLever / 100;   
 
 		// my weth -> eth unwrap
 		_unwrap(_WETH, ausdcAmountInEth);
@@ -558,16 +567,16 @@ contract VaultStrategy2
 		// eth -> aaveETH wrap
 		_wrap(aaveETH, ausdcAmountInEth);
 		
-		// swap aaveETH for aaUsdc ? would it be traded in the pool you created? 
+		// swap aaveETH for aaUsdc (workaround for rinkeby only) 
+		// todo: swap in previous step to save this swap
 		swapDirectPool(aaveETH, aaveUSDC, 3000, 1, ausdcAmountInEth);
 
 		uint256 amount  = IERC20(aaveUSDC).balanceOf(address(this));
 		
-		require(amount > 0, "A0");
+		require(amount > 0, "A0");  // be sure there is enough funds
 		
-		// call AaveHelper.short()
         TransferHelper.safeApprove(aaveUSDC, shortCallback, amount + IERC20(aaveUSDC).allowance(address(this), shortCallback));
-        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amount, amount / usdcPerEth * 2);
+        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amount, amount / usdcPerEth * leverage );
     }
 	
 	///@notice calculate best portion to put into uniswap
@@ -646,6 +655,20 @@ contract VaultStrategy2
 
 	}
 	
+	function getPriceFromAavePool() public view returns(uint256 price) {
+
+		address _aavePool = IUniswapV3Factory(UNIV3_FACTORY).getPool( aaveETH, aaveUSDC, 3000); //todo: hardcoded solver
+		
+        //int24 twaptick =  getTwap(_ethPool, _twapDuration); // twap on testnet throw error 'OLD'  
+		(	,int24 twaptick, , , , , ) 	= IUniswapV3Pool(_aavePool).slot0();
+		
+        address _token0 = IUniswapV3Pool(_aavePool).token0();
+        address _token1 = IUniswapV3Pool(_aavePool).token1();
+        
+       	price =  (_token0 == aaveETH)? getQuoteAtTick(twaptick, uint128(1e18), _token0, _token1) : getQuoteAtTick(twaptick, uint128(1e18), _token1, _token0 );
+
+	}
+	
 	
 	function getBalance(address _token) internal view returns(uint256){
 		return (IERC20(_token).balanceOf(address(this)));
@@ -655,12 +678,20 @@ contract VaultStrategy2
 	// get oracle price from ChainLink 	
     function getPrice() public view returns(uint256) {
         //( uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
-        ( , int price,,,) = priceFeed.latestRoundData();
-		return uint256( price );
+        //( , int price,,,) = priceFeed.latestRoundData();
+		//return uint256( price );
+		
+		return getEthPriceFromPool(_USDC,500);
     }
     
     function setChainlinkProxy(address newProxy) external onlyAdmin {
         priceFeed = AggregatorV3Interface(newProxy); 
+    }
+    
+    ///@notice in case liquidity range get screwed. 
+    function setHighLow(int24 _high, int24 _low ) external onlyAdmin {
+        cHigh = _high;
+        cLow = _low;
     }
     
     
@@ -747,6 +778,8 @@ contract VaultStrategy2
 	
 	function removeShort() public {
 		// call aave unwind , may need wrap
+		// aToken.sol erc20(aToken).balanceOf(address())
+		// usdc-atoken: 0xD624c05a873B9906e5F1afD9c5d6B2dC625d36c3
 		// AaveHelper.unwind( shortPortionEth );
 	}
 	
@@ -785,15 +818,15 @@ contract VaultStrategy2
     }   
 
 
-	function _wrap(address _aweth, uint256 amount) internal {
+	function _wrap(address _weth, uint256 amount) internal {
 	    if (amount > 0) {
-	        IWETH9(_aweth).deposit{value:amount}();
+	        IWETH9(_weth).deposit{value:amount}();
 	    }   
 	}
 
-	function _unwrap(address _aweth, uint256 amount) internal {
+	function _unwrap(address _weth, uint256 amount) internal {
 	    if (amount > 0) {
-	        IWETH9(_aweth).withdraw(amount);
+	        IWETH9(_weth).withdraw(amount);
 	    }
 	}   
   
@@ -873,16 +906,20 @@ contract VaultStrategy2
 
 	function getTotalAmounts() public view returns(uint256 , uint256) {
 		
-		uint256 b0 = IERC20(token0).balanceOf(address(this));
-		uint256 b1 = IERC20(token1).balanceOf(address(this));
-		uint256 b2 = IERC20(aWETH).balanceOf(address(this));
-		uint256 ob3 = IERC20(oSqth).balanceOf(address(this)) ;
-
 		(uint256 u0, uint256 u1, ) = getUniAmounts(cLow, cHigh);
+
+		uint256 usdc1 = IERC20(token0).balanceOf(address(this));
+		uint256 usdc2 = IERC20(aTokenUSDC).balanceOf(address(this));
+
+		uint256 eth1 = IERC20(token1).balanceOf(address(this));
+		uint256 oe = IERC20(oSqth).balanceOf(address(this)) ;
+		// convert squeeth to eth
+		uint256 eth2 = oe * 1e18 / getEthPriceFromPool(oSqth,3000);
 		
-		uint256 b3 = ob3 * 1e18 / getEthPriceFromPool(oSqth,3000);
+		uint256 v0 = IERC20(token0).balanceOf(myVault());
+		uint256 v1 = IERC20(token1).balanceOf(myVault());
 		
-		return (u0+b0, u1+b1+b2+b3);
+		return (u0+usdc1+usdc2, u1+eth1+eth2);
 	}
 	
  	

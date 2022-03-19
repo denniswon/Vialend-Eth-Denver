@@ -1,5 +1,4 @@
 
-
 vault v1.2p
 	0x0d256db81eEeecA70399C9bF50c611B1FeBdF429	
 "0x04B1560f4F58612a24cF13531F4706c817E8A5Fe", //pool
@@ -766,4 +765,12 @@ TypeError: entry_points() got an unexpected keyword argument 'group'
 		Your node is still syncing, it will not process transactions until it is synced. 
 		Before it's synced, it can't really evalaute whether a given tx is valid
 		(has right nonce, has sufficient balance etc), so you need to wait that out.
+	
+	
+	
+	
+### ERROR 
+eric@DESKTOP-M0EENPL:/mnt/c/Users/xdotk/sandbox/leonopteryx/vialend/contracts/vaults/v2.1/contracts$ /usr/bin/abigen --abi=../build/aavePool.abi/pool.abi --bin=../build/aavePool.abi/pool.bin --pkg=api --out=../deploy/aavePool/Pool.go
+Fatal: Contract has additional library references, please use other mode(e.g. --combined-json) to catch library infos
+
 	

@@ -28,10 +28,10 @@ func GetPrice() {
 
 }
 
-func GetPricePer(_token string, fee int) {
+func GetPricePer(_token string, fee int) *big.Int {
 
 	myPrintln("----------------------------------------------")
-	myPrintln(".........GetPrice strat2 .........  ")
+	myPrintln(".........GetPricePer strat2 .........  ")
 	myPrintln("----------------------------------------------")
 
 	_, stratInstance, _ := GetInstance4()
@@ -39,10 +39,16 @@ func GetPricePer(_token string, fee int) {
 	price, err := stratInstance.GetEthPriceFromPool(&bind.CallOpts{}, common.HexToAddress(_token), big.NewInt(int64(fee)))
 
 	if err != nil {
-		log.Fatal("getprice err:", err)
+		bal, symb := TokenInfo(_token, Network.VaultStrat)
+		log.Println(symb, ",", bal, ", ", _token, ",", fee)
+
+		log.Fatal("getpricefrompool err:", err)
+
 	}
 
-	myPrintln("price per :", price)
+	//myPrintln("price per :", price)
+
+	return price
 
 }
 

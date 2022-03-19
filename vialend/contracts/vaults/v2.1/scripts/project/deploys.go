@@ -8,6 +8,8 @@ import (
 
 	AB "viaroot/deploy/AB"
 	vault "viaroot/deploy/FeeMaker"
+
+	//	PoolAddressesProvider "viaroot/deploy/PoolAddressesProvider"
 	Squeeth "viaroot/deploy/Squeeth"
 	StratDeployer "viaroot/deploy/StratDeployer"
 	callee "viaroot/deploy/TestUniswapV3Callee"
@@ -863,6 +865,27 @@ func DeployStratDeployer() {
 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
 	TxConfirm(tx.Hash())
 }
+
+// func DeployAavePoolProvider() {
+
+// 	myTitle(".Deploy PoolAddressesProvider")
+
+// 	NonceGen()
+
+// 	address, tx, instance, err := PoolAddressesProvider.DeployApi(Auth, EthClient, "oSqueeth", "oSqth")
+
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	_, _, _ = address, instance, tx
+
+// 	myPrintln("address:", address)
+
+// 	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
+// 	TxConfirm(tx.Hash())
+
+// }
 
 func DeploySqueeth() {
 
