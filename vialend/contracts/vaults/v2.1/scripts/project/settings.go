@@ -49,18 +49,18 @@ func SetProtocolFee(rate *big.Int) {
 
 // }
 
-func SetTwapduration(period int) {
+// func SetTwapduration(period int) {
 
-	_, instance, _ := GetInstance3()
+// 	_, instance, _ := GetInstance3()
 
-	tx, err := instance.SetTwapDuration(Auth, uint32(period))
+// 	tx, err := instance.SetTwapDuration(Auth, uint32(period))
 
-	if err != nil {
-		log.Fatal("settwapduration err ", err)
-	}
+// 	if err != nil {
+// 		log.Fatal("settwapduration err ", err)
+// 	}
 
-	fmt.Println("settwapduration ", period, " tx sent: ", tx.Hash().Hex())
+// 	fmt.Println("settwapduration ", period, " tx sent: ", tx.Hash().Hex())
 
-	TxConfirm(tx.Hash())
+// 	TxConfirm(tx.Hash())
 
-}
+// }

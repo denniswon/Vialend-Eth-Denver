@@ -1,3 +1,5 @@
+Warning: Contract code size is 24696 bytes and exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on mainnet. Consider enabling the optimizer (with a low "runs" value!), turning off revert strings, or using libraries.
+
 
 #start wsl
 #bash "/mnt/c/Users/xdotk/torukmakto/vialend/contracts/vaults/v2.0/contracts/_solcScripts.sh"

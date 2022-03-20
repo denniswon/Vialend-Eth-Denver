@@ -5,9 +5,15 @@ pragma solidity 0.8.10;
 
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
-import {IPoolAddressesProvider} from "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol";
-import {IPool} from "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol";
-import {DataTypes} from "https://github.com/aave/aave-v3-core/blob/master/contracts/protocol/libraries/types/DataTypes.sol";
+//import {IPoolAddressesProvider} from "./aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
+//import {IPool} from "./aave-v3-core/contracts/interfaces/IPool.sol";
+//import {DataTypes} from "./aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
+
+
+import {IPoolAddressesProvider} from "./aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
+import {IPool} from "./aave-v3-core/contracts/interfaces/IPool.sol";
+import {DataTypes} from "./aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract AaveHelper {
@@ -98,7 +104,7 @@ contract AaveHelper {
     /**
     * Get debt amount of the given asset.
     */
-    function getDebt(IPool pool, address _shorted) internal returns(uint256) {
+    function getDebt(IPool pool, address _shorted) internal view returns(uint256) {
         DataTypes.ReserveData memory debtReserves = pool.getReserveData(_shorted);
         address debtTokenAddress = debtReserves.variableDebtTokenAddress;
         return IERC20(debtTokenAddress).balanceOf(address(this)); // denominated in underlying asset not aToken.

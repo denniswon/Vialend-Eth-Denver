@@ -534,7 +534,8 @@ func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, am
 	//	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 	//	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 	ChangeAccount(accountId)
-	ApproveToken(common.HexToAddress(sellToken), amount, Network.SwapHelper)
+	amountToApprove := new(big.Int).Mul(amount, big.NewInt(2))
+	ApproveToken(common.HexToAddress(sellToken), amountToApprove, Network.SwapHelper)
 
 	//tx, err := swapInstance.SwapExactInputSingle(Auth, common.HexToAddress(sellToken), common.HexToAddress(buyToken), big.NewInt(int64(feetier)), amount)
 	tx, err := swapInstance.Swap(Auth, common.HexToAddress(sellToken), common.HexToAddress(buyToken), big.NewInt(int64(feetier)), amount)

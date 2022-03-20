@@ -133,8 +133,13 @@ func main() {
 	//return
 
 	//# strat uniswap pool swap
-	//project.SwapDirectPool(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("103453817677935236749"))
+	//project.Deposit(30e6, 1e16, 0)
+	//	project.VaultInfo3(0)
+
+	//	project.SwapDirectPool(project.Network.LendingContracts.WETH, project.Network.LendingContracts.OSQTH, 3000, project.Str2BigInt("100000"))
+	//project.SwapDirectPool(project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("10"))
 	// project.Sleep(5000)
+	//	return
 
 	//project.VaultInfo()
 	//project.GetTVL()
@@ -188,32 +193,29 @@ func main() {
 	//return
 
 	//# call funds, deploy strat2, register, move funds
-	//	project.Alloc(0)    // remove positions
-	//	project.CallFunds() // call funds from vault
-	//project.GetTVL()    //
-	//project.Withdraw(100, 0)
+	project.Alloc(0)    // remove positions
+	project.CallFunds() // call funds from vault
+	// // // project.GetTVL()    //
+	// // return
+	project.Withdraw(100, 0)
 
-	// project.Rebalance(1500, 0) //  1500 = $600
+	//	// project.Rebalance(1500, 0) //  1500 = $600
 	// // project.MyAccountInfo(1)
 	// project.GetTVL()
 	// project.VaultInfo3(0)
 	// return
-	// project.DeployStrat2ByGoStruct()
-	// project.DeployVaultByGo()
-	// project.ConfigWrite()
-	// project.Init(-1, -1)
-	// project.Register(project.Network.VaultStrat, project.Network.Vault)
-	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	//project.Deposit(100e6, 1e16, 0)
+	project.DeployStrat2ByGoStruct()
+	project.DeployVaultByGo()
+	project.ConfigWrite()
+	project.Init(-1, -1)
+	project.Register(project.Network.VaultStrat, project.Network.Vault)
+	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	project.Deposit(30e6, 1e16, 0)
 	//project.MoveFunds()
 	//project.GetTVL()
-	//project.SetVaultAddress(project.Network.Vault, 1) //reg vault in bridge
 	//project.GetTotalSupply()
-	// project.VaultInfo3(0)
-	// return
-
-	// project.GetPair0(project.Network.Vault)
-	// return
+	project.VaultInfo3(0)
+	//return
 
 	//## deposit & withdraw
 	//project.Deposit(200e6, 1e17, 0)
@@ -246,10 +248,11 @@ func main() {
 	// 重启geth
 	// 测试withdraw 、 rebalance
 
-	//	project.Rebalance(1200, 0) //  1500 = $600
+	project.Rebalance(1200, 0) //  1500 = $600
+	project.Rebalance(1500, 0) //  1500 = $600
 
 	project.VaultInfo3(0)
-	project.VaultInfo3(1)
+	//project.VaultInfo3(1)
 
 	return
 

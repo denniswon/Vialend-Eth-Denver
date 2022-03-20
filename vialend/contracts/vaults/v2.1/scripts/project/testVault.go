@@ -506,7 +506,7 @@ func Rebalance(_range int, acc int) {
 	rebalParam.UniPortionRate = uint32(2665)
 	rebalParam.SqthPortionRate = uint32(4675)
 	rebalParam.ShortPortionRate = uint32(2659)
-	rebalParam.ShortLever = uint32(2)
+	rebalParam.ShortLever = uint32(1)
 
 	tx, err := stratInstance.Rebalance(Auth, rebalParam)
 
@@ -1438,16 +1438,23 @@ func VaultInfo3(accId int) {
 	MyTotalValue := CalcMyValue(tvlInUSDC, myShare, totalSupply)
 	myTvl0 := CalcMyValue(tvl0, myShare, totalSupply)
 	myTvl1 := CalcMyValue(tvl1, myShare, totalSupply)
-	EstimatedGains := 0 // todo
-	APY := 0            // todo 34
 
 	MyLiquidity := Readable(CalcMyValue(uniTotalInUSDC, myShare, totalSupply), 6)
 
 	MyLiquidity_USDC := Readable(CalcMyValue(uniAmounts.Amount0, myShare, totalSupply), 6)
 	MyLiquidity_WETH := Readable(CalcMyValue(uniAmounts.Amount1, myShare, totalSupply), 18)
 
+	// my hedge, my income, my gain, my apy
+	TotalHedge := new(big.Int).Add(osqthValueUSDC, aTokenAmount)
+	MyIncome := new(big.Int).Sub(MyTotalValue, MyDepositInUSDC)
+	myIncome_USDC := new(big.Int).Sub(myTvl0, assetHolder.Deposit0)
+	myIncome_ETH := new(big.Int).Sub(myTvl1, assetHolder.Deposit1)
+
+	EstimatedGains := MyIncome
+	APY := BigIntToFloat64(MyIncome) / BigIntToFloat64(MyDepositInUSDC) * 365.0
+
 	myPrintln("My Total Value: $", Readable(MyTotalValue, 6))
-	myPrintln("EstimatedGains: $", EstimatedGains)
+	myPrintln("EstimatedGains: $", Readable(EstimatedGains, 6))
 	myPrintln("APY:", APY, "%")
 
 	myTitle("My Liquidity ...")
@@ -1457,16 +1464,12 @@ func VaultInfo3(accId int) {
 	myPrintln("My Liquidity WETH:", MyLiquidity_WETH)
 
 	myTitle("My Hedge")
-	TotalHedge := new(big.Int).Add(osqthValueUSDC, aTokenAmount)
 
 	myPrintln("Total: $", Readable(CalcMyValue(TotalHedge, myShare, totalSupply), 6))
 	myPrintln("USDC:", Readable(CalcMyValue(aTokenAmount, myShare, totalSupply), 6))
 	myPrintln("ETH:", Readable(CalcMyValue(osqthValueETH, myShare, totalSupply), 18))
 
 	myTitle("My Gain/Loss:")
-	MyIncome := new(big.Int).Sub(MyTotalValue, MyDepositInUSDC)
-	myIncome_USDC := new(big.Int).Sub(myTvl0, assetHolder.Deposit0)
-	myIncome_ETH := new(big.Int).Sub(myTvl1, assetHolder.Deposit1)
 	myPrintln("$", Readable(MyIncome, 6))
 	myPrintln("USDC:", Readable(myIncome_USDC, 6))
 	myPrintln("ETH:", Readable(myIncome_ETH, 18))

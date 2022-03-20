@@ -91,7 +91,8 @@ contract VaultStrategy2
 
  
 	address public aavePoolProvider = 0xA55125A90d75a95EC00130E8E8C197dB5641Eb19; // rinkey 
-    address public shortCallback = 0x2162c3051f3801c3f9fB45D33a054cD10399e1e2; // rinkey 
+	address public shortCallback = 0xa55eC76678548b4Eff64A09fA693cC18F7c6fc8c;	
+    address public unwindCallback = 0x5fC0Ed674B2dA337Cf9BCfd5f17DA1F52Eb2F661;    
     address public aaveUSDC = 0x5B8B635c2665791cf62fe429cB149EaB42A3cEd8; // rinkey 
     address public aaveETH = 0x98a5F1520f7F7fb1e83Fe3398f9aBd151f8C65ed ; // rinkey 
 	address public aStableDebt = 0x1E2192C406c6a53056E923A1aCe9e05b0090a531;  // rinkeby aStableDebt 
@@ -259,7 +260,7 @@ contract VaultStrategy2
 		uint24 fee, 
 		uint160 sqrtPriceLimitX96Shift, // >=1
 		uint256 amount
-	) public nonReentrant {  
+	) public  {  
 		
 
 		if (amount ==0) return;
@@ -554,7 +555,7 @@ contract VaultStrategy2
 		
 		require( ausdcAmountInEth > 0, "AS0");
 		
-		require(leverage > 1 && leverage <= 4, 'L0');
+		require(leverage >= 1 && leverage <= 4, 'L0');
 
 		// my weth -> eth unwrap
 		_unwrap(_WETH, ausdcAmountInEth);
@@ -571,14 +572,9 @@ contract VaultStrategy2
 		require(amountInUsdc > 0, "A0");  // be sure there is enough funds
 
         TransferHelper.safeApprove(aaveUSDC, shortCallback, amountInUsdc + IERC20(aaveUSDC).allowance(address(this), shortCallback));
-        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, ethValue(amountInUsdc) * leverage );
+        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, ausdcAmountInEth * leverage );
     }
 	
-	
-	function ethValue(uint256 valueInUsdc) internal returns (uint256) {
-		uint256 usdcPerEth = getEthPriceFromPool(_USDC,500);
-		return valueInUsdc * 1e18 / usdcPerEth ;
-	}
 	
 	///@notice calculate best portion to put into uniswap
 	/// todo: formula of parts in uniswap, squeeth, and hedging
@@ -676,7 +672,7 @@ contract VaultStrategy2
 
 	}
 
-	// get oracle price from ChainLink 	
+	/// get oracle price from ChainLink 	
     function getPrice() public view returns(uint256) {
         //( uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
         //( , int price,,,) = priceFeed.latestRoundData();
@@ -684,7 +680,8 @@ contract VaultStrategy2
 		
 		return getEthPriceFromPool(_USDC,500);
     }
-    
+
+/*    
     function setChainlinkProxy(address newProxy) external onlyAdmin {
         priceFeed = AggregatorV3Interface(newProxy); 
     }
@@ -696,7 +693,6 @@ contract VaultStrategy2
     }
     
     
-    
     function setMaxTwapDeviation(int24 _maxTwapDeviation) external onlyCreator {
          require(_maxTwapDeviation > 0, "maxTwapDeviation");
         maxTwapDeviation = _maxTwapDeviation;
@@ -705,14 +701,13 @@ contract VaultStrategy2
     function setTwapDuration(uint32 _twapDuration) external onlyCreator {
         twapDuration = _twapDuration;
     }
-    
-  
 
 	///@notice set protocol address to collect fees
 	function setProtocol(address _protocol) external onlyAdmin {
         protocol = _protocol;
     }
    
+*/    
 
  	function mintUniV3(
         int24 newLow,
@@ -778,10 +773,39 @@ contract VaultStrategy2
 	}
 	
 	function removeShort() public {
-		// call aave unwind , may need wrap
-		// aToken.sol erc20(aToken).balanceOf(address())
-		// usdc-atoken: 0xD624c05a873B9906e5F1afD9c5d6B2dC625d36c3
-		// AaveHelper.unwind( shortPortionEth );
+
+		
+		uint256 ethPerUsdc = 250563768;   // 1e18 / getPriceFromAavePool();
+
+		uint256 aAmount = IERC20(aTokenUSDC).balanceOf(address(this));
+		
+		if (aAmount == 0) return;
+		
+		//require(false, Debugger.uint2str(aAmount));
+		
+		AaveHelper.unwind(
+        	aavePoolProvider,
+			unwindCallback,
+        	aaveUSDC,
+        	aaveETH,
+        	ethPerUsdc
+    	);
+		
+		//require(false, Debugger.uint2str(ethPerUsdc));
+		
+        uint256 aUsdcAmount = IERC20(aaveUSDC).balanceOf(address(this));
+		
+		// swap aaUsdc for aaveETH  (workaround for rinkeby only) 
+		swapDirectPool(aaveUSDC, aaveETH, 3000, 1, aUsdcAmount);
+
+		uint256 aETHamount  = IERC20(aaveETH).balanceOf(address(this));
+
+		//  aaveWeth -> eth unwrap
+		_unwrap(aaveETH, aETHamount);
+		
+		// eth -> WETH wrap
+		_wrap(_WETH, aETHamount);
+    
 	}
 	
 	function _position(int24 tickLower, int24 tickUpper)
