@@ -116,15 +116,18 @@ func main() {
 	// project.Init(-1, -1)
 	// return
 	// // note: must check if swapHelper is deployed
-	// for i := 0; i < 3; i++ {
-	// 	//eth price down
-	// 	project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e18))
-	// 	project.Sleep(5000)
+	//project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e17))
+	project.TokenSwap(0, project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, big.NewInt(280e6))
+	return
 
-	// 	//eth price up
-	// 	//project.TokenSwap(0, project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, big.NewInt(3000e6))
-	// 	//project.Sleep(5000)
+	// for i := 0; i < 5; i++ {
+	// 	//eth price down
+	// 	project.TokenSwap(0, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, big.NewInt(1e17))
+	// 	// 	//eth price up
+	// 	project.TokenSwap(0, project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, big.NewInt(280e6))
+	// 	// 	//project.Sleep(5000)
 	// }
+	// return
 	//project.TokenSwap(0, project.Network.LendingContracts.OSQTH, project.Network.LendingContracts.WETH, 3000, project.Str2BigInt("503453817677935236749"))
 
 	//# strat router02 swap
@@ -153,10 +156,10 @@ func main() {
 	//project.ConfigWrite()
 	//project.SetVaultAddress(project.Network.VaultFactory, 0) //factory
 	//project.SetVaultAddress(project.Network.Vault, 1) //vault
-	//	project.SetPermit("0x23E7A3F38a8834606bCC9F5d5485aA3EBD058Efa", 1) // daniel user1
-	//	project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
-	//project.SetPermit("0x8ee95fe2DB1e3f7FAACCdEd1cbCc237267EB4a00", 1) // vadmin0
-	//project.SetPermit("0x511Ed5FC53CCCf5c4239487381fcE287B02119Fa", 1) // daniel
+	// //	project.SetPermit("0x23E7A3F38a8834606bCC9F5d5485aA3EBD058Efa", 1) // daniel user1
+	// //	project.SetPermit("0xE1190667976b71f1c186521e50fFdAEDF722C830", 1) // collector
+	// //project.SetPermit("0x8ee95fe2DB1e3f7FAACCdEd1cbCc237267EB4a00", 1) // vadmin0
+	// //project.SetPermit("0x511Ed5FC53CCCf5c4239487381fcE287B02119Fa", 1) // daniel
 	// project.GetVaultAddress(0)
 	// project.GetVaultAddress(1)
 	// project.GetVaultAddress(2)
@@ -193,29 +196,30 @@ func main() {
 	//return
 
 	//# call funds, deploy strat2, register, move funds
-	project.Alloc(0)    // remove positions
-	project.CallFunds() // call funds from vault
-	// // // project.GetTVL()    //
-	// // return
-	project.Withdraw(100, 0)
 
 	//	// project.Rebalance(1500, 0) //  1500 = $600
 	// // project.MyAccountInfo(1)
 	// project.GetTVL()
 	// project.VaultInfo3(0)
 	// return
-	project.DeployStrat2ByGoStruct()
-	project.DeployVaultByGo()
-	project.ConfigWrite()
-	project.Init(-1, -1)
-	project.Register(project.Network.VaultStrat, project.Network.Vault)
-	project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
-	project.Deposit(30e6, 1e16, 0)
+	// project.Alloc(0)    // remove positions
+	// project.CallFunds() // call funds from vault
+	// project.Withdraw(100, 0)
+	// return
+	// project.DeployStrat2ByGoStruct()
+	// project.DeployVaultByGo()
+	// project.ConfigWrite()
+	// project.Init(-1, -1)
+	// project.Register(project.Network.VaultStrat, project.Network.Vault)
+	// project.ChangeStat(project.Network.VaultStrat, project.Network.Vault, 1)
+	//project.Deposit(20e6, 1e16, 1)
 	//project.MoveFunds()
 	//project.GetTVL()
 	//project.GetTotalSupply()
+	project.Rebalance(1500, 0) //  1500 = $600
+	//project.Rebalance(1500, 0) //  1500 = $600
 	project.VaultInfo3(0)
-	//return
+	return
 
 	//## deposit & withdraw
 	//project.Deposit(200e6, 1e17, 0)
@@ -249,7 +253,7 @@ func main() {
 	// 测试withdraw 、 rebalance
 
 	project.Rebalance(1200, 0) //  1500 = $600
-	project.Rebalance(1500, 0) //  1500 = $600
+	//project.Rebalance(1500, 0) //  1500 = $600
 
 	project.VaultInfo3(0)
 	//project.VaultInfo3(1)

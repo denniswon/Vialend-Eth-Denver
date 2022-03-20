@@ -88,11 +88,11 @@ func main() {
 	}
 
 	if op == 1 {
-		//buy eth, sell usdc
-		project.TokenSwap(0, project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, project.PowX(amount, 6))
+		//buy eth
+		project.TokenSwap(0, project.Network.LendingContracts.USDC, project.Network.LendingContracts.WETH, 500, project.PowX(amount*10, 8))
 	} else {
-		// sell eth, buy usdc
-		project.TokenSwap(accoundid, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, project.PowX(amount, 18))
+		// sell eth
+		project.TokenSwap(accoundid, project.Network.LendingContracts.WETH, project.Network.LendingContracts.USDC, 500, project.PowX(amount*10, 18))
 
 	}
 

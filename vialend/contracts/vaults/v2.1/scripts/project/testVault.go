@@ -1428,7 +1428,7 @@ func VaultInfo3(accId int) {
 	myPrintln(osqthSymbol, " amount(osqth): ", osqthAmount)
 	myPrintln(osqthSymbol, " value(eth): ", osqthValueETH)
 	myPrintln(osqthSymbol, " value(usdc): ", osqthValueUSDC)
-	myPrintln(aTokenSymbol, "amount(ausdc): ", aTokenAmount)
+	myPrintln(aTokenSymbol, "amount(aTokenUsdc): ", aTokenAmount)
 
 	//# calculation 输出：
 
@@ -1619,8 +1619,12 @@ func SetVaultAddress(_address string, ind int64) {
 }
 
 func GetVaultAddress(ind int64) {
+	//bridgeAddress := "0xF065F185Cd6fE0feD4448A2Ef56f1017e7359277"
+	bridgeAddress := Network.VaultBridge
 
-	instance, err := bridge.NewApi(common.HexToAddress(Network.VaultBridge), EthClient)
+	myPrintln("vault bridge address: ", bridgeAddress)
+
+	instance, err := bridge.NewApi(common.HexToAddress(bridgeAddress), EthClient)
 
 	if err != nil {
 		log.Fatal("vaultBridgeInstance err:", err)
@@ -1632,7 +1636,7 @@ func GetVaultAddress(ind int64) {
 		log.Fatal("getVaultBridge err: ", err)
 	}
 
-	fmt.Println("vaultAddress:", vaultAddress)
+	fmt.Println("vaultAddress ", ind, ": ", vaultAddress)
 
 }
 

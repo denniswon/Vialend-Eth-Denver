@@ -582,7 +582,7 @@ func getBigFromFloat64(v float64) *big.Int {
 
 }
 
-func PrintPrice() {
+func PrintPrice() float64 {
 
 	poolInstance := GetPoolInstance()
 	slot0, _ := poolInstance.Slot0(&bind.CallOpts{})
@@ -592,6 +592,7 @@ func PrintPrice() {
 	tn := time.Now().Format("15:04:05")
 	fmt.Println("Price now:", pf, "  ", tn)
 
+	return pf
 }
 
 // func Observe(secondsAgo int) {

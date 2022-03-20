@@ -522,7 +522,10 @@ func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, am
 
 	myTitle("Token Swap -- through swaphelper")
 
+	ChangeAccount(accountId)
+
 	sym, balBefore := GetBalance(buyToken, GetAddress(accountId).Hex())
+	symSell, balSell := GetBalance(sellToken, GetAddress(accountId).Hex())
 
 	myPrintln("SwapHelper address:", Network.SwapHelper)
 	swapInstance, err := SwapHelper.NewApi(common.HexToAddress(Network.SwapHelper), EthClient)
@@ -533,7 +536,9 @@ func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, am
 
 	//	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
 	//	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
-	ChangeAccount(accountId)
+	if balSell.Cmp(amount) < 0 {
+		log.Fatal("not enough ", symSell, " to sell")
+	}
 	amountToApprove := new(big.Int).Mul(amount, big.NewInt(2))
 	ApproveToken(common.HexToAddress(sellToken), amountToApprove, Network.SwapHelper)
 

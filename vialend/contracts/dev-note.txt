@@ -4,6 +4,12 @@ aaveEth/usdc price per usdc
 aToken amount, before hitting unwind
 28019848
 
+
+
+fail at squeeth SWAP
+require(false, Debugger.uint2str(sqthPortionEth));
+9654807523163917
+
 daniel
 shortcallback: 0x2162c3051f3801c3f9fB45D33a054cD10399e1e2
 "6": {

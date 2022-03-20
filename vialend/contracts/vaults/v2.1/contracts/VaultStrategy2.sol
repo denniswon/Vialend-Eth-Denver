@@ -260,7 +260,7 @@ contract VaultStrategy2
 		uint24 fee, 
 		uint160 sqrtPriceLimitX96Shift, // >=1
 		uint256 amount
-	) public  {  
+	) public nonReentrant {  
 		
 
 		if (amount ==0) return;
@@ -572,7 +572,7 @@ contract VaultStrategy2
 		require(amountInUsdc > 0, "A0");  // be sure there is enough funds
 
         TransferHelper.safeApprove(aaveUSDC, shortCallback, amountInUsdc + IERC20(aaveUSDC).allowance(address(this), shortCallback));
-        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, ausdcAmountInEth * leverage );
+        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, amountInUsdc * 250563768  * leverage );
     }
 	
 	
@@ -769,20 +769,18 @@ contract VaultStrategy2
 	function removeSqueeth() public {
 		// remove osqth portion
 		uint256 sqthAmount = IERC20(oSqth).balanceOf(address(this));
+		if ( sqthAmount == 0 ) return;
 		swapDirectPool(oSqth, _WETH, 3000, 1, sqthAmount);
 	}
 	
 	function removeShort() public {
-
-		
-		uint256 ethPerUsdc = 250563768;   // 1e18 / getPriceFromAavePool();
+        
+		uint256 ethPerUsdc =  250563768; // 1e18 / getPriceFromAavePool();
 
 		uint256 aAmount = IERC20(aTokenUSDC).balanceOf(address(this));
 		
 		if (aAmount == 0) return;
-		
-		//require(false, Debugger.uint2str(aAmount));
-		
+
 		AaveHelper.unwind(
         	aavePoolProvider,
 			unwindCallback,
@@ -790,8 +788,6 @@ contract VaultStrategy2
         	aaveETH,
         	ethPerUsdc
     	);
-		
-		//require(false, Debugger.uint2str(ethPerUsdc));
 		
         uint256 aUsdcAmount = IERC20(aaveUSDC).balanceOf(address(this));
 		
