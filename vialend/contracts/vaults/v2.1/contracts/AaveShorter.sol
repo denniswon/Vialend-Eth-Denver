@@ -2,106 +2,151 @@
 
 pragma solidity 0.8.10;
 
-import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/flashloan/base/FlashLoanReceiverBase.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "https://github.com/Uniswap/swap-router-contracts/blob/main/contracts/interfaces/ISwapRouter02.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "https://github.com/aave/aave-v3-core/blob/master/contracts/protocol/libraries/types/DataTypes.sol";
 
-import {IPoolAddressesProvider} from "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol";
-import {IPool} from "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol";
-import {DataTypes} from "https://github.com/aave/aave-v3-core/blob/master/contracts/protocol/libraries/types/DataTypes.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+/**
+ * @notice Contract for creating a short position using Aave for borrowing and Uniswap for swap.
+ */
+contract AaveShorterCallback is FlashLoanReceiverBase {
+    address public constant SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address public aavePool;
 
-
-contract AaveHelper {
-
-    /**
-     * Create a short on aave with the given collateral and short addresses.
-     */
-    function short(
-        address _aavePoolProvider,
-        address _callback,
-        address _collateral,
-        address _shorting,
-        uint256 _collateralSize,  // 1,000,000 usdc // 2x short requres: collateral / ethprice * 2 = shortsize
-        uint256 _shortSize       // 666.66 eth
-    ) internal returns(bool) {
-
-        // Approve call back to transfer collateral
-        TransferHelper.safeApprove(_collateral, _callback, _collateralSize);
-
-        // set up flash loan
-        bytes memory params = abi.encode(_collateral, _collateralSize);
-        address[] memory assets = new address[](1);
-        assets[0] = _shorting;
-        uint256[] memory sizes = new uint256[](1);
-        sizes[0] = _shortSize;
-        uint256[] memory modes = new uint256[](1);
-        modes[0] = 2;           // 0 repay, 1 stable, 2 variable
-
-        // flash loan the amount times the size of the short, swap for more collateral and deposit.
-        IPool(IPoolAddressesProvider(_aavePoolProvider).getPool()).flashLoan(
-            _callback,
-            assets,
-            sizes,
-            modes,              
-            address(this),
-            params,
-            0
-        );
-
-        return true;
+    constructor(IPoolAddressesProvider _addressProvider) public FlashLoanReceiverBase(_addressProvider) {
+        // noop
     }
 
     /**
-     * Unwind the entire short using the balances of aToken and debtTokens at the given addresses.
-     */
-    function unwind(                 // short (eth), total colat (usdc) => short unwind, usdc = aUsdc * index
-        address _aavePoolProvider,
-        address _callback,
-        address _collateral,
-        address _shorted,
-        uint256 _ethPerUsdc  // 10^18 / (10^6) -> 10^12 > 1
-    ) internal returns(bool) {
+    * @notice Executes an operation after receiving the flash-borrowed assets
+    * @dev Ensure that the contract can return the debt + premium, e.g., has
+    *      enough funds to repay and has approved the Pool to pull the total amount
+    * @param assets The addresses of the flash-borrowed assets
+    * @param amounts The amounts of the flash-borrowed assets
+    * @param initiator The address of the flashloan initiator
+    * @param params The byte-encoded params passed when initiating the flashloan
+    * @return True if the execution of the operation succeeds, false otherwise
+    */
+    function executeOperation(
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        uint256[] calldata premiums,
+        address initiator,
+        bytes calldata params
+    ) external override returns (bool) {
 
-        // Get the atoken addresses
-        IPool pool = IPool(IPoolAddressesProvider(_aavePoolProvider).getPool());
-        DataTypes.ReserveData memory collateralReserves = pool.getReserveData(_collateral);
-        address aToken = collateralReserves.aTokenAddress;
+        require(msg.sender == address(POOL), "Only allow aave to call");
+        (address _collateral, uint256 _collateralSize) = abi.decode(params, (address, uint256));
 
-        // Approve transfer of aTokens to callback
-        TransferHelper.safeApprove(aToken, _callback, IERC20(aToken).balanceOf(address(this)));
+        // transfer from requires approval prior
+        TransferHelper.safeTransferFrom(_collateral, initiator, address(this), _collateralSize);
 
-        uint256 debt = getDebt(pool, _shorted);
+        // approve
+        TransferHelper.safeApprove(assets[0], SWAP_ROUTER, amounts[0]);
 
-        // (address _collateral, uint256 _collateralSizeOfDebt) = abi.decode(params, (address, uint256));
-        bytes memory params = abi.encode(_collateral, debt / _ethPerUsdc);  // 10^18 / (10^12) -> 10^6
+        // swap
+        ISwapRouter02.ExactInputSingleParams memory swapParams = IV3SwapRouter.ExactInputSingleParams({
+                tokenIn: assets[0],
+                tokenOut: _collateral,
+                fee: 3000,
+                recipient: address(this),
+                amountIn: amounts[0],
+                amountOutMinimum: 0,   // TODO: Does this value need to be set.
+                sqrtPriceLimitX96: 0
+            });
+        uint256 out = ISwapRouter02(SWAP_ROUTER).exactInputSingle(swapParams);
 
-        address[] memory assets = new address[](1);
-        assets[0] = _shorted;
-        uint256[] memory sizes = new uint256[](1);
-        sizes[0] = debt;
-        uint256[] memory modes = new uint256[](1);
-        modes[0] = 0;   // 0 repay, 1 stable, 2 variable
-
-        // flash loan the amount times the size of the short, swap for more collateral and deposit.
-        pool.flashLoan(
-            _callback,
-            assets,
-            sizes,
-            modes,              
-            address(this),
-            params,
-            0
-        );
+        // deposit
+        TransferHelper.safeApprove(_collateral, address(POOL), _collateralSize + out);
+        POOL.supply(_collateral, _collateralSize + out, initiator, 0); // USDC => AUSDC + debtTokenEth
 
         return true;
+    }   
+}
+
+
+/**
+ * @notice Contract for creating a short position using Aave for borrowing and Uniswap for swap.
+ */
+contract AaveUnwindCallback is FlashLoanReceiverBase {
+    address public constant SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address public aavePool;
+
+    constructor(IPoolAddressesProvider _addressProvider) public FlashLoanReceiverBase(_addressProvider) {
+        // noop
     }
 
     /**
-     * Get debt for given address on Aave.
-     */
-    function getDebt(IPool pool, address _shorted) internal returns(uint256) {
-        // get debt amount to flash loan
-        DataTypes.ReserveData memory debtReserves = pool.getReserveData(_shorted);
-        address debtTokenAddress = debtReserves.variableDebtTokenAddress;
-        return IERC20(debtTokenAddress).balanceOf(address(this)); // denominated in underlying asset not aToken.
+    * @notice Executes an operation after receiving the flash-borrowed assets
+    * @dev Ensure that the contract can return the debt + premium, e.g., has
+    *      enough funds to repay and has approved the Pool to pull the total amount
+    * @param assets The addresses of the flash-borrowed assets
+    * @param amounts The amounts of the flash-borrowed assets
+    * @param initiator The address of the flashloan initiator
+    * @param params The byte-encoded params passed when initiating the flashloan
+    * @return True if the execution of the operation succeeds, false otherwise
+    */
+    function executeOperation(
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        uint256[] calldata premiums,
+        address initiator,
+        bytes calldata params
+    ) external override returns (bool) {
+
+        require(msg.sender == address(POOL), "Only allow aave POOL to call");
+        (address _collateral, uint256 _collateralSizeOfDebt) = abi.decode(params, (address, uint256));
+        address _aToken = POOL.getReserveData(_collateral).aTokenAddress;
+        address asset = assets[0];
+        uint256 amount = amounts[0];
+        uint256 premium = premiums[0];
+
+        // pay loan with flash loan
+        TransferHelper.safeApprove(asset, address(POOL), amount);
+        POOL.repay(
+            asset,
+            amount, 
+            2,          // 1 stable, 2 variable
+            initiator
+        );
+
+        // transfer collateral Atoken
+        uint256 _collateralSize = IERC20(_aToken).balanceOf(initiator);
+        TransferHelper.safeTransferFrom(_aToken, initiator, address(this), _collateralSize);
+
+        // withdraw collateral
+        POOL.withdraw(
+            _collateral,
+            _collateralSize,
+            address(this)
+        );
+
+        // swap
+        TransferHelper.safeApprove(_collateral, SWAP_ROUTER, _collateralSizeOfDebt);
+
+        ISwapRouter02.ExactInputSingleParams memory swapParams = IV3SwapRouter.ExactInputSingleParams({
+                tokenIn: _collateral,
+                tokenOut: asset,
+                fee: 3000,
+                recipient: address(this),
+                amountIn: _collateralSizeOfDebt,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
+        
+        uint256 out = ISwapRouter02(SWAP_ROUTER).exactInputSingle(swapParams);
+        uint256 repay = amount + premium;
+        
+        require(out >= repay, "Insufficient swap");
+
+        // approve repay flash & transfer excess to inititor
+        TransferHelper.safeApprove(asset, address(POOL), repay);
+        IERC20(asset).transfer(initiator, out - repay);
+        IERC20(_collateral).transfer(initiator, _collateralSize - _collateralSizeOfDebt);
+        return true;
     }
 }
