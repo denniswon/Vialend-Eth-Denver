@@ -9,10 +9,13 @@ solc --optimize --overwrite --abi ./aave-v3-core/contracts/protocol/pool/Pool.so
 solc --optimize --overwrite --bin ./aave-v3-core/contracts/protocol/pool/Pool.sol -o ../build/aavePool.abi
 /usr/bin/abigen --abi=../build/aavePool.abi/pool.abi --bin=../build/aavePool.abi/pool.bin --pkg=api --out=../deploy/aavePool/Pool.go
 
-
 solc --optimize --overwrite --abi ./aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol -o ../build
 solc --optimize --overwrite --bin ./aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol -o ../build
 /usr/bin/abigen --abi=../build/PoolAddressesProvider.abi --bin=../build/PoolAddressesProvider.bin --pkg=api --out=../deploy/PoolAddressesProvider/PoolAddressesProvider.go
+
+solc --optimize --overwrite --abi SwapHelper.sol -o ../build
+solc --optimize --overwrite --bin SwapHelper.sol -o ../build
+/usr/bin/abigen --abi=../build/SwapHelper.abi --bin=../build/SwapHelper.bin --pkg=api --out=../deploy/SwapHelper/SwapHelper.go
 
 
 solc --optimize --overwrite --abi VaultFactory.sol -o ../build

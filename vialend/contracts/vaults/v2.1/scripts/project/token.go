@@ -14,10 +14,9 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"strings"
 
+	SwapHelper "viaroot/deploy/SwapHelper"
 	weth "viaroot/deploy/Tokens/erc20/deploy/WETH9"
-	pool "viaroot/deploy/uniswap/v3/deploy/UniswapV3Pool"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -520,40 +519,77 @@ func SwapDirectPool(tokenIn string, tokenOut string, fee int, amount *big.Int) {
 }
 
 func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, amount *big.Int) {
-	// func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
-	// func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
 
-	_pool := GetPool(sellToken, buyToken, int64(feetier))
+	myTitle("Token Swap -- through swaphelper")
 
-	poolInstance, err := pool.NewApi(_pool, EthClient)
+	sym, balBefore := GetBalance(buyToken, GetAddress(accountId).Hex())
+
+	myPrintln("SwapHelper address:", Network.SwapHelper)
+	swapInstance, err := SwapHelper.NewApi(common.HexToAddress(Network.SwapHelper), EthClient)
 	if err != nil {
-		log.Fatal("pool instance:", err)
+		log.Println("swaphelper contract:", Network.SwapHelper)
+		log.Fatal("swapHelper instance,", err)
 	}
-	Sleep(5000)
 
-	liquidity, err := poolInstance.Liquidity(&bind.CallOpts{})
-	//myPrintln("liquidity in pool:", Pricef(liquidity, int(1e18)))
-	myPrintln(sellToken, "/", buyToken, " pool liquidity:", liquidity)
+	//	var maxToken0 = PowX(99999, int(Token[0].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	//	var maxToken1 = PowX(99999, int(Token[1].Decimals)) //new(big.Int).SetString("900000000000000000000000000000", 10)
+	ChangeAccount(accountId)
+	ApproveToken(common.HexToAddress(sellToken), amount, Network.SwapHelper)
 
-	myPrintln("liquidity in pool:", liquidity)
+	//tx, err := swapInstance.SwapExactInputSingle(Auth, common.HexToAddress(sellToken), common.HexToAddress(buyToken), big.NewInt(int64(feetier)), amount)
+	tx, err := swapInstance.Swap(Auth, common.HexToAddress(sellToken), common.HexToAddress(buyToken), big.NewInt(int64(feetier)), amount)
 
 	if err != nil {
-		log.Fatal("pool instance:", err)
+		log.Fatal("swapHelper tx ", err)
 	}
 
-	token0, _ := poolInstance.Token0(&bind.CallOpts{})
-	//token1, _ := poolInstance.Token1(&bind.CallOpts{})
+	TxConfirm(tx.Hash())
 
-	// myPrintln("token0:", token0)
-	// myPrintln("sellToken:", sellToken)
-	// myPrintln("token1:", token1)
+	_, balAfter := GetBalance(buyToken, GetAddress(accountId).Hex())
 
-	if strings.ToLower(sellToken) != strings.ToLower(token0.Hex()) {
-		zeroForOne := false
-		Swap1(accountId, amount, zeroForOne, _pool.Hex())
-	} else {
-		zeroForOne := true
-		Swap0(accountId, amount, zeroForOne, _pool.Hex())
-	}
+	myPrintln(sym, " before swap:", balBefore)
+	myPrintln(sym, " affter swap:", balAfter)
+
+	ChangeAccount(Account)
 
 }
+
+// func TokenSwap(accountId int, sellToken string, buyToken string, feetier int, amount *big.Int) {
+// 	// func Swap0(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
+// 	// func Swap1(accountId int, swapAmount *big.Int, zeroForOne bool, _pool string)
+
+// 	myTitle("Token Swap -- wallet swap")
+// 	_pool := GetPool(sellToken, buyToken, int64(feetier))
+
+// 	poolInstance, err := pool.NewApi(_pool, EthClient)
+// 	if err != nil {
+// 		log.Fatal("pool instance:", err)
+// 	}
+// 	Sleep(5000)
+
+// 	liquidity, err := poolInstance.Liquidity(&bind.CallOpts{})
+// 	//myPrintln("liquidity in pool:", Pricef(liquidity, int(1e18)))
+// 	myPrintln(sellToken, "/", buyToken, " pool liquidity:", liquidity)
+
+// 	myPrintln("liquidity in pool:", liquidity)
+
+// 	if err != nil {
+// 		log.Fatal("pool instance:", err)
+// 	}
+
+// 	token0, _ := poolInstance.Token0(&bind.CallOpts{})
+// 	//token1, _ := poolInstance.Token1(&bind.CallOpts{})
+
+// 	// myPrintln("token0:", token0)
+// 	// myPrintln("sellToken:", sellToken)
+// 	// myPrintln("token1:", token1)
+
+// 	if strings.ToLower(sellToken) != strings.ToLower(token0.Hex()) {
+// 		zeroForOne := false
+// 		Swap1(accountId, amount, zeroForOne, _pool.Hex())
+// 	} else {
+// 		zeroForOne := true
+// 		Swap0(accountId, amount, zeroForOne, _pool.Hex())
+// 	}
+
+// }

@@ -153,6 +153,9 @@ contract ViaVault is
         if (amount0 > 0) IERC20(token0).safeTransferFrom(msg.sender, address(this), amount0);
         if (amount1 > 0) IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
         
+        Assetholder[msg.sender].deposit0 += amount0;		// add or increase msg.sender's asset0
+		Assetholder[msg.sender].deposit1 += amount1;		// add or increase msg.sender's asset1
+		
         emit Deposit(msg.sender, shares, amount0, amount1);
         
         
@@ -190,9 +193,11 @@ contract ViaVault is
 		
 		uint256 shares = balanceOf(msg.sender) * percent / 100;
 		uint256 _totalSupply = totalSupply();
-		( uint256 total0, uint256 total1 ) = IStrategy(myStrategy()).getTotalAmounts();
+		
 		uint256 reserve0 = getbalance0(); 
 		uint256 reserve1 = getbalance1(); 
+
+		( uint256 total0, uint256 total1 ) = IStrategy(myStrategy()).getTotalAmounts();
 		total0 += reserve0;
 		total1 += reserve1;
 		
@@ -261,6 +266,14 @@ contract ViaVault is
 
 		if(amount0>0) { IERC20(token0).safeTransfer(to, amount0); }
 		if(amount1>0) { IERC20(token1).safeTransfer(to, amount1); }
+		
+		// update user's total deposits 
+		 Assetholder[to].deposit0  = ( Assetholder[to].deposit0 > amount0  ) ? 
+				Assetholder[to].deposit0 -= amount0 : 0;
+		 Assetholder[to].deposit1  = ( Assetholder[to].deposit1 > amount1  ) ? 
+				Assetholder[to].deposit1 -= amount1 : 0;
+
+		
 		
     }
 

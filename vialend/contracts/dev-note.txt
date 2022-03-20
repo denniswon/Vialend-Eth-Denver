@@ -793,3 +793,20 @@ eric@DESKTOP-M0EENPL:/mnt/c/Users/xdotk/sandbox/leonopteryx/vialend/contracts/va
 Fatal: Contract has additional library references, please use other mode(e.g. --combined-json) to catch library infos
 
 	
+	
+	
+### ERROR 'STF'	 etherscan solidity  swapHelper
+	`when` call swaprouter02
+		cautionary tale: if you are trying to make a swap and are getting the "execution reverted: STF" error, 
+		check that you have enough balance of the token you are trying to swap, I was banging my head because 
+		I had the tokens approved but I was trying to swap WETH for USDC for example and didn't have WETH (only ETH)
+	`cause` 
+		the token in the wallet is not transfered to the swapHelper contract.
+		
+	`solution`
+        before approve and swapping through the swap router, transfer tokenIn from the msg.sender
+        
+        TransferHelper.safeTransferFrom( _tokenIn, msg.sender, address(this), _amountIn);
+        
+        
+	

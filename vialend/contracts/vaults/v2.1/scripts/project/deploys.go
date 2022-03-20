@@ -24,6 +24,7 @@ import (
 
 	//	VaultStrategy "viaroot/deploy/VaultStrategy"
 	//	ViaVault "viaroot/deploy/ViaVault"
+	SwapHelper "viaroot/deploy/SwapHelper"
 	arb "viaroot/deploy/arb"
 	_ "viaroot/deploy/cether"
 	admin "viaroot/deploy/vaultAdmin"
@@ -910,107 +911,31 @@ func DeploySqueeth() {
 
 }
 
-// func DeployVaultStrategy() {
-// 	fmt.Println("----------------------------------------------")
-// 	fmt.Println(".......................Deploy  VaultStrategy and ViaVault. ..................")
-// 	fmt.Println("----------------------------------------------")
+func DeploySwapHelper() {
 
-// 	NonceGen()
+	fmt.Println("----------------------------------------------")
+	fmt.Println(".......................Deploy SwapHelper. ..................")
+	fmt.Println("----------------------------------------------")
 
-// 	pool := FindPool() //tokens based on network selection
-// 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-// 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
+	NonceGen()
 
-// 	var quoteAmount = big.NewInt(1e18) /// make sure it's the token0 amount for oracle price quote.
-// 	var uniPortionRate = uint8(90)
-// 	var compPortionRate = uint8(100)
+	address, tx, instance, err := SwapHelper.DeployApi(Auth, EthClient, common.HexToAddress(Network.SwapRouter))
 
-// 	networkid := uint8(5) // 5: goerli
-// 	VaultFactory := common.HexToAddress(Network.VaultFactory)
-// 	protocolAddr := common.HexToAddress("0xEa24c7256ab5c61b4dC1c5cB600A3D0bE826a440")
-// 	creatorFee := uint8(10)
-// 	vault := common.HexToAddress(Network.Vault)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	contracts := [7]common.Address{
-// 		protocolAddr,
-// 		pool,
-// 		common.HexToAddress(Network.LendingContracts.WETH),
-// 		common.HexToAddress(Network.LendingContracts.CETH),
-// 		common.HexToAddress(Network.CTOKEN0),
-// 		common.HexToAddress(Network.CTOKEN1),
-// 		vault,
-// 	}
+	_, _, _ = address, instance, tx
 
-// 	_ = vaultCap
-// 	_ = individualCap
+	Network.SwapHelper = address.Hex()
+	Cfg.Contracts.SWAPHELPER = address.Hex()
 
-// 	myPrintln("VaultFactory:", VaultFactory)
-// 	myPrintln("Network:", networkid)
-// 	address, tx, instanceStrat, err := VaultStrategy.DeployApi(Auth, EthClient,
-// 		contracts,
-// 		uniPortionRate,
-// 		compPortionRate,
-// 		creatorFee,
-// 		quoteAmount)
+	myPrintln("address:", address)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+	//Readstring("Uniswap Factory deploy done, wait for pending ... next... ")
+	TxConfirm(tx.Hash())
 
-// 	TxConfirm(tx.Hash())
-
-// 	stratAddress := address.Hex()
-// 	fmt.Println("StratUniComp address:", stratAddress)
-
-// 	Readstring2("strat uni comp deploy done, wait for pending ... next deploy viaVault... ", false)
-
-// 	vaultAddress, _ := instanceStrat.Vault(&bind.CallOpts{})
-// 	fmt.Println("viaVault Address:", vaultAddress)
-
-// 	stat, _ := instanceStrat.Stat(&bind.CallOpts{})
-// 	fmt.Println("vault status:", stat)
-
-// 	if IsZeroAddress(vaultAddress) {
-// 		log.Fatal(">>>>FAILED......vaultAddress  is 0: ", vaultAddress)
-// 	}
-
-// 	WriteINI([]string{VaultFactory.Hex(), stratAddress, vaultAddress.Hex()})
-
-// }
-
-// func DeployViaVault() {
-// 	fmt.Println("----------------------------------------------")
-// 	fmt.Println(".......................Deploy  ViaVault. ..................")
-// 	fmt.Println("----------------------------------------------")
-
-// 	NonceGen()
-
-// 	vaultCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-// 	individualCap, _ := new(big.Int).SetString("9999999999999999999999999999999999999999", 10)
-// 	admin := FromAddress
-// 	strategy := common.HexToAddress(Network.VaultStrat)
-// 	token0 := common.HexToAddress(Network.TokenA)
-// 	token1 := common.HexToAddress(Network.TokenB)
-
-// 	address, tx, _, err := ViaVault.DeployApi(Auth, EthClient,
-// 		admin,
-// 		token0,
-// 		token1,
-// 		vaultCap,
-// 		individualCap,
-// 	)
-
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	TxConfirm(tx.Hash())
-
-// 	if IsZeroAddress(address) {
-// 		log.Fatal(">>>>FAILED......vaultAddress  is 0: ", address)
-// 	}
-
-// }
+}
 
 // IsZeroAddress validate if it's a 0 address
 func IsZeroAddress(iaddress interface{}) bool {

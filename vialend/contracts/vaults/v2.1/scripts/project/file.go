@@ -20,7 +20,8 @@ const fn = "C:\\Users\\xdotk\\torukmakto\\vialend\\contracts\\vaults\\v2.0\\scri
 //const cfg_file = "C:\\Users\\xdotk\\sendbox\\leonopteryx\\vialend\\contracts\\vaults\\v2.1\\scripts\\file\\config.json"
 //const cfg_file = "C:\\Users\\xdotk\\torukmakto\\vialend\\contracts\\vaults\\v2.1\\scripts\\file\\config.json"
 
-const cfg_file = "../scripts/file/config.json"
+//const cfg_file = "../scripts/file/config.json"
+const cfg_file = "C:\\Users\\xdotk\\sandbox\\leonopteryx\\vialend\\contracts\\vaults\\v2.1\\scripts\\file\\config.json"
 
 type Configuration struct {
 	Description string `json:"Description"`
@@ -32,6 +33,7 @@ type Configuration struct {
 		VAULT          string
 		VAULT_BRIDGE   string
 		CALLEE         string
+		SWAPHELPER     string
 	} `json:"Contracts"`
 }
 

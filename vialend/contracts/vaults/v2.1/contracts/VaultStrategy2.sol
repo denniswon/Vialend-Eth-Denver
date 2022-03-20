@@ -293,8 +293,6 @@ contract VaultStrategy2
             );
         }
 	}
-	
-	
         
 	//## debugging function, will be remvoed on product
 	function swapTest (
@@ -552,13 +550,11 @@ contract VaultStrategy2
 	}
 	
 	/// do the aave v3 Shorting  
-	function shortHelper(uint256 ausdcAmountInEth, uint32 shortLever) internal {
+	function shortHelper(uint256 ausdcAmountInEth, uint32 leverage) internal {
 		
 		require( ausdcAmountInEth > 0, "AS0");
 		
-		uint32 leverage = shortLever; 
-		
-		require(leverage > 0 && leverage < 6, 'L0');
+		require(leverage > 1 && leverage <= 4, 'L0');
 
 		// my weth -> eth unwrap
 		_unwrap(_WETH, ausdcAmountInEth);
@@ -575,8 +571,14 @@ contract VaultStrategy2
 		require(amountInUsdc > 0, "A0");  // be sure there is enough funds
 
         TransferHelper.safeApprove(aaveUSDC, shortCallback, amountInUsdc + IERC20(aaveUSDC).allowance(address(this), shortCallback));
-        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, amountInUsdc * leverage );
+        AaveHelper.short(aavePoolProvider, shortCallback, aaveUSDC, aaveETH, amountInUsdc, ethValue(amountInUsdc) * leverage );
     }
+	
+	
+	function ethValue(uint256 valueInUsdc) internal returns (uint256) {
+		uint256 usdcPerEth = getEthPriceFromPool(_USDC,500);
+		return valueInUsdc * 1e18 / usdcPerEth ;
+	}
 	
 	///@notice calculate best portion to put into uniswap
 	/// todo: formula of parts in uniswap, squeeth, and hedging

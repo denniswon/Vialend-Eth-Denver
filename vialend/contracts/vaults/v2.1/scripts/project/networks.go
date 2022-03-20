@@ -81,6 +81,7 @@ type Params struct {
 	VaultHedge       string
 	LendingContracts LendingStruct
 	Accounts         []AccountStruct
+	SwapHelper       string
 }
 
 type Indi int
@@ -137,7 +138,7 @@ var Networks = [...]Params{
 		"", //VaultFactory
 		10, //pendingtime  local fork
 		"0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8", // pool
-		"", // swap router
+		"0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", // swap router
 		"", // bonus token
 		"0xE8a6f04DEF6d9fa9F02982b8E1d8Eea835fB7668", //vault address  -> ganache-cli forked main
 		3000,
@@ -162,6 +163,7 @@ var Networks = [...]Params{
 			SqthController: "0x64187ae08781B09368e6253F9E94951243A493D5",
 		},
 		[]AccountStruct{},
+		"", //swaphelper
 	},
 
 	{ /// 1 local usdc/usdt
@@ -186,6 +188,7 @@ var Networks = [...]Params{
 
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 		[]AccountStruct{},
+		"", //swaphelper
 	},
 
 	{ /// 2 local weth/usdc
@@ -210,9 +213,11 @@ var Networks = [...]Params{
 
 		LendingStruct{DAI: "ASDF", CDAI: "ASD"},
 		[]AccountStruct{},
+		"", //swaphelper
+
 	},
 	{ ///3  goerli admin test 1
-		[]string{"https://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6", "wss://goerli.infura.io/v3/68070d464ba04080a428aeef1b9803c6"},
+		[]string{},
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		// "0xd648DB0713965e927963182Dc44D07D122a703ed", //callee
@@ -252,6 +257,8 @@ var Networks = [...]Params{
 
 		},
 		[]AccountStruct{},
+		"", //swaphelper
+
 	},
 	{ ///4  goerli weth / usdc fee tier 0.1%
 		[]string{}, ///  provider url
@@ -295,6 +302,8 @@ var Networks = [...]Params{
 			ChainLinkProxy: "0x326c977e6efc84e512bb9c30f76e30c160ed06fb", // usdc/eth
 		},
 		[]AccountStruct{},
+		"", //swaphelper
+
 	},
 	{ ///5  goerli wbtc / usdc fee tier 0.3%
 		[]string{}, ///  provider url
@@ -336,6 +345,8 @@ var Networks = [...]Params{
 			ChainLinkProxy: "0x326c977e6efc84e512bb9c30f76e30c160ed06fb", // usdc/eth
 		},
 		[]AccountStruct{},
+		"", //swaphelper
+
 	},
 
 	{ ///6  rinkeby tester admin
@@ -343,17 +354,20 @@ var Networks = [...]Params{
 
 		"0x1F98431c8aD98523631AE4a59f267346ea31F984", //factory
 		"", //callee
-		[11]string{},
+		[11]string{
+			"3ff408e9e5342c7e3f540bba9345da9b0fdaabb7a6e4eaceb7de126a1ba55391",
+			"f12e87b71f16f24f192941ecc3aff77e8ebcc7be01dd8d7d1245d7644ce8c93b",
+		},
 		"0x6aFA9B0F44f125028573Da29c1f00A89C9C8AC99", // usdc self deployed
 		"0xaab1f2c9835cA4A15f6330967aBEfBa5Edf79F7d", // weth self deployed
 		//"0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b", //tokenA  usdc
 		//"0xc778417E063141139Fce010982780140Aa0cD5Ab", //tokenB Weth
 		"0xd6801a1DfFCd0a410336Ef88DeF4320D6DF1883e", //ctoken0
 		"0x5B281A6DdA0B271e91ae35DE655Ad301C976edb1", //ctoken1
-		"",  //VaultFactory
-		50,  //time pending interval
-		"",  //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
-		"",  // swap router
+		"", //VaultFactory
+		50, //time pending interval
+		"", //pool 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", //pool tusdc/ tweth 0xBF93aB266Cd9235DaDE543fAd2EeC884D1cCFc0c // 0x3c7fADe1921Bf9D8308D76d7B09cA54839cfF033", eweth/eusdc //pool
+		"0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", // swap router
 		"",  // tto  token
 		"",  //vault address
 		500, // fee
@@ -380,6 +394,8 @@ var Networks = [...]Params{
 
 		},
 		[]AccountStruct{},
+		"", //swaphelper
+
 	},
 	{ ///7  ropsten
 		[]string{}, ///  provider url
@@ -416,6 +432,8 @@ var Networks = [...]Params{
 
 		},
 		[]AccountStruct{},
+		"", //swaphelper
+
 	},
 }
 
@@ -490,8 +508,8 @@ func GetSignature(nid int, accId int) *bind.TransactOpts {
 
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Value = big.NewInt(0)          // in wei
-	auth.GasLimit = uint64(6721975)     // in gwei
-	auth.GasPrice = big.NewInt(2 * 1e9) // 2*1e9 = 2 gwei.  1 gwei = 1e9 wei
+	auth.GasLimit = uint64(8721975)     // in gwei
+	auth.GasPrice = big.NewInt(4 * 1e9) // 2*1e9 = 2 gwei.  1 gwei = 1e9 wei
 
 	return auth
 
@@ -516,8 +534,8 @@ func GetSignatureByKey(key string) (*bind.TransactOpts, string) {
 
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Value = big.NewInt(0)          // in wei
-	auth.GasLimit = uint64(6721975)     // in gwei
-	auth.GasPrice = big.NewInt(2 * 1e9) // 2*1e9 = 2 gwei.  1 gwei = 1e9 wei
+	auth.GasLimit = uint64(8721975)     // in gwei
+	auth.GasPrice = big.NewInt(4 * 1e9) // 2*1e9 = 2 gwei.  1 gwei = 1e9 wei
 
 	return auth, publicAddress.Hex()
 
@@ -596,6 +614,7 @@ func Init(nid int, acc int) {
 	Network.Vault = Cfg.Contracts.VAULT
 	Network.VaultBridge = Cfg.Contracts.VAULT_BRIDGE
 	Network.Callee = Cfg.Contracts.CALLEE
+	Network.SwapHelper = Cfg.Contracts.SWAPHELPER
 
 	myTitle("Loading contracts ")
 	myPrintln("VaultFactory:", Network.VaultFactory)
@@ -660,7 +679,7 @@ func TxConfirm(tx common.Hash) {
 
 	tr, err := EthClient.TransactionReceipt(context.Background(), tx)
 	if err != nil {
-		log.Println("TransactionReceipt :  ", err)
+		log.Println("TransactionReceipt:  ", err)
 	}
 
 	delay := time.Duration(5)
